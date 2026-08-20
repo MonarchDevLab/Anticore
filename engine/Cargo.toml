@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/anticore-core",
+    "crates/anticore-transport-win",
+    "crates/anticore-cli",
+]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2021"
+license = "MIT"
+authors = ["Monolith Works", "MonarchDevLab"]
+repository = "https://github.com/MonarchDevLab/Anticore"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

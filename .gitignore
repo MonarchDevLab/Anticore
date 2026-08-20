@@ -1,0 +1,65 @@
+# Derleme çıktıları
+engine/target/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+desktop/dist/
+dist-portable/
+target/
+node_modules/
+
+# Kök dizindeki derlenmiş ikili dosyalar (bu repo kaynağından üretilir;
+# regenerable, dağıtım Releases'ten gelir — git'te tutulmaz).
+# NOT: WinDivert.dll/WinDivert64.sys/WebView2Loader.dll BURADA DEĞİL —
+# bunlar tauri.conf.json bundle.resources'un derleme-zamanı girdisidir;
+# untrack etmeden önce CI'da vendor-fetch adımı gerekir (henüz yok).
+/anticore.exe
+/anticore-desktop.exe
+
+# Yerel çalışma dosyaları
+*.log
+*.tmp
+
+# Yerel çalışma ve teşhis kayıtları
+.ai/
+
+# Sürücü ve satıcı ikili dosyaları (dağıtımda ayrı sağlanır)
+engine/vendor/
+
+# Çevre ve Ortam Değişkenleri — ASLA repoya girmez (.env koruması)
+.env
+.env.*
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Kimlik Bilgileri, Gizli Dosyalar ve Belirteçler
+*.secret
+*.secrets
+secrets/
+*.token
+*token*.json
+*secret*.json
+token/
+credentials.json
+credentials.xml
+credentials/
+auth.json
+*.auth
+
+# Sertifikalar, Gizli Anahtarlar ve Cüzdanlar
+keys/
+*.key
+*.pem
+*.pfx
+*.p12
+*.pkcs12
+*.keystore
+*.jks
+*.cer
+*.crt
+*.der
+id_rsa*
+id_ecdsa*
+id_ed25519*
