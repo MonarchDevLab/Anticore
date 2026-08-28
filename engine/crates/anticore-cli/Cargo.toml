@@ -1,0 +1,18 @@
+[package]
+name = "anticore-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "anticore"
+path = "src/main.rs"
+
+[dependencies]
+anticore-core = { path = "../anticore-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+anticore-transport-win = { path = "../anticore-transport-win" }
+windows-service = "0.7"
