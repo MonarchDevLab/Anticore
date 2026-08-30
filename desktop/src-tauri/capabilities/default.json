@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "default",
+  "description": "Anticore ana pencere yetkileri",
+  "windows": ["main", "*"],
+  "permissions": [
+    "core:default",
+    "core:window:default",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:webview:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://**" }]
+    },
+    "updater:default",
+    "process:allow-restart",
+    "dialog:allow-save",
+    "dialog:allow-open"
+  ]
+}

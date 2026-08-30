@@ -1,0 +1,1420 @@
+//! IPC komutları: arayüz <-> motor köprüsü.
+
+use std::sync::atomic::Ordering;
+use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Emitter, Manager};
+
+use anticore_core::dto::StepDto;
+use crate::service::Engine;
+
+// ---------- DTO'lar ----------
+
+#[derive(Serialize)]
+pub struct StatusDto {
+    pub running: bool,
+    pub profile_id: String,
+    pub packets_seen: u64,
+    pub packets_touched: u64,
+    pub passthrough: u64,
+    /// Motorun kaç saniyedir çalıştığı; durmuşsa 0.
+    pub uptime_sec: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProfileDto {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub builtin: bool,
+    pub steps: Vec<StepDto>,
+}
+
+#[derive(Deserialize)]
+pub struct ProfileInput {
+    pub id: Option<String>,
+    pub name: String,
+    pub description: String,
+    pub steps: Vec<StepDto>,
+}
+
+#[derive(Serialize)]
+pub struct ProbeDto {
+    pub host: String,
+    pub result: String,
+    pub latency_ms: Option<u128>,
+}
+
+#[derive(Deserialize)]
+pub struct ProbeRequest {
+    pub host: String,
+}
+
+#[derive(Serialize)]
+pub struct DnsDto {
+    pub servers: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DohStatusDto {
+    pub enabled: bool,
+    pub auto_doh_value: u32,
+    pub template: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AdapterDnsInfo {
+    pub name: String,
+    pub description: String,
+    pub interface_index: u32,
+    pub ipv4_servers: Vec<String>,
+    pub ipv6_servers: Vec<String>,
+    pub is_dhcp: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct LegacyServiceDto {
+    pub id: String,
+    pub name: String,
+    pub status: String,
+    pub installed: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct EngineConfigDto {
+    pub pasif_savunma: bool,
+    pub quic_engelle: bool,
+}
+
+#[tauri::command]
+pub fn get_engine_config(app: AppHandle) -> EngineConfigDto {
+    let c = load_engine_config(&app);
+    EngineConfigDto {
+        pasif_savunma: c.pasif_savunma,
+        quic_engelle: c.quic_engelle,
+    }
+}
+
+#[tauri::command]
+pub fn set_engine_config(app: AppHandle, config: EngineConfigDto) -> Result<(), String> {
+    let engine = app.state::<Engine>();
+    if engine.running.load(Ordering::SeqCst) {
+        return Err("Motor çalışırken ayar değiştirilemez; önce durdurun".into());
+    }
+    std::fs::write(
+        config_path(&app),
+        serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| format!("kaydedilemedi: {e}"))?;
+    Ok(())
+}
+
+// ---------- kurulum: servis + bağımsız çalıştırma ----------
+
+pub const SERVICE_NAME: &str = "AnticoreService";
+
+/// Motor ikili dosyasını bulur: önce panel yanında, sonra derleme çıktıları.
+fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            candidates.push(dir.join("anticore.exe"));
+            candidates.push(dir.join("anticore-cli.exe"));
+            candidates.push(dir.join("bin").join("anticore.exe"));
+            // resource dizini (bundle)
+            if let Some(parent) = dir.parent() {
+                candidates.push(parent.join("anticore.exe"));
+                candidates.push(parent.join("bin").join("anticore.exe"));
+            }
+        }
+    }
+    for rel in [
+        "../../engine/target/release/anticore.exe",
+        "../../engine/target/debug/anticore.exe",
+        "../../../engine/target/release/anticore.exe",
+        "../../../engine/target/debug/anticore.exe",
+    ] {
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(dir) = exe.parent() {
+                candidates.push(dir.join(rel));
+            }
+        }
+        candidates.push(PathBuf::from(rel));
+    }
+    candidates.retain(|p| p.is_file());
+    candidates
+        .into_iter()
+        .next()
+        .ok_or_else(|| "anticore.exe bulunamadı (motor ikili dosyası panel yanında olmalı)".into())
+}
+
+fn sc_query(service: &str) -> String {
+    std::process::Command::new("sc")
+        .args(["query", service])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
+        .unwrap_or_default()
+}
+
+#[derive(Serialize)]
+pub struct SetupStatusDto {
+    pub service_installed: bool,
+    pub service_running: bool,
+    pub detached_running: bool,
+}
+
+#[tauri::command]
+pub fn get_setup_status(app: AppHandle) -> SetupStatusDto {
+    let q = sc_query(SERVICE_NAME);
+    let service_installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
+    let service_running = service_installed && q.contains("RUNNING");
+
+    let pid_file = app_dir(&app).join("detached.pid");
+    let detached_running = pid_file.is_file()
+        && std::fs::read_to_string(&pid_file)
+            .ok()
+            .and_then(|s| s.trim().parse::<u32>().ok())
+            .map(|pid| {
+                std::process::Command::new("tasklist")
+                    .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
+                    .output()
+                    .map(|o| {
+                        let out = String::from_utf8_lossy(&o.stdout);
+                        out.contains("anticore.exe")
+                    })
+                    .unwrap_or(false)
+            })
+            .unwrap_or(false);
+
+    SetupStatusDto {
+        service_installed,
+        service_running,
+        detached_running,
+    }
+}
+
+#[tauri::command]
+pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String> {
+    // Çalışan panel motoruyla çakışmayı önle
+    app.state::<Engine>().stop().ok();
+    let motor = find_motor_exe(&app)?;
+    let data_dir = app_dir(&app);
+    let exe_str = motor.to_string_lossy().to_string();
+    let dir_str = data_dir.to_string_lossy().to_string();
+
+    let bin_path = format!(
+        "\"{exe}\" service-run --profile {profile} --data-dir \"{dir}\"",
+        exe = exe_str,
+        profile = profile_id,
+        dir = dir_str
+    );
+
+    for cmd in [
+        vec!["stop".to_string(), SERVICE_NAME.to_string()],
+        vec!["delete".to_string(), SERVICE_NAME.to_string()],
+    ] {
+        let _ = std::process::Command::new("sc").args(&cmd).output();
+        std::thread::sleep(std::time::Duration::from_millis(800));
+    }
+
+    let out = std::process::Command::new("sc")
+        .args(["create", SERVICE_NAME, "binPath=", &bin_path, "start=", "auto"])
+        .output()
+        .map_err(|e| format!("sc çalıştırılamadı: {e}"))?;
+    if !out.status.success() {
+        return Err(format!(
+            "servis oluşturulamadı: {}",
+            String::from_utf8_lossy(&out.stderr)
+        ));
+    }
+    let _ = std::process::Command::new("sc")
+        .args(["description", SERVICE_NAME, "Anticore paket motoru servisi"])
+        .output();
+
+    let start = std::process::Command::new("sc")
+        .args(["start", SERVICE_NAME])
+        .output()
+        .map_err(|e| format!("sc start başarısız: {e}"))?;
+    if !start.status.success() {
+        return Err(format!(
+            "servis başlatılamadı: {}",
+            String::from_utf8_lossy(&start.stderr)
+        ));
+    }
+    app.emit("log", format!("[+] servis kuruldu ve başlatıldı (profil={profile_id})"))
+        .ok();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
+    let _ = std::process::Command::new("sc").args(["stop", SERVICE_NAME]).output();
+    std::thread::sleep(std::time::Duration::from_millis(1500));
+    let out = std::process::Command::new("sc")
+        .args(["delete", SERVICE_NAME])
+        .output()
+        .map_err(|e| format!("sc delete başarısız: {e}"))?;
+    if !out.status.success() {
+        return Err("servis kaldırılamadı (kurulu olmayabilir)".into());
+    }
+    app.emit("log", "[-] servis kaldırıldı".to_string()).ok();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> {
+    use std::process::Stdio;
+
+    if app.state::<Engine>().running.load(Ordering::SeqCst) {
+        return Err("Panel motoru çalışıyor; önce onu durdurun".into());
+    }
+    let q = sc_query(SERVICE_NAME);
+    if q.contains("SERVICE_NAME:") && !q.contains("1060") {
+        return Err("Servis kurulu; çakışmayı önlemek için önce servisi kaldırın".into());
+    }
+
+    let motor = find_motor_exe(&app)?;
+    let data_dir = app_dir(&app);
+
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let child = std::process::Command::new(&motor)
+        .args(["run", "--profile", &profile_id, "--data-dir"])
+        .arg(&data_dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn()
+        .map_err(|e| format!("motor başlatılamadı: {e}"))?;
+
+    std::fs::write(
+        app_dir(&app).join("detached.pid"),
+        child.id().to_string(),
+    )
+    .ok();
+    drop(child);
+    app.emit(
+        "log",
+        format!("[+] bağımsız motor başladı (profil={profile_id}) — panel kapansa da sürer"),
+    )
+    .ok();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn detached_stop(app: AppHandle) -> Result<(), String> {
+    let pid_file = app_dir(&app).join("detached.pid");
+    let pid = std::fs::read_to_string(&pid_file)
+        .ok()
+        .and_then(|s| s.trim().parse::<u32>().ok())
+        .ok_or_else(|| "çalışan bağımsız motor bulunamadı".to_string())?;
+    let out = std::process::Command::new("taskkill")
+        .args(["/PID", &pid.to_string(), "/F"])
+        .output()
+        .map_err(|e| format!("taskkill başarısız: {e}"))?;
+    let _ = std::fs::remove_file(&pid_file);
+    if out.status.success() {
+        app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
+        Ok(())
+    } else {
+        Err("motor sonlandırılamadı (zaten kapalı olabilir)".into())
+    }
+}
+
+// ---------- yardımcılar ----------
+
+fn app_dir(app: &AppHandle) -> PathBuf {
+    let dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let _ = std::fs::create_dir_all(&dir);
+    dir
+}
+
+fn blacklist_path(app: &AppHandle) -> PathBuf {
+    app_dir(app).join("blacklist.txt")
+}
+
+fn profiles_path(app: &AppHandle) -> PathBuf {
+    app_dir(app).join("profiles.json")
+}
+
+fn config_path(app: &AppHandle) -> PathBuf {
+    app_dir(app).join("config.json")
+}
+
+/// Motor yapılandırması: dosyadan okur, yoksa varsayılan döner.
+fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfig {
+    let defaults = crate::service::EngineConfig::default();
+    let Ok(text) = std::fs::read_to_string(config_path(app)) else {
+        return defaults;
+    };
+    #[derive(Deserialize)]
+    struct Raw {
+        pasif_savunma: Option<bool>,
+        quic_engelle: Option<bool>,
+    }
+    match serde_json::from_str::<Raw>(&text) {
+        Ok(r) => crate::service::EngineConfig {
+            pasif_savunma: r.pasif_savunma.unwrap_or(defaults.pasif_savunma),
+            quic_engelle: r.quic_engelle.unwrap_or(defaults.quic_engelle),
+        },
+        Err(_) => defaults,
+    }
+}
+
+fn load_blacklist(app: &AppHandle) -> anticore_core::config::Blacklist {
+    anticore_core::config::Blacklist::from_file(&blacklist_path(app))
+        .unwrap_or_else(|_| anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST))
+}
+
+fn load_custom_profiles(app: &AppHandle) -> Vec<ProfileDto> {
+    let Ok(text) = std::fs::read_to_string(profiles_path(app)) else {
+        return vec![];
+    };
+    serde_json::from_str(&text).unwrap_or_default()
+}
+
+fn resolve_steps(app: &AppHandle, profile_id: &str) -> Result<Vec<anticore_core::strategy::Step>, String> {
+    // Önce builtin, yoksa custom
+    if let Some(p) = anticore_core::profile::find_profile(profile_id) {
+        return Ok(p.steps);
+    }
+    for p in load_custom_profiles(app) {
+        if p.id == profile_id {
+            return anticore_core::dto::steps_from_dto(&p.steps);
+        }
+    }
+    Err(format!("profil bulunamadı: {profile_id}"))
+}
+
+// ---------- durum ----------
+
+#[tauri::command]
+pub fn get_status(engine: tauri::State<Engine>) -> StatusDto {
+    StatusDto {
+        running: engine.running.load(Ordering::SeqCst),
+        profile_id: engine.profile_id.lock().unwrap().clone(),
+        packets_seen: engine.stats.packets_seen.load(Ordering::Relaxed),
+        packets_touched: engine.stats.packets_touched.load(Ordering::Relaxed),
+        passthrough: engine.stats.passthrough.load(Ordering::Relaxed),
+        uptime_sec: engine.uptime_sec(),
+    }
+}
+
+// ---------- profiller ----------
+
+#[tauri::command]
+pub fn list_profiles(app: AppHandle) -> Vec<ProfileDto> {
+    let mut out: Vec<ProfileDto> = anticore_core::profile::builtin_profiles()
+        .into_iter()
+        .map(|p| ProfileDto {
+            id: p.id.to_string(),
+            name: p.name.to_string(),
+            description: p.description.to_string(),
+            builtin: true,
+            steps: anticore_core::dto::steps_to_dto(&p.steps),
+        })
+        .collect();
+    out.extend(load_custom_profiles(&app));
+    out
+}
+
+#[tauri::command]
+pub fn save_profile(app: AppHandle, profile: ProfileInput) -> Result<ProfileDto, String> {
+    if profile.name.trim().is_empty() {
+        return Err("Profil adı boş olamaz".into());
+    }
+    if profile.steps.is_empty() {
+        return Err("En az bir adım gerekli".into());
+    }
+    // Adımların geçerliliğini doğrula
+    for s in &profile.steps {
+        s.to_step()?;
+    }
+
+    let mut all = load_custom_profiles(&app);
+    let id = profile.id.unwrap_or_else(|| {
+        format!("custom-{}", chrono_like_id())
+    });
+    let dto = ProfileDto {
+        id: id.clone(),
+        name: profile.name.trim().to_string(),
+        description: profile.description.trim().to_string(),
+        builtin: false,
+        steps: profile.steps,
+    };
+    all.retain(|p| p.id != id);
+    all.push(dto.clone());
+    std::fs::write(
+        profiles_path(&app),
+        serde_json::to_string_pretty(&all).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| format!("kaydedilemedi: {e}"))?;
+    Ok(dto)
+}
+
+#[tauri::command]
+pub fn delete_profile(app: AppHandle, id: String) -> Result<(), String> {
+    let mut all = load_custom_profiles(&app);
+    all.retain(|p| p.id != id);
+    std::fs::write(
+        profiles_path(&app),
+        serde_json::to_string_pretty(&all).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| format!("silinemedi: {e}"))?;
+    Ok(())
+}
+
+/// Özel (builtin olmayan) profilleri native "Farklı Kaydet" diyaloğuyla
+/// seçilen JSON dosyasına yazar. Builtin profiller dahil edilmez — kaynak
+/// kodda zaten tanımlılar, tekrar içe aktarmak anlamsız olurdu.
+#[tauri::command]
+pub fn export_profiles_to_file(app: AppHandle) -> Result<bool, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let custom = load_custom_profiles(&app);
+    if custom.is_empty() {
+        return Err("Dışa aktarılacak özel profil yok".into());
+    }
+
+    let Some(path) = app
+        .dialog()
+        .file()
+        .add_filter("Anticore Profilleri", &["json"])
+        .set_file_name("anticore-profiller.json")
+        .blocking_save_file()
+    else {
+        return Ok(false); // kullanıcı iptal etti
+    };
+    let path = path.into_path().map_err(|e| e.to_string())?;
+
+    let text = serde_json::to_string_pretty(&custom).map_err(|e| e.to_string())?;
+    std::fs::write(&path, text).map_err(|e| format!("kaydedilemedi: {e}"))?;
+    Ok(true)
+}
+
+/// Native "Aç" diyaloğuyla seçilen JSON dosyasından profilleri içe aktarır.
+/// Her profilin adım listesi doğrulanır (geçersiz olan atlanır, tüm dosya
+/// reddedilmez); aynı id varsa üzerine yazılır (`save_profile` ile aynı
+/// davranış). Döner: içe aktarılan profil sayısı.
+#[tauri::command]
+pub fn import_profiles_from_file(app: AppHandle) -> Result<usize, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let Some(path) = app.dialog().file().add_filter("Anticore Profilleri", &["json"]).blocking_pick_file() else {
+        return Ok(0); // kullanıcı iptal etti
+    };
+    let path = path.into_path().map_err(|e| e.to_string())?;
+
+    let text = std::fs::read_to_string(&path).map_err(|e| format!("okunamadı: {e}"))?;
+    let incoming: Vec<ProfileDto> =
+        serde_json::from_str(&text).map_err(|e| format!("geçersiz profil dosyası: {e}"))?;
+
+    let mut all = load_custom_profiles(&app);
+    let mut imported = 0usize;
+    for mut p in incoming {
+        if p.steps.iter().any(|s| s.to_step().is_err()) {
+            continue; // geçersiz adımlı profili sessizce atla
+        }
+        p.builtin = false; // içe aktarılan hiçbir zaman builtin işaretlenmez
+        all.retain(|existing| existing.id != p.id);
+        all.push(p);
+        imported += 1;
+    }
+
+    std::fs::write(
+        profiles_path(&app),
+        serde_json::to_string_pretty(&all).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| format!("kaydedilemedi: {e}"))?;
+
+    Ok(imported)
+}
+
+fn chrono_like_id() -> u64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+// ---------- hedef siteler ----------
+
+#[tauri::command]
+pub fn get_blacklist(app: AppHandle) -> Vec<String> {
+    let bl = load_blacklist(&app);
+    let mut v: Vec<String> = bl.iter().cloned().collect();
+    v.sort();
+    v
+}
+
+/// Hedef listesini native "Farklı Kaydet" diyaloğuyla seçilen `.txt`
+/// dosyasına yazar. Önceden Sites.tsx `<a download>` + blob kullanıyordu —
+/// WebView2'de sessizce çalışmaz (bkz. Faz 0 analizi A2.9).
+#[tauri::command]
+pub fn export_sites_to_file(app: AppHandle) -> Result<bool, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let Some(path) = app
+        .dialog()
+        .file()
+        .add_filter("Metin dosyası", &["txt"])
+        .set_file_name("anticore-hedefler.txt")
+        .blocking_save_file()
+    else {
+        return Ok(false);
+    };
+    let path = path.into_path().map_err(|e| e.to_string())?;
+
+    std::fs::write(&path, get_blacklist(app).join("\n")).map_err(|e| format!("kaydedilemedi: {e}"))?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub fn add_site(app: AppHandle, domain: String) -> Result<(), String> {
+    let domain = domain.trim().to_lowercase();
+    if domain.is_empty() || !domain.contains('.') || domain.contains(' ') {
+        return Err("Geçersiz domain".into());
+    }
+    let mut current = get_blacklist(app.clone());
+    if current.contains(&domain) {
+        return Ok(());
+    }
+    current.push(domain.clone());
+    save_blacklist(&app, &current)?;
+    app.emit("log", format!("[+] hedef eklendi: {domain}")).ok();
+    Ok(())
+}
+
+/// Domain DNS'ten çözümlenebiliyor mu — Sites view'da ekleme öncesi yazım
+/// hatalarını yakalamak için. Ağ gerektirir ama tek bir sistem çağrısı
+/// kadar hafiftir (`ToSocketAddrs`, port 443 varsayımıyla); ayrı bir TLS
+/// probe'una gerek yok.
+#[tauri::command]
+pub fn resolve_domain(domain: String) -> bool {
+    use std::net::ToSocketAddrs;
+    (domain.trim(), 443u16)
+        .to_socket_addrs()
+        .map(|mut it| it.next().is_some())
+        .unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn remove_site(app: AppHandle, domain: String) -> Result<(), String> {
+    let current = get_blacklist(app.clone());
+    save_blacklist(
+        &app,
+        &current.into_iter().filter(|d| *d != domain).collect::<Vec<_>>(),
+    )?;
+    app.emit("log", format!("[-] hedef çıkarıldı: {domain}")).ok();
+    Ok(())
+}
+
+fn save_blacklist(app: &AppHandle, domains: &[String]) -> Result<(), String> {
+    std::fs::write(blacklist_path(app), domains.join("\n"))
+        .map_err(|e| format!("kaydedilemedi: {e}"))
+}
+
+// ---------- motor ----------
+
+#[tauri::command]
+pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: String) -> Result<(), String> {
+    let bl = load_blacklist(&app);
+    let steps = resolve_steps(&app, &profile_id)?;
+    let config = load_engine_config(&app);
+
+    let handle = app.clone();
+    let log_file = app_dir(&app).join("anticore.log");
+    let log_sink = move |line: String| {
+        crate::service::write_rotated_log(&log_file, &line);
+        handle.emit("log", line).ok();
+    };
+
+    let dll_dir = app
+        .path()
+        .resource_dir()
+        .ok()
+        .or_else(|| {
+            std::env::current_exe()
+                .ok()
+                .and_then(|p| p.parent().map(|d| d.to_path_buf()))
+        });
+
+    engine.start(&profile_id, bl, steps, &config, dll_dir, log_sink)?;
+    app.emit("status_changed", true).ok();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
+    engine.stop()?;
+    app.emit("status_changed", false).ok();
+    Ok(())
+}
+
+/// Uygulamayı yönetici olarak yeniden başlatır (WinDivert sürücüsü için şart).
+#[tauri::command]
+pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let exe_str = exe.to_string_lossy().replace('\'', "''");
+    let script = format!("Start-Process -FilePath '{}' -Verb RunAs", exe_str);
+    let status = std::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .status()
+        .map_err(|e| format!("yükseltme başlatılamadı: {e}"))?;
+    if !status.success() {
+        return Err("Yükseltme onaylanmadı".into());
+    }
+    // Yeni (yönetici) örnek açıldı; bu örneği kapat
+    app.exit(0);
+    Ok(())
+}
+
+// ---------- test (probe) ----------
+
+#[tauri::command]
+pub fn probe_target(req: ProbeRequest) -> ProbeDto {
+    let host = req.host.trim().to_lowercase();
+    let r = anticore_core::tester::probe(&host, 443, 3000);
+    let (result, latency) = match r {
+        anticore_core::tester::ProbeResult::Open { latency_ms } => ("open".into(), Some(latency_ms)),
+        anticore_core::tester::ProbeResult::Blocked { latency_ms } => ("blocked".into(), Some(latency_ms)),
+        anticore_core::tester::ProbeResult::Filtered => ("filtered".into(), None),
+        anticore_core::tester::ProbeResult::Unreachable(e) => (format!("unreachable:{e}"), None),
+    };
+    ProbeDto { host, result, latency_ms: latency }
+}
+
+// ---------- ağ onarımı (DNS) ----------
+
+#[tauri::command]
+pub fn get_dns_servers() -> DnsDto {
+    let out = run_powershell(
+        "(Get-DnsClientServerAddress -AddressFamily IPv4 | Where-Object {$_.ServerAddresses} | ForEach-Object {$_.ServerAddresses}) -join ','",
+    );
+    let servers: Vec<String> = out
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+    DnsDto { servers }
+}
+
+#[tauri::command]
+pub fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), String> {
+    let provider_key = provider.unwrap_or_else(|| "google".to_string()).to_lowercase();
+    let (v4, v6, prov_name) = match provider_key.as_str() {
+        "cloudflare" => (
+            vec!["1.1.1.1", "1.0.0.1"],
+            vec!["2606:4700:4700::1111", "2606:4700:4700::1001"],
+            "Cloudflare (1.1.1.1)",
+        ),
+        "quad9" => (
+            vec!["9.9.9.9", "149.112.112.112"],
+            vec!["2620:fe::fe", "2620:fe::9"],
+            "Quad9 (9.9.9.9)",
+        ),
+        "yandex" => (
+            vec!["77.88.8.8", "77.88.8.1"],
+            vec!["2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff"],
+            "Yandex (77.88.8.8)",
+        ),
+        _ => (
+            vec!["8.8.8.8", "8.8.4.4"],
+            vec!["2001:4860:4860::8888", "2001:4860:4860::8844"],
+            "Google (8.8.8.8)",
+        ),
+    };
+
+    let v4_str = v4.iter().map(|s| format!("'{s}'")).collect::<Vec<_>>().join(",");
+    let v6_str = v6.iter().map(|s| format!("'{s}'")).collect::<Vec<_>>().join(",");
+
+    let script = format!(
+        r#"
+$ErrorActionPreference = 'Stop'
+$v4 = @({v4_str})
+$v6 = @({v6_str})
+Get-NetAdapter -Physical | ForEach-Object {{
+    Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ServerAddresses ($v4 + $v6) -ErrorAction SilentlyContinue
+}}
+Clear-DnsClientCache
+"#
+    );
+    run_powershell_script(&script)?;
+    app.emit("log", format!("[+] güvenli DNS uygulandı: {prov_name} (IPv4 + IPv6)"))
+        .ok();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn reset_dns(app: AppHandle) -> Result<(), String> {
+    let script = r#"
+$ErrorActionPreference = 'Stop'
+Get-NetAdapter -Physical | ForEach-Object {
+    Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ResetServerAddresses -ErrorAction SilentlyContinue
+}
+Clear-DnsClientCache
+"#;
+    run_powershell_script(script)?;
+    app.emit("log", "[*] DNS ayarları DHCP'ye döndürüldü".to_string())
+        .ok();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_adapter_dns_info() -> Result<Vec<AdapterDnsInfo>, String> {
+    let script = r#"
+$ErrorActionPreference = 'SilentlyContinue'
+$adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' -or $_.HardwareInterface }
+if (-not $adapters) {
+    $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' }
+}
+$list = @()
+foreach ($a in $adapters) {
+    $idx = $a.ifIndex
+    $v4 = (Get-DnsClientServerAddress -InterfaceIndex $idx -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses
+    $v6 = (Get-DnsClientServerAddress -InterfaceIndex $idx -AddressFamily IPv6 -ErrorAction SilentlyContinue).ServerAddresses
+    $isDhcp = ((Get-NetIPAddress -InterfaceIndex $idx -AddressFamily IPv4 -ErrorAction SilentlyContinue).PrefixOrigin -eq 'Dhcp')
+    $list += [PSCustomObject]@{
+        name = $a.Name
+        description = $a.InterfaceDescription
+        interface_index = [int]$idx
+        ipv4_servers = if ($v4) { @($v4) } else { @() }
+        ipv6_servers = if ($v6) { @($v6) } else { @() }
+        is_dhcp = [bool]$isDhcp
+    }
+}
+$list | ConvertTo-Json -Compress
+"#;
+    let out = run_powershell(script);
+    if out.trim().is_empty() {
+        return Ok(vec![]);
+    }
+    if out.trim().starts_with('[') {
+        serde_json::from_str::<Vec<AdapterDnsInfo>>(&out).map_err(|e| format!("Adaptör verisi çözümlenemedi: {e}"))
+    } else {
+        match serde_json::from_str::<AdapterDnsInfo>(&out) {
+            Ok(single) => Ok(vec![single]),
+            Err(_) => Ok(vec![]),
+        }
+    }
+}
+
+// ---------- LOG YÖNETİMİ ----------
+
+#[tauri::command]
+pub fn get_log_file(app: AppHandle, max_lines: Option<usize>) -> Result<Vec<String>, String> {
+    let limit = max_lines.unwrap_or(500);
+    let log_file = app_dir(&app).join("anticore.log");
+    let mut lines = Vec::new();
+
+    let backup_file = app_dir(&app).join("anticore.log.1");
+    if backup_file.is_file() {
+        if let Ok(content) = std::fs::read_to_string(&backup_file) {
+            for line in content.lines() {
+                if !line.trim().is_empty() {
+                    lines.push(line.to_string());
+                }
+            }
+        }
+    }
+
+    if log_file.is_file() {
+        if let Ok(content) = std::fs::read_to_string(&log_file) {
+            for line in content.lines() {
+                if !line.trim().is_empty() {
+                    lines.push(line.to_string());
+                }
+            }
+        }
+    }
+
+    if lines.len() > limit {
+        lines = lines.split_off(lines.len() - limit);
+    }
+    Ok(lines)
+}
+
+#[tauri::command]
+pub fn clear_log_file(app: AppHandle) -> Result<(), String> {
+    let log_file = app_dir(&app).join("anticore.log");
+    let backup_file = app_dir(&app).join("anticore.log.1");
+    let _ = std::fs::remove_file(&backup_file);
+    if let Ok(mut f) = std::fs::File::create(&log_file) {
+        use std::io::Write;
+        let _ = writeln!(f, "[{}] [*] Log dosyası sıfırlandı.", crate::service::format_iso8601_now());
+    }
+    app.emit("log", "[*] Log dosyası temizlendi".to_string()).ok();
+    Ok(())
+}
+
+/// Log dosyasının TAMAMINI (rotasyon dahil) native "Farklı Kaydet"
+/// diyaloğuyla seçilen yola yazar. Diyaloğu ve dosya I/O'sunu Rust
+/// tarafında yapıyoruz — frontend'in `<a download>` ile blob indirmesi
+/// WebView2'de sessizce çalışmaz (bkz. Faz 0 analizi A2.9).
+#[tauri::command]
+pub fn export_log_to_file(app: AppHandle) -> Result<bool, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let Some(path) = app
+        .dialog()
+        .file()
+        .add_filter("Metin dosyası", &["txt"])
+        .set_file_name("anticore-log.txt")
+        .blocking_save_file()
+    else {
+        return Ok(false); // kullanıcı iptal etti
+    };
+    let path = path.into_path().map_err(|e| e.to_string())?;
+
+    let all_lines = get_log_file(app, Some(usize::MAX))?;
+    std::fs::write(&path, all_lines.join("\n")).map_err(|e| format!("kaydedilemedi: {e}"))?;
+    Ok(true)
+}
+
+fn run_powershell(command: &str) -> String {
+    let utf8_cmd = format!(
+        "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); $OutputEncoding = [System.Text.UTF8Encoding]::new($false); {}",
+        command
+    );
+    std::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &utf8_cmd])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
+        .unwrap_or_default()
+}
+
+fn run_powershell_script(script: &str) -> Result<(), String> {
+    let path = std::env::temp_dir().join(format!("Anticore-net-{}.ps1", chrono_like_id()));
+    let full_script = format!(
+        "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false);\n$OutputEncoding = [System.Text.UTF8Encoding]::new($false);\n{}",
+        script
+    );
+    std::fs::write(&path, full_script.as_bytes()).map_err(|e| e.to_string())?;
+    let out = std::process::Command::new("powershell")
+        .args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+        ])
+        .arg(&path)
+        .output()
+        .map_err(|e| format!("PowerShell çalıştırılamadı: {e}"))?;
+    let _ = std::fs::remove_file(&path);
+    if out.status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "ağ işlemi başarısız: {}",
+            String::from_utf8_lossy(&out.stderr)
+        ))
+    }
+}
+
+// ---------- YENI GOREV B4 KOMUTLARI ----------
+
+#[tauri::command]
+pub fn check_compatibility() -> anticore_core::compat::CompatReport {
+    anticore_core::compat::check_compatibility()
+}
+
+#[tauri::command]
+pub async fn auto_discover_profile(app: AppHandle) -> Result<Vec<anticore_core::blockcheck::BlockcheckResult>, String> {
+    let profiles = anticore_core::profile::builtin_profiles();
+    let (tx, mut rx) = tokio::sync::mpsc::channel(10);
+    
+    let target = "discord.com";
+    let handle = tokio::spawn(async move {
+        anticore_core::blockcheck::run_blockcheck(target, &profiles, tx).await
+    });
+    
+    while let Some(prog) = rx.recv().await {
+        app.emit("blockcheck_progress", prog).ok();
+    }
+    
+    let res = handle.await.map_err(|e| e.to_string())?;
+    Ok(res)
+}
+
+#[tauri::command]
+pub fn scan_legacy_services() -> Vec<LegacyServiceDto> {
+    let targets = [
+        ("GoodbyeDPI", "GoodbyeDPI Servisi"),
+        ("GoodbyeDPI-Turkey", "GoodbyeDPI Türkiye Servisi"),
+        ("zapret", "Zapret DPI Servisi"),
+        ("winws1", "WinWS Servisi 1"),
+        ("winws2", "WinWS Servisi 2"),
+        ("WireSock", "WireSock Servisi"),
+        ("WireSockService", "WireSock Service"),
+        ("ProxiFyre", "ProxiFyre SOCKS Proxy"),
+    ];
+
+    let mut results = Vec::new();
+    for (id, name) in targets {
+        let q = sc_query(id);
+        let installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
+        let status = if !installed {
+            "NOT_INSTALLED"
+        } else if q.contains("RUNNING") {
+            "RUNNING"
+        } else if q.contains("STOPPED") {
+            "STOPPED"
+        } else {
+            "UNKNOWN"
+        };
+
+        results.push(LegacyServiceDto {
+            id: id.to_string(),
+            name: name.to_string(),
+            status: status.to_string(),
+            installed,
+        });
+    }
+    results
+}
+
+#[tauri::command]
+pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>) -> Result<Vec<String>, String> {
+    let to_clean = if let Some(ids) = service_ids {
+        ids
+    } else {
+        scan_legacy_services()
+            .into_iter()
+            .filter(|s| s.installed)
+            .map(|s| s.id)
+            .collect()
+    };
+
+    let mut cleaned = Vec::new();
+    for srv in &to_clean {
+        let _ = std::process::Command::new("sc").args(["stop", srv]).output();
+        std::thread::sleep(std::time::Duration::from_millis(300));
+        let out = std::process::Command::new("sc").args(["delete", srv]).output();
+        if let Ok(o) = out {
+            if o.status.success() {
+                cleaned.push(srv.clone());
+            }
+        }
+    }
+
+    app.emit(
+        "log",
+        format!("[+] {} adet eski servis temizlendi: {:?}", cleaned.len(), cleaned),
+    )
+    .ok();
+    Ok(cleaned)
+}
+
+#[cfg(windows)]
+#[tauri::command]
+pub fn get_startup_enabled() -> bool {
+    windows_registry::CURRENT_USER
+        .open("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
+        .and_then(|k| k.get_string("Anticore"))
+        .is_ok()
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+pub fn get_startup_enabled() -> bool {
+    false
+}
+
+#[cfg(windows)]
+#[tauri::command]
+pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let run_key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+    if enabled {
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_str = exe.to_string_lossy();
+        let run_key = windows_registry::CURRENT_USER
+            .create(run_key_path)
+            .map_err(|e| format!("Kayıt defteri açılamadı: {e}"))?;
+        let value = format!("\"{}\" --hidden", exe_str);
+        run_key
+            .set_string("Anticore", &value)
+            .map_err(|e| format!("Başlangıç değeri yazılamadı: {e}"))?;
+        app.emit("log", "[+] Başlangıçta çalıştır açıldı (Native Registry)".to_string()).ok();
+    } else {
+        if let Ok(run_key) = windows_registry::CURRENT_USER.open(run_key_path) {
+            let _ = run_key.remove_value("Anticore");
+        }
+        app.emit("log", "[-] Başlangıçta çalıştır kapatıldı (Native Registry)".to_string()).ok();
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+pub fn set_startup_enabled(_app: AppHandle, _enabled: bool) -> Result<(), String> {
+    Err("Bu platformda başlangıç kaydı desteklenmiyor".into())
+}
+
+#[cfg(windows)]
+#[tauri::command]
+pub fn get_doh_status() -> DohStatusDto {
+    let params_path = "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters";
+    if let Ok(k) = windows_registry::LOCAL_MACHINE.open(params_path) {
+        let auto_doh_value = k.get_u32("EnableAutoDoh").unwrap_or(0);
+        let template = k.get_string("AutoDohTemplate").ok();
+        DohStatusDto {
+            enabled: auto_doh_value == 2,
+            auto_doh_value,
+            template,
+        }
+    } else {
+        DohStatusDto {
+            enabled: false,
+            auto_doh_value: 0,
+            template: None,
+        }
+    }
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+pub fn get_doh_status() -> DohStatusDto {
+    DohStatusDto {
+        enabled: false,
+        auto_doh_value: 0,
+        template: None,
+    }
+}
+
+#[cfg(windows)]
+#[tauri::command]
+pub fn apply_doh_registry(app: AppHandle, template: Option<String>) -> Result<(), String> {
+    let params_path = "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters";
+    let key = windows_registry::LOCAL_MACHINE
+        .create(params_path)
+        .map_err(|e| format!("Dnscache kayıt defteri açılamadı (Yönetici yetkisi gerekli): {e}"))?;
+
+    key.set_u32("EnableAutoDoh", 2)
+        .map_err(|e| format!("EnableAutoDoh yazılamadı: {e}"))?;
+
+    if let Some(tpl) = &template {
+        if !tpl.trim().is_empty() {
+            key.set_string("AutoDohTemplate", tpl.trim())
+                .map_err(|e| format!("AutoDohTemplate yazılamadı: {e}"))?;
+        }
+    }
+
+    app.emit(
+        "log",
+        "[+] DoH (DNS over HTTPS) kayıt defterine eklendi (EnableAutoDoh=2, Native Registry)".to_string(),
+    )
+    .ok();
+    Ok(())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+pub fn apply_doh_registry(_app: AppHandle, _template: Option<String>) -> Result<(), String> {
+    Err("DoH kayıt defteri yalnızca Windows'ta geçerlidir".into())
+}
+
+#[cfg(windows)]
+#[tauri::command]
+pub fn reset_doh_registry(app: AppHandle) -> Result<(), String> {
+    let params_path = "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters";
+    if let Ok(key) = windows_registry::LOCAL_MACHINE.open(params_path) {
+        let _ = key.remove_value("EnableAutoDoh");
+        let _ = key.remove_value("AutoDohTemplate");
+    }
+    app.emit("log", "[-] DoH kayıt defterinden silindi (Native Registry)".to_string()).ok();
+    Ok(())
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+pub fn reset_doh_registry(_app: AppHandle) -> Result<(), String> {
+    Err("DoH kayıt defteri yalnızca Windows'ta geçerlidir".into())
+}
+
+#[tauri::command]
+pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
+    engine.stop().ok();
+
+    std::fs::write(blacklist_path(&app), anticore_core::config::DEFAULT_BLACKLIST)
+        .map_err(|e| format!("Blacklist sıfırlanamadı: {e}"))?;
+
+    let _ = std::fs::remove_file(profiles_path(&app));
+
+    let default_cfg = crate::service::EngineConfig::default();
+    let cfg_dto = EngineConfigDto {
+        pasif_savunma: default_cfg.pasif_savunma,
+        quic_engelle: default_cfg.quic_engelle,
+    };
+    std::fs::write(
+        config_path(&app),
+        serde_json::to_string_pretty(&cfg_dto).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| format!("Yapılandırma sıfırlanamadı: {e}"))?;
+
+    let _ = std::fs::remove_file(app_dir(&app).join("detached.pid"));
+
+    clear_log_file(app.clone()).ok();
+
+    app.emit(
+        "log",
+        "[!] Fabrika sıfırlama tamamlandı: Tüm profiller, hedef listesi ve yapılandırma varsayılana döndürüldü.".to_string(),
+    )
+    .ok();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn dns_leak_test() -> Result<String, String> {
+    let script = r#"
+try {
+    $result = Resolve-DnsName -Name discord.com -Type A -ErrorAction Stop
+    $server = (Get-DnsClientServerAddress -AddressFamily IPv4 | Where-Object {$_.ServerAddresses}).ServerAddresses -join ', '
+    "Resolved using: $server"
+} catch {
+    "Failed to resolve: $_"
+}
+"#;
+    let out = run_powershell(script);
+    Ok(out.trim().to_string())
+}
+
+#[tauri::command]
+pub fn repair_discord_updates(app: AppHandle) -> Result<String, String> {
+    let script = r#"
+$ErrorActionPreference = 'SilentlyContinue'
+Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 500
+
+Clear-DnsClientCache
+
+$localDiscord = Join-Path $env:LOCALAPPDATA 'Discord'
+if (Test-Path $localDiscord) {
+    Remove-Item -Path (Join-Path $localDiscord 'Update.exe.log') -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path (Join-Path $localDiscord 'Squirrel.log') -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path $localDiscord -Filter 'Squirrel-tmp*' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+"Discord güncelleme kilitleri ve DNS önbelleği başarıyla temizlendi."
+"#;
+    let out = run_powershell(script);
+    app.emit("log", "[+] Discord güncelleme döngüsü onarıldı".to_string()).ok();
+    Ok(out.trim().to_string())
+}
+
+#[tauri::command]
+pub fn clear_discord_cache(app: AppHandle) -> Result<String, String> {
+    let script = r#"
+$ErrorActionPreference = 'SilentlyContinue'
+Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 500
+
+$appDataDiscord = Join-Path $env:APPDATA 'discord'
+if (Test-Path $appDataDiscord) {
+    $caches = @('Cache', 'Code Cache', 'GPUCache', 'DawnCache', 'blob_storage')
+    foreach ($c in $caches) {
+        $p = Join-Path $appDataDiscord $c
+        if (Test-Path $p) {
+            Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+"Discord önbelleği (Cache / Code Cache / GPUCache) başarıyla temizlendi."
+"#;
+    let out = run_powershell(script);
+    app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
+    Ok(out.trim().to_string())
+}
+
+// ---------- GITHUB UPDATER & SÜRÜM YÖNETİMİ ----------
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UpdateInfoDto {
+    pub has_update: bool,
+    pub current_version: String,
+    pub latest_version: String,
+    pub release_name: String,
+    pub release_notes: String,
+    pub html_url: String,
+    pub download_url: Option<String>,
+    pub published_at: String,
+}
+
+#[tauri::command]
+pub fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+#[tauri::command]
+pub fn open_browser_url(app: AppHandle, url: String) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err("Geçersiz URL protokolü".into());
+    }
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| format!("URL açılamadı: {e}"))
+}
+
+#[derive(Deserialize)]
+struct GhAsset {
+    name: String,
+    browser_download_url: String,
+}
+
+#[derive(Deserialize)]
+struct GhRelease {
+    tag_name: Option<String>,
+    name: Option<String>,
+    body: Option<String>,
+    html_url: Option<String>,
+    published_at: Option<String>,
+    #[serde(default)]
+    assets: Vec<GhAsset>,
+}
+
+/// GitHub Releases API'ye doğrudan HTTPS isteği (ureq/rustls) — önceden
+/// PowerShell `Invoke-RestMethod` çağırıyordu (~300-600ms process-spawn
+/// başına + kırılgan kısıtlı PowerShell ortamlarında).
+#[tauri::command]
+pub fn check_update(
+    repo_override: Option<String>,
+    token_override: Option<String>,
+) -> Result<UpdateInfoDto, String> {
+    let repo = repo_override
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or_else(|| "MonarchDevLab/Anticore".to_string());
+    let current_ver = env!("CARGO_PKG_VERSION");
+
+    let uri = format!("https://api.github.com/repos/{}/releases/latest", repo.trim());
+    let mut req = ureq::get(&uri)
+        .set("User-Agent", &format!("Anticore-Desktop/{current_ver}"))
+        .set("Accept", "application/vnd.github+json")
+        .timeout(std::time::Duration::from_secs(10));
+
+    let token = token_override
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| std::env::var("GITHUB_TOKEN").ok())
+        .or_else(|| std::env::var("GH_TOKEN").ok());
+
+    if let Some(tok) = token {
+        req = req.set("Authorization", &format!("Bearer {}", tok.trim()));
+    }
+
+    let resp = req.call().map_err(|e| format!("GitHub API isteği başarısız: {e}"))?;
+
+    let parsed: GhRelease = resp
+        .into_json()
+        .map_err(|e| format!("Yanıt ayrıştırılamadı: {e}"))?;
+
+    let latest_tag = parsed.tag_name.unwrap_or_default();
+    let has_update = is_newer_version(current_ver, &latest_tag);
+    let download_url = parsed
+        .assets
+        .iter()
+        .find(|a| {
+            a.name.ends_with(".exe") || a.name.ends_with(".zip") || a.name.ends_with(".msi")
+        })
+        .map(|a| a.browser_download_url.clone());
+
+    Ok(UpdateInfoDto {
+        has_update,
+        current_version: current_ver.to_string(),
+        latest_version: latest_tag,
+        release_name: parsed.name.unwrap_or_default(),
+        release_notes: parsed.body.unwrap_or_default(),
+        html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
+        download_url,
+        published_at: parsed.published_at.unwrap_or_default(),
+    })
+}
+
+/// `current`/`remote`, başında opsiyonel "v" ile, semver olarak karşılaştırılır.
+/// Ayrıştırılamayan (semver-dışı) etiketler güncelleme YOK sayılır — hatalı
+/// pozitif güncelleme bildirimi vermek, bildirim vermemekten daha kötüdür.
+fn is_newer_version(current: &str, remote: &str) -> bool {
+    let clean = |s: &str| s.trim().trim_start_matches('v').to_string();
+    let (Ok(c), Ok(r)) = (
+        semver::Version::parse(&clean(current)),
+        semver::Version::parse(&clean(remote)),
+    ) else {
+        return false;
+    };
+    r > c
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detects_newer_patch_and_minor() {
+        assert!(is_newer_version("0.2.0", "v0.2.1"));
+        assert!(is_newer_version("0.2.0", "0.3.0"));
+        assert!(!is_newer_version("0.2.0", "0.2.0"));
+        assert!(!is_newer_version("0.3.0", "0.2.9"));
+    }
+
+    #[test]
+    fn unparseable_tags_report_no_update() {
+        assert!(!is_newer_version("0.2.0", "not-a-version"));
+        assert!(!is_newer_version("0.2.0", ""));
+    }
+
+    #[test]
+    fn doh_status_dto_roundtrip() {
+        let dto = DohStatusDto {
+            enabled: true,
+            auto_doh_value: 2,
+            template: Some("https://dns.google/dns-query".into()),
+        };
+        let json = serde_json::to_string(&dto).unwrap();
+        let parsed: DohStatusDto = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.enabled, true);
+        assert_eq!(parsed.auto_doh_value, 2);
+        assert_eq!(parsed.template.as_deref(), Some("https://dns.google/dns-query"));
+    }
+
+    #[test]
+    fn adapter_dns_info_roundtrip() {
+        let info = AdapterDnsInfo {
+            name: "Ethernet".into(),
+            description: "Realtek PCIe GbE Family Controller".into(),
+            interface_index: 12,
+            ipv4_servers: vec!["8.8.8.8".into(), "8.8.4.4".into()],
+            ipv6_servers: vec!["2001:4860:4860::8888".into()],
+            is_dhcp: false,
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        let parsed: AdapterDnsInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.name, "Ethernet");
+        assert_eq!(parsed.ipv4_servers.len(), 2);
+        assert_eq!(parsed.is_dhcp, false);
+    }
+
+    #[test]
+    fn legacy_service_dto_roundtrip() {
+        let dto = LegacyServiceDto {
+            id: "GoodbyeDPI".into(),
+            name: "GoodbyeDPI Servisi".into(),
+            status: "RUNNING".into(),
+            installed: true,
+        };
+        let json = serde_json::to_string(&dto).unwrap();
+        let parsed: LegacyServiceDto = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.id, "GoodbyeDPI");
+        assert_eq!(parsed.installed, true);
+    }
+
+    #[test]
+    fn iso8601_format_structure() {
+        let ts = crate::service::format_iso8601_now();
+        assert_eq!(ts.len(), 20);
+        assert!(ts.ends_with('Z'));
+        assert_eq!(&ts[10..11], "T");
+    }
+}
