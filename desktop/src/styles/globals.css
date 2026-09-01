@@ -1,0 +1,490 @@
+@import "./fonts.css";
+@import "tailwindcss";
+
+/* Taramayı garantiye al (Tailwind v4) */
+@source "./";
+@source "../";
+
+/* === Anticore Design Tokens: Cyber-Brutalism (design-system/anticore/MASTER.md) === */
+@theme {
+  /* Renk Paleti (Saf Siyah & Neon Kontrast) */
+  --color-void: #000000;
+  --color-surface-subtle: #080808;
+  --color-surface-card: #0d0d0d;
+  --color-surface-elevated: #141414;
+  
+  --color-border-brutal: rgba(255, 255, 255, 0.2);
+  --color-border-brutal-subtle: rgba(255, 255, 255, 0.1);
+  --color-border-brutal-strong: rgba(255, 255, 255, 0.6);
+
+  --color-paper: #FFFFFF;
+  --color-paper-bright: #FFFFFF;
+  --color-paper-muted: #A3A3A3;
+  --color-paper-faint: #737373;
+
+  /* Geriye dönük uyumluluk alias'ları */
+  --color-ink: #000000;
+  --color-ink-deep: #000000;
+  --color-panel: #0d0d0d;
+  --color-panel-muted: #080808;
+  --color-edge: #262626;
+  --color-fog: #A3A3A3;
+
+  /* Neon Vurgu Renkleri */
+  --color-neon-live: #00FF9D;
+  --color-neon-live-dim: #059669;
+  --color-neon-alert: #FF3366;
+  --color-neon-alert-dim: #DC2626;
+  --color-neon-warn: #FFCC00;
+  --color-neon-warn-dim: #D97706;
+  --color-neon-cyan: #00FFFF;
+  --color-neon-cyan-dim: #0891B2;
+
+  /* Temel semantik eşleşmeler */
+  --color-live: #00FF9D;
+  --color-live-dim: #059669;
+  --color-alert: #FF3366;
+  --color-alert-dim: #DC2626;
+  --color-warn: #FFCC00;
+  --color-warn-dim: #D97706;
+  --color-sky: #00FFFF;
+  --color-sky-dim: #0891B2;
+
+  /* Neon Glow Efektleri */
+  --glow-live: 0 0 15px rgba(0, 255, 157, 0.4), 0 0 30px rgba(0, 255, 157, 0.15);
+  --glow-alert: 0 0 15px rgba(255, 51, 102, 0.4), 0 0 30px rgba(255, 51, 102, 0.15);
+  --glow-sky: 0 0 15px rgba(0, 255, 255, 0.4), 0 0 30px rgba(0, 255, 255, 0.15);
+
+  /* Tipografi */
+  --font-sans: "Fira Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Fira Code", ui-monospace, monospace;
+
+  /* Brutalist Sert Gölgeler (Blur Yok) */
+  --shadow-brutal-sm: 2px 2px 0px rgba(255, 255, 255, 0.15);
+  --shadow-brutal: 4px 4px 0px #FFFFFF;
+  --shadow-brutal-live: 4px 4px 0px #00FF9D;
+  --shadow-brutal-alert: 4px 4px 0px #FF3366;
+  --shadow-brutal-warn: 4px 4px 0px #FFCC00;
+  --shadow-brutal-cyan: 4px 4px 0px #00FFFF;
+  --shadow-brutal-lg: 8px 8px 0px rgba(255, 255, 255, 0.2);
+}
+
+/* ── Açık Tema (Yüksek Kontrastlı Brutalist Kağıt) ── */
+html.light,
+[data-theme="light"] {
+  --color-void: #F5F5F5;
+  --color-surface-subtle: #EBEBEB;
+  --color-surface-card: #FFFFFF;
+  --color-surface-elevated: #FFFFFF;
+
+  --color-border-brutal: #000000;
+  --color-border-brutal-subtle: #404040;
+  --color-border-brutal-strong: #000000;
+
+  --color-paper: #000000;
+  --color-paper-bright: #000000;
+  --color-paper-muted: #404040;
+  --color-paper-faint: #737373;
+
+  --color-ink: #F5F5F5;
+  --color-ink-deep: #EBEBEB;
+  --color-panel: #FFFFFF;
+  --color-panel-muted: #EBEBEB;
+  --color-edge: #000000;
+  --color-fog: #404040;
+
+  --color-neon-live: #059669;
+  --color-neon-alert: #DC2626;
+  --color-neon-warn: #D97706;
+  --color-neon-cyan: #0284C7;
+
+  --color-live: #059669;
+  --color-alert: #DC2626;
+  --color-warn: #D97706;
+  --color-sky: #0284C7;
+
+  --shadow-brutal-sm: 2px 2px 0px #000000;
+  --shadow-brutal: 4px 4px 0px #000000;
+  --shadow-brutal-live: 4px 4px 0px #059669;
+  --shadow-brutal-alert: 4px 4px 0px #DC2626;
+  --shadow-brutal-warn: 4px 4px 0px #D97706;
+  --shadow-brutal-cyan: 4px 4px 0px #0284C7;
+  --shadow-brutal-lg: 8px 8px 0px #000000;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-void);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Matrix Arka Plan Deseni (Sadece #root) */
+  #root {
+    position: relative;
+    isolation: isolate;
+  }
+  #root::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: 
+      linear-gradient(rgba(0, 255, 157, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 157, 0.03) 1px, transparent 1px);
+    background-size: 3rem 3rem;
+    pointer-events: none;
+  }
+
+  summary { list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+
+  /* WCAG 2.2 AA Focus Ring */
+  :focus-visible {
+    outline: 2px solid var(--color-neon-cyan);
+    outline-offset: 2px;
+  }
+
+  /* Brutalist Keskin Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 0px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-neon-live); }
+  ::-webkit-scrollbar-track { background: #000000; }
+
+  *, *::before, *::after {
+    border-color: var(--color-border-brutal);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Cyber-Brutalist Bileşen Sınıfları
+   ═══════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Brutalist Kartlar ── */
+  .card {
+    background: var(--color-void);
+    border: 3px solid var(--color-border-brutal);
+    border-radius: 0px;
+    box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.08);
+    position: relative;
+  }
+  .card:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .card-subtle {
+    background: var(--color-surface-subtle);
+    border: 2px solid var(--color-border-brutal-subtle);
+    border-radius: 0px;
+  }
+
+  .card-glow-live:hover {
+    border-color: var(--color-neon-live);
+    box-shadow: 4px 4px 0px var(--color-neon-live);
+  }
+  .card-glow-alert:hover {
+    border-color: var(--color-neon-alert);
+    box-shadow: 4px 4px 0px var(--color-neon-alert);
+  }
+
+  /* ── Brutalist Butonlar ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0px;
+    padding: 0.6rem 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    border: 2px solid;
+    white-space: nowrap;
+    position: relative;
+    user-select: none;
+    transition: none;
+  }
+  .btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: none !important;
+  }
+  .btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none !important;
+  }
+
+  .btn-primary {
+    background: var(--color-neon-live);
+    color: #000000;
+    border-color: var(--color-neon-live);
+    box-shadow: 3px 3px 0px #FFFFFF;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #00e68d;
+    box-shadow: 4px 4px 0px #FFFFFF;
+  }
+
+  .btn-danger {
+    background: var(--color-neon-alert);
+    color: #000000;
+    border-color: var(--color-neon-alert);
+    box-shadow: 3px 3px 0px #FFFFFF;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: #ff1f57;
+    box-shadow: 4px 4px 0px #FFFFFF;
+  }
+
+  .btn-secondary {
+    background: #000000;
+    color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 3px 3px 0px rgba(255, 255, 255, 0.15);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-paper-muted);
+    border-color: transparent;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* ── Brutalist Girdiler ── */
+  .input {
+    width: 100%;
+    border-radius: 0px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: #000000;
+    padding: 0.65rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-paper);
+    outline: none;
+  }
+  .input:focus {
+    border-color: var(--color-neon-live);
+    box-shadow: 3px 3px 0px var(--color-neon-live);
+  }
+  .input::placeholder { color: var(--color-paper-faint); }
+  select.input { cursor: pointer; appearance: none; }
+  select.input option { background: #000000; color: #FFFFFF; }
+
+  /* ── Üst Çubuk ── */
+  .topbar {
+    background: #000000;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* ── Brutalist Durum Rozeti ── */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border-radius: 0px;
+    padding: 0.3rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    border: 2px solid;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .status-pill.on {
+    color: #000000;
+    border-color: var(--color-neon-live);
+    background: var(--color-neon-live);
+    box-shadow: 2px 2px 0px rgba(255, 255, 255, 0.3);
+  }
+  .status-pill.off {
+    color: var(--color-paper-muted);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: #000000;
+  }
+
+  /* ── Navigasyon ── */
+  .nav-item {
+    position: relative;
+  }
+
+  /* ── Rozet / Badge ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 0px;
+    padding: 0.2rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    border: 1px solid;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge-live { background: #000000; border-color: var(--color-neon-live); color: var(--color-neon-live); box-shadow: 2px 2px 0px var(--color-neon-live); }
+  .badge-alert { background: #000000; border-color: var(--color-neon-alert); color: var(--color-neon-alert); box-shadow: 2px 2px 0px var(--color-neon-alert); }
+  .badge-warn { background: #000000; border-color: var(--color-neon-warn); color: var(--color-neon-warn); box-shadow: 2px 2px 0px var(--color-neon-warn); }
+  .badge-cyan { background: #000000; border-color: var(--color-neon-cyan); color: var(--color-neon-cyan); box-shadow: 2px 2px 0px var(--color-neon-cyan); }
+  .badge-muted { background: #000000; border-color: rgba(255, 255, 255, 0.2); color: var(--color-paper-muted); }
+
+  /* ── Brutalist Toggle Switch ── */
+  .toggle-track {
+    position: relative;
+    width: 3rem;
+    height: 1.6rem;
+    border-radius: 0px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    flex-shrink: 0;
+    background: #000000;
+  }
+  .toggle-track[aria-checked="true"] {
+    background: var(--color-neon-live);
+    border-color: var(--color-neon-live);
+  }
+  .toggle-track:disabled { opacity: 0.35; cursor: not-allowed; }
+  .toggle-thumb {
+    position: absolute;
+    top: 2px;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 0px;
+    background: #FFFFFF;
+    transition: transform 150ms ease-out;
+  }
+  .toggle-track[aria-checked="true"] .toggle-thumb {
+    transform: translateX(1.4rem);
+    background: #000000;
+  }
+  .toggle-track[aria-checked="false"] .toggle-thumb {
+    transform: translateX(2px);
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  /* ── İlerleme Çubuğu ── */
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 0px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: #000000;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 0px;
+    background: var(--color-neon-live);
+    transition: width 200ms ease-out;
+  }
+
+  /* ── Bölücü Çizgi ── */
+  .divider {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+  }
+
+  /* ── Bölüm Başlığı ── */
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Animasyonlar
+   ═══════════════════════════════════════════════ */
+
+/* Mesh arka plan kayması */
+@keyframes mesh-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-20px, 10px) scale(1.02); }
+  100% { transform: translate(10px, -15px) scale(0.98); }
+}
+
+/* Durum halkası nabzı */
+@keyframes ring-pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  70% { opacity: 0; transform: scale(1.16); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+.ring-pulse { animation: ring-pulse 2.2s ease-out infinite; }
+
+/* Sayfa giriş */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fade-up 280ms ease-out both; }
+
+/* Neon pulse */
+@keyframes neon-pulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(5, 150, 105, 0.25); }
+  50% { box-shadow: 0 0 28px rgba(5, 150, 105, 0.45), 0 0 8px rgba(5, 150, 105, 0.3); }
+}
+.neon-pulse { animation: neon-pulse 3s ease-in-out infinite; }
+
+/* Shimmer (yükleme efekti) */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Spin */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ring-pulse,
+  .neon-pulse,
+  .shimmer::after { animation: none; }
+  .fade-up { animation: none; }
+  #root::before { animation: none; }
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
