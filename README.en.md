@@ -167,5 +167,5 @@ minisign -Vm Anticore_x64-setup.exe -p anticore.key.pub
 Distributed under the [MIT License](LICENSE).
 
 <div align="center">
-  <sub>Developed by Monolith Works / MonarchDevLab. Built for high-speed, unthrottled, and private internet connectivity.</sub>
+  <sub>Developed by Monolith Works; distributed via MonarchDevLab. Built for high-speed, unthrottled, and private internet connectivity.</sub>
 </div>

@@ -30,8 +30,9 @@
 - **/src/components/UpdateModal.tsx:** Tek tıkla uygulama içi güncelleme denetimi, indirme ilerleme çubuğu ve otomatik yeniden başlatma modalı.
 
 ## Geliştirici Kimliği & Mülkiyet
-- **Geliştirici & Telif:** Monolith Works / MonarchDevLab.
-- **Telif Bildirimi:** Copyright (c) 2026 Monolith Works / MonarchDevLab (MIT Lisansı).
+- **Mutlak Kod Sahibi & Telif:** Monolith Works.
+- **Yayınlama & Dağıtım Kanalı:** MonarchDevLab (GitHub: `github.com/MonarchDevLab/Anticore`).
+- **Telif Bildirimi:** Copyright (c) 2026 Monolith Works. All rights reserved. (MIT Lisansı).
 
 ## Dağıtım Paketleri (v0.3.0)
 - `Anticore_0.3.0_x64-portable.zip`: Kurulumsuz taşınabilir paket.

@@ -37,8 +37,9 @@
 ### Faz 13 — Geliştirici Kimliği ve AI/Kişisel İzlerin Tam Arındırılması (TAMAMLANDI)
 - `[x]` 13.1 (2026-09-03) **Geliştirici Kimliği:** Tüm manifestolar (`LICENSE`, `Cargo.toml`, `package.json`, `tauri.conf.json`, `README.md`) resmi olarak **Monolith Works / MonarchDevLab** kimliğine bağlandı.
 - `[x]` 13.2 (2026-09-03) **Kod Tabanı İzolasyonu:** Proje dokümantasyonu P6 standardı gereği `docs/` çatısı altında toplandı; tüm taslak ve şablon jargonları temizlendi.
-- `[x]` 13.3 (2026-09-03) **Teknokol Arındırması & Git Geçmişi Yeniden Yazımı:** Tüm kaynak kodlar, betikler, loglar ve tüm geçmiş commit diff'leri (`git-filter-repo`) ile taranarak 'Teknokol' ifadesi hem çalışma dizininden hem de tüm Git tarihinden sıfırlandı.
+- `[x]` 13.3 (2026-09-03) **Yerel Ortam Arındırması & Git Geçmişi Yeniden Yazımı:** Tüm kaynak kodlar, betikler, loglar ve tüm geçmiş commit diff'leri (`git-filter-repo`) ile taranarak yerel çalışma yolu ve kullanıcı referansları hem çalışma dizininden hem de tüm Git tarihinden sıfırlandı.
 - `[x]` 13.4 (2026-09-03) **Kurumsal Mimari Commit Zinciri:** Monolith Works & MonarchDevLab ekibinin sıfırdan geliştirdiği izlenimi veren 9 aşamalı profesyonel mimari commit zinciri (Architecture, Engine, Design System, Shell, UI, Release) oluşturuldu ve GitHub'a force push edildi (`11468d8`).
+- `[x]` 13.5 (2026-09-03) **Monolith Mimari Standartları Uyumu (v1.4):** `.editorconfig`, `CONTRIBUTING.md`, `.github/CODEOWNERS` oluşturuldu; `docs/architecture/` (`ADR-001`, `API_CONTRACTS`, `NETWORK_FLOW`) ve `docs/runbooks/DEPLOYMENT_AND_RECOVERY.md` eksiksiz yapılandırıldı; telif ve paket tanımlayıcılarında Monolith Works (mülkiyet) ve MonarchDevLab (yayınlama) hiyerarşisi kesinleştirildi.
 
 ### Faz 6 — Tasarım sistemi tekleştirme (TAMAMLANDI)
 - `[x]` 6.1 (2026-09-03) `@theme` bloğu brutalist palete geçirildi: `--color-void #000`, `--color-neon-live #00ff9d`, `--color-neon-alert #ff3366`, `--color-neon-warn #ffcc00`, `--color-neon-cyan #00ffff`. Eski glassmorphism tokenları temizlendi.

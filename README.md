@@ -219,5 +219,5 @@ Bu yazılım [MIT Lisansı](LICENSE) kapsamında dağıtılmaktadır.
 - **Yasal Sorumluluk:** Anticore, ağ analizi, kişisel gizlilik ve sansürsüz bilgiye erişim amacıyla geliştirilmiştir. Kullanıcıların yerel yasalara ve servis kullanım şartlarına uygun hareket etmesi kendi sorumluluğundadır.
 
 <div align="center">
-  <sub>Monolith Works / MonarchDevLab tarafından geliştirilmektedir. Türkiye'deki tüm kullanıcılara hızlı, güvenli ve bağımsız bir internet deneyimi sunmak amacıyla açık kaynak olarak paylaşılmıştır.</sub>
+  <sub>Monolith Works tarafından geliştirilmekte, MonarchDevLab üzerinden dağıtılmaktadır. Türkiye'deki tüm kullanıcılara hızlı, güvenli ve bağımsız bir internet deneyimi sunmak amacıyla açık kaynak olarak paylaşılmıştır.</sub>
 </div>
