@@ -17,8 +17,8 @@ Anticore, tam teşekküllü üretim kalitesine ulaştırıldı; tek tıkla günc
 - Sürüm ve Varlık Kontrolü: `gh release view v0.3.0`
 
 ## Commit Zinciri
-- Son Commit: `11468d8` (`ci(release): finalize multi-target distribution workflow and documentation vitrine`)
-- Durum: `main` dalı ve `v0.3.0` etiketi 9 aşamalı kurumsal mimari zincirle güncel ve senkronize.
+- Son Commit: `ba146c7` (`docs(core): align project documentation and architecture standards with Monolith Works chain`)
+- Durum: `main` dalı ve `v0.3.0` etiketi kurumsal mimari zincirle güncel ve senkronize.
 
 ## Riskler ve Öncelikler
 - **Gizlilik:** Depo `PRIVATE` durumdadır. Dışarı açılmak istendiğinde `gh repo edit --visibility public` ile açılabilir.
