@@ -17,7 +17,7 @@ Anticore, tam teşekküllü üretim kalitesine ulaştırıldı; tek tıkla günc
 - Sürüm ve Varlık Kontrolü: `gh release view v0.3.0`
 
 ## Commit Zinciri
-- Son Commit: `8aa3ade` (`docs(handoff): sync commit hash`)
+- Son Commit: `48c5b83` (`docs(handoff): sync commit hash`)
 - Durum: `main` dalı ve `v0.3.0` etiketi kurumsal mimari zincirle güncel ve senkronize.
 
 ## Riskler ve Öncelikler
