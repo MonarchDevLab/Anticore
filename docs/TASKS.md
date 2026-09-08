@@ -5,7 +5,7 @@
 > `npm test` 5/5, frontend ve iki Rust release build başarılı; dağıtım paketleri bu görevde yenilenmedi. Saha hız testi yapılmadı.
 
 ## ŞİMDİ `[~]`
-- *(Yok — Faz 31 P0 kaynak uygulaması tamamlandı; saha kabulü bekliyor.)*
+- *(Yok)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
@@ -13,6 +13,10 @@
 ## SIRADAKİ `[ ]`
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
 - `[ ]` 32 NETWORK_PLAN.md P1/P2/P3: uyarlanabilir profil seçimi, arayüz kabulü ve açık kaynak yayın kapıları.
+
+### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-08 — `251f083`: yeni bağlantı ana ekranı, yan gezinme, açık/koyu tema, TR/EN, profil kilidi, gerçek paket grafiği ve isteğe bağlı TLS hedef testleri. Diğer sayfaların mevcut işlevleri korundu.
+- `[x]` 2026-09-08 — `251f083`: 5 mevcut test, TypeScript/Vite üretim derlemesi ve Edge IPC test senaryoları geçti. 390/768/1080 pikselde taşma kontrolü, klavye odağı ve örnek metinlerde 6.9:1–10.2:1 kontrast doğrulandı. Tarayıcı verileri test fixture; canlı sürücü/ISS kanıtı değildir.
 
 ### Faz 31 — Ölçülebilir Ağ Kalitesi P0 (kaynak uygulaması tamamlandı)
 - `[x]` 2026-09-07 — `1110001`: ortak seçici filtre, doğru DROP sabiti, kuyruk boşaltarak durdurma, SCM recv uyandırma, DLL kaynak serbest bırakma, normal geçişlerde TCP/DNS sıfırlamalarını kaldırma, yeni ayarlarda RST baskılamayı kapatma.

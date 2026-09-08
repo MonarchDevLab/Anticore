@@ -1,5 +1,11 @@
 # SYSTEM MAP
 
+## Connection workspace — 2026-09-08 (current shell)
+- `AppNavigation` owns grouped navigation; `Dashboard` composes `features/connection` data, activity, targets and path visual. Existing native IPC contracts remain unchanged.
+- `workspace.css`: slate-blue accent #a9c8f4 / on-accent #101a29; light #075985 / #ffffff; existing theme surfaces; radius 16px; motion 200ms ease-out; Fira Sans/Fira Code; 12px minimum labels; 208px sidebar; 48px titlebar. This supersedes the historical horizontal shell below.
+- Status polling invalidates unknown state; shared action latch prevents duplicate starts. Packet activity is counter delta, never bandwidth. Target tests are opt-in and discarded when session/host list changes.
+- Browser acceptance: run Vite on 127.0.0.1:1420, provide PLAYWRIGHT_MODULE and UI_OUTPUT_DIR, then node scripts/verify-workspace.cjs. Fixtures never enter production modules. MASTER.md is the design reference.
+
 ## Network contract — 2026-09-07
 - `anticore_core::dispatch::capture_filter` is the shared desktop/CLI capture policy. Default profiles capture bounded HTTP/TLS handshake candidates; WindowSize profiles retain bounded compatibility capture.
 - WinDivert DROP is 0x0002. Receive shutdown drains the queue before handle release. Desktop lifecycle is serialized; the SCM stop handler wakes blocked capture. DLL references are scoped to transport lifetimes.

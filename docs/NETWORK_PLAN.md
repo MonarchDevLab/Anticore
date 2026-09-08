@@ -64,6 +64,8 @@ Compatibility boundaries: the current parser does not reassemble fragmented Clie
 Rank existing profiles from repeated endpoint probes with failure reasons and measured connection times; preserve last working profile per locally stored network identity. Switching must be deliberate, bounded, reversible and must not interrupt ongoing transfers. Separate DNS, TCP, TLS and HTTP failures. Snapshot only settings the application modifies and restore exact prior values. Acceptance: failed recommendation restores the prior profile; no unexpected DNS/proxy changes.
 
 ### P2: understandable interface
+
+2026-09-08 implementation: `251f083` delivers the new connection dashboard and navigation shell with real counters, opt-in TLS probes, state invalidation and accessible controls. Existing 5 frontend tests and Edge fixture acceptance checks passed, including keyboard focus, 390/768/1080 widths, light/dark screenshots and representative text contrast (6.9:1–10.2:1). All secondary pages and native Windows accessibility are not comprehensively redesigned/audited; field acceptance remains open.
 Use the existing design system for one primary connection action, visible active profile, measured target health, accessible error recovery and optional advanced controls. Test keyboard, focus, reduced motion, contrast and narrow windows. Explicitly distinguish engine running, packet processed and site reachable. No fabricated graphs or hard-coded performance claims.
 
 ### P3: open-source release quality
@@ -80,5 +82,5 @@ Work on `improvement/measured-network`, based on `4b3f32a`. Revert this change t
 - Transfer harness: 5 synthetic comparison/validation scenarios passed. An actual curl attempt to the closed local endpoint https://127.0.0.1:1 produced exit 7 and a saved invalid measurement, not a speed result.
 - Clippy completed with warnings in existing core loops/signatures and desktop test assertions. New warnings in this change were corrected. This is not a warning-free repository.
 - Engine and desktop release builds passed. Implementation commit: `1110001`.
-- Source review confirms ordinary start/stop no longer calls system-wide TCP reset or DNS flush. Live long-transfer lifecycle, SCM stop, visual accessibility and cross-ISP tests were not run. No download/upload speed improvement, zero loss or universal reachability is asserted.
-- P1/P2/P3 are sequenced product roadmap items, not completed implementations. Field evidence is required before expanding capture semantics or publishing performance claims.
+- Source review confirms ordinary start/stop no longer calls system-wide TCP reset or DNS flush. Live long-transfer lifecycle, SCM stop, comprehensive native accessibility and cross-ISP tests were not run. No download/upload speed improvement, zero loss or universal reachability is asserted.
+- P1/P3 remain roadmap items; P2 shell/dashboard implementation is recorded above, with remaining acceptance limits. Field evidence is required before expanding capture semantics or publishing performance claims.

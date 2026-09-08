@@ -1,6 +1,7 @@
 # WORKLOG
 
 ## Aktif Oturum (Son Oturumun Detayları)
+- 2026-09-08 — `251f083`: bağlantı çalışma alanı yeniden tasarlandı, mevcut bağımlılıklar kullanıldı. Koyu/açık ve dar pencere ekranları incelendi. Vite HMR sorgu parametresi test fixture enjeksiyonunu atlıyordu; route deseni parametreleri kapsayacak şekilde düzeltildi ve fixture varlığı ayrıca doğrulandı. Gerçek ağ ölçümü yapılmadı.
 - 2026-09-07 — Measured network quality: ortak aday paket filtresi gerçek WinDivertHelperEvalFilter ile doğrulandı. DROP=0x0002; shutdown receive ardından kuyruk boşaltma ve Drop ile kapatma. DLL referansları FreeLibrary ile serbest bırakılıyor. Masaüstü start/stop seri; SCM stop bloklu recv çağrısını uyandırıyor. Yeni ayarlarda RST baskılama kapalı; kaydedilmiş tercih korunuyor. Normal motor geçişlerinde sistem bağlantıları/DNS sıfırlanmıyor. Ölçülmeyen başarı/gecikme/hız vaatleri düzeltildi. PowerShell aktarım ölçümü ve karşılaştırması eklendi. Saha verisi üretilmedi.
 - Mimari karar: mevcut Rust/WinDivert/Tauri hattı korunur; performans iyileştirmesi iddiası için eşleştirilmiş gerçek aktarım verisi gerekir. WindowSize uyumluluk yolu ve parçalanmış/büyük ClientHello sınırları NETWORK_PLAN.md içinde kayıtlıdır.
 - **Tarih:** 2026-09-07
