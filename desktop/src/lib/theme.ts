@@ -154,7 +154,10 @@ export function applyTheme(mode: ThemeMode) {
   root.setAttribute("data-theme", effective);
 }
 
-export function setThemeGlobal(mode: ThemeMode) {
+const THEME_EVENT = "theme_changed";
+
+/** Temayı yalnızca bu pencerede uygular; olay yayını yapmaz. */
+function applyThemeLocal(mode: ThemeMode) {
   currentTheme = mode;
   applyTheme(mode);
   themeListeners.forEach((fn) => {
@@ -163,6 +166,30 @@ export function setThemeGlobal(mode: ThemeMode) {
     } catch {}
   });
 }
+
+export function setThemeGlobal(mode: ThemeMode) {
+  applyThemeLocal(mode);
+  // Ana pencere ve tepsi mini paneli ayrı WebView'lerdir; tema yalnızca
+  // değişikliği yapan pencerede uygulanır. Tauri olayı ile hepsini eşitler.
+  void (async () => {
+    try {
+      const { emit } = await import("@tauri-apps/api/event");
+      await emit(THEME_EVENT, mode);
+    } catch {}
+  })();
+}
+
+// Diğer pencerelerden gelen tema değişikliğini uygula (yankıyı önlemek için yayın yok).
+void (async () => {
+  try {
+    const { listen } = await import("@tauri-apps/api/event");
+    await listen<ThemeMode>(THEME_EVENT, (event) => {
+      if (event.payload && event.payload !== currentTheme) {
+        applyThemeLocal(event.payload);
+      }
+    });
+  } catch {}
+})();
 
 // İlk yüklemede temayı hemen uygula ve sistem tema değişikliklerini izle
 if (typeof window !== "undefined") {

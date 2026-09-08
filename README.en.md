@@ -152,7 +152,7 @@ npm run tauri build
 
 Official release binaries are signed with Minisign. Public key:
 ```
-dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDAzNkNDN0QyQzUzRDU1RTYKUldSUE9pWld3bXN5aGZ1N1N6T2I0SldhZEU2S2h2dDVlOGJld2Y3bEZoT0x4MGlpSEI1ZmdQdkIK
+dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE1QTRFREEwMDFGNDFFNTMKUldSVEh2UUJvTzJrRmE3UGFDdG81YWtnYUdYSkhFdWQxVGJ0V2VVdHFKNDJvaGZRWS90TWx3ejMK
 ```
 
 Verify signature:

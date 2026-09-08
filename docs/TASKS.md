@@ -11,6 +11,7 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
+- `[ ]` Yeni paketlerin (`63373CD1...`) native kullanıcı kabulü: mini panel tema eşitlemesi ve marka bloğunun kaldırılması canlı arayüzde doğrulanmadı.
 - `[ ]` `e2bdef9` yoğun operasyon konsolunun nihai kullanıcı kabulü; `0f07227` tasarımı kullanıcı tarafından reddedildi. Alt araç sayfaları ortak görünümü kullanır; tam sayfa yeniden tasarımı yapılmadı.
 - `[ ]` Çalışma modlarının native UI üzerinden son kullanıcı kabulü; UI gösterimleri, tekrar başlatma, kurulu sistem yükseltmesi ve eşzamanlı çoklu uygulama örnekleri ayrı denetlenmeli.
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
@@ -19,6 +20,8 @@
 - `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-09 — Dağıtım yenilendi: `npm run tauri build` + `scripts/package.ps1` (pwsh 7 ile; Windows PowerShell 5.1 `IO.Path::GetRelativePath` desteklemiyor). GUI SHA256 `63373CD1FB79686318DB954C53034BCB92FF65420F0732EDA2EF97B9F636FB2A` (root, dist, dist-portable kopyaları eşit). NSIS `9EF8A153...`, MSI `C7A2A385...`, portable ZIP `94696552...`. CLI motoru değişmedi. İmzalama ve yayın yapılmadı.
+- `[x]` 2026-09-09 — Mini panel (tray quick-panel) ile ana pencere teması eşitlendi: tema değişikliği `theme_changed` Tauri olayı ile tüm WebView pencerelerine yayılıyor (`src/lib/theme.ts`). Yan gezinmedeki `anticore / MONOLITH WORKS` marka bloğu ve ilgili CSS kaldırıldı. 14/14 frontend testi, `tsc --noEmit` ve Vite üretim derlemesi geçti. Native paket yenilenmedi; görsel kabul yapılmadı.
 - `[x]` 2026-09-09 — `e2bdef9` paketlerinin doğrudan teslimi: EXE/release ve setup/bundle SHA256 eşleşmeleri doğrulandı. Portable ZIP içindeki GUI, CLI, WinDivert DLL/SYS ve WebView2Loader yerel dağıtımla birebir eşleşiyor. Güncel dosyalar yeniden derlenmeden kullanıldı.
 - `[x]` 2026-09-09 — `e2bdef9`: yoğun operasyon konsolu, çekirdek durum göstergesi, bitişik telemetri, yatay TLS denetimi, kompakt olay/araç alanı ve ortak görünüm. 14 frontend testi, Edge kabulü, 1080×720 görünürlük, 390/768/1080px taşma, açık/koyu örnek kontrastları geçti. Native EXE/NSIS/MSI/portable ve normal başlatıcı yenilendi. GUI SHA256 `7BA061F6D35F8DF1E126BDC6595FDEC72D2B2CF56EEF050138AAA2807F3C80D1`; ZIP ve başlatıcı eşleşiyor. Yedek `package-backups/20260909-003218`. Native etkileşim kabulü ve yayın yapılmadı.
 - `[x]` 2026-09-08 — `0f07227`: yatay bağlantı paneli, kare güç kontrolü, birleşik sayaç şeridi, tema uyumlu gezinme/yüzeyler ve açık tema kontrast düzeltmesi. 14/14 frontend testi, TypeScript/Vite, native release ve mevcut Edge kabul senaryoları geçti (390/768/1080px, açık/koyu, kilitler, bilinmeyen durum). Görseller test IPC verisidir. Yeni EXE: `desktop/src-tauri/target/release/anticore-desktop.exe`; dist kurulum/portable paketleri bu turda yenilenmedi.

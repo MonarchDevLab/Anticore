@@ -15,7 +15,6 @@ export default function AppNavigation({ view, onNavigate, running, known, busy, 
   ];
   return (
     <aside className="workspace-sidebar">
-      <div className="sidebar-brand"><span className="brand-mark"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 23 14 5l9 18M9 17h10" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>anticore<span className="brand-caption">MONOLITH WORKS</span></span></div>
       <nav aria-label={copy.workspace}>
         {groups.map((group) => <div className="nav-group" key={group.label}><span className="nav-label">{group.label}</span>{group.items.map(({ id, label, icon: Icon }) => <button type="button" key={id} aria-current={view === id ? "page" : undefined} title={label} aria-label={label} onClick={() => onNavigate(id as ViewId)}><Icon size={18} aria-hidden="true" /><span>{label}</span>{view === id && <span className="nav-active-marker" />}</button>)}</div>)}
       </nav>
