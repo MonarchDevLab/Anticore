@@ -78,8 +78,11 @@ pub fn builtin_profiles() -> Vec<IspProfile> {
         IspProfile {
             id: "universal",
             name: "Evrensel",
-            description: "Sağlayıcı bilinmiyorsa güvenli varsayılan: sadece SNI parçalama.",
-            steps: vec![Step::FragmentTls { mode: SplitMode::SniMid }],
+            description: "Düşük TTL sahte paket + SNI parçalama (tüm sağlayıcılar ve Discord/Roblox için kanıtlanmış kombinasyon).",
+            steps: vec![
+                Step::FakePacketBefore { ttl: 4 },
+                Step::FragmentTls { mode: SplitMode::SniMid },
+            ],
         },
     ]
 }

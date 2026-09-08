@@ -21,7 +21,16 @@ Anticore v0.3.0, Ouroboros v6.0 disiplini ile derinlemesine restore edildi:
   - `App.tsx` üst çubuk hızlı başlatma (`quickToggle`) akışına da benzer hata ve yönetici butonu bağlandı.
 - **6 Tam Morfolojik & Atmosferik Bağımsız Tema Dünyası (Faz 21):**
   - Temalar yalnızca renk değişkenlerini değiştiren yüzeysel halden çıkarılıp; kart geometrisi (0px jilet keskin vs. 2px CRT vs. 6px taktik vs. 24px organik hap), tam ekran zemin atmosferi (CRT scanline katmanı, endüstriyel HUD grid matrisi, sonar radarı dairesel ızgarası, çift pembe-eflatun nebula, laboratuvar nokta ızgarası), buton hissiyatı ve tipografi (Amber CRT için zorunlu `font-mono` ve kehribar fosfor ışıması) ile tamamen bağımsız 6 dünyaya dönüştürüldü.
-- **Doğrulama:** `npm run build` 0 hata (1537 modül, 2.58s), `cargo check` (desktop/src-tauri) 0 hata, `cargo test` (src-tauri) 8/8 yeşil, `cargo test --workspace` 46/46 yeşil. Dağıtım ikilileri (`dist/`, `dist-portable/`, `Anticore.exe`) güncellendi.
+- **Otomatik DNS Zehirlenmesi ve Discord BTK Engeli Onarımı (Faz 22):**
+  - Türkiye'deki ISP'lerin `discord.com` sorgusunu mahkeme kararıyla BTK engelleme sunucusuna (`195.175.254.2`) yönlendirdiği PowerShell ile tespit edildi. Tarayıcı sahte hedefe gittiği için WinDivert motoru devrede olsa bile Discord açılamıyordu.
+  - Rust tarafında `commands::check_dns_health` ve `commands::auto_fix_dns` komutları inşa edildi; `universal` profiline Sandvine DPI atlatması için `FakePacketBefore { ttl: 4 }` eklendi.
+  - Dashboard'a otomatik DNS sağlık kontrolü ve tek tıkla "Güvenli DNS & DoH Uygula" (Cloudflare 1.1.1.1 + native Windows DoH + DNS flush) mekanizması entegre edildi.
+- **Cyberpunk 2077 & Quiet Luxury Tam Morfolojik Temaları (Faz 22):**
+  - Kullanıcının bizzat talep ettiği iki zıt kutup geliştirildi:
+    - *Cyberpunk 2077:* 45° açılı kesik poligon köşeler (`clip-path: polygon(...)`), 24px HUD grid matrisi, üstte elektrik sarısı neon şerit (`border-top: 3px solid #FFE600`), endüstriyel mecha tetik butonları, agresif uppercase tipografi ve neon siyan/sarı yüksek gerilim auraları.
+    - *Quiet Luxury:* Patek Philippe & Mayfair lüks saatçilik estetiği, editoryal serif tipografi (`font-serif` - Cinzel, Playfair Display, Georgia), kadife siyahı (`#0C0B0E`), fırçalanmış şampanya altını ve kaşmir detaylar (`#D4AF37`), fısıldayan mikro sınırlar, pürüzsüz 12px organik kavisler, sıfır neon.
+    - *Amber CRT:* Tam ekran CRT scanline overlay katmanı (`#root::after`), CRT phosphor kehribar ışıması ve zorunlu monospace (`font-mono`).
+- **Doğrulama:** `npm run build` 0 hata (1537 modül, 2.53s), `cargo check` (desktop/src-tauri) 0 hata, `cargo test` (src-tauri) 8/8 yeşil, `cargo test --workspace` 46/46 yeşil (10.59s). Dağıtım ikilileri (`dist/`, `dist-portable/`, `Anticore.exe`) güncellendi.
 
 ## Kritik Komutlar
 - Frontend Derleme: `npm run build` (`antikor/desktop`)

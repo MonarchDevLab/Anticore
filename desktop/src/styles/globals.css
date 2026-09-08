@@ -134,6 +134,37 @@ html.theme-cyberpunk {
   --shadow-brutal-live: 0 0 25px rgba(255, 230, 0, 0.3);
 }
 
+/* ── 3. Quiet Luxury (Patek Philippe & Mayfair Klası) ── */
+[data-theme="luxury"],
+html.theme-luxury {
+  --color-void: #0A090C;
+  --color-surface-subtle: #121017;
+  --color-surface-card: #18151F;
+  --color-surface-elevated: #221E2B;
+  --color-surface-hover: #2E293A;
+  --color-border-brutal: rgba(212, 175, 55, 0.18);
+  --color-border-brutal-subtle: rgba(212, 175, 55, 0.08);
+  --color-border-brutal-strong: rgba(212, 175, 55, 0.35);
+  --color-paper: #F5F2EB;
+  --color-paper-bright: #FFFFFF;
+  --color-paper-muted: #C5A059;
+  --color-paper-faint: #8C7853;
+  --color-neon-live: #D4AF37;
+  --color-neon-live-dim: #997B25;
+  --color-neon-cyan: #E2C974;
+  --color-live: #D4AF37;
+  --color-live-dim: #997B25;
+  --color-live-bright: #F5E6B3;
+  --color-alert: #D9534F;
+  --color-alert-dim: #A93226;
+  --color-warn: #C5A059;
+  --color-warn-dim: #8C7853;
+  --color-sky: #E2C974;
+  --color-sky-dim: #B89736;
+  --glow-live: 0 0 25px rgba(212, 175, 55, 0.3), 0 0 50px rgba(212, 175, 55, 0.1);
+  --shadow-brutal-live: 0 0 25px rgba(212, 175, 55, 0.25);
+}
+
 /* ── 3. Amber CRT (Endüstriyel Fosfor Kehribar) ── */
 [data-theme="amber"],
 html.theme-amber {
@@ -715,7 +746,27 @@ html.theme-amber #root::before {
   pointer-events: none;
 }
 
-/* Phosphor Text Glow */
+/* Phosphor Text Glow & Full Monospace Enforcement */
+[data-theme="amber"],
+html.theme-amber {
+  font-family: var(--font-mono) !important;
+}
+[data-theme="amber"] * {
+  font-family: var(--font-mono) !important;
+}
+[data-theme="amber"] #root::after,
+html.theme-amber #root::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+  background-size: 100% 3px;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
 [data-theme="amber"] h1,
 [data-theme="amber"] h2,
 [data-theme="amber"] h3,
@@ -727,9 +778,9 @@ html.theme-amber #root::before {
 /* 2px Sharp Terminal Geometry */
 [data-theme="amber"] .card,
 [data-theme="amber"] .card-subtle,
-[data-theme="amber"] div[class*="rounded-"],
+[data-theme="amber"] div[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-amber .card,
-html.theme-amber div[class*="rounded-"] {
+html.theme-amber div[class*="rounded-"]:not([class*="rounded-full"]) {
   border-radius: 2px !important;
   border: 1px solid rgba(255, 176, 32, 0.35) !important;
   box-shadow: 0 0 14px rgba(255, 176, 32, 0.06), inset 0 0 10px rgba(255, 176, 32, 0.03) !important;
@@ -738,9 +789,9 @@ html.theme-amber div[class*="rounded-"] {
 
 /* Terminal Key Buttons */
 [data-theme="amber"] .btn,
-[data-theme="amber"] button[class*="rounded-"],
+[data-theme="amber"] button[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-amber .btn,
-html.theme-amber button[class*="rounded-"] {
+html.theme-amber button[class*="rounded-"]:not([class*="rounded-full"]) {
   border-radius: 2px !important;
   border: 1px solid rgba(255, 176, 32, 0.55) !important;
   text-transform: uppercase !important;
@@ -764,7 +815,7 @@ html.theme-amber .btn-primary {
 }
 
 
-/* ── 2. CYBERPUNK VOLT: 0px Razor-Sharp Industrial Mecha ── */
+/* ── 2. CYBERPUNK 2077: 45° Chamfer Cut Polygons & High-Voltage HUD ── */
 [data-theme="cyberpunk"] #root::before,
 html.theme-cyberpunk #root::before {
   content: "";
@@ -772,36 +823,47 @@ html.theme-cyberpunk #root::before {
   inset: 0;
   z-index: -1;
   background-image: 
-    linear-gradient(rgba(255, 230, 0, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 230, 0, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+    linear-gradient(rgba(255, 230, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 230, 0, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, rgba(0, 240, 255, 0.06) 0%, transparent 50%);
+  background-size: 26px 26px, 26px 26px, 100% 100%;
   background-color: #08090D;
   pointer-events: none;
 }
 
-/* 0px Jilet Keskin Çelik Geometri */
+/* 45 Derece Kesik Köşeli Poligon Kartlar (Chamfer Cut) */
 [data-theme="cyberpunk"] .card,
 [data-theme="cyberpunk"] .card-subtle,
-[data-theme="cyberpunk"] div[class*="rounded-"],
+[data-theme="cyberpunk"] div[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-cyberpunk .card,
-html.theme-cyberpunk div[class*="rounded-"] {
+html.theme-cyberpunk div[class*="rounded-"]:not([class*="rounded-full"]) {
   border-radius: 0px !important;
-  border: 1px solid rgba(255, 230, 0, 0.2) !important;
-  border-top: 2px solid #FFE600 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 230, 0, 0.12) !important;
-  background: rgba(14, 17, 24, 0.94) !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  ) !important;
+  border: 1px solid rgba(255, 230, 0, 0.35) !important;
+  border-top: 3px solid #FFE600 !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), inset 0 0 16px rgba(255, 230, 0, 0.06) !important;
+  background: rgba(13, 16, 24, 0.96) !important;
 }
 
-/* Endüstriyel Tetik Butonları */
+/* Endüstriyel Mecha Tetik Butonları */
 [data-theme="cyberpunk"] .btn,
-[data-theme="cyberpunk"] button[class*="rounded-"],
+[data-theme="cyberpunk"] button[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-cyberpunk .btn,
-html.theme-cyberpunk button[class*="rounded-"] {
+html.theme-cyberpunk button[class*="rounded-"]:not([class*="rounded-full"]) {
   border-radius: 0px !important;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%) !important;
   text-transform: uppercase !important;
   font-weight: 800 !important;
   letter-spacing: 0.08em !important;
-  border: 1px solid rgba(255, 230, 0, 0.4) !important;
+  border: 1px solid rgba(255, 230, 0, 0.45) !important;
 }
 
 [data-theme="cyberpunk"] .btn-primary,
@@ -809,7 +871,19 @@ html.theme-cyberpunk .btn-primary {
   background: #FFE600 !important;
   color: #08090D !important;
   border-color: #FFE600 !important;
-  box-shadow: 0 0 24px rgba(255, 230, 0, 0.5) !important;
+  box-shadow: 0 0 24px rgba(255, 230, 0, 0.6) !important;
+  font-weight: 900 !important;
+}
+
+[data-theme="cyberpunk"] h1,
+[data-theme="cyberpunk"] h2,
+[data-theme="cyberpunk"] h3,
+html.theme-cyberpunk h1,
+html.theme-cyberpunk h2,
+html.theme-cyberpunk h3 {
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  text-shadow: 0 0 8px rgba(255, 230, 0, 0.35) !important;
 }
 
 [data-theme="cyberpunk"] .status-pill,
@@ -819,6 +893,90 @@ html.theme-cyberpunk .btn-primary {
 [data-theme="cyberpunk"] select {
   border-radius: 0px !important;
   text-transform: uppercase !important;
+}
+
+[data-theme="cyberpunk"] .topbar,
+html.theme-cyberpunk .topbar {
+  border-bottom: 2px solid #FFE600 !important;
+  background: #08090D !important;
+}
+
+
+/* ── 3. QUIET LUXURY: Mayfair / Cartier High-End Editorial Serif & Brushed Gold ── */
+[data-theme="luxury"],
+html.theme-luxury {
+  font-family: "Playfair Display", "Cinzel", "Bodoni MT", "Didot", "Georgia", "Times New Roman", serif !important;
+}
+
+[data-theme="luxury"] h1,
+[data-theme="luxury"] h2,
+[data-theme="luxury"] h3,
+[data-theme="luxury"] .section-title,
+[data-theme="luxury"] .font-mono,
+html.theme-luxury h1,
+html.theme-luxury h2,
+html.theme-luxury h3,
+html.theme-luxury .font-mono {
+  font-family: "Cinzel", "Playfair Display", "Georgia", serif !important;
+  letter-spacing: 0.08em !important;
+}
+
+[data-theme="luxury"] #root::before,
+html.theme-luxury #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    radial-gradient(ellipse at 50% -10%, rgba(212, 175, 55, 0.09) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(197, 160, 89, 0.05) 0%, transparent 50%);
+  background-color: #0A090C !important;
+  pointer-events: none;
+}
+
+/* 12px Organik Lüks Kadife Kartlar & Fırçalanmış Şampanya Altını Sınırlar */
+[data-theme="luxury"] .card,
+[data-theme="luxury"] .card-subtle,
+[data-theme="luxury"] div[class*="rounded-"]:not([class*="rounded-full"]),
+html.theme-luxury .card,
+html.theme-luxury div[class*="rounded-"]:not([class*="rounded-full"]) {
+  border-radius: 12px !important;
+  background: linear-gradient(165deg, rgba(22, 19, 28, 0.94) 0%, rgba(12, 10, 15, 0.98) 100%) !important;
+  border: 1px solid rgba(212, 175, 55, 0.22) !important;
+  border-top: 1px solid rgba(255, 235, 170, 0.38) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(212, 175, 55, 0.15) !important;
+}
+
+/* Mücevherat Sınıfı Fırçalanmış Altın Butonlar */
+[data-theme="luxury"] .btn,
+[data-theme="luxury"] button[class*="rounded-"]:not([class*="rounded-full"]),
+html.theme-luxury .btn,
+html.theme-luxury button[class*="rounded-"]:not([class*="rounded-full"]) {
+  border-radius: 8px !important;
+  font-family: "Cinzel", "Playfair Display", "Georgia", serif !important;
+  letter-spacing: 0.06em !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="luxury"] .btn-primary,
+html.theme-luxury .btn-primary {
+  background: linear-gradient(135deg, #DFBA55 0%, #B88E31 100%) !important;
+  color: #120F0A !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35) !important;
+  border: 1px solid #FFEBA0 !important;
+}
+
+[data-theme="luxury"] .topbar,
+html.theme-luxury .topbar {
+  background: rgba(10, 9, 12, 0.95) !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2) !important;
+}
+
+[data-theme="luxury"] input,
+[data-theme="luxury"] select {
+  border-radius: 8px !important;
+  border: 1px solid rgba(212, 175, 55, 0.2) !important;
 }
 
 

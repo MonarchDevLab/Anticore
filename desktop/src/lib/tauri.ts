@@ -132,6 +132,13 @@ export interface LegacyServiceDto {
   installed: boolean;
 }
 
+export interface DnsHealthDto {
+  poisoned: boolean;
+  resolved_ip: string;
+  is_secure: boolean;
+  message: string;
+}
+
 export interface UpdateInfoDto {
   has_update: boolean;
   current_version: string;
@@ -197,6 +204,8 @@ export const api = {
   getTrayMinimize: () => invoke<boolean>("get_tray_minimize"),
   setTrayMinimize: (enabled: boolean) => invoke<void>("set_tray_minimize", { enabled }),
   dnsLeakTest: () => invoke<string>("dns_leak_test"),
+  checkDnsHealth: () => invoke<DnsHealthDto>("check_dns_health"),
+  autoFixDns: () => invoke<void>("auto_fix_dns"),
   repairDiscordUpdates: () => invoke<string>("repair_discord_updates"),
   clearDiscordCache: () => invoke<string>("clear_discord_cache"),
   checkUpdate: (repoOverride?: string, tokenOverride?: string) =>

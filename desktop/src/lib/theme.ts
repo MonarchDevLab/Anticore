@@ -2,10 +2,11 @@ import { useSyncExternalStore } from "react";
 
 export type ThemeMode =
   | "system"
+  | "cyberpunk"
+  | "luxury"
   | "obsidian"
   | "amber"
   | "cobalt"
-  | "cyberpunk"
   | "amethyst"
   | "titanium";
 
@@ -19,6 +20,20 @@ export interface ThemeOption {
 
 export const THEME_OPTIONS: ThemeOption[] = [
   {
+    id: "cyberpunk",
+    name: "Cyberpunk 2077",
+    description: "45° kesik açılı poligon kartlar, endüstriyel HUD gridi, mecha tetik butonları ve sarı/siyan yüksek gerilim",
+    accent: "#FFE600",
+    bg: "#08090D",
+  },
+  {
+    id: "luxury",
+    name: "Quiet Luxury",
+    description: "Patek Philippe & Mayfair zarafeti, editoryal serif tipografi, fırçalanmış şampanya altını ve kadife siyah şasi",
+    accent: "#D4AF37",
+    bg: "#0A090C",
+  },
+  {
     id: "obsidian",
     name: "Obsidian Emerald",
     description: "Havacılık sınıfı CNC obsidyen şasi, 16px kavisli cam paneller ve zümrüt telemetri",
@@ -28,16 +43,9 @@ export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: "amber",
     name: "Amber CRT",
-    description: "VT220 monokrom kehribar fosfor terminali, CRT scanline tarama ve tam monospace arayüz",
+    description: "VT220 monokrom kehribar fosfor terminali, CRT scanline tarama ve zorunlu monospace kod arayüzü",
     accent: "#FFB020",
     bg: "#0C0A06",
-  },
-  {
-    id: "cyberpunk",
-    name: "Cyberpunk Volt",
-    description: "0px jilet keskin brutalist mecha arayüzü, endüstriyel HUD gridi ve sarı gerilim şeritleri",
-    accent: "#FFE600",
-    bg: "#08090D",
   },
   {
     id: "cobalt",
@@ -79,6 +87,7 @@ export function getStoredTheme(): ThemeMode {
   const saved = localStorage.getItem(THEME_STORAGE_KEY);
   if (
     saved === "obsidian" ||
+    saved === "luxury" ||
     saved === "amber" ||
     saved === "cobalt" ||
     saved === "cyberpunk" ||
@@ -118,6 +127,7 @@ export function applyTheme(mode: ThemeMode) {
     "dark",
     "light",
     "theme-obsidian",
+    "theme-luxury",
     "theme-amber",
     "theme-cobalt",
     "theme-cyberpunk",

@@ -21,7 +21,7 @@ import {
   Shield,
   X,
 } from "lucide-react";
-import { api, type Profile, type Status } from "../lib/tauri";
+import { api, type Profile, type Status, type DnsHealthDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import LogConsole from "../components/LogConsole";
 
@@ -68,8 +68,42 @@ export default function Dashboard({
   // Canlı yakalanan paket akışı (Loglardan veya gerçek etkinliklerden ayrıştırılır)
   const [packetStream, setPacketStream] = useState<PacketEvent[]>([]);
 
+  // Canlı DNS Sağlık ve Zehirlenme Kontrolü
+  const [dnsHealth, setDnsHealth] = useState<DnsHealthDto | null>(null);
+  const [dnsFixing, setDnsFixing] = useState(false);
+  const [dnsDismissed, setDnsDismissed] = useState(false);
+
+  const checkDns = async () => {
+    try {
+      const res = await api.checkDnsHealth();
+      setDnsHealth(res);
+      if (res.poisoned) {
+        setDnsDismissed(false);
+        pushLog(`[!] DNS UYARISI: discord.com ${res.resolved_ip} adresine yönlendiriliyor (BTK Mahkeme Engeli)!`);
+      }
+    } catch {
+      // sessizce geç
+    }
+  };
+
+  const handleFixDns = async () => {
+    setDnsFixing(true);
+    try {
+      pushLog("[*] Güvenli Cloudflare DNS (1.1.1.1) ve Windows DoH protokolü uygulanıyor...");
+      await api.autoFixDns();
+      pushLog("[+] Güvenli DNS & DoH başarıyla uygulandı! DNS önbelleği temizlendi.");
+      await checkDns();
+    } catch (err) {
+      pushLog(`[!] DNS onarım hatası: ${String(err)}`);
+      setError(String(err));
+    } finally {
+      setDnsFixing(false);
+    }
+  };
+
   useEffect(() => {
     void api.listProfiles().then(setProfiles);
+    void checkDns();
   }, []);
 
   useEffect(() => {
@@ -215,6 +249,51 @@ export default function Dashboard({
             <button
               type="button"
               onClick={() => setError(null)}
+              className="px-2.5 py-1.5 rounded-lg text-paper-muted hover:text-paper-bright hover:bg-white/[0.05] text-xs cursor-pointer transition-colors flex items-center gap-1"
+            >
+              <X size={13} />
+              <span>{t("btn_close")}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* DNS Zehirlenmesi / Discord BTK Engeli Algılama & Otomatik Onarım Şeridi */}
+      {dnsHealth?.poisoned && !dnsDismissed && (
+        <div
+          role="alert"
+          className="p-4 rounded-xl bg-warn/15 border border-warn/40 text-paper-bright flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-lg bg-warn/25 text-warn shrink-0 flex items-center justify-center">
+              <Radio size={20} className="animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-warn tracking-wide uppercase flex items-center gap-2">
+                <span>DNS ZEHİRLENMESİ TESPİT EDİLDİ</span>
+                <span className="px-1.5 py-0.5 rounded bg-warn/20 text-[10px] font-mono border border-warn/30">
+                  discord.com &rarr; {dnsHealth.resolved_ip}
+                </span>
+              </div>
+              <div className="text-xs text-paper-muted mt-0.5">
+                İnternet sağlayıcınız Discord'u BTK engelleme sunucusuna yönlendiriyor. DPI motoru devrede olsa dahi sahte hedefe gidildiğinden Discord açılamaz. Tek tıkla güvenli Cloudflare DNS ve şifreli DNS (DoH) uygulayın.
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <button
+              type="button"
+              disabled={dnsFixing}
+              onClick={handleFixDns}
+              className="btn btn-primary px-3.5 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+            >
+              <ShieldCheck size={14} />
+              <span>{dnsFixing ? "Uygulanıyor..." : "Güvenli DNS & DoH Uygula"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDnsDismissed(true)}
               className="px-2.5 py-1.5 rounded-lg text-paper-muted hover:text-paper-bright hover:bg-white/[0.05] text-xs cursor-pointer transition-colors flex items-center gap-1"
             >
               <X size={13} />

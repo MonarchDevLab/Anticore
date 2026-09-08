@@ -60,6 +60,8 @@ fn main() {
             commands::restart_as_admin,
             commands::probe_target,
             commands::get_dns_servers,
+            commands::check_dns_health,
+            commands::auto_fix_dns,
             commands::apply_secure_dns,
             commands::reset_dns,
             commands::get_engine_config,

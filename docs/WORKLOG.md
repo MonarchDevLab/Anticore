@@ -2,13 +2,23 @@
 
 ## Aktif Oturum (Son Oturumun Detayları)
 - **Tarih:** 2026-09-04
-- **Gerçekleşenler (Faz 21 - Sadeleştirilmiş Yönetici Bildirimi & 6 Tam Morfolojik Tema Dünyası):**
-  1. WinDivert Başlatma Uyarısı Sadeleştirildi: `divert.rs` içindeki ham filtre dizesi ve dahili sürücü detayları gizlendi; yerine "Yönetici İzni Gerekiyor" başlığı ve sade açıklama getirildi.
-  2. Yönetici Olarak Yeniden Başlat Eylemi: `Dashboard.tsx` ve `App.tsx` üst kontrol çubuğuna, yönetici yetkisi eksik olduğunda tek tıkla UAC yükseltmeli yeniden başlatan (`api.restartAsAdmin()`) buton şık bir şekilde entegre edildi.
-  3. 6 Tam Morfolojik & Atmosferik Bağımsız Tema Dünyası (`globals.css`, `theme.ts`): Temalar yüzeysel renk paleti olmaktan çıkarıldı; köşe geometrisi (0px jilet keskin, 2px CRT, 6px taktik, 24px organik hap, 12px lab), arka plan dokusu (CRT scanline katmanı, mecha HUD gridi, sonar radarı dairesel ızgarası, çift pembe-eflatun nebula, mühendislik nokta ızgarası), buton hissiyatı ve tipografi (Amber CRT için zorunlu `font-mono` ve kehribar fosfor ışıması) ile tamamen bağımsız 6 dünyaya dönüştürüldü.
-  4. Doğrulama: `npm run build` 0 hata, `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 8/8 yeşil; release binary (`Anticore.exe`), NSIS kurulumcu, MSI paketi ve taşınabilir zip paketi güncellendi.
+- **Gerçekleşenler (Faz 22 - Otomatik DNS Zehirlenmesi / Discord BTK Engeli Onarımı & Cyberpunk & Quiet Luxury Temaları):**
+  1. Discord BTK DNS Zehirlenmesi Analizi ve Otomatik Onarımı: Türkiye'deki ISP'lerin `discord.com` sorgusunu `195.175.254.2` BTK engelleme sunucusuna yönlendirdiği tespit edildi. Tarayıcı sahte hedefe gittiği için WinDivert motoru açıkken bile Discord açılamıyordu. Rust tarafına `check_dns_health` ve `auto_fix_dns` (Cloudflare 1.1.1.1 + Windows native DoH + DNS flush) eklendi; `universal` profiline Sandvine DPI atlatması için `FakePacketBefore { ttl: 4 }` entegre edildi.
+  2. Dashboard Canlı DNS Zehirlenmesi Şeridi: `Dashboard.tsx` açılışında otomatik DNS testi çalıştırılarak zehirlenme tespit edildiğinde uyarı şeridi ve tek tıkla "Güvenli DNS & DoH Uygula" butonu gösterildi.
+  3. Cyberpunk 2077 ve Quiet Luxury Tam Morfolojik Temaları:
+     - Cyberpunk 2077: 45° açılı kesik poligon köşeler (`clip-path: polygon(...)`), 24px HUD grid matrisi, üstte elektrik sarısı neon şerit (`border-top: 3px solid #FFE600`), endüstriyel mecha tetik butonları, agresif uppercase tipografi ve neon siyan/sarı yüksek gerilim auraları.
+     - Quiet Luxury: Patek Philippe & Mayfair lüks saatçilik estetiği, editoryal serif tipografi (`font-serif` - Cinzel, Playfair Display, Georgia), kadife siyahı (`#0C0B0E`), fırçalanmış şampanya altını ve kaşmir detaylar (`#D4AF37`), fısıldayan mikro sınırlar, pürüzsüz 12px organik kavisler, sıfır neon.
+     - Amber CRT: Tam ekran CRT scanline overlay katmanı (`#root::after`), CRT phosphor kehribar ışıması ve zorunlu monospace (`font-mono`).
+  4. Doğrulama: `npm run build` 0 hata (2.53s), `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 8/8 yeşil; release binary (`Anticore.exe`), NSIS kurulumcu ve taşınabilir zip paketi güncellendi.
 
 ## Mimari Kararlar
+- `[KARAR-020]` **Derin Morfolojik Tasarım Mimarisi (Cyberpunk vs. Quiet Luxury):**
+  Yalnızca renk değiştiren temalar kullanıcı nezdinde yetersizdir. Tema sistemi arayüzün tüm karakterini değiştirmelidir:
+  - Cyberpunk 2077: 45° açılı poligon pahlar (`clip-path: polygon(...)`), 24px HUD gridi zemin, sarı üst lazer şeritleri (`border-top: 3px solid #FFE600`), mecha tetik butonları, agresif uppercase tipografi.
+  - Quiet Luxury: Mayfair / Cartier saatçilik zarafeti, editoryal serif tipografi (`font-serif` - Cinzel / Playfair Display / Georgia), kadife siyahı (`#0C0B0E`), fırçalanmış şampanya altını (`#D4AF37`), fısıldayan mikro sınırlar, pürüzsüz 12px organik kavisler, sıfır neon.
+  - Amber CRT: Tam ekran CRT scanline overlay katmanı (`#root::after`), kehribar fosfor ışıması, zorunlu monospace (`font-mono`).
+- `[KARAR-019]` **ISP DNS Zehirlenmesi Tespiti ve Otomatik DoH / Güvenli DNS Onarımı:**
+  Türkiye'deki operatörlerin (Türk Telekom vb.) `discord.com` sorgusunu `195.175.254.2` (BTK mahkeme kararı IP'si) gibi adreslere zehirlemesi nedeniyle, WinDivert DPI bypass motoru devrede olsa dahi tarayıcı sahte hedefe gittiğinden Discord açılmaz. Kök neden tespiti: DPI bypass L4/L7 paket parçalama yaparken, DNS çözümlemesi hedefin yanlış IP'sine yapıldığı için bağlantı timeout verir. Çözüm: `check_dns_health` ile BTK IP yönlendirmesini tespit eden proaktif telemetri, `auto_fix_dns` ile tek tıkla Cloudflare DNS (`1.1.1.1`, `1.0.0.1`) ve Windows native DoH (`EnableAutoDoh=2`) kaydı + DNS önbellek temizliği (`flush_dns_cache`). Ayrıca `profile.rs` `universal` profiline Türkiye Sandvine DPI'ı için `FakePacketBefore { ttl: 4 }` eklendi.
 - `[KARAR-018]` **Sadeleştirilmiş Hata Katmanı & Çok Boyutlu Morfolojik Tema Mimarisi:**
   1. Ham paket filtreleri (`(filter=outbound and tcp and (tcp.DstPort == 443 or tcp.DstPort == 80))`) kullanıcı arayüzüne sızdırılmamalıdır. Hata mesajı çekirdek katmanında (`divert.rs`) sadeleştirildi ve arayüzde `isPrivilegeError` deseniyle yakalanarak UAC yeniden başlatma (`restartAsAdmin`) eylemiyle birleştirildi.
   2. Temalar yalnızca renk tokenlarını (`--color-live`, `--color-void`) değiştirdiğinde kullanıcı için yüzeysel kalır. Tema sistemi; köşe yarıçapı (`border-radius`), kenarlık stili (üst sarı lazer, sol polar çapa, amber fosfor), zemin dokusu (CRT scanline, HUD grid, sonar radar, nebula, dot grid), tipografi (zorunlu monospace terminal vs. modern sans vs. mecha) ve derinlik modeliyle (buzlu cam vs. sert metal) donatılmış 6 eksiksiz morfolojik dünyaya dönüştürüldü.

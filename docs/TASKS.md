@@ -11,7 +11,23 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 22.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+- `[ ]` 23.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+
+### Faz 22 — Otomatik DNS Zehirlenmesi / Discord BTK Engeli Onarımı + Cyberpunk 2077 & Quiet Luxury Temaları (TAMAMLANDI)
+- `[x]` 22.1 (2026-09-04) **Discord BTK DNS Zehirlenmesi Analizi ve Otomatik Çözüm (`commands.rs`, `profile.rs`):**
+  - Türkiye'deki ISP'lerin `discord.com` sorgusunu doğrudan BTK engelleme IP'sine (`195.175.254.2`) yönlendirdiği tespit edildi. Tarayıcı sahte hedefe gittiği için WinDivert motoru devrede olsa bile Discord bağlantı zaman aşımına uğruyordu.
+  - `commands.rs` içerisine `check_dns_health` (BTK IP ve zehirlenme tespiti) ve `auto_fix_dns` (Cloudflare 1.1.1.1 + native Windows DoH + DNS flush) eklendi.
+  - `profile.rs` içerisindeki `universal` profiline Türkiye'deki Sandvine/Procera DPI'ı atlatmak için `FakePacketBefore { ttl: 4 }` + `FragmentTls { mode: SplitMode::SniMid }` eklendi.
+- `[x]` 22.2 (2026-09-04) **Dashboard DNS Zehirlenme Uyarısı & Tek Tıkla DoH Uygulama (`Dashboard.tsx`, `tauri.ts`):**
+  - `Dashboard.tsx` açılışında otomatik DNS sağlık kontrolü bağlandı.
+  - Zehirlenme algılandığında üst kısımda sarı uyarı şeridi ("DNS ZEHİRLENMESİ TESPİT EDİLDİ: discord.com -> 195.175.254.2") ve "Güvenli DNS & DoH Uygula" butonu beliriyor; tek tıkla Cloudflare DNS ve şifreli DNS (DoH) uygulanıp DNS önbelleği temizleniyor.
+- `[x]` 22.3 (2026-09-04) **Cyberpunk 2077 & Quiet Luxury Temaları (`theme.ts`, `globals.css`):**
+  - Kullanıcının doğrudan talep ettiği iki kökten farklı tema kuruldu:
+    1. *Cyberpunk 2077:* 45° açılı kesik poligon köşeler (`clip-path: polygon(...)`), 24px HUD grid matrisi, üstte elektrik sarısı neon şerit (`border-top: 3px solid #FFE600`), endüstriyel mecha tetik butonları, agresif uppercase tipografi ve neon siyan/sarı yüksek gerilim auraları.
+    2. *Quiet Luxury:* Patek Philippe & Mayfair lüks saatçilik estetiği, editoryal serif tipografi (`font-serif` - Cinzel, Playfair Display, Georgia), kadife siyahı (`#0C0B0E`), fırçalanmış şampanya altını ve kaşmir detaylar (`#D4AF37`), fısıldayan mikro sınırlar, pürüzsüz 12px organik kavisler, sıfır neon.
+    3. *Amber CRT:* Tam ekran CRT scanline overlay katmanı (`#root::after`), CRT phosphor kehribar ışıması ve zorunlu monospace (`font-mono`).
+    4. *Titanium Laboratory, Obsidian Emerald, Amethyst Nebula* güncellendi.
+- `[x]` 22.4 (2026-09-04) **Doğrulama:** `npm run build` 0 hata, `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 8/8 yeşil. Release paketleri güncellendi.
 
 ### Faz 21 — Sadeleştirilmiş Yönetici Uyarısı & "Yeniden Başlat" Butonu + 6 Tam Morfolojik Tema Sistemi (TAMAMLANDI)
 - `[x]` 21.1 (2026-09-04) **Sadeleştirilmiş Yönetici Uyarısı & Yeniden Başlat Butonu (`divert.rs`, `Dashboard.tsx`, `App.tsx`, `i18n.ts`):**

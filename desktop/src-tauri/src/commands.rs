@@ -64,6 +64,14 @@ pub struct DohStatusDto {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DnsHealthDto {
+    pub poisoned: bool,
+    pub resolved_ip: String,
+    pub is_secure: bool,
+    pub message: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AdapterDnsInfo {
     pub name: String,
     pub description: String,
@@ -863,6 +871,63 @@ Clear-DnsClientCache
     run_powershell_script(script)?;
     app.emit("log", "[*] DNS ayarları DHCP'ye döndürüldü".to_string())
         .ok();
+    Ok(())
+}
+
+/// Discord ve engelli siteler için DNS'in sahte BTK IP'sine (195.175.*)
+/// yönlendirilip yönlendirilmediğini (DNS zehirlenmesi) test eder.
+#[tauri::command]
+pub fn check_dns_health() -> DnsHealthDto {
+    use std::net::ToSocketAddrs;
+    match ("discord.com", 443u16).to_socket_addrs() {
+        Ok(mut addrs) => {
+            if let Some(addr) = addrs.next() {
+                let ip_str = addr.ip().to_string();
+                // 195.175.* Türk Telekom / BTK resmi mahkeme engelleme sunucusu
+                if ip_str.starts_with("195.175.") || ip_str == "127.0.0.1" || ip_str == "0.0.0.0" {
+                    DnsHealthDto {
+                        poisoned: true,
+                        resolved_ip: ip_str,
+                        is_secure: false,
+                        message: "İnternet sağlayıcınız (ISP) Discord'u sahte BTK engelleme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
+                    }
+                } else {
+                    DnsHealthDto {
+                        poisoned: false,
+                        resolved_ip: ip_str,
+                        is_secure: true,
+                        message: "DNS çözünürlüğü temiz ve gerçek sunucuya ulaşıyor.".into(),
+                    }
+                }
+            } else {
+                DnsHealthDto {
+                    poisoned: true,
+                    resolved_ip: "none".into(),
+                    is_secure: false,
+                    message: "Discord domaini çözümlenemedi (DNS engeli olabilir).".into(),
+                }
+            }
+        }
+        Err(e) => {
+            DnsHealthDto {
+                poisoned: true,
+                resolved_ip: "unresolvable".into(),
+                is_secure: false,
+                message: format!("DNS çözümlenemedi: {e}"),
+            }
+        }
+    }
+}
+
+/// Cloudflare Güvenli DNS'i ve Windows DoH (DNS-over-HTTPS) kaydını tek tıkla uygular,
+/// ardından sistem DNS önbelleğini temizler.
+#[tauri::command]
+pub fn auto_fix_dns(app: AppHandle) -> Result<(), String> {
+    apply_secure_dns(app.clone(), Some("cloudflare".into()))?;
+    #[cfg(windows)]
+    let _ = apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()));
+    crate::net_teardown::flush_dns_cache();
+    app.emit("log", "[+] Cloudflare Güvenli DNS ve DoH otomatik olarak uygulandı, DNS önbelleği temizlendi".to_string()).ok();
     Ok(())
 }
 
