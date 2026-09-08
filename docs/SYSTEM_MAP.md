@@ -7,8 +7,8 @@
 - User rejected slate-blue styling: workspace accent now inherits installed theme `--color-live`; power button replaces the path illustration. `tool-pages.css` shares existing surface tokens across secondary pages. Settings section links preserve native navigation. Native dialog supplies modal focus containment and Escape handling; busy operations cannot dismiss it.
 
 ## Connection workspace — 2026-09-08 (current shell)
-- `AppNavigation` owns grouped navigation; `Dashboard` composes `features/connection` data, activity, targets and path visual. Existing native IPC contracts remain unchanged.
-- `workspace.css`: slate-blue accent #a9c8f4 / on-accent #101a29; light #075985 / #ffffff; existing theme surfaces; radius 16px; motion 200ms ease-out; Fira Sans/Fira Code; 12px minimum labels; 208px sidebar; 48px titlebar. This supersedes the historical horizontal shell below.
+- `AppNavigation` owns grouped navigation; `Dashboard` composes `features/connection` data, activity and targets. The old path illustration is no longer rendered; the central power control is current. Setup status keeps its success payload but rejects on query failure.
+- `workspace.css`: accent inherits `--color-live`, on-accent inherits `--color-void` in both modes; existing theme surfaces; radius 16px; motion 200ms ease-out; Fira Sans/Fira Code; 12px minimum labels; 208px sidebar; 48px titlebar. This supersedes the previous slate-blue accent and historical horizontal shell below. Theme-wide contrast has not been re-certified for every accent.
 - Status polling invalidates unknown state; shared action latch prevents duplicate starts. Packet activity is counter delta, never bandwidth. Target tests are opt-in and discarded when session/host list changes.
 - Browser acceptance: run Vite on 127.0.0.1:1420, provide PLAYWRIGHT_MODULE and UI_OUTPUT_DIR, then node scripts/verify-workspace.cjs. Fixtures never enter production modules. MASTER.md is the design reference.
 

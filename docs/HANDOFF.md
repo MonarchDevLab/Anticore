@@ -1,6 +1,6 @@
 # HANDOFF
 
-2026-09-08 — `feat/complete-tool-workspace`: user rejected the slate design; theme-accent power console replaces the path illustration. Tools share surface/control tokens; settings gains section navigation. Wizard failures no longer complete onboarding, DNS is opt-in, successful profile persists. Eight frontend tests, TypeScript/Vite and desktop release build pass. Native executable launched; live ISP/throughput and final visual acceptance remain unverified.
+2026-09-08 — Kayıt girişi: çalışma modu kodu `511a0bb`, arayüz/sihirbaz kodu `48536eb`, önceki kanıt kaydı `27ab0e8`. Ayrıntılı oturum envanteri, SHA-256 tablosu ve geri dönüş bilgisi `docs/WORKLOG.md` içindeki “2026-09-08 tam oturum kaydı” bölümündedir. Görevlerin tek güncel kaynağı `docs/TASKS.md`.
 
 ## Anlık Durum
 2026-09-08 — Dal `feat/complete-tool-workspace`, çalışma modu düzeltmeleri `511a0bb`. 11 frontend, 9 backend, 48 motor testi geçti. Canlı CLI ve geçici SCM hizmeti start/stop geçti; test servisi kaldırıldı, DNS değiştirilmedi. Root/dist/portable EXE ve ZIP içeriği eşleşiyor; NSIS/MSI kaynak yerleşimi düzeltildi. GUI SHA256: `C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4`. Eski çıktılar/imzalar `package-backups/` altında. Güncel çalıştırılacak dosya `dist/Anticore.exe`. Native UI uçtan uca kabulü, kurulu sistem yükseltmesi ve saha hız ölçümü açık; tam ürün hatasızlığı iddia edilmez. Aşağıdaki eski kayıtlar tarihçedir.
@@ -87,6 +87,8 @@
 - **Doğrulama (Faz 7-10):** Vitest kurulumu tamamlandı (`npm run test`), testler başarıyla çalıştırıldı (2/2 yeşil). CI/CD hatları ve kalite denetimleri doğrulandı. `npm run build` 0 hata, `cargo test` 9/9 yeşil, `cargo test --workspace` 46/46 yeşil. `package.ps1` ile güncel release binary ve portable zip üretildi.
 
 ## Kritik Komutlar
+- Tam paket üretimi: önce `cargo build --release` (`antikor/engine`), sonra `npm run tauri -- build` (`antikor/desktop`), ardından PowerShell 7 ile `./scripts/package.ps1` (`antikor`). Paketleme öncesi uygulamayı kapat; eski imzalar yedeklenir, yeni imza üretilmez.
+- İzinli canlı kabul: yönetici PowerShell 7 ile `./scripts/test-live-modes.ps1 -Phase Verify`. Ağ trafiğini etkiler; kullanıcı izni olmadan çalıştırma. Var olan AnticoreService üzerine yazmaz. Sonuç: `live-Verify.txt`.
 - Frontend Testleri: `npm test` (`antikor/desktop`)
 - Masaüstü Release: `cargo build --release` (`antikor/desktop/src-tauri`)
 - Tarayıcı kabulü: Vite `127.0.0.1:1420` üzerinde çalışırken `PLAYWRIGHT_MODULE` ve `UI_OUTPUT_DIR` ortam değişkenleriyle `node scripts/verify-workspace.cjs` (`antikor`). Test IPC verisi kullanır.
@@ -97,12 +99,15 @@
 - Rust Backend Testleri: `cargo test` (`antikor/desktop/src-tauri`)
 
 ## Commit Zinciri
+- `511a0bb` — Setup hata/izin kapıları, gerçek bağımsız hazır kontrolü, SC argümanları ve doğru kurulum kaynak yerleşimi.
+- `48536eb` — tema renkli güç kontrolü, ortak araç stilleri ve güvenli sihirbaz.
+- `27ab0e8` — canlı kabul ve dağıtım doğrulamalarının ilk kaydı.
 - `1110001` — seçici paket yakalama ve güvenli motor yaşam döngüsü.
 - `e2cdef9` — ağ planı ve saha kabul kapıları.
 - `251f083` — bağlantı çalışma alanı ve uygulama kabuğu.
 - `f227c3d` — arayüz doğrulama kayıtları.
 
 ## Riskler ve Öncelikler
-- **Yayın:** Uzak depo görünürlüğü bu oturumda doğrulanmadı. Kurulum/portable paketleri güncellenmedi; yayın yapılmadı.
-- **Performans:** Sıfır hız kaybı kanıtlanmadı. Gerçek indirme/yükleme çiftleri, canlı start/stop ve ISS uyumluluğu için `NETWORK_PLAN.md` kabul kapıları geçerlidir.
-- **Arayüz:** Tarayıcı fixture kontrolleri yerel sürücü veya kapsamlı Windows erişilebilirlik doğrulaması değildir; diğer araç sayfaları yeniden tasarlanmadı.
+- **Yayın:** EXE/NSIS/MSI/portable güncel; 5 dağıtım ikilisi ve 2 kaldırılmış eski imza çalışma ağacında commit edilmemiş durumda. Yeni imza/yayın yok; uzak depo görünürlüğü kontrol edilmedi.
+- **Performans:** Bağımsız CLI/SCM start-stop geçti; aktif aktarım altında geçiş, indirme/yükleme çiftleri ve ISS uyumluluğu ölçülmedi. `NETWORK_PLAN.md` kabul kapıları açık.
+- **Arayüz:** `48536eb` revizyonu için nihai kullanıcı kabulü ve tam native erişilebilirlik doğrulaması yok. Ortak stiller tüm araç ekranlarının baştan tasarımı değildir. Eski fixture sonuçları yeni revizyonun bütünü için kanıt sayılmaz.

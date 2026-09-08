@@ -5,12 +5,13 @@
 > Canlı bağımsız motor ve SCM başlat/durdur geçti; geçici servis kaldırıldı. Native UI düğmelerinin uçtan uca otomasyonu ve saha hız ölçümü yapılmadı.
 
 ## ŞİMDİ `[~]`
-- `[~]` 2026-09-08 — Kullanıcı slate tasarımını reddetti; tema renkli merkezi güç kontrolü uygulandı. 8 test, frontend ve native build geçti; yeni EXE başlatıldı. Nihai görsel kabul ve kapsamlı yerel erişilebilirlik bekliyor. Değişiklikler henüz commit edilmedi.
+- `[~]` 2026-09-08 — Tam kayıt eşitlemesi: commitler, paket hash'leri, yedekler, yapılanlar ve doğrulanmamış kabul kapıları kaydediliyor. Uygulama kodu/paketler bu kayıt turunda değiştirilmiyor.
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
+- `[ ]` `48536eb` güç kontrolü tasarımının nihai kullanıcı kabulü; ortak stiller uygulanan araç ekranları tam sayfa yeniden tasarımı olarak sayılmamalı.
 - `[ ]` Çalışma modlarının native UI üzerinden son kullanıcı kabulü; UI gösterimleri, tekrar başlatma, kurulu sistem yükseltmesi ve eşzamanlı çoklu uygulama örnekleri ayrı denetlenmeli.
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
 - `[ ]` 33 NETWORK_PLAN.md P1: uyarlanabilir profil seçimi ve geri dönüş davranışı.
@@ -18,6 +19,7 @@
 - `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-08 — `48536eb`: tema rengini kullanan merkezi güç kontrolü; araç sayfalarında ortak yüzey/kontrol stilleri; ayarlarda bölüm bağlantıları ve seçim durumu; native onay diyaloğu; profil/günlük yükleme hataları; sihirbazda DNS opt-in, başarısız başlangıçta tamamlanmama ve başarılı profil kaydı. Yeni sihirbaz testleri dahil son toplam frontend 11/11. Bu satır uygulama kapsamıdır; tüm arayüzlerin görsel/erişilebilirlik kabulü değildir.
 - `[x]` 2026-09-08 — `511a0bb`: Setup hata/izin kapıları, SC argümanları, bağımsız hazır kontrolü ve kurulum kaynak konumları düzeltildi. 11 frontend / 9 backend / 48 motor testi geçti. İzinli canlı CLI+SCM start/stop geçti; DNS değiştirilmedi. EXE/NSIS/MSI/portable yenilendi; tüm GUI kopyaları ve ZIP içeriği SHA256 `C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4`. Eski çıktılar/imzalar package-backups altında korundu; yayın yapılmadı.
 - `[x]` 2026-09-08 — `f227c3d` sonrası kayıt eşitlemesi: doğrulama tarihleri, tamamlanan arayüz kapsamı, kalan kabul işleri ve release çıktısı güncellendi. Bu kayıt turunda testler yeniden çalıştırılmadı.
 - `[x]` 2026-09-08 — `251f083`: yeni bağlantı ana ekranı, yan gezinme, açık/koyu tema, TR/EN, profil kilidi, gerçek paket grafiği ve isteğe bağlı TLS hedef testleri. Diğer sayfaların mevcut işlevleri korundu.

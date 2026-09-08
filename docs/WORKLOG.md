@@ -1,5 +1,63 @@
 # WORKLOG
 
+## 2026-09-08 tam oturum kaydı
+
+### Kapsam ve commitler
+- Proje: `E:\Personel\Branding\Uygulama\Anticore\antikor`; dal: `feat/complete-tool-workspace`; başlangıç güvenli kaydı: `8379a9e`.
+- `511a0bb`: çalışma modları ve dağıtım düzeltmeleri (7 dosya).
+- `48536eb`: kullanıcı tarafından reddedilen slate tasarımının revizyonu ve güvenli sihirbaz (12 dosya).
+- `27ab0e8`: test/paket kanıtlarının ilk kayıt eşitlemesi (5 doküman).
+- Bu kayıt turunda test, build, canlı ağ işlemi ve yayın tekrarlanmadı; git durumu, raporlar ve dağıtım SHA-256 değerleri yeniden okundu.
+
+### Arayüz ve kurulum sihirbazı
+- `Dashboard.tsx`, `workspace.css`: bağlantı yolu çizimi yerine büyük güç kontrolü, kurulu temanın vurgu rengi, profil ve gerçek paket göstergeleri korundu. `MASTER.md` yeni yönle güncellendi.
+- `tool-pages.css`, `main.tsx`, `App.tsx`: ikincil ekranlarda ortak kart, tipografi, kontrol boyutu, odak ve azaltılmış hareket kuralları. Bu, bütün ikincil sayfaların sıfırdan yeniden tasarlandığı anlamına gelmez.
+- `SettingsView.tsx`: bölüm bağlantıları ve tema seçiminde `aria-pressed`. `Profiles.tsx` ve `LogsView.tsx`: yükleme hataları görünür.
+- `ConfirmDialog.tsx`: native modal dialog; Escape/backdrop iptali işlem sırasında engellenir. Native klavye/ekran okuyucu davranışı bu oturumda uçtan uca ölçülmedi.
+- `Wizard.tsx`: DNS değişikliği varsayılan kapalı; alan adları batch API ile yazılır; DNS/motor hataları yutulmaz; başarısız başlangıç onboarding tamamlandı kaydı yazmaz; başarılı profil saklanır ve ana ekranla eşitlenir.
+- `Wizard.test.tsx`: motor hatası, alan adı kaydetme hatası, DNS opt-in ve başarılı profil kaydı senaryoları.
+
+### Çalışma modu düzeltmeleri
+- `Setup.tsx`: durum/profil/yetki sorgularında hata gösterimi; bilinmeyen durum artık kurulu değil/kapalı gibi sunulmaz; yetki veya durum doğrulanmadan işlem başlatılmaz. Kurulu servis varken bağımsız başlatma kapalıdır.
+- `commands.rs`: `sc create` seçenek ve değerleri ayrıldı; stdout/stderr hataları taşınır; mevcut servis kurulum öncesinde sessizce silinmez; çalışan panel/bağımsız motorla servis kurulumu engellenir; profil doğrulanır.
+- Bağımsız başlangıç: ikinci başlatma kontrolü, yerel başlangıç günlüğü, sürücü-hazır mesajı için 5 saniye sınır, erken çıkışın hata olarak dönmesi, hazır olmayan çocuğun durdurulması ve PID yazma hatasının raporlanması.
+- `Setup.test.tsx`: bilinmeyen durum, yönetici olmayan kullanıcı ve başarısız bağımsız başlangıç senaryoları.
+- Bu değişiklikler bütün çoklu süreç/race, PID yeniden kullanımı ve otomatik toparlanma senaryolarının çözüldüğünü kanıtlamaz.
+
+### Dağıtım ve ortam
+- İlk aşamada yalnız target/release EXE güncellenmiş, root/dist/portable eski kalmıştı; kullanıcı bildirimiyle hash/tarih farkı doğrulandı. Son aşamada tüm dağıtım kopyaları yenilendi.
+- `tauri.conf.json`: kaynak haritası motoru `anticore-cli.exe`, WinDivert DLL/SYS ve WebView2 loader'ı uygulama yanına yerleştirir; eski `_up_` paket yolları kaldırıldı. Son WiX çıktısında `_up_` dizini bulunmadığı kontrol edildi; gerçek kurulu sistem yükseltmesi çalıştırılmadı.
+- `package.ps1`: kopyalama hataları artık başarı gibi yutulmaz; dosyalar yedeklenir ve hash karşılaştırılır; eski kurulum çıktısı için tarih kontrolü; portable ZIP önce staging'e üretilir; geçersiz kalan `.sig` yan dosyaları yedeğe taşınır.
+- Yedekler: `package-backups/20260908-122702` ve `package-backups/20260908-123235`. İkincisi önceki EXE/CLI/ZIP/NSIS/MSI ve imza dosyalarını içerir. Bunlar yereldir ve git dışındadır.
+- Windows'un yüklediği `desktop/src-tauri/target/release/WinDivert64.sys` derlemeyi kilitledi. Kaynakla aynı hash doğrulandı; silinmeden `WinDivert64.loaded-20260908.sys` adına taşındı. Yeni build normal adlı dosyayı tekrar oluşturdu. Kernel sürücü hizmeti kaldırılmadı; sistem yeniden başlatılmadı.
+- Windows PowerShell 5 script politikası test yardımcısını engelledi. Politika değiştirilmedi; kurulu PowerShell 7 yönetici olarak kullanıldı. NSIS araç önbelleği erişimi için izinli build yapıldı.
+- `dist/Anticore.exe.old` önceki oturumdan kalmadır; yeni çalıştırma hedefi değildir ve bu oturumda silinmedi.
+
+### Doğrulama kanıtı ve sınırı
+- `npm test`: 4 dosyada 11 test geçti; `npm run build`: TypeScript/Vite geçti.
+- Desktop `cargo test`: 9 test geçti. Engine `cargo test --workspace`: 47 core + 1 gerçek WinDivert filtre entegrasyonu geçti (48 toplam).
+- Engine release, desktop release, NSIS ve MSI üretimi başarılı. Son paketler 2026-09-08 12:32 yerel saat aralığında üretildi.
+- Kullanıcının açık izniyle yalnız çalışma alanındaki GUI örnekleri kapatıldı; `live-CloseApps.txt` bunu kaydeder.
+- `scripts/test-live-modes.ps1`: bağımsız motorun gerçek hazır çıktısı görüldü ve süreç durduruldu; geçici AnticoreService oluşturuldu, başladı, 2 saniye çalışır kaldı, durduruldu ve silindi. `live-Verify.txt`: iki PASS ve DeleteService SUCCESS. Son `sc query AnticoreService` 1060 döndü.
+- Canlı test CLI/SCM seviyesindedir; React → Tauri → Windows native düğme akışının tamamı değildir. Test mevcut servisi silip üzerine kurmayı reddeder. DNS değiştirilmedi. Test verileri `live-test-data/` içinde yerel tutulur.
+- Son GUI root, dist, portable klasörleri ve ZIP içindeki EXE aynı SHA-256 değerine sahip. ZIP arşiv hash'i içindeki EXE hash'inden farklıdır.
+
+### Son dağıtım SHA-256 değerleri (bu kayıt turunda tekrar okundu)
+| Dosya (`dist/`) | SHA-256 |
+| --- | --- |
+| Anticore.exe | C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4 |
+| anticore-cli.exe | 3C48A0F386D12848071A72E473184E84FAA5C414BF190EB386CE6B2F3E9B3427 |
+| Anticore_0.3.0_x64-portable.zip | 890EEF6ACF13A7D860F3307B8A38E2A1D2E143B5D71102F8F32C6F21936AAC5E |
+| Anticore_0.3.0_x64-setup.exe | F6DD154DF014E53F16CC8BE5C77B28ACFA2E630392842A4782766103D6FEDEAE |
+| Anticore_0.3.0_x64_en-US.msi | B9C508392454EAC408554C5979DDEC3CCC9876175ED44163CDF77A746FD9D716 |
+
+### Açık sınırlar ve teslim durumu
+- Kaynak değişiklikleri commit edildi; 5 değiştirilmiş `dist` ikilisi ve yedeğe taşındığı için silinmiş görünen 2 `.sig` git çalışma ağacında henüz commit edilmedi. Bu kayıt talebi kapsamında ikililer yeniden yazılmadı veya yayınlanmadı.
+- Son paketler için yeni imza oluşturulmadı; eski imzalar yeni dosyalara aitmiş gibi bırakılmadı. Otomatik güncelleme/yayın kabulü tamamlanmış değildir.
+- Nihai tasarım kabulü, tüm temalarda erişilebilirlik/kontrast, native UI uçtan uca akışları, kurulu sistem yükseltmesi, çoklu GUI örnekleri ve yeniden başlatma kabulü açık.
+- Uyarlanabilir profil/geri dönüş P1, açık kaynak yayın/imzalama P3 ve eşleştirilmiş indirme-yükleme/ISS performans testleri açık. Yeni UI revizyonunda önceki tarayıcı kabul sonuçları aynen geçerli kabul edilmez.
+- “Tamamen hatasız”, “her ISS'de erişim”, “sıfır hız kaybı”, “her ekran yenilendi” veya “imzalı yayın hazır” iddiası yoktur. Devam sırası `docs/TASKS.md` içindedir.
+
 ## Aktif Oturum (Son Oturumun Detayları)
 - 2026-09-08 — Çalışma modları: SC parametreleri ayrıldı; durum sorgusu hataları taşınıyor; mevcut servis kurulum sırasında silinmiyor; bağımsız motor gerçek hazır mesajı olmadan başarılı sayılmıyor. Setup izin/bilinmeyen durum testleriyle frontend 11/11, backend 9/9, motor 48/48 geçti. İzinli canlı CLI bağımsız ve SCM başlat/durdur geçti; geçici servis silindi, DNS değiştirilmedi. Bu test native arayüz düğmelerinin uçtan uca kanıtı değildir. Paketlerde `_up_` kaynak yerleşimi tespit edilip düzeltildi. Derleme kilidi Windows'ta yüklü `WinDivert64.sys` idi; aynı hash doğrulandı ve dosya `.loaded-20260908.sys` adıyla korundu, sürücü hizmeti kaldırılmadı.
 - 2026-09-08 — Kullanıcı slate tasarımı reddetti. Tema rengi ve merkezi güç kontrolü geri getirildi; işlev düzeltmeleri korundu. Sihirbaz hatayı yuttuğu için başarı kaydı yazıyordu; artık hata görünür, DNS opt-in, profil yalnız başarılı başlangıç sonrası kaydedilir. 8 frontend testi ve üretim/native derleme geçti. Tarayıcıda bilinmeyen motor görünümü incelendi; gerçek uygulama açıldı. Görsel kullanıcı kabulü ve saha performansı doğrulanmadı.
