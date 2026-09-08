@@ -1,22 +1,24 @@
 # TASKS
 
 > Tek gerçek kaynak. Kod/git ile çeliştiğinde git kazanır, bu dosya düzeltilir.
-> Son arayüz doğrulaması: 2026-09-08 — `251f083`: `npm test` 5/5, TypeScript/Vite ve masaüstü Rust release build başarılı; Edge kabul kontrolleri geçti.
-> Motor testlerinin son çalıştırılması: 2026-09-07 — 48/48 motor, 9/9 masaüstü backend. Dağıtım paketleri yenilenmedi; saha hız testi yapılmadı.
+> Son doğrulama: 2026-09-08 — 11/11 frontend, 9/9 backend, 48/48 motor; TypeScript/Vite, native release, NSIS/MSI başarılı. EXE ve portable ZIP içerik hash'i eşleşti.
+> Canlı bağımsız motor ve SCM başlat/durdur geçti; geçici servis kaldırıldı. Native UI düğmelerinin uçtan uca otomasyonu ve saha hız ölçümü yapılmadı.
 
 ## ŞİMDİ `[~]`
-- *(Yok)*
+- `[~]` 2026-09-08 — Kullanıcı slate tasarımını reddetti; tema renkli merkezi güç kontrolü uygulandı. 8 test, frontend ve native build geçti; yeni EXE başlatıldı. Nihai görsel kabul ve kapsamlı yerel erişilebilirlik bekliyor. Değişiklikler henüz commit edilmedi.
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
+- `[ ]` Çalışma modlarının native UI üzerinden son kullanıcı kabulü; UI gösterimleri, tekrar başlatma, kurulu sistem yükseltmesi ve eşzamanlı çoklu uygulama örnekleri ayrı denetlenmeli.
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
 - `[ ]` 33 NETWORK_PLAN.md P1: uyarlanabilir profil seçimi ve geri dönüş davranışı.
 - `[ ]` 34 NETWORK_PLAN.md P2 kalan kabul: diğer araç sayfaları ve yerel Windows erişilebilirlik denetimi. Ana ekran ve kabuk Faz 32 kapsamında tamamlandı.
 - `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-08 — `511a0bb`: Setup hata/izin kapıları, SC argümanları, bağımsız hazır kontrolü ve kurulum kaynak konumları düzeltildi. 11 frontend / 9 backend / 48 motor testi geçti. İzinli canlı CLI+SCM start/stop geçti; DNS değiştirilmedi. EXE/NSIS/MSI/portable yenilendi; tüm GUI kopyaları ve ZIP içeriği SHA256 `C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4`. Eski çıktılar/imzalar package-backups altında korundu; yayın yapılmadı.
 - `[x]` 2026-09-08 — `f227c3d` sonrası kayıt eşitlemesi: doğrulama tarihleri, tamamlanan arayüz kapsamı, kalan kabul işleri ve release çıktısı güncellendi. Bu kayıt turunda testler yeniden çalıştırılmadı.
 - `[x]` 2026-09-08 — `251f083`: yeni bağlantı ana ekranı, yan gezinme, açık/koyu tema, TR/EN, profil kilidi, gerçek paket grafiği ve isteğe bağlı TLS hedef testleri. Diğer sayfaların mevcut işlevleri korundu.
 - `[x]` 2026-09-08 — `251f083`: 5 mevcut test, TypeScript/Vite üretim derlemesi ve Edge IPC test senaryoları geçti. 390/768/1080 pikselde taşma kontrolü, klavye odağı ve örnek metinlerde 6.9:1–10.2:1 kontrast doğrulandı. Tarayıcı verileri test fixture; canlı sürücü/ISS kanıtı değildir.

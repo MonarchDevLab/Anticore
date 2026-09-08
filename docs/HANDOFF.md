@@ -1,7 +1,9 @@
 # HANDOFF
 
+2026-09-08 — `feat/complete-tool-workspace`: user rejected the slate design; theme-accent power console replaces the path illustration. Tools share surface/control tokens; settings gains section navigation. Wizard failures no longer complete onboarding, DNS is opt-in, successful profile persists. Eight frontend tests, TypeScript/Vite and desktop release build pass. Native executable launched; live ISP/throughput and final visual acceptance remain unverified.
+
 ## Anlık Durum
-Kayıt eşitlemesi: 2026-09-08. Dal: `improvement/measured-network`; uygulama `251f083`, önceki kayıt commit'i `f227c3d`. Son masaüstü release derlemesi başarılı; çıktı `desktop/src-tauri/target/release/anticore-desktop.exe` (15.299.072 bayt). Bu kayıt turunda test veya paketleme yeniden çalıştırılmadı.
+2026-09-08 — Dal `feat/complete-tool-workspace`, çalışma modu düzeltmeleri `511a0bb`. 11 frontend, 9 backend, 48 motor testi geçti. Canlı CLI ve geçici SCM hizmeti start/stop geçti; test servisi kaldırıldı, DNS değiştirilmedi. Root/dist/portable EXE ve ZIP içeriği eşleşiyor; NSIS/MSI kaynak yerleşimi düzeltildi. GUI SHA256: `C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4`. Eski çıktılar/imzalar `package-backups/` altında. Güncel çalıştırılacak dosya `dist/Anticore.exe`. Native UI uçtan uca kabulü, kurulu sistem yükseltmesi ve saha hız ölçümü açık; tam ürün hatasızlığı iddia edilmez. Aşağıdaki eski kayıtlar tarihçedir.
 
 2026-09-08 — `251f083`: arayüz ana ekranı ve uygulama kabuğu yeniden yazıldı. Yan gezinme, gerçek motor durumu, profil kilidi, paket örnekleri ve kullanıcı başlatmalı TLS testleri var. 5 frontend testi, üretim build ve Edge kabul senaryoları geçti. Ekran görüntüleri test IPC verisi kullanır. Diğer araç sayfaları işlevlerini korur; tüm alt sayfalar yeniden tasarlanmadı. Yayın paketleri güncellenmedi; saha hız doğrulaması bekliyor.
 
