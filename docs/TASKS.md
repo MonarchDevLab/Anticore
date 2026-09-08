@@ -11,7 +11,13 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 24.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+- `[ ]` 24.2 Sahada canlı ISP testi ve kullanıcı kabulü.
+
+### Faz 24 — UI Hassas Geometri ve Donanım Anahtarı (Toggle) Hizalama Restorasyonu (TAMAMLANDI)
+- `[x]` 24.1 (2026-09-04) **Modern Donanım Toggle Anahtar Geometrisi & Taşıma Hatası Düzeltmesi (`globals.css`, `SettingsView.tsx`):**
+  - `.toggle-thumb` içindeki eksik `left` tanımı sebebiyle `<button>` varsayılan `text-align: center` merkezlemesinden ötürü butonun dışına taşan (aktifte +8.8px sağa taşma, pasifte ortada asılı kalma) CSS matematik hatası giderildi.
+  - Kapsül `display: inline-flex`, `align-items: center`, `padding: 0`, `box-sizing: border-box` yapısına kavuşturuldu; `top: 2px`, `left: 2px`, `1.125rem` (18px) thumb geometrisi ve aktifte `translateX(1.25rem)` ile her 4 yönden kusursuz 3px donanım payı sağlandı.
+  - `button[role="switch"]` öğelerine `type="button"` eklendi; `npm run build` ile doğrulandı.
 
 ### Faz 23 — Kod Tabanı Derin Denetimi, ECH/Kyber 2048B Yükseltmesi, Asenkron Kilitlenmesiz DNS & Güvenli Mimari Restorasyonu (TAMAMLANDI)
 - `[x]` 23.1 (2026-09-04) **Büyük Paket ve Modern TLS/ECH/Kyber El Sıkışma Restorasyonu (`dispatch.rs`):**

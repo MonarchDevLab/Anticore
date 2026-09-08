@@ -550,38 +550,50 @@ html.theme-titanium {
   /* ── Modern Toggle Switch ($10K Hardware Micro-Interactions) ── */
   .toggle-track {
     position: relative;
+    display: inline-flex;
+    align-items: center;
     width: 2.75rem;
     height: 1.5rem;
+    padding: 0;
     border-radius: 9999px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     cursor: pointer;
     flex-shrink: 0;
     background: rgba(255, 255, 255, 0.08);
     transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    box-sizing: border-box;
   }
-  .toggle-track[aria-checked="true"] {
+  .toggle-track:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+  .toggle-track[aria-checked="true"],
+  .toggle-track.is-active {
     background: var(--color-neon-live);
     border-color: var(--color-neon-live);
-    box-shadow: 0 0 12px rgba(0, 245, 155, 0.25);
+    box-shadow: 0 0 14px var(--color-neon-live-dim, rgba(0, 245, 155, 0.35));
   }
   .toggle-track:disabled { opacity: 0.35; cursor: not-allowed; }
   .toggle-thumb {
     position: absolute;
     top: 2px;
-    width: 1.25rem;
-    height: 1.25rem;
+    left: 2px;
+    width: 1.125rem;
+    height: 1.125rem;
     border-radius: 9999px;
-    background: #FFFFFF;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
-    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 200ms ease;
+    background: #CBD5E1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+    transform: translateX(0);
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 200ms ease, box-shadow 200ms ease;
   }
-  .toggle-track[aria-checked="true"] .toggle-thumb {
-    transform: translateX(1.3rem);
+  .toggle-track[aria-checked="true"] .toggle-thumb,
+  .toggle-track.is-active .toggle-thumb {
+    transform: translateX(1.25rem);
     background: #FFFFFF;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 6px rgba(255, 255, 255, 0.8);
   }
   .toggle-track[aria-checked="false"] .toggle-thumb {
-    transform: translateX(2px);
+    transform: translateX(0);
     background: #CBD5E1;
   }
 

@@ -366,6 +366,7 @@ export default function SettingsView({
             <p className="text-xs text-paper-muted mt-0.5">{t("settings_startup_desc")}</p>
           </div>
           <button
+            type="button"
             role="switch"
             aria-checked={startup}
             aria-label={t("settings_startup_title")}
@@ -391,6 +392,7 @@ export default function SettingsView({
             </div>
           </div>
           <button
+            type="button"
             role="switch"
             aria-checked={trayMinimize}
             aria-label={t("settings_tray_title")}
@@ -649,6 +651,7 @@ export default function SettingsView({
               <p className="text-[11px] text-paper-muted">{t("settings_autocheck_desc")}</p>
             </div>
             <button
+              type="button"
               role="switch"
               aria-checked={autoUpdate}
               onClick={() => toggleAutoUpdate(!autoUpdate)}
@@ -863,6 +866,7 @@ function Toggle({
         <p className="mt-0.5 text-xs leading-relaxed text-paper-muted">{desc}</p>
       </div>
       <button
+        type="button"
         role="switch"
         aria-checked={checked}
         aria-label={label}
