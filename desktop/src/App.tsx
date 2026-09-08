@@ -208,7 +208,7 @@ export default function App() {
 
       {/* ── 3. Tam Ekran Geniş Çalışma Alanı ── */}
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
-        <div className="workspace-page">
+        <div className={`workspace-page ${view === "dashboard" ? "" : "tool-workspace"}`}>
           {view === "dashboard" && (
             <Dashboard
               status={status}
@@ -231,7 +231,10 @@ export default function App() {
             <SettingsView pushLog={pushLog} onOpenWizard={() => setView("wizard")} running={running} />
           )}
           {view === "wizard" && (
-            <Wizard onComplete={() => setView("dashboard")} pushLog={pushLog} />
+            <Wizard onComplete={() => {
+              setSelectedProfile(localStorage.getItem("anticore_last_profile") || "universal");
+              setView("dashboard");
+            }} pushLog={pushLog} />
           )}
         </div>
       </main>

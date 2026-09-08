@@ -272,8 +272,15 @@ export default function SettingsView({
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("settings_title")}</h2>
       </header>
 
+      <nav className="tool-section-nav" aria-label={t("settings_title")}>
+        <a href="#appearance">{t("settings_theme_title")}</a>
+        <a href="#engine-options">{t("settings_defense_title")}</a>
+        <a href="#updates">{t("settings_updates_title")}</a>
+        <a href="#recovery">{t("settings_factory_title")}</a>
+      </nav>
+
       {/* Görünüm ve Tema (8 Donanım Teması + Sistem) */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+      <section id="appearance" className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
             <Monitor size={18} aria-hidden strokeWidth={2} />
@@ -290,6 +297,7 @@ export default function SettingsView({
             return (
               <button
                 key={item.id}
+                aria-pressed={active}
                 onClick={() => setTheme(item.id)}
                 className={`p-3.5 flex flex-col items-start gap-2 rounded-xl border text-xs transition-all cursor-pointer text-left relative overflow-hidden ${
                   active
@@ -412,7 +420,7 @@ export default function SettingsView({
             <ShieldCheck size={18} aria-hidden strokeWidth={2} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-paper-bright">{t("settings_defense_title")}</h3>
+            <h3 id="engine-options" className="text-sm font-bold text-paper-bright">{t("settings_defense_title")}</h3>
             <p className="text-xs text-paper-muted mt-0.5">{t("settings_defense_desc")}</p>
           </div>
         </div>
@@ -611,7 +619,7 @@ export default function SettingsView({
               <Download size={18} aria-hidden strokeWidth={2} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-paper-bright">{t("settings_updates_title")}</h3>
+              <h3 id="updates" className="text-sm font-bold text-paper-bright">{t("settings_updates_title")}</h3>
               <p className="text-xs text-paper-muted mt-0.5">{t("settings_updates_desc")}</p>
             </div>
           </div>
@@ -755,7 +763,7 @@ export default function SettingsView({
             <RotateCcw size={18} aria-hidden strokeWidth={2} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-alert">{t("settings_factory_title")}</h3>
+            <h3 id="recovery" className="text-sm font-bold text-alert">{t("settings_factory_title")}</h3>
             <p className="text-xs text-paper-muted mt-0.5">{t("settings_factory_desc")}</p>
           </div>
         </div>

@@ -1,5 +1,9 @@
 # Design System Master File
 
+## Power console — revision 2026-09-08
+
+User rejected the slate workspace. Restore the installed theme accent and compact instrument character without restoring fabricated metrics. Signature: a large physical-style power control, paired with profile selection. Fira Sans semibold titles, Fira Code counters. Existing palette: void #06080C, card #0E131F, paper #F1F5F9, live #00F59B; use theme tokens, not hardcoded component colors. Radius 16px, 8px spacing grid, 44px minimum actions. Unknown backend state stays visibly unknown and cannot start. This section supersedes the slate-blue visual direction below.
+
 ## Connection workspace — 2026-09-08
 
 This section supersedes the historical dashboard specifications below for the application shell and connection workspace. Subject: a local Windows network utility for everyday users. Primary job: operate the engine and distinguish its state from measured reachability.

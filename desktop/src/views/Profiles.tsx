@@ -20,7 +20,7 @@ export default function Profiles() {
       } else if (ps.length > 0) {
         setSelectedId((prev) => (prev && ps.some((p) => p.id === prev) ? prev : ps[0].id));
       }
-    });
+    }).catch((error: unknown) => setError(String(error)));
   useEffect(() => {
     refresh();
   }, []);

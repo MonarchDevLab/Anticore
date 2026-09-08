@@ -1,0 +1,37 @@
+.tool-workspace > div { max-width: 1120px; width: 100%; }
+.tool-workspace { color: var(--color-paper); }
+.tool-workspace > div > :first-child { padding-bottom: 24px; border-bottom: 1px solid var(--color-border-brutal); }
+.tool-workspace h2 { font-size: clamp(24px, 3vw, 32px); line-height: 1.2; font-weight: 500; letter-spacing: -.8px; }
+.tool-workspace section h2, .tool-workspace .card h2 { font-size: 20px; letter-spacing: -.3px; }
+.tool-workspace h3 { font-size: 16px; line-height: 1.5; }
+.tool-workspace p { line-height: 1.7; }
+.tool-workspace :is(.text-xs, [class*="text-[10px]"], [class*="text-[11px]"]) { font-size: 12px; }
+.tool-workspace .card { border: 1px solid var(--color-border-brutal); border-radius: var(--workspace-radius); background: var(--color-surface-card); box-shadow: none; clip-path: none; }
+.tool-workspace section.card { padding: 24px; }
+.tool-workspace .card-subtle { background: var(--color-surface-subtle); border-color: var(--color-border-brutal); box-shadow: none; border-radius: 12px; }
+.tool-workspace .btn { min-height: 44px; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; box-shadow: none; letter-spacing: 0; text-transform: none; }
+.tool-workspace .btn-primary { background: var(--workspace-accent); color: var(--workspace-on-accent); border-color: var(--workspace-accent); }
+.tool-workspace .btn-secondary { background: var(--color-surface-elevated); color: var(--color-paper); border: 1px solid var(--color-border-brutal-strong); }
+.tool-workspace :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select) { min-height: 44px; border-radius: 10px; border-color: var(--color-border-brutal-strong); background-color: var(--color-surface-subtle); color: var(--color-paper); font-size: 14px; }
+.tool-workspace :is(input, textarea, button, select, summary):focus-visible { outline: 2px solid var(--workspace-accent); outline-offset: 3px; }
+.tool-workspace button:disabled { cursor: not-allowed; opacity: .5; }
+.tool-workspace details.card { background: var(--color-surface-subtle); }
+.tool-workspace summary { min-height: 48px; align-content: center; }
+.tool-section-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+.tool-section-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 10px; background: var(--color-surface-elevated); border: 1px solid var(--color-border-brutal); font-size: 13px; }
+.tool-section-nav a:hover { color: var(--workspace-accent); }
+.tool-section-nav a:focus-visible { outline: 2px solid var(--workspace-accent); outline-offset: 3px; }
+.tool-workspace [id] { scroll-margin-top: 24px; }
+.tool-error { padding: 16px; border: 1px solid var(--color-alert); border-radius: 12px; color: var(--color-alert); overflow-wrap: anywhere; }
+.workspace-dialog { margin: auto; padding: 0; width: min(460px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); border: 1px solid var(--color-border-brutal-strong); border-radius: var(--workspace-radius); color: var(--color-paper); background: var(--color-surface-card); }
+.workspace-dialog::backdrop { background: color-mix(in srgb, var(--color-void) 80%, transparent); backdrop-filter: blur(4px); }
+.workspace-dialog > div { border: 0; box-shadow: none; }
+.workspace-dialog .btn { min-height: 44px; }
+@media (max-width: 640px) {
+  .tool-workspace section.card { padding: 16px; }
+  .tool-workspace > div > :first-child { flex-wrap: wrap; gap: 16px; }
+  .tool-workspace .btn { padding-inline: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-workspace *, .workspace-dialog * { animation: none !important; transition: none !important; }
+}

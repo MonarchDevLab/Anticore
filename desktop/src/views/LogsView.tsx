@@ -15,6 +15,7 @@ export default function LogsView({ liveLogs, pushLog }: Props) {
   const { t } = useI18n();
   const [historyLogs, setHistoryLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState<Level>("all");
   const [confirmClear, setConfirmClear] = useState(false);
@@ -22,11 +23,12 @@ export default function LogsView({ liveLogs, pushLog }: Props) {
   const boxRef = useRef<HTMLDivElement>(null);
 
   const loadHistory = () => {
+    setError(null);
     setLoading(true);
     void api
       .getLogFile(2000)
       .then(setHistoryLogs)
-      .catch(() => {})
+      .catch((error: unknown) => setError(String(error)))
       .finally(() => setLoading(false));
   };
   useEffect(loadHistory, []);
@@ -98,6 +100,7 @@ export default function LogsView({ liveLogs, pushLog }: Props) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-8">
+      {error && <p role="alert" className="tool-error">{error}</p>}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/[0.08]">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("nav_logs")}</h2>

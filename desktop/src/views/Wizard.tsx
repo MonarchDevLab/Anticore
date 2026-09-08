@@ -58,8 +58,9 @@ export default function Wizard({ onComplete, pushLog }: Props) {
   const [step, setStep] = useState(1);
   const [selectedIsp, setSelectedIsp] = useState("universal");
   const [selectedPacks, setSelectedPacks] = useState<string[]>(["discord", "roblox"]);
-  const [applyDns, setApplyDns] = useState(true);
+  const [applyDns, setApplyDns] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const togglePack = (packId: string) => {
     setSelectedPacks((prev) =>
@@ -68,6 +69,8 @@ export default function Wizard({ onComplete, pushLog }: Props) {
   };
 
   const handleFinish = async () => {
+    if (busy) return;
+    setError(null);
     setBusy(true);
     try {
       pushLog("[*] Sihirbaz ayarları uygulanıyor...");
@@ -77,26 +80,24 @@ export default function Wizard({ onComplete, pushLog }: Props) {
       PACKS.filter((p) => selectedPacks.includes(p.id)).forEach((p) => {
         p.domains.forEach((d) => domainsToAdd.add(d));
       });
-      for (const domain of domainsToAdd) {
-        await api.addSite(domain).catch(() => {});
-      }
+      await api.addSites([...domainsToAdd]);
       pushLog(`[+] ${domainsToAdd.size} hedef alan adı listeye kaydedildi.`);
 
       // 2) DNS uygula
       if (applyDns) {
-        await api.applySecureDns().catch((e) => pushLog(`[!] DNS uyarısı: ${String(e)}`));
-        await api.applyDohRegistry().catch(() => {});
+        await api.applySecureDns();
+        await api.applyDohRegistry();
       }
 
       // 3) Motoru başlat
-      await api.startEngine(selectedIsp).catch((e) => {
-        pushLog(`[!] Motor başlatma uyarısı: ${String(e)}`);
-      });
+      await api.startEngine(selectedIsp);
 
+      localStorage.setItem("anticore_last_profile", selectedIsp);
       localStorage.setItem("anticore_onboarded", "true");
       pushLog("[+] Anticore kurulumu başarıyla tamamlandı!");
       onComplete();
     } catch (e) {
+      setError(String(e));
       pushLog(`[!] Sihirbaz tamamlama hatası: ${String(e)}`);
     } finally {
       setBusy(false);
@@ -105,6 +106,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-8">
+      {error && <p role="alert" className="tool-error">{error}</p>}
       {/* İlerleme Göstergesi */}
       <div className="flex items-center justify-between gap-3 px-1">
         {[1, 2, 3, 4].map((i) => {

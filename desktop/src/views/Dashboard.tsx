@@ -5,7 +5,6 @@ import { useI18n } from "../lib/i18n";
 import type { ViewId } from "../components/AppNavigation";
 import { connectionCopy } from "../features/connection/copy";
 import { useConnectionData } from "../features/connection/useConnectionData";
-import ConnectionVisual from "../features/connection/ConnectionVisual";
 import ConnectionActivity from "../features/connection/ConnectionActivity";
 import ConnectionTargets from "../features/connection/ConnectionTargets";
 
@@ -42,8 +41,13 @@ export default function Dashboard({ status, running, logs, selectedProfile, onSe
         <section className={`workspace-panel connection-hero ${running && known ? "is-active" : ""}`}>
           <div className="hero-status"><span className={`status-dot ${running && known ? "online" : ""}`} /><span role="status">{stateText}</span><span className="hero-local">{copy.noTunnel}</span></div>
           <div className="hero-copy"><h2>{!known ? copy.unknown : running ? copy.active : copy.ready}</h2><p>{!known ? copy.unknownHint : running ? copy.activeHint : copy.readyHint}</p></div>
-          <ConnectionVisual active={running && known} copy={copy} />
-          <div className="hero-actions"><button className={`workspace-button primary ${running ? "is-running" : ""}`} onClick={onToggle} disabled={busy || !known || (!running && !profile)} aria-busy={busy}>{busy ? <LoaderCircle size={18} className="animate-spin" /> : <Power size={18} />}{busy ? copy.busy : running ? copy.stop : copy.start}</button><span className="hero-profile"><Layers size={14} />{profile?.name ?? selectedProfile}</span></div>
+          <div className="power-control">
+            <button className={`power-switch ${running && known ? "is-running" : ""}`} onClick={onToggle} disabled={busy || !known || (!running && !profile)} aria-busy={busy} aria-label={busy ? copy.busy : running ? copy.stop : copy.start}>
+              {busy ? <LoaderCircle size={46} className="animate-spin" /> : <Power size={46} strokeWidth={1.5} />}
+              <span>{busy ? copy.busy : running ? copy.stop : copy.start}</span>
+            </button>
+          </div>
+          <div className="hero-actions"><span className="hero-profile"><Layers size={14} />{profile?.name ?? selectedProfile}</span><span className="hero-protocol">WIN DIVERT / LOCAL</span></div>
         </section>
         <section className="workspace-panel profile-panel">
           <div className="panel-heading"><div><span className="panel-icon"><Layers size={18} /></span><h2>{copy.profile}</h2><p>{copy.profileHint}</p></div></div>

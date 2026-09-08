@@ -1,4 +1,5 @@
 import { LoaderCircle } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useI18n } from "../lib/i18n";
 
 interface Props {
@@ -25,15 +26,21 @@ export default function ConfirmDialog({
   onCancel,
 }: Props) {
   const { t } = useI18n();
-  if (!open) return null;
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    if (!element) return;
+    if (open && !element.open) element.showModal();
+    if (!open && element.open) element.close();
+  }, [open]);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialog}
       aria-label={title}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4"
-      onClick={onCancel}
+      className="workspace-dialog"
+      onCancel={(event) => { event.preventDefault(); if (!busy) onCancel(); }}
+      onClick={(event) => { if (!busy && event.target === event.currentTarget) onCancel(); }}
     >
       <div
         className={`card rounded-2xl p-6 bg-surface-card border shadow-2xl w-full max-w-md relative overflow-hidden ${
@@ -47,6 +54,7 @@ export default function ConfirmDialog({
         <p className="mt-2 text-xs leading-relaxed text-paper-muted">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
           <button
+            autoFocus
             className="btn btn-secondary text-xs"
             onClick={onCancel}
             disabled={busy}
@@ -63,6 +71,6 @@ export default function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
