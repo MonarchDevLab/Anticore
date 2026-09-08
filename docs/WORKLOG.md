@@ -2,16 +2,19 @@
 
 ## Aktif Oturum (Son Oturumun Detayları)
 - **Tarih:** 2026-09-04
-- **Gerçekleşenler (Faz 22 - Otomatik DNS Zehirlenmesi / Discord BTK Engeli Onarımı & Cyberpunk & Quiet Luxury Temaları):**
-  1. Discord BTK DNS Zehirlenmesi Analizi ve Otomatik Onarımı: Türkiye'deki ISP'lerin `discord.com` sorgusunu `195.175.254.2` BTK engelleme sunucusuna yönlendirdiği tespit edildi. Tarayıcı sahte hedefe gittiği için WinDivert motoru açıkken bile Discord açılamıyordu. Rust tarafına `check_dns_health` ve `auto_fix_dns` (Cloudflare 1.1.1.1 + Windows native DoH + DNS flush) eklendi; `universal` profiline Sandvine DPI atlatması için `FakePacketBefore { ttl: 4 }` entegre edildi.
-  2. Dashboard Canlı DNS Zehirlenmesi Şeridi: `Dashboard.tsx` açılışında otomatik DNS testi çalıştırılarak zehirlenme tespit edildiğinde uyarı şeridi ve tek tıkla "Güvenli DNS & DoH Uygula" butonu gösterildi.
-  3. Cyberpunk 2077 ve Quiet Luxury Tam Morfolojik Temaları:
-     - Cyberpunk 2077: 45° açılı kesik poligon köşeler (`clip-path: polygon(...)`), 24px HUD grid matrisi, üstte elektrik sarısı neon şerit (`border-top: 3px solid #FFE600`), endüstriyel mecha tetik butonları, agresif uppercase tipografi ve neon siyan/sarı yüksek gerilim auraları.
-     - Quiet Luxury: Patek Philippe & Mayfair lüks saatçilik estetiği, editoryal serif tipografi (`font-serif` - Cinzel, Playfair Display, Georgia), kadife siyahı (`#0C0B0E`), fırçalanmış şampanya altını ve kaşmir detaylar (`#D4AF37`), fısıldayan mikro sınırlar, pürüzsüz 12px organik kavisler, sıfır neon.
-     - Amber CRT: Tam ekran CRT scanline overlay katmanı (`#root::after`), CRT phosphor kehribar ışıması ve zorunlu monospace (`font-mono`).
-  4. Doğrulama: `npm run build` 0 hata (2.53s), `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 8/8 yeşil; release binary (`Anticore.exe`), NSIS kurulumcu ve taşınabilir zip paketi güncellendi.
+- **Gerçekleşenler (Faz 23 - Kod Tabanı Derin Denetimi, ECH/Kyber 2048B Yükseltmesi, Asenkron DNS & Güvenli Mimari Restorasyonu):**
+  1. ECH & Post-Quantum Kyber Büyük Paket Restorasyonu: Modern tarayıcıların (Chrome 124+, Firefox 128+) Encrypted Client Hello ve Kyber anahtar değişimi paketlerinin (1420-1460B) `TooLarge` filtresine takılarak sansürlenmesi engellendi; `MAX_INSPECT_PAYLOAD` 2048 bayta yükseltildi (`dispatch.rs`).
+  2. Asenkron & Çoklu IP DNS Zehirlenme Tespiti: `commands::check_dns_health` komutu `tokio::time::timeout(3000ms)` ile asenkron yapıldı; dönen tüm IP'ler taranarak BTK, Superonline, Vodafone, RFC1918, CGNAT ve IPv6 sahte engelleme adresleri (`is_poisoned_or_bogus_ip`) eksiksiz yakalandı (`commands.rs`).
+  3. Yönetici Hak Doğrulaması ve PowerShell Hata Yayılımı: Native `shell32::IsUserAnAdmin()` ile `is_running_as_admin()` ve `check_is_admin()` fonksiyonları eklendi. `apply_secure_dns`, `auto_fix_dns`, `reset_dns`, `apply_doh_registry`, `reset_doh_registry` komutlarına yönetici kontrolü bağlandı; PowerShell `-ErrorAction SilentlyContinue` kaldırılarak aktif Up bağdaştırıcıları korundu.
+  4. CSS Seçici ve Morfolojik Tema Temizliği: Zararlı joker seçiciler (`div[class*="rounded-"]`, `button[class*="rounded-"]`) silindi, kart ve butonlar doğrudan `.card`, `.card-subtle`, `.btn` sınıflarına bağlandı; Cobalt dairesel reaktör butonu korundu; Cyberpunk uppercase input zorlaması ve clip-path kaldırıldı; Quiet Luxury serif zorlaması sadece başlıklara çekilip monospace telemetri korundu; Amber CRT scanline katmanı z-35'e çekilerek modal pencerelerinin arkasına alındı (`globals.css`).
+  5. Soket Teardown & Dağıtım Paketleri: Windows API'de var olmayan `SetTcp6Entry` temizlenerek MSVC LNK2019 bağlama hatası giderildi, 5 denemeli IPv4 `SetTcpEntry` + `DnsFlushResolverCache` ile derleme sağlandı. `Anticore.exe` (15.3 MB), `anticore-cli.exe` (371 KB), `Anticore_0.3.0_x64-setup.exe` (4.32 MB), `Anticore_0.3.0_x64_en-US.msi` (6.03 MB) ve `Anticore_0.3.0_x64-portable.zip` (6.18 MB) üretildi.
+  6. Doğrulama: `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 9/9 yeşil, `npm run build` 0 hata.
 
 ## Mimari Kararlar
+- `[KARAR-022]` **Asenkron DNS Sağlık Motoru & Native Windows Yönetici Doğrulaması:**
+  DNS çözümleme istekleri işletim sistemi seviyesinde kilitlenmeye (15-30s) yol açmaması için `tokio::time::timeout(3000ms)` ile asenkron tokio iş parçacığına taşındı. `is_poisoned_or_bogus_ip` ile sadece ilk IP değil, gelen tüm adresler taranarak BTK/Superonline/Vodafone sahte engelleme IP'leri yakalandı. Ağ/DNS ayarları için native `shell32::IsUserAnAdmin()` ile Rust seviyesinde ön doğrulama yapıldı, PowerShell `-ErrorAction SilentlyContinue` kaldırılarak gerçek hata yayılımı sağlandı.
+- `[KARAR-021]` **Büyük El Sıkışma Paketleri (ECH & Post-Quantum Kyber) için 2048B Eşiği:**
+  Modern tarayıcıların (Chrome 124+, Firefox 128+) Encrypted Client Hello (ECH) ve Kyber (ML-KEM 768) el sıkışma paketlerinin (1420-1460 bayt) `MAX_INSPECT_PAYLOAD = 1400` sınırına takılıp passthrough edilerek sansürlenmesini önlemek için sınır 2048 bayta yükseltildi.
 - `[KARAR-020]` **Derin Morfolojik Tasarım Mimarisi (Cyberpunk vs. Quiet Luxury):**
   Yalnızca renk değiştiren temalar kullanıcı nezdinde yetersizdir. Tema sistemi arayüzün tüm karakterini değiştirmelidir:
   - Cyberpunk 2077: 45° açılı poligon pahlar (`clip-path: polygon(...)`), 24px HUD gridi zemin, sarı üst lazer şeritleri (`border-top: 3px solid #FFE600`), mecha tetik butonları, agresif uppercase tipografi.

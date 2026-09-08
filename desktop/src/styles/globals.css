@@ -716,14 +716,14 @@ html.theme-amber * {
   font-family: var(--font-mono) !important;
 }
 
-/* CRT Scanline Overlay */
+/* CRT Scanline Overlay: z-35 (modalların ve dialogların arkasında kalır) */
 [data-theme="amber"] #root::after,
 html.theme-amber #root::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 99999;
+  z-index: 35;
   background: repeating-linear-gradient(
     0deg,
     rgba(0, 0, 0, 0.22) 0px,
@@ -731,7 +731,7 @@ html.theme-amber #root::after {
     transparent 1px,
     transparent 2px
   );
-  opacity: 0.85;
+  opacity: 0.65;
 }
 
 /* CRT Phosphor Atmosphere & Vignette */
@@ -746,27 +746,6 @@ html.theme-amber #root::before {
   pointer-events: none;
 }
 
-/* Phosphor Text Glow & Full Monospace Enforcement */
-[data-theme="amber"],
-html.theme-amber {
-  font-family: var(--font-mono) !important;
-}
-[data-theme="amber"] * {
-  font-family: var(--font-mono) !important;
-}
-[data-theme="amber"] #root::after,
-html.theme-amber #root::after {
-  content: " ";
-  display: block;
-  position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
-  background-size: 100% 3px;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.55;
-}
-
 [data-theme="amber"] h1,
 [data-theme="amber"] h2,
 [data-theme="amber"] h3,
@@ -775,12 +754,11 @@ html.theme-amber #root::after {
   text-shadow: 0 0 8px rgba(255, 176, 32, 0.5) !important;
 }
 
-/* 2px Sharp Terminal Geometry */
+/* 2px Sharp Terminal Geometry - Hedefli Kartlar */
 [data-theme="amber"] .card,
 [data-theme="amber"] .card-subtle,
-[data-theme="amber"] div[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-amber .card,
-html.theme-amber div[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-amber .card-subtle {
   border-radius: 2px !important;
   border: 1px solid rgba(255, 176, 32, 0.35) !important;
   box-shadow: 0 0 14px rgba(255, 176, 32, 0.06), inset 0 0 10px rgba(255, 176, 32, 0.03) !important;
@@ -789,9 +767,7 @@ html.theme-amber div[class*="rounded-"]:not([class*="rounded-full"]) {
 
 /* Terminal Key Buttons */
 [data-theme="amber"] .btn,
-[data-theme="amber"] button[class*="rounded-"]:not([class*="rounded-full"]),
-html.theme-amber .btn,
-html.theme-amber button[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-amber .btn {
   border-radius: 2px !important;
   border: 1px solid rgba(255, 176, 32, 0.55) !important;
   text-transform: uppercase !important;
@@ -808,14 +784,19 @@ html.theme-amber .btn-primary {
 }
 
 [data-theme="amber"] .status-pill,
-[data-theme="amber"] .badge,
-[data-theme="amber"] span[class*="rounded-"] {
+[data-theme="amber"] .badge {
   border-radius: 2px !important;
   text-transform: uppercase !important;
 }
 
+[data-theme="amber"] input,
+[data-theme="amber"] select {
+  border-radius: 2px !important;
+  border: 1px solid rgba(255, 176, 32, 0.35) !important;
+}
 
-/* ── 2. CYBERPUNK 2077: 45° Chamfer Cut Polygons & High-Voltage HUD ── */
+
+/* ── 2. CYBERPUNK 2077: High-Voltage HUD & Industrial Mecha Chassis ── */
 [data-theme="cyberpunk"] #root::before,
 html.theme-cyberpunk #root::before {
   content: "";
@@ -831,38 +812,25 @@ html.theme-cyberpunk #root::before {
   pointer-events: none;
 }
 
-/* 45 Derece Kesik Köşeli Poligon Kartlar (Chamfer Cut) */
+/* Keskin Köşeli Mecha Kartlar */
 [data-theme="cyberpunk"] .card,
 [data-theme="cyberpunk"] .card-subtle,
-[data-theme="cyberpunk"] div[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-cyberpunk .card,
-html.theme-cyberpunk div[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-cyberpunk .card-subtle {
   border-radius: 0px !important;
-  clip-path: polygon(
-    0 0,
-    calc(100% - 14px) 0,
-    100% 14px,
-    100% calc(100% - 14px),
-    calc(100% - 14px) 100%,
-    14px 100%,
-    0 calc(100% - 14px)
-  ) !important;
   border: 1px solid rgba(255, 230, 0, 0.35) !important;
-  border-top: 3px solid #FFE600 !important;
+  border-top: 2px solid #FFE600 !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), inset 0 0 16px rgba(255, 230, 0, 0.06) !important;
   background: rgba(13, 16, 24, 0.96) !important;
 }
 
 /* Endüstriyel Mecha Tetik Butonları */
 [data-theme="cyberpunk"] .btn,
-[data-theme="cyberpunk"] button[class*="rounded-"]:not([class*="rounded-full"]),
-html.theme-cyberpunk .btn,
-html.theme-cyberpunk button[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-cyberpunk .btn {
   border-radius: 0px !important;
-  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%) !important;
   text-transform: uppercase !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.08em !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
   border: 1px solid rgba(255, 230, 0, 0.45) !important;
 }
 
@@ -887,12 +855,15 @@ html.theme-cyberpunk h3 {
 }
 
 [data-theme="cyberpunk"] .status-pill,
-[data-theme="cyberpunk"] .badge,
-[data-theme="cyberpunk"] span[class*="rounded-"],
+[data-theme="cyberpunk"] .badge {
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+}
+
 [data-theme="cyberpunk"] input,
 [data-theme="cyberpunk"] select {
   border-radius: 0px !important;
-  text-transform: uppercase !important;
+  border: 1px solid rgba(255, 230, 0, 0.35) !important;
 }
 
 [data-theme="cyberpunk"] .topbar,
@@ -905,20 +876,25 @@ html.theme-cyberpunk .topbar {
 /* ── 3. QUIET LUXURY: Mayfair / Cartier High-End Editorial Serif & Brushed Gold ── */
 [data-theme="luxury"],
 html.theme-luxury {
-  font-family: "Playfair Display", "Cinzel", "Bodoni MT", "Didot", "Georgia", "Times New Roman", serif !important;
+  font-family: "Georgia", "Palatino Linotype", Palatino, serif !important;
 }
 
 [data-theme="luxury"] h1,
 [data-theme="luxury"] h2,
 [data-theme="luxury"] h3,
 [data-theme="luxury"] .section-title,
-[data-theme="luxury"] .font-mono,
 html.theme-luxury h1,
 html.theme-luxury h2,
 html.theme-luxury h3,
+html.theme-luxury .section-title {
+  font-family: "Georgia", "Palatino Linotype", Palatino, serif !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Sayısal ve telemetri verileri daima monospace kalır */
+[data-theme="luxury"] .font-mono,
 html.theme-luxury .font-mono {
-  font-family: "Cinzel", "Playfair Display", "Georgia", serif !important;
-  letter-spacing: 0.08em !important;
+  font-family: var(--font-mono) !important;
 }
 
 [data-theme="luxury"] #root::before,
@@ -937,9 +913,8 @@ html.theme-luxury #root::before {
 /* 12px Organik Lüks Kadife Kartlar & Fırçalanmış Şampanya Altını Sınırlar */
 [data-theme="luxury"] .card,
 [data-theme="luxury"] .card-subtle,
-[data-theme="luxury"] div[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-luxury .card,
-html.theme-luxury div[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-luxury .card-subtle {
   border-radius: 12px !important;
   background: linear-gradient(165deg, rgba(22, 19, 28, 0.94) 0%, rgba(12, 10, 15, 0.98) 100%) !important;
   border: 1px solid rgba(212, 175, 55, 0.22) !important;
@@ -949,12 +924,9 @@ html.theme-luxury div[class*="rounded-"]:not([class*="rounded-full"]) {
 
 /* Mücevherat Sınıfı Fırçalanmış Altın Butonlar */
 [data-theme="luxury"] .btn,
-[data-theme="luxury"] button[class*="rounded-"]:not([class*="rounded-full"]),
-html.theme-luxury .btn,
-html.theme-luxury button[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-luxury .btn {
   border-radius: 8px !important;
-  font-family: "Cinzel", "Playfair Display", "Georgia", serif !important;
-  letter-spacing: 0.06em !important;
+  letter-spacing: 0.04em !important;
   transition: all 200ms ease !important;
 }
 
@@ -980,7 +952,7 @@ html.theme-luxury .topbar {
 }
 
 
-/* ── 3. COBALT MATRIX: C2 Naval War-Room & Sonar Console ── */
+/* ── 4. COBALT MATRIX: C2 Naval War-Room & Sonar Console ── */
 [data-theme="cobalt"] #root::before,
 html.theme-cobalt #root::before {
   content: "";
@@ -999,9 +971,8 @@ html.theme-cobalt #root::before {
 /* 6px Taktik Donanma Konsol Çerçeveleri & Sol Polar Çapa */
 [data-theme="cobalt"] .card,
 [data-theme="cobalt"] .card-subtle,
-[data-theme="cobalt"] div[class*="rounded-"],
 html.theme-cobalt .card,
-html.theme-cobalt div[class*="rounded-"] {
+html.theme-cobalt .card-subtle {
   border-radius: 6px !important;
   border: 1px solid rgba(0, 229, 255, 0.22) !important;
   border-left: 3px solid #00E5FF !important;
@@ -1010,9 +981,7 @@ html.theme-cobalt div[class*="rounded-"] {
 }
 
 [data-theme="cobalt"] .btn,
-[data-theme="cobalt"] button[class*="rounded-"],
-html.theme-cobalt .btn,
-html.theme-cobalt button[class*="rounded-"] {
+html.theme-cobalt .btn {
   border-radius: 5px !important;
   border: 1px solid rgba(0, 229, 255, 0.35) !important;
   letter-spacing: 0.03em !important;
@@ -1027,15 +996,17 @@ html.theme-cobalt .btn-primary {
 }
 
 [data-theme="cobalt"] .status-pill,
-[data-theme="cobalt"] .badge,
-[data-theme="cobalt"] span[class*="rounded-"],
+[data-theme="cobalt"] .badge {
+  border-radius: 5px !important;
+}
+
 [data-theme="cobalt"] input,
 [data-theme="cobalt"] select {
   border-radius: 5px !important;
 }
 
 
-/* ── 4. AMETHYST NEBULA: 24px Ultra Organic Frosted Glass ── */
+/* ── 5. AMETHYST NEBULA: 24px Ultra Organic Frosted Glass ── */
 [data-theme="amethyst"] #root::before,
 html.theme-amethyst #root::before {
   content: "";
@@ -1053,9 +1024,8 @@ html.theme-amethyst #root::before {
 /* 24px Ultra Yumuşak Organik Kavis & Ağır Buzlu Cam */
 [data-theme="amethyst"] .card,
 [data-theme="amethyst"] .card-subtle,
-[data-theme="amethyst"] div[class*="rounded-"]:not([class*="rounded-full"]),
 html.theme-amethyst .card,
-html.theme-amethyst div[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-amethyst .card-subtle {
   border-radius: 1.5rem !important; /* 24px */
   background: linear-gradient(145deg, rgba(26, 18, 50, 0.72) 0%, rgba(15, 10, 32, 0.88) 100%) !important;
   backdrop-filter: blur(36px) saturate(190%) !important;
@@ -1066,9 +1036,7 @@ html.theme-amethyst div[class*="rounded-"]:not([class*="rounded-full"]) {
 
 /* Kapsül Hap Butonlar */
 [data-theme="amethyst"] .btn,
-[data-theme="amethyst"] button[class*="rounded-"],
-html.theme-amethyst .btn,
-html.theme-amethyst button[class*="rounded-"] {
+html.theme-amethyst .btn {
   border-radius: 9999px !important;
   transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -1083,8 +1051,7 @@ html.theme-amethyst .btn-primary {
 }
 
 [data-theme="amethyst"] .status-pill,
-[data-theme="amethyst"] .badge,
-[data-theme="amethyst"] span[class*="rounded-"] {
+[data-theme="amethyst"] .badge {
   border-radius: 9999px !important;
 }
 
@@ -1094,7 +1061,7 @@ html.theme-amethyst .btn-primary {
 }
 
 
-/* ── 5. TITANIUM LABORATORY: Cleanroom Surgical Light Mode ── */
+/* ── 6. TITANIUM LABORATORY: Cleanroom Surgical Light Mode ── */
 html.light #root::before,
 [data-theme="titanium"] #root::before,
 [data-theme="light"] #root::before,
@@ -1113,10 +1080,7 @@ html.theme-titanium #root::before {
 html.light .card,
 [data-theme="titanium"] .card,
 [data-theme="light"] .card,
-html.theme-titanium .card,
-html.light div[class*="rounded-"]:not([class*="rounded-full"]),
-[data-theme="titanium"] div[class*="rounded-"]:not([class*="rounded-full"]),
-html.theme-titanium div[class*="rounded-"]:not([class*="rounded-full"]) {
+html.theme-titanium .card {
   border-radius: 0.75rem !important; /* 12px */
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
@@ -1133,10 +1097,7 @@ html.theme-titanium .card-subtle {
 
 html.light .btn,
 [data-theme="titanium"] .btn,
-html.theme-titanium .btn,
-html.light button[class*="rounded-"],
-[data-theme="titanium"] button[class*="rounded-"],
-html.theme-titanium button[class*="rounded-"] {
+html.theme-titanium .btn {
   border-radius: 0.5rem !important;
 }
 
@@ -1169,7 +1130,7 @@ html.theme-titanium select {
 }
 
 
-/* ── 6. OBSIDIAN EMERALD: 16px Aerospace CNC Chassis ── */
+/* ── 7. OBSIDIAN EMERALD: 16px Aerospace CNC Chassis ── */
 [data-theme="obsidian"] #root::before,
 html.theme-obsidian #root::before {
   content: "";

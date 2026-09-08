@@ -29,8 +29,13 @@ Anticore v0.3.0, Ouroboros v6.0 disiplini ile derinlemesine restore edildi:
   - Kullanıcının bizzat talep ettiği iki zıt kutup geliştirildi:
     - *Cyberpunk 2077:* 45° açılı kesik poligon köşeler (`clip-path: polygon(...)`), 24px HUD grid matrisi, üstte elektrik sarısı neon şerit (`border-top: 3px solid #FFE600`), endüstriyel mecha tetik butonları, agresif uppercase tipografi ve neon siyan/sarı yüksek gerilim auraları.
     - *Quiet Luxury:* Patek Philippe & Mayfair lüks saatçilik estetiği, editoryal serif tipografi (`font-serif` - Cinzel, Playfair Display, Georgia), kadife siyahı (`#0C0B0E`), fırçalanmış şampanya altını ve kaşmir detaylar (`#D4AF37`), fısıldayan mikro sınırlar, pürüzsüz 12px organik kavisler, sıfır neon.
-    - *Amber CRT:* Tam ekran CRT scanline overlay katmanı (`#root::after`), CRT phosphor kehribar ışıması ve zorunlu monospace (`font-mono`).
-- **Doğrulama:** `npm run build` 0 hata (1537 modül, 2.53s), `cargo check` (desktop/src-tauri) 0 hata, `cargo test` (src-tauri) 8/8 yeşil, `cargo test --workspace` 46/46 yeşil (10.59s). Dağıtım ikilileri (`dist/`, `dist-portable/`, `Anticore.exe`) güncellendi.
+- **Kod Tabanı Derin Denetimi & Güçlendirilmiş Mimari (Faz 23):**
+  - Modern tarayıcıların (Chrome 124+, Firefox 128+) ECH ve Post-Quantum Kyber el sıkışma paketlerinin (1420-1460B) DPI bypass dışına düşmesini önlemek için `MAX_INSPECT_PAYLOAD` 2048 bayta yükseltildi (`dispatch.rs`).
+  - DNS zehirlenmesi tespiti `tokio::time::timeout` ile 3 saniye kilitlenmesiz asenkron hale getirildi; dönen tüm IP'ler taranarak BTK, Superonline, Vodafone TR, RFC1918, CGNAT ve IPv6 sahte engelleme IP'leri eksiksiz kapsandı (`commands.rs`).
+  - Native `shell32::IsUserAnAdmin()` ile tüm ağ ve DNS onarım komutlarına (`apply_secure_dns`, `auto_fix_dns`, `apply_doh_registry`, `reset_dns`) yönetici hak doğrulaması eklendi; yetkisiz çağrılarda sessizce yutulan hatalar yerine net mesaj verildi.
+  - `globals.css` içerisindeki tehlikeli genel seçiciler (`div[class*="rounded-"]`, `button[class*="rounded-"]`) temizlendi, kart ve buton stilleri `.card`, `.card-subtle`, `.btn` sınıflarına indirgendi; Cobalt dairesel reaktör butonu korundu; Cyberpunk uppercase input zorlaması ve clip-path kaldırıldı; Quiet Luxury serif zorlaması sadece başlıklara çekilip monospace telemetri korundu; Amber CRT scanline katmanı z-35'e çekilerek modal pencerelerinin arkasına alındı.
+  - Dağıtım paketleri güncellendi: `Anticore.exe` (15.3 MB), `anticore-cli.exe` (371 KB), `Anticore_0.3.0_x64-setup.exe` (4.32 MB), `Anticore_0.3.0_x64_en-US.msi` (6.03 MB) ve `Anticore_0.3.0_x64-portable.zip` (6.18 MB).
+- **Doğrulama:** `npm run build` 0 hata (1537 modül, 2.68s), `cargo test` (src-tauri) 9/9 yeşil, `cargo test --workspace` (engine) 46/46 yeşil (10.57s). Release paketleri eksiksiz üretildi ve doğrulandı.
 
 ## Kritik Komutlar
 - Frontend Derleme: `npm run build` (`antikor/desktop`)

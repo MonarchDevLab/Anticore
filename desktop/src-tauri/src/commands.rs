@@ -765,6 +765,30 @@ pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), S
     Ok(())
 }
 
+#[cfg(windows)]
+#[link(name = "shell32")]
+extern "system" {
+    fn IsUserAnAdmin() -> i32;
+}
+
+/// Uygulamanın Windows yönetici (Administrator) yetkileriyle çalışıp çalışmadığını test eder.
+pub fn is_running_as_admin() -> bool {
+    #[cfg(windows)]
+    unsafe {
+        IsUserAnAdmin() != 0
+    }
+    #[cfg(not(windows))]
+    {
+        true
+    }
+}
+
+/// Arayüzün yönetici yetkisini doğrudan sorgulaması için IPC komutu.
+#[tauri::command]
+pub fn check_is_admin() -> bool {
+    is_running_as_admin()
+}
+
 /// Uygulamayı yönetici olarak yeniden başlatır (WinDivert sürücüsü için şart).
 #[tauri::command]
 pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
@@ -815,6 +839,10 @@ pub fn get_dns_servers() -> DnsDto {
 
 #[tauri::command]
 pub fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("DNS ayarlarını değiştirmek için Windows yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak yeniden başlatın.".into());
+    }
+
     let provider_key = provider.unwrap_or_else(|| "google".to_string()).to_lowercase();
     let (v4, v6, prov_name) = match provider_key.as_str() {
         "cloudflare" => (
@@ -847,8 +875,19 @@ pub fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), 
 $ErrorActionPreference = 'Stop'
 $v4 = @({v4_str})
 $v6 = @({v6_str})
-Get-NetAdapter -Physical | ForEach-Object {{
-    Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ServerAddresses ($v4 + $v6) -ErrorAction SilentlyContinue
+$adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {{ $_.Status -eq 'Up' -and ($_.HardwareInterface -or -not $_.Virtual) }}
+if (-not $adapters) {{
+    $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {{ $_.Status -eq 'Up' }}
+}}
+$appliedCount = 0
+foreach ($a in $adapters) {{
+    try {{
+        Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ServerAddresses ($v4 + $v6) -ErrorAction Stop
+        $appliedCount++
+    }} catch {{}}
+}}
+if ($appliedCount -eq 0 -and $adapters.Count -gt 0) {{
+    throw "Hiçbir aktif ağ bağdaştırıcısına DNS atanamadı. Yönetici izinlerinizi kontrol edin."
 }}
 Clear-DnsClientCache
 "#
@@ -861,10 +900,16 @@ Clear-DnsClientCache
 
 #[tauri::command]
 pub fn reset_dns(app: AppHandle) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("DNS ayarlarını sıfırlamak için Windows yönetici (Administrator) yetkisi gereklidir.".into());
+    }
     let script = r#"
 $ErrorActionPreference = 'Stop'
-Get-NetAdapter -Physical | ForEach-Object {
-    Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ResetServerAddresses -ErrorAction SilentlyContinue
+$adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' }
+foreach ($a in $adapters) {
+    try {
+        Set-DnsClientServerAddress -InterfaceIndex $a.ifIndex -ResetServerAddresses -ErrorAction Stop
+    } catch {}
 }
 Clear-DnsClientCache
 "#;
@@ -874,46 +919,133 @@ Clear-DnsClientCache
     Ok(())
 }
 
-/// Discord ve engelli siteler için DNS'in sahte BTK IP'sine (195.175.*)
-/// yönlendirilip yönlendirilmediğini (DNS zehirlenmesi) test eder.
+/// Verilen IP'nin BTK/ISP DNS zehirlenmesi, mahkeme engelleme sayfası veya
+/// geçersiz/özel ağ (bogon/RFC1918) yönlendirmesi olup olmadığını belirler.
+pub fn is_poisoned_or_bogus_ip(ip: &std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(v4) => {
+            if v4.is_loopback() || v4.is_unspecified() || v4.is_broadcast() {
+                return true;
+            }
+            let octets = v4.octets();
+            // RFC 1918 Özel Ağ IP'leri (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+            if octets[0] == 10
+                || (octets[0] == 172 && (16..=31).contains(&octets[1]))
+                || (octets[0] == 192 && octets[1] == 168)
+            {
+                return true;
+            }
+            // RFC 6598 CGNAT (100.64.0.0/10)
+            if octets[0] == 100 && (octets[1] >= 64 && octets[1] <= 127) {
+                return true;
+            }
+            // Türk Telekom & BTK Resmi Mahkeme Engelleme Sunucu Havuzları
+            if octets[0] == 195 && octets[1] == 175 {
+                return true;
+            }
+            if octets[0] == 212 && octets[1] == 156 {
+                return true;
+            }
+            // Turkcell Superonline Engelleme Sunucu Havuzları
+            if octets[0] == 213 && octets[1] == 74 {
+                return true;
+            }
+            if octets[0] == 85 && octets[1] == 29 {
+                return true;
+            }
+            if octets[0] == 212 && octets[1] == 252 {
+                return true;
+            }
+            // Vodafone Türkiye Engelleme Sunucu Havuzları
+            if octets[0] == 212 && octets[1] == 65 {
+                return true;
+            }
+            false
+        }
+        std::net::IpAddr::V6(v6) => {
+            if v6.is_loopback() || v6.is_unspecified() {
+                return true;
+            }
+            let segments = v6.segments();
+            // Türk Telekom IPv6 engelleme bloğu (2a00:1368::/32)
+            if segments[0] == 0x2a00 && segments[1] == 0x1368 {
+                return true;
+            }
+            false
+        }
+    }
+}
+
+/// Discord ve engelli siteler için DNS'in sahte BTK/ISP engelleme IP'sine
+/// yönlendirilip yönlendirilmediğini (DNS zehirlenmesi) asenkron ve kilitlenmesiz test eder.
 #[tauri::command]
-pub fn check_dns_health() -> DnsHealthDto {
+pub async fn check_dns_health() -> DnsHealthDto {
     use std::net::ToSocketAddrs;
-    match ("discord.com", 443u16).to_socket_addrs() {
-        Ok(mut addrs) => {
-            if let Some(addr) = addrs.next() {
-                let ip_str = addr.ip().to_string();
-                // 195.175.* Türk Telekom / BTK resmi mahkeme engelleme sunucusu
-                if ip_str.starts_with("195.175.") || ip_str == "127.0.0.1" || ip_str == "0.0.0.0" {
-                    DnsHealthDto {
-                        poisoned: true,
-                        resolved_ip: ip_str,
-                        is_secure: false,
-                        message: "İnternet sağlayıcınız (ISP) Discord'u sahte BTK engelleme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
-                    }
-                } else {
-                    DnsHealthDto {
-                        poisoned: false,
-                        resolved_ip: ip_str,
-                        is_secure: true,
-                        message: "DNS çözünürlüğü temiz ve gerçek sunucuya ulaşıyor.".into(),
-                    }
-                }
-            } else {
-                DnsHealthDto {
+    use std::time::Duration;
+
+    let res = tokio::time::timeout(Duration::from_millis(3000), tokio::task::spawn_blocking(|| {
+        ("discord.com", 443u16).to_socket_addrs()
+    })).await;
+
+    match res {
+        Ok(Ok(Ok(addrs))) => {
+            let addrs_vec: Vec<_> = addrs.collect();
+            if addrs_vec.is_empty() {
+                return DnsHealthDto {
                     poisoned: true,
                     resolved_ip: "none".into(),
                     is_secure: false,
                     message: "Discord domaini çözümlenemedi (DNS engeli olabilir).".into(),
+                };
+            }
+
+            let mut poisoned_ip = None;
+            for sa in &addrs_vec {
+                if is_poisoned_or_bogus_ip(&sa.ip()) {
+                    poisoned_ip = Some(sa.ip().to_string());
+                    break;
+                }
+            }
+
+            let first_ip = addrs_vec[0].ip().to_string();
+            if let Some(bad_ip) = poisoned_ip {
+                DnsHealthDto {
+                    poisoned: true,
+                    resolved_ip: bad_ip,
+                    is_secure: false,
+                    message: "İnternet sağlayıcınız (ISP) Discord'u sahte BTK/ISP engelleme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
+                }
+            } else {
+                DnsHealthDto {
+                    poisoned: false,
+                    resolved_ip: first_ip,
+                    is_secure: true,
+                    message: "DNS çözünürlüğü temiz ve gerçek sunucuya ulaşıyor.".into(),
                 }
             }
         }
-        Err(e) => {
+        Ok(Ok(Err(e))) => {
             DnsHealthDto {
                 poisoned: true,
                 resolved_ip: "unresolvable".into(),
                 is_secure: false,
                 message: format!("DNS çözümlenemedi: {e}"),
+            }
+        }
+        Ok(Err(join_err)) => {
+            DnsHealthDto {
+                poisoned: true,
+                resolved_ip: "task_error".into(),
+                is_secure: false,
+                message: format!("DNS çözümleme görevi başarısız: {join_err}"),
+            }
+        }
+        Err(_) => {
+            DnsHealthDto {
+                poisoned: true,
+                resolved_ip: "timeout".into(),
+                is_secure: false,
+                message: "DNS sorgusu 3 saniyede yanıt vermedi (İnternet sağlayıcınız DNS isteklerini engelliyor olabilir).".into(),
             }
         }
     }
@@ -923,9 +1055,12 @@ pub fn check_dns_health() -> DnsHealthDto {
 /// ardından sistem DNS önbelleğini temizler.
 #[tauri::command]
 pub fn auto_fix_dns(app: AppHandle) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("Otomatik DNS onarımı için Windows yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak yeniden başlatın.".into());
+    }
     apply_secure_dns(app.clone(), Some("cloudflare".into()))?;
     #[cfg(windows)]
-    let _ = apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()));
+    apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()))?;
     crate::net_teardown::flush_dns_cache();
     app.emit("log", "[+] Cloudflare Güvenli DNS ve DoH otomatik olarak uygulandı, DNS önbelleği temizlendi".to_string()).ok();
     Ok(())
@@ -1291,6 +1426,9 @@ pub fn get_doh_status() -> DohStatusDto {
 #[cfg(windows)]
 #[tauri::command]
 pub fn apply_doh_registry(app: AppHandle, template: Option<String>) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("DoH (DNS over HTTPS) kayıt defteri anahtarlarını yazmak için Windows yönetici (Administrator) yetkisi gereklidir.".into());
+    }
     let params_path = "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters";
     let key = windows_registry::LOCAL_MACHINE
         .create(params_path)
@@ -1323,6 +1461,9 @@ pub fn apply_doh_registry(_app: AppHandle, _template: Option<String>) -> Result<
 #[cfg(windows)]
 #[tauri::command]
 pub fn reset_doh_registry(app: AppHandle) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("DoH kayıt defteri anahtarlarını silmek için Windows yönetici (Administrator) yetkisi gereklidir.".into());
+    }
     let params_path = "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters";
     if let Ok(key) = windows_registry::LOCAL_MACHINE.open(params_path) {
         let _ = key.remove_value("EnableAutoDoh");
@@ -1776,5 +1917,56 @@ mod tests {
         }
         assert_eq!(added, 1);
         assert!(existing.contains("new-site.org"));
+    }
+
+    #[test]
+    fn test_is_poisoned_or_bogus_ip() {
+        use std::net::IpAddr;
+
+        // TTNet / BTK mahkeme kararı sahte engelleme IP'leri
+        let btk_1: IpAddr = "195.175.254.2".parse().unwrap();
+        let btk_2: IpAddr = "212.156.4.1".parse().unwrap();
+        assert!(is_poisoned_or_bogus_ip(&btk_1));
+        assert!(is_poisoned_or_bogus_ip(&btk_2));
+
+        // Superonline engelleme IP'leri
+        let sol_1: IpAddr = "213.74.1.1".parse().unwrap();
+        let sol_2: IpAddr = "85.29.16.1".parse().unwrap();
+        let sol_3: IpAddr = "212.252.0.1".parse().unwrap();
+        assert!(is_poisoned_or_bogus_ip(&sol_1));
+        assert!(is_poisoned_or_bogus_ip(&sol_2));
+        assert!(is_poisoned_or_bogus_ip(&sol_3));
+
+        // Vodafone TR engelleme IP'si
+        let voda: IpAddr = "212.65.128.1".parse().unwrap();
+        assert!(is_poisoned_or_bogus_ip(&voda));
+
+        // Loopback / Sıfır / Bogon IP'ler
+        let loopback: IpAddr = "127.0.0.1".parse().unwrap();
+        let zero: IpAddr = "0.0.0.0".parse().unwrap();
+        let private_c: IpAddr = "192.168.1.1".parse().unwrap();
+        let private_a: IpAddr = "10.0.0.1".parse().unwrap();
+        let cgnat: IpAddr = "100.64.0.1".parse().unwrap();
+        assert!(is_poisoned_or_bogus_ip(&loopback));
+        assert!(is_poisoned_or_bogus_ip(&zero));
+        assert!(is_poisoned_or_bogus_ip(&private_c));
+        assert!(is_poisoned_or_bogus_ip(&private_a));
+        assert!(is_poisoned_or_bogus_ip(&cgnat));
+
+        // Temiz gerçek genel internet ve DNS IP'leri (False pozitif olmamalı)
+        let cf_discord: IpAddr = "162.159.135.234".parse().unwrap();
+        let cf_dns: IpAddr = "1.1.1.1".parse().unwrap();
+        let google_dns: IpAddr = "8.8.8.8".parse().unwrap();
+        assert!(!is_poisoned_or_bogus_ip(&cf_discord));
+        assert!(!is_poisoned_or_bogus_ip(&cf_dns));
+        assert!(!is_poisoned_or_bogus_ip(&google_dns));
+
+        // IPv6 testleri
+        let btk_v6: IpAddr = "2a00:1368::1".parse().unwrap();
+        let clean_v6: IpAddr = "2606:4700:4700::1111".parse().unwrap();
+        let loopback_v6: IpAddr = "::1".parse().unwrap();
+        assert!(is_poisoned_or_bogus_ip(&btk_v6));
+        assert!(is_poisoned_or_bogus_ip(&loopback_v6));
+        assert!(!is_poisoned_or_bogus_ip(&clean_v6));
     }
 }

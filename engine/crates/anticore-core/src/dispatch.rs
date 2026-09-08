@@ -14,7 +14,9 @@ use crate::strategy::{apply_steps, Step};
 use crate::tls::{parse_client_hello, parse_http_host};
 
 /// Kurulu oturumun dosya transferi paketleri işlenmez -> CPU ve hız korunur.
-pub const MAX_INSPECT_PAYLOAD: usize = 1400;
+/// Post-quantum (Kyber) ve ECH taşıyan büyük ClientHello paketlerini (1400+ bayt)
+/// kapsaması için sınır 2048 olarak ayarlanmıştır.
+pub const MAX_INSPECT_PAYLOAD: usize = 2048;
 
 /// Bir paketin neden dokunulmadan geçtiği (istatistik/log ayrımı içindir).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

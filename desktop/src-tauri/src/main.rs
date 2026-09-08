@@ -57,6 +57,7 @@ fn main() {
             commands::export_sites_to_file,
             commands::start_engine,
             commands::stop_engine,
+            commands::check_is_admin,
             commands::restart_as_admin,
             commands::probe_target,
             commands::get_dns_servers,

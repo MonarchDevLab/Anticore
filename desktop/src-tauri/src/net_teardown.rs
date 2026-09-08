@@ -17,6 +17,19 @@ pub struct MibTcpRow {
 }
 
 #[cfg(windows)]
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct MibTcp6Row {
+    pub dw_state: u32,
+    pub local_addr: [u8; 16],
+    pub dw_local_scope_id: u32,
+    pub dw_local_port: u32,
+    pub remote_addr: [u8; 16],
+    pub dw_remote_scope_id: u32,
+    pub dw_remote_port: u32,
+}
+
+#[cfg(windows)]
 #[link(name = "iphlpapi")]
 extern "system" {
     fn GetTcpTable(pTcpTable: *mut u8, pdwSize: *mut u32, bOrder: i32) -> u32;
@@ -31,50 +44,51 @@ extern "system" {
 
 #[cfg(windows)]
 pub const MIB_TCP_STATE_DELETE_TCB: u32 = 12;
+#[cfg(windows)]
+const ERROR_INSUFFICIENT_BUFFER: u32 = 122;
 
-/// Aktif HTTP/HTTPS (port 80 ve 443) baglantilarini sonlandirir ve soket havuzunu bosaltir.
+/// Aktif HTTP/HTTPS (port 80, 443, 8080, 8443) IPv4 baglantilarini sonlandirir.
 #[cfg(windows)]
 pub fn reset_http_connections() -> usize {
+    let mut closed_count = 0;
+
+    // IPv4 TCP Tablosu (5 denemeli arabellek buyutme dongusu)
     let mut size = 0u32;
-    // Ilk cagri gereken arabellek boyutunu dondurur
     unsafe {
         let _ = GetTcpTable(std::ptr::null_mut(), &mut size, 0);
     }
-    if size == 0 {
-        return 0;
-    }
-
-    let mut buffer = vec![0u8; size as usize];
-    let ret = unsafe { GetTcpTable(buffer.as_mut_ptr(), &mut size, 0) };
-    if ret != 0 || buffer.len() < 4 {
-        return 0;
-    }
-
-    let num_entries = u32::from_ne_bytes(buffer[0..4].try_into().unwrap()) as usize;
-    let row_size = std::mem::size_of::<MibTcpRow>();
-    let mut closed_count = 0;
-
-    for i in 0..num_entries {
-        let offset = 4 + i * row_size;
-        if offset + row_size > buffer.len() {
+    for _ in 0..5 {
+        if size == 0 {
             break;
         }
-        let row_ptr = buffer[offset..].as_ptr() as *const MibTcpRow;
-        let mut row = unsafe { *row_ptr };
+        let mut buffer = vec![0u8; size as usize];
+        let ret = unsafe { GetTcpTable(buffer.as_mut_ptr(), &mut size, 0) };
+        if ret == ERROR_INSUFFICIENT_BUFFER {
+            continue;
+        }
+        if ret == 0 && buffer.len() >= 4 {
+            let num_entries = u32::from_ne_bytes(buffer[0..4].try_into().unwrap()) as usize;
+            let row_size = std::mem::size_of::<MibTcpRow>();
+            for i in 0..num_entries {
+                let offset = 4 + i * row_size;
+                if offset + row_size > buffer.len() {
+                    break;
+                }
+                let row_ptr = buffer[offset..].as_ptr() as *const MibTcpRow;
+                let mut row = unsafe { *row_ptr };
 
-        // dw_remote_port network byte order'dadir (Big Endian)
-        let remote_port = u16::from_be((row.dw_remote_port & 0xFFFF) as u16);
-
-        // Web portlari (80, 443, 8080, 8443)
-        if remote_port == 80 || remote_port == 443 || remote_port == 8080 || remote_port == 8443 {
-            // Sadece aktif / dinleme harici baglantilar
-            if row.dw_state != 2 /* LISTEN */ && row.dw_state != 1 /* CLOSED */ {
-                row.dw_state = MIB_TCP_STATE_DELETE_TCB;
-                let set_res = unsafe { SetTcpEntry(&row) };
-                if set_res == 0 {
-                    closed_count += 1;
+                let remote_port = u16::from_be((row.dw_remote_port & 0xFFFF) as u16);
+                if matches!(remote_port, 80 | 443 | 8080 | 8443)
+                    && row.dw_state != 2 /* LISTEN */
+                    && row.dw_state != 1 /* CLOSED */
+                {
+                    row.dw_state = MIB_TCP_STATE_DELETE_TCB;
+                    if unsafe { SetTcpEntry(&row) } == 0 {
+                        closed_count += 1;
+                    }
                 }
             }
+            break;
         }
     }
 

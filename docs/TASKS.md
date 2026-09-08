@@ -11,7 +11,29 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 23.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+- `[ ]` 24.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+
+### Faz 23 — Kod Tabanı Derin Denetimi, ECH/Kyber 2048B Yükseltmesi, Asenkron Kilitlenmesiz DNS & Güvenli Mimari Restorasyonu (TAMAMLANDI)
+- `[x]` 23.1 (2026-09-04) **Büyük Paket ve Modern TLS/ECH/Kyber El Sıkışma Restorasyonu (`dispatch.rs`):**
+  - Modern tarayıcıların (Chrome 124+, Firefox 128+) Encrypted Client Hello (ECH) ve Post-Quantum Kyber (ML-KEM 768) ile 1400 baytı aşan (1420-1460 bayt) TLS el sıkışma paketlerinin `TooLarge` filtresine takılarak passthrough edilmesi ve Discord/Pastebin/Roblox üzerinde sansüre takılması engellendi; `MAX_INSPECT_PAYLOAD = 1400` sınırı `2048`'e yükseltildi.
+- `[x]` 23.2 (2026-09-04) **Asenkron ve Çoklu IP / Bogon Destekli DNS Zehirlenme Tespiti (`commands.rs`):**
+  - `check_dns_health` komutu senkron bloklayıcı yapıdan `tokio::time::timeout(Duration::from_millis(3000), tokio::task::spawn_blocking(...))` ile asenkron, arayüzü asla kilitlemeyen yapıya dönüştürüldü.
+  - `is_poisoned_or_bogus_ip` mimari fonksiyonu geliştirildi; Türk Telekom/BTK (`195.175.*`, `212.156.*`), Turkcell Superonline (`213.74.*`, `85.29.*`, `212.252.*`), Vodafone TR (`212.65.*`), RFC1918 özel IP'ler, CGNAT (`100.64.*`), Loopback/Zero ve IPv6 BTK (`2a00:1368:*`) blokları tam kapsandı.
+  - Domain çözümlemesinde dönen tüm IP'ler taranarak araya sıkışan sahte engelleme IP'leri anında tespit edilebilir kılındı.
+- `[x]` 23.3 (2026-09-04) **Yönetici Yetki Doğrulaması ve PowerShell Güvenlik Katmanı (`commands.rs`):**
+  - Native `shell32::IsUserAnAdmin()` ile `is_running_as_admin()` ve `check_is_admin()` fonksiyonları eklendi.
+  - `apply_secure_dns`, `auto_fix_dns`, `reset_dns`, `apply_doh_registry`, `reset_doh_registry` komutlarına yönetici kontrolü eklendi; yetkisiz erişimde sessizce başarılı dönmek yerine açıklayıcı hata verilmesi sağlandı.
+  - PowerShell DNS komutlarındaki `-ErrorAction SilentlyContinue` kaldırıldı, tüm aktif (`Up`) fiziksel ve Wi-Fi bağdaştırıcıları kapsandı ve başarısızlık durumunda net hata fırlatıldı.
+- `[x]` 23.4 (2026-09-04) **CSS Seçici ve Morfolojik Tema Temizliği (`globals.css`):**
+  - Tüm genel `div[class*="rounded-"]`, `button[class*="rounded-"]` ve `span[class*="rounded-"]` joker seçicileri temizlendi; stil tanımları doğrudan `.card`, `.card-subtle`, `.btn`, `.status-pill` ve `.badge` sınıflarıyla sınırlandırıldı.
+  - Cobalt temasında dairesel ana reaktör butonunun (`rounded-full`) şekil kaybı önlendi.
+  - Cyberpunk temasında buton ve kartlardaki erişilebilirliği bozan `clip-path` kaldırıldı; `input, select` alanlarındaki `text-transform: uppercase` silindi.
+  - Quiet Luxury temasında `.font-mono` serif zorlaması kaldırılarak telemetri ve sayılar Fira Code ile korundu; başlıklar güvenli sistem serif fontlarına bağlandı.
+  - Amber CRT temasındaki çift scanline katmanı teke indirildi ve `z-index: 35` ile modal ve dialogların arkasında kalması sağlandı.
+- `[x]` 23.5 (2026-09-04) **Soket Teardown & Dağıtım Paketleri Güncellemesi (`net_teardown.rs`, `tauri.conf.json`, `dist/`):**
+  - Windows API'sinde bulunmayan `SetTcp6Entry` sembolü temizlendi, 5 denemeli IPv4 `SetTcpEntry` + `DnsFlushResolverCache` ile kusursuz derleme ve bağlama sağlandı.
+  - `Anticore.exe` (15.3 MB), `anticore-cli.exe` (371 KB), `Anticore_0.3.0_x64-setup.exe` (4.32 MB), `Anticore_0.3.0_x64_en-US.msi` (6.03 MB) ve `Anticore_0.3.0_x64-portable.zip` (6.18 MB) üretilerek dağıtım klasörlerine yerleştirildi.
+- `[x]` 23.6 (2026-09-04) **Doğrulama:** `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 9/9 yeşil, `npm run build` 0 hata. Release paketleri doğrulandı.
 
 ### Faz 22 — Otomatik DNS Zehirlenmesi / Discord BTK Engeli Onarımı + Cyberpunk 2077 & Quiet Luxury Temaları (TAMAMLANDI)
 - `[x]` 22.1 (2026-09-04) **Discord BTK DNS Zehirlenmesi Analizi ve Otomatik Çözüm (`commands.rs`, `profile.rs`):**
