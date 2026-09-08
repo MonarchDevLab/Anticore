@@ -195,10 +195,17 @@ fn live_loop(
     use anticore_transport_win::{WinDivert, WINDIVERT_FLAG_DROP};
 
     println!("[*] WinDivert yükleniyor... (yönetici hakları gerekir)");
-    let wd = WinDivert::open(
-        "outbound and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80)",
+    let wd = std::sync::Arc::new(WinDivert::open(
+        &anticore_core::dispatch::capture_filter(steps),
         dll_dir,
-    )?;
+    )?);
+
+    if let Some(stop) = stop_flag {
+        *SERVICE_CAPTURE.lock().unwrap() = std::sync::Arc::downgrade(&wd);
+        if stop.load(std::sync::atomic::Ordering::SeqCst) {
+            wd.shutdown()?;
+        }
+    }
 
     let _wd_rst = if pasif_savunma {
         println!("[+] Pasif savunma (sahte RST düşürme) devrede");
@@ -227,12 +234,10 @@ fn live_loop(
     let mut buf = vec![0u8; 65_535];
     let mut consecutive_errors = 0u32;
     loop {
-        if let Some(stop) = stop_flag {
-            if stop.load(std::sync::atomic::Ordering::Relaxed) {
+        let Some((n, addr)) = wd.recv(&mut buf) else {
+            if stop_flag.is_some_and(|stop| stop.load(std::sync::atomic::Ordering::SeqCst)) {
                 break;
             }
-        }
-        let Some((n, addr)) = wd.recv(&mut buf) else {
             consecutive_errors += 1;
             if consecutive_errors > 100 {
                 return Err("WinDivert sürücü bağlantısı koptu (ardışık 100 recv hatası)".into());
@@ -273,6 +278,10 @@ static SERVICE_ARGS: std::sync::OnceLock<ServiceArgs> = std::sync::OnceLock::new
 #[cfg(windows)]
 static SERVICE_STOP_FLAG: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+#[cfg(windows)]
+static SERVICE_CAPTURE: std::sync::Mutex<std::sync::Weak<anticore_transport_win::WinDivert>> =
+    std::sync::Mutex::new(std::sync::Weak::new());
+
 /// SCM servis gövdesi: dispatcher'a bağlan, Running bildir, motoru çalıştır.
 /// Stop/Shutdown sinyalinde temiz çıkar.
 #[cfg(windows)]
@@ -312,6 +321,11 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
     let status_handle = service_control_handler::register(SERVICE_NAME, move |control| match control {
         ServiceControl::Stop | ServiceControl::Shutdown => {
             SERVICE_STOP_FLAG.store(true, std::sync::atomic::Ordering::SeqCst);
+            if let Some(capture) = SERVICE_CAPTURE.lock().unwrap().upgrade() {
+                if let Err(error) = capture.shutdown() {
+                    eprintln!("{error}");
+                }
+            }
             ServiceControlHandlerResult::NoError
         }
         ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,

@@ -358,7 +358,7 @@ export default function TrayQuickPanel() {
             {t("qp_telemetry_bypass")}
           </span>
           <span className="text-xs font-mono font-black text-live mt-0.5">
-            {running ? "%100" : "—"}
+            {t("telemetry_unmeasured")}
           </span>
         </div>
 
@@ -367,7 +367,7 @@ export default function TrayQuickPanel() {
             {t("qp_telemetry_latency")}
           </span>
           <span className="text-xs font-mono font-black text-sky mt-0.5">
-            {running ? "<0.05ms" : "—"}
+            {t("telemetry_unmeasured")}
           </span>
         </div>
       </div>

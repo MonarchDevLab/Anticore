@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 // ---------- WinDivert sabitleri ----------
 pub const WINDIVERT_LAYER_NETWORK: i32 = 0;
 pub const WINDIVERT_FLAG_NONE: u64 = 0;
-pub const WINDIVERT_FLAG_DROP: u64 = 1; // eşleşen paket çekirdekte düşürülür
+pub const WINDIVERT_FLAG_DROP: u64 = 0x0002;
 
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
@@ -34,6 +34,14 @@ impl Default for WindivertAddress {
 extern "system" {
     fn LoadLibraryW(name: *const u16) -> *mut c_void;
     fn GetProcAddress(module: *mut c_void, name: *const u8) -> *mut c_void;
+    fn FreeLibrary(module: isize) -> i32;
+}
+
+struct Library(isize);
+impl Drop for Library {
+    fn drop(&mut self) {
+        unsafe { FreeLibrary(self.0); }
+    }
 }
 
 // ---------- WinDivert fonksiyon tipleri ----------
@@ -58,6 +66,7 @@ type DivertSend = unsafe extern "system" fn(
     addr: *const WindivertAddress,
 ) -> i32;
 type DivertClose = unsafe extern "system" fn(handle: isize) -> i32;
+type DivertShutdown = unsafe extern "system" fn(handle: isize, how: i32) -> i32;
 
 /// Yüklenmiş WinDivert bağlamı.
 pub struct WinDivert {
@@ -65,6 +74,8 @@ pub struct WinDivert {
     recv: DivertRecv,
     send: DivertSend,
     close: DivertClose,
+    shutdown_recv: DivertShutdown,
+    _library: Library,
     /// `shutdown()`/`Drop` idempotent olsun diye: handle değeri OS
     /// tarafından yeniden kullanılmış olabileceğinden aynı handle'ı
     /// iki kez kapatmak yabancı bir tanıtıcıyı kapatma riski taşır.
@@ -94,6 +105,7 @@ impl WinDivert {
         if lib.is_null() {
             return Err("WinDivert.dll yüklenemedi. Dosya uygulama dizininde mi?".into());
         }
+        let library = Library(lib as isize);
 
         let sym = |name: &str| -> Result<*mut c_void, String> {
             // GetProcAddress LPCSTR (null-sonlandırmalı) ister
@@ -119,6 +131,9 @@ impl WinDivert {
         let close = unsafe {
             std::mem::transmute::<*mut c_void, DivertClose>(sym("WinDivertClose")?)
         };
+        let shutdown_recv = unsafe {
+            std::mem::transmute::<*mut c_void, DivertShutdown>(sym("WinDivertShutdown")?)
+        };
 
         if filter.as_bytes().contains(&0) {
             return Err("Filtre null karakter (interior null) içeremez.".into());
@@ -137,6 +152,8 @@ impl WinDivert {
             recv,
             send,
             close,
+            shutdown_recv,
+            _library: library,
             closed: AtomicBool::new(false),
         })
     }
@@ -159,11 +176,12 @@ impl WinDivert {
         unsafe { (self.send)(self.handle, pkt.as_ptr(), pkt.len() as u32, &mut n, addr) != 0 }
     }
 
-    /// Handle'ı kapatarak recv() döngüsünü kırar (başka thread'i unblock eder).
-    /// İdempotent: birden çok kez çağrılsa (veya `Drop` ile çakışsa) bile
-    /// alttaki `WinDivertClose` yalnızca bir kez çalışır.
-    pub fn shutdown(&self) {
-        self.close_once();
+    /// Stop capture, drain queued packets, then let Drop close after I/O completes.
+    pub fn shutdown(&self) -> Result<(), String> {
+        if unsafe { (self.shutdown_recv)(self.handle, 1) } == 0 {
+            return Err(format!("WinDivertShutdown: {}", std::io::Error::last_os_error()));
+        }
+        Ok(())
     }
 
     fn close_once(&self) {

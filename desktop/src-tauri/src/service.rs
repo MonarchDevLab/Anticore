@@ -88,21 +88,12 @@ pub struct Stats {
 }
 
 /// Motor çalışma yapılandırması.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EngineConfig {
     /// Gelen sahte RST'leri (port 80/443) çekirdekte düşürür.
     pub pasif_savunma: bool,
     /// QUIC/HTTP3 trafiğini düşürür (tarayıcı TLS'e döner, denetlenebilir).
     pub quic_engelle: bool,
-}
-
-impl Default for EngineConfig {
-    fn default() -> Self {
-        Self {
-            pasif_savunma: true,
-            quic_engelle: false,
-        }
-    }
 }
 
 pub struct Engine {
@@ -117,7 +108,7 @@ pub struct Engine {
     stop_flag: Arc<AtomicBool>,
     worker: Mutex<Option<std::thread::JoinHandle<()>>>,
     #[cfg(windows)]
-    active_handles: Mutex<Vec<Arc<anticore_transport_win::WinDivert>>>,
+    active_handles: Arc<Mutex<Vec<Arc<anticore_transport_win::WinDivert>>>>,
 }
 
 impl Engine {
@@ -130,7 +121,7 @@ impl Engine {
             stop_flag: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
             #[cfg(windows)]
-            active_handles: Mutex::new(Vec::new()),
+            active_handles: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -156,15 +147,18 @@ impl Engine {
     ) -> Result<(), String> {
         use anticore_transport_win::WinDivert;
 
+        let mut worker = self.worker.lock().unwrap();
         if self.running.load(Ordering::SeqCst) {
             return Err("Motor zaten çalışıyor".into());
+        }
+        if let Some(previous) = worker.take() {
+            previous.join().map_err(|_| "Önceki motor iş parçacığı başarısız oldu")?;
         }
         *self.profile_id.lock().unwrap() = profile_id.to_string();
         self.stop_flag.store(false, Ordering::SeqCst);
         self.stats.packets_seen.store(0, Ordering::Relaxed);
         self.stats.packets_touched.store(0, Ordering::Relaxed);
         self.stats.passthrough.store(0, Ordering::Relaxed);
-        *self.started_at.lock().unwrap() = Some(Instant::now());
 
         let running = self.running.clone();
         let stop = self.stop_flag.clone();
@@ -172,9 +166,9 @@ impl Engine {
         let started_at = self.started_at.clone();
         let profile_id = profile_id.to_string();
 
-        // Ana handle: outbound 80/443 trafiğini userspace'e taşır
+        // Capture only candidates that the core can inspect.
         let divert = Arc::new(WinDivert::open(
-            "outbound and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80)",
+            &anticore_core::dispatch::capture_filter(&steps),
             dll_dir.as_deref(),
         )?);
 
@@ -212,8 +206,11 @@ impl Engine {
         }
 
         *self.active_handles.lock().unwrap() = handles;
+        let active_handles = self.active_handles.clone();
+        *self.started_at.lock().unwrap() = Some(Instant::now());
+        self.running.store(true, Ordering::SeqCst);
 
-        let handle = std::thread::spawn(move || {
+        let handle = std::thread::Builder::new().name("anticore-packets".into()).spawn(move || {
             on_log(format!(
                 "[+] motor aktif | profil={profile_id} | {} hedef domain",
                 blacklist.len()
@@ -262,13 +259,21 @@ impl Engine {
                     }
                 }
             }
-            running.store(false, Ordering::SeqCst);
+            active_handles.lock().unwrap().clear();
             *started_at.lock().unwrap() = None;
+            running.store(false, Ordering::SeqCst);
             on_log("[*] motor durduruldu".into());
         });
 
-        *self.worker.lock().unwrap() = Some(handle);
-        self.running.store(true, Ordering::SeqCst);
+        match handle {
+            Ok(handle) => *worker = Some(handle),
+            Err(error) => {
+                self.active_handles.lock().unwrap().clear();
+                *self.started_at.lock().unwrap() = None;
+                self.running.store(false, Ordering::SeqCst);
+                return Err(format!("Motor iş parçacığı başlatılamadı: {error}"));
+            }
+        }
         Ok(())
     }
 
@@ -285,19 +290,22 @@ impl Engine {
         Err("Canlı mod bu platformda henüz desteklenmiyor (Faz 4)".into())
     }
 
-    /// Motoru durdurur: tüm handle'lar kapatılarak bloklu recv kırılır.
+    /// Stop capture, drain the queue, join the worker, then release handles.
     #[cfg(windows)]
     pub fn stop(&self) -> Result<(), String> {
-        if !self.running.load(Ordering::SeqCst) {
+        let mut worker = self.worker.lock().unwrap();
+        if worker.is_none() {
             return Err("Motor zaten durdurulmuş".into());
         }
         self.stop_flag.store(true, Ordering::SeqCst);
-        let handles: Vec<_> = self.active_handles.lock().unwrap().drain(..).collect();
-        for h in handles {
-            h.shutdown(); // recv anında false döner → thread çıkar
+        {
+            let handles = self.active_handles.lock().unwrap();
+            if let Some(main) = handles.first() {
+                main.shutdown()?;
+            }
         }
-        if let Some(h) = self.worker.lock().unwrap().take() {
-            let _ = h.join();
+        if let Some(h) = worker.take() {
+            h.join().map_err(|_| "Motor iş parçacığı başarısız oldu")?;
         }
         Ok(())
     }

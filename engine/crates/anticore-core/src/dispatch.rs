@@ -18,6 +18,17 @@ use crate::tls::{parse_client_hello, parse_http_host};
 /// kapsaması için sınır 2048 olarak ayarlanmıştır.
 pub const MAX_INSPECT_PAYLOAD: usize = 2048;
 
+/// Keep bulk TLS data and control packets outside the user-mode packet loop.
+pub fn capture_filter(steps: &[Step]) -> String {
+    let base = format!(
+        "outbound and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80) and tcp.PayloadLength <= {MAX_INSPECT_PAYLOAD}"
+    );
+    if steps.iter().any(|step| matches!(step, Step::WindowSize { .. })) {
+        return base;
+    }
+    format!("{base} and tcp.PayloadLength > 0 and ((tcp.Payload[0] == 0x16 and tcp.Payload[5] == 0x01) or tcp.Payload32[0] == 0x47455420 or tcp.Payload32[0] == 0x504f5354 or tcp.Payload32[0] == 0x48454144)")
+}
+
 /// Bir paketin neden dokunulmadan geçtiği (istatistik/log ayrımı içindir).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PassthroughReason {

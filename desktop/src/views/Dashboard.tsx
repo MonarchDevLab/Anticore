@@ -143,7 +143,7 @@ export default function Dashboard({
           strategy: `${prof.toUpperCase()} [${delta} pkt]`,
           packets: delta,
           verdict: "bypass",
-          loss: "<0.05ms",
+          loss: "—",
         };
         setPacketStream((prev) => [newEvent, ...prev.slice(0, 7)]);
       }
@@ -668,7 +668,7 @@ export default function Dashboard({
                   <Activity size={14} className="text-cyan" />
                 </div>
                 <div className="text-sm font-bold text-paper-bright font-mono">
-                  %100.0 <span className="text-xs text-live font-normal">{t("dash_matrix_success")}</span>
+                  — <span className="text-xs text-live font-normal">{t("dash_matrix_success")}</span>
                 </div>
                 <span className="text-[11px] text-paper-muted block">
                   {t("dash_matrix_dpi_bypassed")}
@@ -753,27 +753,27 @@ export default function Dashboard({
                 <span className="text-[10px] text-paper-faint block uppercase">SÜRÜCÜ KATMANI</span>
                 <div className="flex items-center gap-1.5">
                   <span className={`h-2 w-2 rounded-full ${running ? "bg-live animate-pulse" : "bg-paper-faint"}`} />
-                  <span className="text-xs font-bold text-paper-bright">WinDivert 1.4 L3</span>
+                  <span className="text-xs font-bold text-paper-bright">WinDivert</span>
                 </div>
-                <span className="text-[10px] text-paper-muted block">NDIS Ağ Filtresi</span>
+                <span className="text-[10px] text-paper-muted block">Windows Packet Filter</span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-subtle/70 border border-white/[0.06] space-y-1">
                 <span className="text-[10px] text-paper-faint block uppercase">HALKA TAMPONU</span>
                 <div className="flex items-center gap-1.5">
                   <Cpu size={12} className="text-live" />
-                  <span className="text-xs font-bold text-paper-bright">8,192 KB</span>
+                  <span className="text-xs font-bold text-paper-bright">—</span>
                 </div>
-                <span className="text-[10px] text-live block">Kayıp Oranı: %0.00</span>
+                <span className="text-[10px] text-live block">{t("telemetry_unmeasured")}</span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-subtle/70 border border-white/[0.06] space-y-1">
                 <span className="text-[10px] text-paper-faint block uppercase">ÇEKİRDEK GECİKMESİ</span>
                 <div className="flex items-center gap-1.5">
                   <Gauge size={12} className="text-live" />
-                  <span className="text-xs font-bold text-paper-bright">&lt; 0.05 ms</span>
+                  <span className="text-xs font-bold text-paper-bright">—</span>
                 </div>
-                <span className="text-[10px] text-paper-muted block">Sıfır Bellek Kopyalama</span>
+                <span className="text-[10px] text-paper-muted block">{t("telemetry_unmeasured")}</span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-subtle/70 border border-white/[0.06] space-y-1">
@@ -973,7 +973,7 @@ export default function Dashboard({
                             ? "bg-live/15 text-live border border-live/30"
                             : "bg-cyan/15 text-cyan border border-cyan/30"
                         }`}>
-                          {pkt.verdict === "bypass" ? "BYPASSED" : "PASSTHROUGH"}
+                          {pkt.verdict === "bypass" ? "PROCESSED" : "PASSTHROUGH"}
                         </span>
                       </td>
                       <td className="py-2 text-right text-live font-semibold">{pkt.loss}</td>

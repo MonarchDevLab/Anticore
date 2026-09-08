@@ -391,8 +391,6 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
         .map_err(|e| format!("taskkill başarısız: {e}"))?;
     let _ = std::fs::remove_file(&pid_file);
     if out.status.success() {
-        crate::net_teardown::reset_http_connections();
-        crate::net_teardown::flush_dns_cache();
         app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
         Ok(())
     } else {
@@ -748,10 +746,6 @@ fn save_blacklist(app: &AppHandle, domains: &[String]) -> Result<(), String> {
 
 #[tauri::command]
 pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: String) -> Result<(), String> {
-    // Eski bayat/takılı kalmış soketleri ve DNS önbelleğini temizle
-    crate::net_teardown::reset_http_connections();
-    crate::net_teardown::flush_dns_cache();
-
     let bl = load_blacklist(&app);
     let steps = resolve_steps(&app, &profile_id)?;
     let config = load_engine_config(&app);
@@ -792,21 +786,6 @@ pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), S
         let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
         app.emit("log", "[*] Arka plan servisi durduruldu".to_string()).ok();
     }
-
-    // 4. Tarayıcıların ve istemcilerin (Chrome, Discord, Roblox vb.) Keep-Alive / HTTP/2
-    // üzerinden açık tuttuğu kalıcı bağlantıları derhal sonlandır (TCP delete TCB)
-    let closed = crate::net_teardown::reset_http_connections();
-    if closed > 0 {
-        app.emit(
-            "log",
-            format!("[*] {closed} aktif HTTP/HTTPS soketi sıfırlandı (Keep-Alive sonlandırıldı)"),
-        )
-        .ok();
-    }
-
-    // 5. DNS çözümleyici önbelleğini boşalt
-    crate::net_teardown::flush_dns_cache();
-    app.emit("log", "[*] DNS çözümleyici önbelleği temizlendi".to_string()).ok();
 
     app.emit("status_changed", false).ok();
 
