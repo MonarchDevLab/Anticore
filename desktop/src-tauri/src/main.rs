@@ -92,6 +92,10 @@ fn main() {
             commands::fetch_community_blacklist,
             commands::get_app_version,
             commands::open_browser_url,
+            commands::window_close,
+            commands::window_minimize,
+            commands::window_toggle_maximize,
+            commands::window_is_maximized,
             tray::get_tray_minimize,
             tray::set_tray_minimize,
         ])

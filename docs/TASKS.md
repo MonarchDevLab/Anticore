@@ -11,7 +11,20 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 20.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+- `[ ]` 21.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+
+### Faz 20 — Tema, Dil Reaktivitesi ve Pencere Kapatma ("X") Onarımı (TAMAMLANDI)
+- `[x]` 20.1 (2026-09-04) **Tauri Yetki ve Pencere Kapatma Çözümü (`capabilities/default.json`, `commands.rs`, `Titlebar.tsx`):**
+  - Tauri v2 capability dosyasında eksik olan `core:window:allow-close`, `allow-minimize`, `allow-maximize`, `allow-toggle-maximize`, `allow-hide`, `allow-destroy` izinleri eklendi.
+  - Rust tarafında `window_close`, `window_minimize`, `window_toggle_maximize`, `window_is_maximized` doğrudan IPC komutları eklendi ve `tray.rs` tercihlerine (tray'e küçült açıksa gizle, kapalıysa motoru durdurup güvenle çık) bağlandı.
+  - Titlebar üzerindeki 'X' butonunun ve pencere kontrollerinin hiçbir koşulda donmadan anında tepki vermesi sağlandı.
+- `[x]` 20.2 (2026-09-04) **Dil Değiştirici Reaktivitesi (`i18n.ts`):**
+  - Bileşen başına izole kalan `useState` yapısı yerine React 18 `useSyncExternalStore` entegre edildi.
+  - Başlık çubuğundan veya Ayarlar sekmesinden dil (TR/EN) değiştirildiğinde tüm sayfalardaki metinlerin anında senkronize olması sağlandı.
+- `[x]` 20.3 (2026-09-04) **Tema Sistemi ve CSS Token Eşleşmesi (`theme.ts`, `globals.css`, `App.tsx`, `Titlebar.tsx`):**
+  - `useTheme` hook'u `useSyncExternalStore` ile tüm bileşenlerde tekil bir reaktif kaynağa bağlandı.
+  - `globals.css` içinde `cyberpunk`, `amber`, `cobalt`, `amethyst`, `titanium` temalarının eksik olan `--color-live`, `--color-live-dim`, `--color-live-bright`, `--color-sky`, `--color-border-brutal`, `--color-paper` değişkenleri tam olarak tanımlandı.
+  - Titlebar ve App navbar'daki sabit renk kodları tokenlara (`bg-surface-subtle`, `border-border-brutal`) çevrildi; hafif (Titanium) ve renkli temalara geçildiğinde tüm arayüzün renk ve şasi kimliği anında değişecek hale getirildi.
 
 ### Faz 19 — Çöp Dosya Temizliği, Çoklu Mod Durdurma & Soket Havuzu Teardown, Dağıtım Paketleri (TAMAMLANDI)
 - `[x]` 19.1 (2026-09-04) **Çöp Dosya & Artık Analizi ve Temizliği:** Çalışma alanında kopyalanmış eski `design-system` kopyası, kök dizindeki taslak plan dokümanı ve derleme log artıkları silindi; çalışma alanı sıfır kirlilikle temizlendi.

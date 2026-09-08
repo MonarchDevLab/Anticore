@@ -172,5 +172,10 @@ pub fn handle_close_request(window: &tauri::WebviewWindow, api: &tauri::CloseReq
     if get_tray_minimize_pref(window.app_handle()) {
         let _ = window.hide();
         api.prevent_close();
+    } else {
+        let engine = window.app_handle().state::<Engine>();
+        if engine.running.load(Ordering::SeqCst) {
+            let _ = engine.stop();
+        }
     }
 }

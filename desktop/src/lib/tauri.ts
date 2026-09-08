@@ -205,6 +205,10 @@ export const api = {
     invoke<number>("fetch_community_blacklist", { sourceUrl }),
   getAppVersion: () => invoke<string>("get_app_version"),
   openBrowserUrl: (url: string) => invoke<void>("open_browser_url", { url }),
+  closeWindow: () => invoke<void>("window_close"),
+  minimizeWindow: () => invoke<void>("window_minimize"),
+  toggleMaximizeWindow: () => invoke<boolean>("window_toggle_maximize"),
+  isWindowMaximized: () => invoke<boolean>("window_is_maximized"),
 };
 
 export function onLog(cb: (line: string) => void): Promise<() => void> {

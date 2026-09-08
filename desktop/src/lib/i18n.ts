@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 
 export type Language = "tr" | "en";
 
@@ -617,7 +617,11 @@ export const translations = {
 
 export type TranslationKey = keyof typeof translations.tr;
 
+let currentLang: Language = getStoredLanguage();
+const langListeners = new Set<() => void>();
+
 export function getStoredLanguage(): Language {
+  if (typeof localStorage === "undefined") return "tr";
   const saved = localStorage.getItem(LANG_STORAGE_KEY);
   if (saved === "tr" || saved === "en") {
     return saved;
@@ -626,19 +630,35 @@ export function getStoredLanguage(): Language {
 }
 
 export function setStoredLanguage(lang: Language) {
-  localStorage.setItem(LANG_STORAGE_KEY, lang);
+  if (typeof localStorage !== "undefined") {
+    localStorage.setItem(LANG_STORAGE_KEY, lang);
+  }
+  currentLang = lang;
+  langListeners.forEach((fn) => {
+    try {
+      fn();
+    } catch {}
+  });
 }
 
 export function useI18n() {
-  const [lang, setLangState] = useState<Language>(getStoredLanguage);
+  const lang: Language = useSyncExternalStore<Language>(
+    (onStoreChange) => {
+      langListeners.add(onStoreChange);
+      return () => {
+        langListeners.delete(onStoreChange);
+      };
+    },
+    () => currentLang,
+    () => "tr"
+  );
 
   const setLang = (newLang: Language) => {
-    setLangState(newLang);
     setStoredLanguage(newLang);
   };
 
   const t = (key: TranslationKey): string => {
-    return translations[lang][key] || translations.tr[key] || key;
+    return translations[lang]?.[key] || translations.tr[key] || key;
   };
 
   return { lang, setLang, t };

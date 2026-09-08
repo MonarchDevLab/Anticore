@@ -73,71 +73,156 @@
 
 /* ── 1. Obsidian Emerald (Varsayılan Cyber-Hardware) ── */
 [data-theme="obsidian"],
-html.dark:not([data-theme]) {
+html.dark:not([data-theme]),
+html.theme-obsidian {
   --color-void: #06080C;
   --color-surface-subtle: #0A0E17;
   --color-surface-card: #0E131F;
   --color-surface-elevated: #141B2B;
   --color-surface-hover: #1A2338;
+  --color-border-brutal: rgba(255, 255, 255, 0.08);
+  --color-border-brutal-subtle: rgba(255, 255, 255, 0.04);
+  --color-border-brutal-strong: rgba(255, 255, 255, 0.16);
+  --color-paper: #F1F5F9;
+  --color-paper-bright: #FFFFFF;
+  --color-paper-muted: #94A3B8;
+  --color-paper-faint: #64748B;
   --color-neon-live: #00F59B;
   --color-neon-live-dim: #059669;
   --color-neon-cyan: #00D2FF;
+  --color-live: #00F59B;
+  --color-live-dim: #059669;
+  --color-live-bright: #34D399;
+  --color-alert: #FF3B30;
+  --color-alert-dim: #DC2626;
+  --color-warn: #FFB224;
+  --color-warn-dim: #D97706;
+  --color-sky: #00D2FF;
+  --color-sky-dim: #0284C7;
   --glow-live: 0 0 25px rgba(0, 245, 155, 0.35), 0 0 50px rgba(0, 245, 155, 0.15);
   --shadow-brutal-live: 0 0 25px rgba(0, 245, 155, 0.3);
 }
 
 /* ── 2. Cyberpunk Volt (Yüksek Gerilim Neon) ── */
-[data-theme="cyberpunk"] {
+[data-theme="cyberpunk"],
+html.theme-cyberpunk {
   --color-void: #08090D;
   --color-surface-subtle: #0F121A;
   --color-surface-card: #151924;
   --color-surface-elevated: #1D2333;
   --color-surface-hover: #262E44;
+  --color-border-brutal: rgba(255, 230, 0, 0.15);
+  --color-border-brutal-subtle: rgba(255, 230, 0, 0.06);
+  --color-border-brutal-strong: rgba(255, 230, 0, 0.28);
+  --color-paper: #F8FAFC;
+  --color-paper-bright: #FFFFFF;
+  --color-paper-muted: #94A3B8;
+  --color-paper-faint: #64748B;
   --color-neon-live: #FFE600;
   --color-neon-live-dim: #D97706;
   --color-neon-cyan: #00F0FF;
+  --color-live: #FFE600;
+  --color-live-dim: #D97706;
+  --color-live-bright: #FEF08A;
+  --color-alert: #FF3B30;
+  --color-alert-dim: #DC2626;
+  --color-warn: #FF9F0A;
+  --color-warn-dim: #D97706;
+  --color-sky: #00F0FF;
+  --color-sky-dim: #0284C7;
   --glow-live: 0 0 25px rgba(255, 230, 0, 0.35), 0 0 50px rgba(255, 230, 0, 0.15);
   --shadow-brutal-live: 0 0 25px rgba(255, 230, 0, 0.3);
 }
 
 /* ── 3. Amber CRT (Endüstriyel Fosfor Kehribar) ── */
-[data-theme="amber"] {
+[data-theme="amber"],
+html.theme-amber {
   --color-void: #0C0904;
   --color-surface-subtle: #140F08;
   --color-surface-card: #1C150B;
   --color-surface-elevated: #261D0F;
   --color-surface-hover: #332714;
+  --color-border-brutal: rgba(255, 176, 32, 0.15);
+  --color-border-brutal-subtle: rgba(255, 176, 32, 0.06);
+  --color-border-brutal-strong: rgba(255, 176, 32, 0.28);
+  --color-paper: #FDF4DC;
+  --color-paper-bright: #FFFBEB;
+  --color-paper-muted: #D4AF37;
+  --color-paper-faint: #926C15;
   --color-neon-live: #FFB020;
   --color-neon-live-dim: #B45309;
   --color-neon-cyan: #FB923C;
+  --color-live: #FFB020;
+  --color-live-dim: #B45309;
+  --color-live-bright: #FDE68A;
+  --color-alert: #FF453A;
+  --color-alert-dim: #B91C1C;
+  --color-warn: #F59E0B;
+  --color-warn-dim: #B45309;
+  --color-sky: #FB923C;
+  --color-sky-dim: #C2410C;
   --glow-live: 0 0 25px rgba(255, 176, 32, 0.35), 0 0 50px rgba(255, 176, 32, 0.15);
   --shadow-brutal-live: 0 0 25px rgba(255, 176, 32, 0.3);
 }
 
 /* ── 4. Cobalt Matrix (Taktik C2 Ağ Konsolu) ── */
-[data-theme="cobalt"] {
+[data-theme="cobalt"],
+html.theme-cobalt {
   --color-void: #050B14;
   --color-surface-subtle: #080F1D;
   --color-surface-card: #0B1526;
   --color-surface-elevated: #112038;
   --color-surface-hover: #162947;
+  --color-border-brutal: rgba(0, 229, 255, 0.15);
+  --color-border-brutal-subtle: rgba(0, 229, 255, 0.06);
+  --color-border-brutal-strong: rgba(0, 229, 255, 0.28);
+  --color-paper: #F0F9FF;
+  --color-paper-bright: #FFFFFF;
+  --color-paper-muted: #7DD3FC;
+  --color-paper-faint: #38BDF8;
   --color-neon-live: #00E5FF;
   --color-neon-live-dim: #0284C7;
   --color-neon-cyan: #60A5FA;
+  --color-live: #00E5FF;
+  --color-live-dim: #0284C7;
+  --color-live-bright: #BAE6FD;
+  --color-alert: #FF3B30;
+  --color-alert-dim: #DC2626;
+  --color-warn: #FBBF24;
+  --color-warn-dim: #D97706;
+  --color-sky: #60A5FA;
+  --color-sky-dim: #1D4ED8;
   --glow-live: 0 0 25px rgba(0, 229, 255, 0.35), 0 0 50px rgba(0, 229, 255, 0.15);
   --shadow-brutal-live: 0 0 25px rgba(0, 229, 255, 0.3);
 }
 
 /* ── 5. Amethyst Nebula (Kozmik Derin Mor) ── */
-[data-theme="amethyst"] {
+[data-theme="amethyst"],
+html.theme-amethyst {
   --color-void: #090611;
   --color-surface-subtle: #110C21;
   --color-surface-card: #18112E;
   --color-surface-elevated: #221841;
   --color-surface-hover: #2E2057;
+  --color-border-brutal: rgba(179, 136, 255, 0.15);
+  --color-border-brutal-subtle: rgba(179, 136, 255, 0.06);
+  --color-border-brutal-strong: rgba(179, 136, 255, 0.28);
+  --color-paper: #FAF5FF;
+  --color-paper-bright: #FFFFFF;
+  --color-paper-muted: #D8B4FE;
+  --color-paper-faint: #A855F7;
   --color-neon-live: #B388FF;
   --color-neon-live-dim: #7C3AED;
   --color-neon-cyan: #E879F9;
+  --color-live: #B388FF;
+  --color-live-dim: #7C3AED;
+  --color-live-bright: #F3E8FF;
+  --color-alert: #FF3B30;
+  --color-alert-dim: #DC2626;
+  --color-warn: #F59E0B;
+  --color-warn-dim: #D97706;
+  --color-sky: #E879F9;
+  --color-sky-dim: #A21CAF;
   --glow-live: 0 0 25px rgba(179, 136, 255, 0.35), 0 0 50px rgba(179, 136, 255, 0.15);
   --shadow-brutal-live: 0 0 25px rgba(179, 136, 255, 0.3);
 }
@@ -145,46 +230,52 @@ html.dark:not([data-theme]) {
 /* ── 6. Titanium Laboratory (CNC Titanyum Açık Mod) ── */
 html.light,
 [data-theme="titanium"],
-[data-theme="light"] {
-  --color-void: #F1F5F9;
-  --color-surface-subtle: #E2E8F0;
+[data-theme="light"],
+html.theme-titanium {
+  --color-void: #F8FAFC;
+  --color-surface-subtle: #F1F5F9;
   --color-surface-card: #FFFFFF;
   --color-surface-elevated: #E2E8F0;
   --color-surface-hover: #CBD5E1;
 
-  --color-border-brutal: rgba(15, 23, 42, 0.08);
-  --color-border-brutal-subtle: rgba(15, 23, 42, 0.04);
-  --color-border-brutal-strong: rgba(15, 23, 42, 0.16);
+  --color-border-brutal: rgba(15, 23, 42, 0.12);
+  --color-border-brutal-subtle: rgba(15, 23, 42, 0.06);
+  --color-border-brutal-strong: rgba(15, 23, 42, 0.22);
 
   --color-paper: #0F172A;
-  --color-paper-bright: #090D16;
+  --color-paper-bright: #020617;
   --color-paper-muted: #475569;
   --color-paper-faint: #64748B;
 
-  --color-ink: #F1F5F9;
-  --color-ink-deep: #E2E8F0;
+  --color-ink: #F8FAFC;
+  --color-ink-deep: #F1F5F9;
   --color-panel: #FFFFFF;
-  --color-panel-muted: #E2E8F0;
-  --color-edge: rgba(15, 23, 42, 0.08);
+  --color-panel-muted: #F1F5F9;
+  --color-edge: rgba(15, 23, 42, 0.12);
   --color-fog: #475569;
 
-  --color-neon-live: #047857;
-  --color-neon-live-dim: #065F46;
+  --color-neon-live: #059669;
+  --color-neon-live-dim: #047857;
   --color-neon-alert: #DC2626;
   --color-neon-warn: #D97706;
-  --color-neon-cyan: #0369A1;
+  --color-neon-cyan: #0284C7;
 
-  --color-live: #047857;
+  --color-live: #059669;
+  --color-live-dim: #047857;
+  --color-live-bright: #10B981;
   --color-alert: #DC2626;
+  --color-alert-dim: #B91C1C;
   --color-warn: #D97706;
-  --color-sky: #0369A1;
+  --color-warn-dim: #B45309;
+  --color-sky: #0284C7;
+  --color-sky-dim: #0369A1;
 
   --shadow-brutal-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-brutal: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-brutal-live: 0 0 16px rgba(4, 120, 87, 0.20);
+  --shadow-brutal-live: 0 0 16px rgba(5, 150, 105, 0.20);
   --shadow-brutal-alert: 0 0 12px rgba(220, 38, 38, 0.15);
   --shadow-brutal-warn: 0 0 12px rgba(217, 119, 6, 0.15);
-  --shadow-brutal-cyan: 0 0 12px rgba(3, 105, 161, 0.15);
+  --shadow-brutal-cyan: 0 0 12px rgba(2, 132, 199, 0.15);
   --shadow-brutal-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 

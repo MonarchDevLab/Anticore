@@ -1573,6 +1573,52 @@ fn is_newer_version(current: &str, remote: &str) -> bool {
     r > c
 }
 
+#[tauri::command]
+pub fn window_close(app: AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        if crate::tray::get_tray_minimize_pref(&app) {
+            let _ = window.hide();
+        } else {
+            let engine = app.state::<Engine>();
+            if engine.running.load(Ordering::SeqCst) {
+                let _ = engine.stop();
+            }
+            app.exit(0);
+        }
+    }
+}
+
+#[tauri::command]
+pub fn window_minimize(app: AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.minimize();
+    }
+}
+
+#[tauri::command]
+pub fn window_toggle_maximize(app: AppHandle) -> bool {
+    if let Some(window) = app.get_webview_window("main") {
+        if window.is_maximized().unwrap_or(false) {
+            let _ = window.unmaximize();
+            false
+        } else {
+            let _ = window.maximize();
+            true
+        }
+    } else {
+        false
+    }
+}
+
+#[tauri::command]
+pub fn window_is_maximized(app: AppHandle) -> bool {
+    if let Some(window) = app.get_webview_window("main") {
+        window.is_maximized().unwrap_or(false)
+    } else {
+        false
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

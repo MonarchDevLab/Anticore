@@ -140,7 +140,7 @@ export default function App() {
       />
 
       {/* ── 2. Yatay Segmented HUD Tab Bar & Konsol Eylemleri ── */}
-      <div className="h-12 shrink-0 flex items-center justify-between px-4 bg-[#0A0E17]/90 backdrop-blur-md border-b border-white/[0.08] relative z-40">
+      <div className="h-12 shrink-0 flex items-center justify-between px-4 bg-surface-subtle/90 backdrop-blur-md border-b border-border-brutal relative z-40">
         {/* Yatay Segmented Menü */}
         <nav aria-label="Ana Gezinme Rayı" className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
           {navItems.map((n) => {
@@ -152,8 +152,8 @@ export default function App() {
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   active
-                    ? "bg-white/[0.1] text-paper-bright border border-white/[0.14] shadow-[0_1px_4px_rgba(0,0,0,0.4)]"
-                    : "text-paper-muted hover:text-paper hover:bg-white/[0.04] border border-transparent"
+                    ? "bg-surface-elevated text-paper-bright border border-border-brutal-strong shadow-sm"
+                    : "text-paper-muted hover:text-paper hover:bg-surface-hover border border-transparent"
                 }`}
               >
                 <span className={active ? "text-live" : "text-paper-faint"}>{n.icon}</span>

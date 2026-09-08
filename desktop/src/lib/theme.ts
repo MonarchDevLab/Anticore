@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 export type ThemeMode =
   | "system"
@@ -71,7 +71,11 @@ export const THEME_OPTIONS: ThemeOption[] = [
 
 const THEME_STORAGE_KEY = "anticore_theme_mode";
 
+let currentTheme: ThemeMode = getStoredTheme();
+const themeListeners = new Set<() => void>();
+
 export function getStoredTheme(): ThemeMode {
+  if (typeof localStorage === "undefined") return "obsidian";
   const saved = localStorage.getItem(THEME_STORAGE_KEY);
   if (
     saved === "obsidian" ||
@@ -92,15 +96,21 @@ export function getStoredTheme(): ThemeMode {
 
 export function getEffectiveTheme(mode: ThemeMode): Exclude<ThemeMode, "system"> {
   if (mode === "system") {
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return isDark ? "obsidian" : "titanium";
+    if (typeof window !== "undefined" && window.matchMedia) {
+      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return isDark ? "obsidian" : "titanium";
+    }
+    return "obsidian";
   }
   return mode;
 }
 
 export function applyTheme(mode: ThemeMode) {
-  localStorage.setItem(THEME_STORAGE_KEY, mode);
+  if (typeof localStorage !== "undefined") {
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  }
   const effective = getEffectiveTheme(mode);
+  if (typeof document === "undefined") return;
   const root = document.documentElement;
 
   // Önceki tema sınıflarını temizle
@@ -124,32 +134,50 @@ export function applyTheme(mode: ThemeMode) {
   root.setAttribute("data-theme", effective);
 }
 
+export function setThemeGlobal(mode: ThemeMode) {
+  currentTheme = mode;
+  applyTheme(mode);
+  themeListeners.forEach((fn) => {
+    try {
+      fn();
+    } catch {}
+  });
+}
+
+// İlk yüklemede temayı hemen uygula ve sistem tema değişikliklerini izle
+if (typeof window !== "undefined") {
+  applyTheme(currentTheme);
+
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (currentTheme === "system") {
+        applyTheme("system");
+        themeListeners.forEach((fn) => {
+          try {
+            fn();
+          } catch {}
+        });
+      }
+    });
+  }
+}
+
 export function useTheme() {
-  const [theme, setThemeState] = useState<ThemeMode>(getStoredTheme);
-  const [effective, setEffectiveState] = useState<Exclude<ThemeMode, "system">>(() =>
-    getEffectiveTheme(getStoredTheme())
+  const theme: ThemeMode = useSyncExternalStore<ThemeMode>(
+    (onStoreChange) => {
+      themeListeners.add(onStoreChange);
+      return () => {
+        themeListeners.delete(onStoreChange);
+      };
+    },
+    () => currentTheme,
+    () => "obsidian" as ThemeMode
   );
 
-  useEffect(() => {
-    applyTheme(theme);
-    setEffectiveState(getEffectiveTheme(theme));
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const listener = () => {
-      if (getStoredTheme() === "system") {
-        applyTheme("system");
-        setEffectiveState(media.matches ? "obsidian" : "titanium");
-      }
-    };
-
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
-  }, [theme]);
+  const effective = getEffectiveTheme(theme);
 
   const setTheme = (mode: ThemeMode) => {
-    setThemeState(mode);
-    applyTheme(mode);
-    setEffectiveState(getEffectiveTheme(mode));
+    setThemeGlobal(mode);
   };
 
   return { theme, effective, setTheme, options: THEME_OPTIONS };

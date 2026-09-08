@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ShieldCheck, Minus, Square, X, ArrowDownCircle, HelpCircle, Palette, Globe } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useI18n } from "../lib/i18n";
-import type { Status } from "../lib/tauri";
+import { api, type Status } from "../lib/tauri";
 
 interface Props {
   status: Status | null;
@@ -25,7 +25,7 @@ export default function Titlebar({
   const { lang, setLang, t } = useI18n();
   const [isMaximized, setIsMaximized] = useState(false);
 
-  // Tauri window instance lazy-loader
+  // Tauri window instance lazy-loader (fallback)
   const getWindow = async () => {
     try {
       const { getCurrentWindow } = await import("@tauri-apps/api/window");
@@ -37,23 +37,24 @@ export default function Titlebar({
 
   const handleNextTheme = () => {
     const ids = options.map((o) => o.id);
-    const currIdx = ids.indexOf(theme);
-    const next = ids[(currIdx + 1) % ids.length];
+    const currIdx = Math.max(0, ids.indexOf(theme));
+    const next = ids[(currIdx + 1) % ids.length] ?? ids[0];
     setTheme(next);
   };
 
   const currentThemeObj = options.find((o) => o.id === theme) || options[0];
 
   useEffect(() => {
+    void api.isWindowMaximized().then(setIsMaximized).catch(() => {});
     let unlisten: (() => void) | undefined;
     void getWindow().then((win) => {
       if (!win) return;
-      void win.isMaximized().then(setIsMaximized);
+      void win.isMaximized().then(setIsMaximized).catch(() => {});
       void win.onResized(() => {
-        void win.isMaximized().then(setIsMaximized);
+        void win.isMaximized().then(setIsMaximized).catch(() => {});
       }).then((u) => {
         unlisten = u;
-      });
+      }).catch(() => {});
     });
     return () => {
       if (unlisten) unlisten();
@@ -61,28 +62,41 @@ export default function Titlebar({
   }, []);
 
   const handleMinimize = async () => {
-    const win = await getWindow();
-    if (win) void win.minimize();
+    try {
+      await api.minimizeWindow();
+    } catch {
+      const win = await getWindow();
+      if (win) void win.minimize();
+    }
   };
 
   const handleToggleMaximize = async () => {
-    const win = await getWindow();
-    if (win) {
-      await win.toggleMaximize();
-      const max = await win.isMaximized();
+    try {
+      const max = await api.toggleMaximizeWindow();
       setIsMaximized(max);
+    } catch {
+      const win = await getWindow();
+      if (win) {
+        await win.toggleMaximize();
+        const max = await win.isMaximized();
+        setIsMaximized(max);
+      }
     }
   };
 
   const handleClose = async () => {
-    const win = await getWindow();
-    if (win) void win.close();
+    try {
+      await api.closeWindow();
+    } catch {
+      const win = await getWindow();
+      if (win) void win.close();
+    }
   };
 
   return (
     <header
       data-tauri-drag-region
-      className="h-10 shrink-0 select-none flex items-center justify-between px-3 bg-[#06080C] border-b border-white/[0.07] relative z-50 text-xs font-mono"
+      className="h-10 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono"
     >
       {/* Sol: Logo & Marka Donanım Etiketi */}
       <div className="flex items-center gap-2.5 pointer-events-none">
