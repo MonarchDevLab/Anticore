@@ -5,7 +5,6 @@ import { useI18n } from "../lib/i18n";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 interface Props {
-  /** App.tsx'in tuttuğu canlı akış — Dashboard'daki LogConsole ile AYNI kaynak. */
   liveLogs: string[];
   pushLog: (l: string) => void;
 }
@@ -32,9 +31,6 @@ export default function LogsView({ liveLogs, pushLog }: Props) {
   };
   useEffect(loadHistory, []);
 
-  // Dosyadan yüklenen geçmiş + canlı akış birleşik gösterilir. Mükemmel
-  // de-dup yapılmıyor (açılıştaki ilk birkaç canlı satır dosyada da olabilir)
-  // — bu bir log görüntüleyici, kayıt bütünlüğü kritik değil.
   const allLogs = useMemo(() => [...historyLogs, ...liveLogs], [historyLogs, liveLogs]);
 
   const filtered = useMemo(() => {
@@ -82,72 +78,75 @@ export default function LogsView({ liveLogs, pushLog }: Props) {
   const levels: Level[] = ["all", "success", "info", "error"];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-white/20 pb-4">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/[0.08]">
         <div>
-          <h2 className="font-mono text-2xl font-black uppercase tracking-widest text-white">{t("nav_logs")}</h2>
-          <p className="mt-1 text-xs font-mono text-white/60">{t("logs_view_desc")}</p>
+          <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("nav_logs")}</h2>
+          <p className="mt-0.5 text-xs text-paper-muted">{t("logs_view_desc")}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-start sm:self-auto">
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3.5 py-1.5 transition-none flex items-center gap-1.5"
+            className="btn btn-secondary text-xs !py-1.5"
             onClick={loadHistory}
             disabled={loading}
           >
-            {loading ? <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={3} /> : <RefreshCw size={14} aria-hidden strokeWidth={2.5} />}
-            {t("btn_refresh")}
+            {loading ? <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={2.5} /> : <RefreshCw size={14} aria-hidden strokeWidth={2} />}
+            <span>{t("btn_refresh")}</span>
           </button>
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3.5 py-1.5 transition-none flex items-center gap-1.5"
+            className="btn btn-secondary text-xs !py-1.5"
             onClick={() => void doExport()}
             disabled={busy !== null}
           >
-            {busy === "export" ? <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={3} /> : <Download size={14} aria-hidden strokeWidth={2.5} />}
-            {t("logs_export_btn")}
+            {busy === "export" ? <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={2.5} /> : <Download size={14} aria-hidden strokeWidth={2} />}
+            <span>{t("logs_export_btn")}</span>
           </button>
           <button
-            className="btn rounded-none border-2 border-alert bg-alert/20 text-alert hover:bg-alert hover:text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_rgba(255,51,102,0.3)] active:translate-y-0.5 active:shadow-none px-3.5 py-1.5 transition-none flex items-center gap-1.5"
+            className="btn btn-danger text-xs !py-1.5"
             onClick={() => setConfirmClear(true)}
             disabled={busy !== null}
           >
-            <Trash2 size={14} aria-hidden strokeWidth={2.5} />
-            {t("logs_clear_btn")}
+            <Trash2 size={14} aria-hidden strokeWidth={2} />
+            <span>{t("logs_clear_btn")}</span>
           </button>
         </div>
       </header>
 
-      <section className="relative overflow-hidden p-6 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)] space-y-4 font-mono" aria-label="Log görüntüleyici">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[14rem] flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" aria-hidden />
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl" aria-label="Log görüntüleyici">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-paper-faint" aria-hidden />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("logs_search_placeholder")}
               aria-label={t("logs_search_placeholder")}
-              className="w-full rounded-none border-2 border-white/20 bg-black pl-9 pr-3 py-1.5 font-mono text-xs text-white focus:border-live shadow-[inset_2px_2px_0px_rgba(0,0,0,0.5)] focus:outline-none"
+              className="input pl-9 text-xs"
             />
           </div>
-          <div className="flex rounded-none border-2 border-white/20 bg-black p-0.5">
-            {levels.map((lv) => (
-              <button
-                key={lv}
-                onClick={() => setLevel(lv)}
-                className={`rounded-none px-3 py-1 font-mono text-xs uppercase font-bold transition-none ${
-                  level === lv
-                    ? lv === "error"
-                      ? "bg-alert text-black"
-                      : lv === "success"
-                        ? "bg-live text-black"
-                        : "bg-white text-black"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                {t(`logs_level_${lv}`)}
-              </button>
-            ))}
+          <div className="flex rounded-xl bg-surface-subtle p-1 border border-white/[0.06] shrink-0">
+            {levels.map((lv) => {
+              const active = level === lv;
+              return (
+                <button
+                  key={lv}
+                  onClick={() => setLevel(lv)}
+                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    active
+                      ? lv === "error"
+                        ? "bg-alert/20 text-alert shadow-sm"
+                        : lv === "success"
+                        ? "bg-live/20 text-live shadow-sm"
+                        : "bg-white/[0.12] text-paper-bright shadow-sm"
+                      : "text-paper-muted hover:text-paper"
+                  }`}
+                >
+                  {t(`logs_level_${lv}`)}
+                </button>
+              );
+            })}
           </div>
-          <span className="font-mono text-xs text-white/40">
+          <span className="font-mono text-xs text-paper-faint self-center">
             {filtered.length} / {allLogs.length}
           </span>
         </div>
@@ -156,22 +155,22 @@ export default function LogsView({ liveLogs, pushLog }: Props) {
           ref={boxRef}
           role="log"
           aria-live="polite"
-          className="h-[32rem] overflow-y-auto rounded-none border-2 border-white/10 bg-black p-4 font-mono text-xs leading-relaxed divide-y divide-white/5"
+          className="h-[32rem] overflow-y-auto rounded-xl border border-white/[0.06] bg-void/80 p-4 font-mono text-xs leading-relaxed space-y-0.5 divide-y divide-white/[0.03]"
         >
           {filtered.length === 0 ? (
-            <span className="text-white/40 uppercase">{t("log_empty")}</span>
+            <span className="text-paper-faint text-xs">{t("log_empty")}</span>
           ) : (
             filtered.map((l, i) => (
               <div
                 key={i}
-                className={`py-1 ${
+                className={`py-0.5 ${
                   l.includes("[!]")
-                    ? "font-bold text-alert"
+                    ? "font-semibold text-alert"
                     : l.includes("[+]")
-                      ? "font-bold text-live"
-                      : l.includes("[*]")
-                        ? "text-cyan"
-                        : "text-white/70"
+                    ? "font-semibold text-live"
+                    : l.includes("[*]")
+                    ? "text-cyan"
+                    : "text-paper-muted"
                 }`}
               >
                 {l}

@@ -5,12 +5,29 @@
 > `cargo check` (src-tauri) temiz.
 
 ## ŞİMDİ `[~]`
-- *(Sistem hazır — v0.3.0 ve vitrin tamamlandı; yeni talimat bekleniyor)*
+- *(Sistem hazır — Faz 15 $10K Cyber-Hardware arayüz dönüşümü tamamlandı; doğrulandı)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
+
+### Faz 15 — $10K Cyber-Hardware & Desktop Utility Arayüz Dönüşümü (TAMAMLANDI)
+- `[x]` 15.1 (2026-09-03) **Frameless Custom Titlebar (`tauri.conf.json`, `Titlebar.tsx`):** Çift başlık çubuğu kapatıldı (`decorations: false`); 40px entegre donanım sistem rayı (`data-tauri-drag-region`), canlı telemetri LED rozeti ve Tauri v2 yerel pencere kontrolleri (`_`, `□`, `✕`) inşa edildi.
+- `[x]` 15.2 (2026-09-03) **Yatay Segmented HUD Tab Bar (`App.tsx`):** Ekranın %25'ini yutan 240px sol admin menüsü kaldırıldı; üst panele Warp/Linear tarzı yatay sekmeli kontrol rayı entegre edilerek net çalışma alanı tam ekrana çıkarıldı.
+- `[x]` 15.3 (2026-09-03) **Cyber-Reactor Hub (`Dashboard.tsx`):** Düz kare kutu yerine; dönen çift SVG segment telemetri halkasına (`animate-spin-slow` / `animate-spin-reverse`), dokunsal basılma hissine (`btn-reactor`) ve durum aurasına sahip dairesel reaktör çekirdeği geliştirildi.
+- `[x]` 15.4 (2026-09-03) **Canlı Ağ Osiloskopu & Paket Radarı (`Dashboard.tsx`):** Statik maket kartlar kaldırıldı; saniyede işlenen paketleri (PPS) çizen canlı SVG Throughput dalga formu, gerçek zamanlı paket teftiş radarı (`discord.com → SPLIT_TLS`, vb.) ve Sıfır Hız Kaybı donanım göstergesi kuruldu.
+- `[x]` 15.5 (2026-09-03) **Slide-over Kılavuz Çekmecesi (`GuideDrawer.tsx`):** Ana sayfayı kaplayan 4 maddelik SSS akordeonu dashboard'dan tahliye edilerek sağ üstten süzülen F1 / buton tetiklemeli şık çekmeceye dönüştürüldü.
+- `[x]` 15.6 (2026-09-03) **Obsidian & Hyper-Emerald Malzeme Sistemi (`globals.css`):** Derin siber uzay obsidyeni (`#06080C`), yüksek voltajlı Hyper-Emerald (`#00F59B`), 1px sub-pixel hairline gradient sınırlar ve ambient aura tanımlandı.
+- `[x]` 15.7 (2026-09-03) **Doğrulama:** `npm run build` 0 hata (1537 modül), `cargo check` 0 hata, `cargo test --workspace` 46/46 yeşil.
+
+### Faz 14 — Dark Monolith $10K UI/UX Yeniden Yapılanması (TAMAMLANDI)
+- `[x]` 14.1 (2026-09-03) **Tasarım Sistemi Dönüşümü (`globals.css`):** Kaba 0px keskin ve 3px beyaz çerçeveli neo-brutalist kurallar tamamen kaldırıldı; Obsidyen (`#090B10`) zemin, kart yüzeyleri (`#121724` / `#181F30`), asil Zümrüt (`#10B981`) vurgusu, 1px zarif sınırlar (`rgba(255, 255, 255, 0.08)`), `rounded-2xl` kartlar ve `rounded-xl` butonlar tanımlandı.
+- `[x]` 14.2 (2026-09-03) **Uygulama İskeleti & Navigasyon (`App.tsx`):** 58px üst çubuk, canlı zümrüt pulsing dot ve kalkan ikonu, kompakt üst çubuk eylemleri; 240px modern sol gezinme menüsü; içerik scroll padding ve üst çubuk örtüşme/kesilme hataları tamamen çözüldü.
+- `[x]` 14.3 (2026-09-03) **Kontrol Merkezi Revizyonu (`Dashboard.tsx`):** Ayrı mod seçim barı kaldırıldı, başlık yanına zarif segmented control entegre edildi; 128x128px dokunsal pulse halkalı Master Engine Hub inşa edildi; Korunan Hedefler gridi esnek, ikonlu ve kırpılmayan modern kartlara dönüştürüldü; Türkçe büyük harf "İ" (ENGİNE) bozulmaları temizlendi.
+- `[x]` 14.4 (2026-09-03) **Hedefler ve Profil Yönetimi (`Sites.tsx`, `Profiles.tsx`, `ProfileEditor.tsx`):** Tüm liste, form, mega paket ve adım zinciri bileşenleri modern Dark Monolith sınıflarına geçirildi.
+- `[x]` 14.5 (2026-09-03) **Test, Onarım, Ayarlar ve Günlükler (`TestCenter.tsx`, `NetworkRepair.tsx`, `SettingsView.tsx`, `LogsView.tsx`, `Setup.tsx`, `Wizard.tsx`):** Kaba neo-brutalist butonlar, kutular ve çerçeveler rafine Dark Monolith kartlarına ve dialoglarına dönüştürüldü.
+- `[x]` 14.6 (2026-09-03) **Doğrulama ve Derleme:** `npm run build` (3.24s) ve `cargo check` (2.53s) 0 hata ile çalıştırıldı.
 
 ### Faz 5 — Release & Dağıtım hattı (TAMAMLANDI)
 - `[x]` 5.0 (2026-09-03) Cyber-Brutalist $10K UI Standardizasyonu: `globals.css` `@theme` 3-tier DTCG tokenları, `.card` / `.btn` brutalist standardı, çift modlu Dashboard (`simple` vs `matrix`), WCAG AA tipografi ölçeği ve i18n anahtarları (`dash_strategy_chain`, `sites_whitelist_*`).

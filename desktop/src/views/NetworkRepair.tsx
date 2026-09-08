@@ -53,10 +53,10 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
   const isCustom = dns?.some((d) => KNOWN_SECURE_SERVERS.has(d));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <header className="border-b-2 border-white/20 pb-4">
-        <h2 className="font-mono text-2xl font-black uppercase tracking-widest text-white">{t("net_title")}</h2>
-        <p className="mt-1 text-xs font-mono text-white/60">{t("net_desc")}</p>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <header className="pb-3 border-b border-white/[0.08]">
+        <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("net_title")}</h2>
+        <p className="mt-0.5 text-xs text-paper-muted">{t("net_desc")}</p>
       </header>
 
       <Guide
@@ -86,106 +86,115 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         }
       />
 
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-          <Wifi size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("net_active_dns")}</h3>
+      {/* Aktif DNS */}
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <Wifi size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("net_active_dns")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">
+              {t("net_status_label")}{" "}
+              {isCustom ? (
+                <span className="text-live font-semibold">{t("net_secure_active")}</span>
+              ) : (
+                <span className="text-paper-faint">{t("net_dhcp_notice")}</span>
+              )}
+            </p>
+          </div>
         </div>
 
         {dns === null ? (
-          <p className="mt-4 flex items-center gap-2 font-mono text-xs text-white/50">
-            <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={3} />
-            {t("net_reading")}
+          <p className="flex items-center gap-2 text-xs text-paper-muted">
+            <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={2.5} />
+            <span>{t("net_reading")}</span>
           </p>
         ) : dns.length === 0 ? (
-          <p className="mt-4 font-mono text-xs text-white/50">{t("net_dhcp_notice")}</p>
+          <p className="text-xs text-paper-muted">{t("net_dhcp_notice")}</p>
         ) : (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {dns.map((d) => (
-              <span key={d} className="rounded-none bg-black border-2 border-live/60 px-3 py-1 font-mono text-xs font-bold text-live shadow-[2px_2px_0px_rgba(5,150,105,0.3)]">
+              <span key={d} className="badge badge-live font-mono text-xs px-3 py-1">
                 {d}
               </span>
             ))}
           </div>
         )}
 
-        <p className="mt-4 font-mono text-xs text-white/50">
-          {t("net_status_label")}{" "}
-          {isCustom ? (
-            <span className="text-live font-black uppercase tracking-wider">[{t("net_secure_active")}]</span>
-          ) : (
-            <span className="text-white/40 uppercase">[{t("net_dhcp_notice")}]</span>
-          )}
-        </p>
-
         {/* DNS Sağlayıcı Seçimi */}
-        <div className="mt-5 flex flex-wrap gap-2">
-          {DNS_PROVIDERS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setProvider(p.id)}
-              className={`rounded-none border-2 px-3 py-1.5 font-mono text-xs uppercase tracking-wider font-bold transition-none active:translate-y-0.5 active:shadow-none ${
-                provider === p.id
-                  ? "border-live bg-live text-black shadow-[3px_3px_0px_#fff]"
-                  : "border-white/20 bg-black text-white/60 hover:border-white/50 hover:text-white shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
-              }`}
-            >
-              {p.label} <span className="text-xs opacity-75 font-mono">[{p.primary}]</span>
-            </button>
-          ))}
+        <div className="space-y-1.5 pt-1">
+          <p className="text-xs font-semibold text-paper-muted">DNS Sağlayıcısı Seç</p>
+          <div className="flex flex-wrap gap-2">
+            {DNS_PROVIDERS.map((p) => {
+              const active = provider === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setProvider(p.id)}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer border ${
+                    active
+                      ? "bg-live/15 text-live border-live/35 shadow-sm"
+                      : "bg-surface-subtle text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
+                  }`}
+                >
+                  <span>{p.label}</span> <span className="font-mono text-[11px] opacity-70">({p.primary})</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="mt-6 flex gap-3">
+        <div className="flex flex-wrap gap-2.5 pt-2 border-t border-white/[0.08]">
           <button
-            className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none hover:bg-live/90 px-4 py-2"
+            className="btn btn-primary text-xs"
             onClick={() => setDialog("apply")}
             disabled={busy}
           >
-            <ShieldCheck size={16} aria-hidden strokeWidth={2.5} />
-            {t("net_apply_btn")}
+            <ShieldCheck size={15} aria-hidden strokeWidth={2} />
+            <span>{t("net_apply_btn")}</span>
           </button>
           <button
-            className="btn rounded-none border-2 border-alert bg-alert/20 text-alert hover:bg-alert hover:text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_rgba(255,51,102,0.3)] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none"
+            className="btn btn-danger text-xs"
             onClick={() => setDialog("reset")}
             disabled={busy}
           >
-            <RefreshCw size={16} aria-hidden strokeWidth={2.5} />
-            {t("net_reset_btn")}
+            <RefreshCw size={14} aria-hidden strokeWidth={2} />
+            <span>{t("net_reset_btn")}</span>
           </button>
         </div>
-        <p className="mt-3 font-mono text-xs text-white/70">
+        <p className="text-[11px] text-paper-faint">
           {t("net_dns_hint")}
         </p>
       </section>
 
       {/* Ağ Adaptörleri */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-          <Network size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("net_adapters_title")}</h3>
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <Network size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <h3 className="text-sm font-bold text-paper-bright">{t("net_adapters_title")}</h3>
         </div>
+
         {adapters === null ? (
-          <p className="mt-4 flex items-center gap-2 font-mono text-xs text-white/50">
-            <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={3} />
-            {t("net_reading")}
+          <p className="flex items-center gap-2 text-xs text-paper-muted">
+            <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={2.5} />
+            <span>{t("net_reading")}</span>
           </p>
         ) : adapters.length === 0 ? (
-          <p className="mt-4 font-mono text-xs text-white/50">{t("net_adapters_empty")}</p>
+          <p className="text-xs text-paper-muted">{t("net_adapters_empty")}</p>
         ) : (
-          <ul className="mt-4 space-y-2.5">
+          <ul className="space-y-2">
             {adapters.map((a) => (
-              <li key={a.interface_index} className="rounded-none border-2 border-white/10 bg-black p-3.5 shadow-[2px_2px_0px_rgba(255,255,255,0.03)]">
+              <li key={a.interface_index} className="rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3.5 hover:border-white/[0.12] transition-all">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-bold text-white uppercase">{a.name}</span>
-                  <span
-                    className={`rounded-none px-2 py-0.5 font-mono text-xs font-black uppercase border ${
-                      a.is_dhcp ? "border-white/20 text-white/70 bg-black" : "border-live bg-live/20 text-live"
-                    }`}
-                  >
+                  <span className="font-mono text-xs font-semibold text-paper-bright">{a.name}</span>
+                  <span className={`badge ${a.is_dhcp ? "badge-muted" : "badge-live"}`}>
                     {a.is_dhcp ? t("net_adapter_dhcp") : t("net_adapter_manual")}
                   </span>
                 </div>
-                <p className="mt-1 font-mono text-xs text-white/50">
+                <p className="mt-1 font-mono text-xs text-paper-muted">
                   {a.ipv4_servers.length > 0 ? a.ipv4_servers.join(", ") : t("net_adapter_no_servers")}
                 </p>
               </li>
@@ -195,17 +204,18 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
       </section>
 
       {/* Windows DoH Registry */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+        <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-3">
-            <ShieldCheck size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-            <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("net_doh_title")}</h3>
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <ShieldCheck size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-paper-bright">{t("net_doh_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("net_doh_desc")}</p>
+            </div>
           </div>
-          <span
-            className={`rounded-none px-2.5 py-0.5 font-mono text-xs font-black uppercase border-2 ${
-              dohStatus?.enabled ? "border-live bg-live text-black shadow-[2px_2px_0px_rgba(255,255,255,0.2)]" : "border-white/20 bg-black text-white/50"
-            }`}
-          >
+          <span className={`badge ${dohStatus?.enabled ? "badge-live" : "badge-muted"}`}>
             {dohStatus === null
               ? "…"
               : dohStatus.enabled
@@ -213,13 +223,10 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
                 : t("net_doh_inactive")}
           </span>
         </div>
-        <p className="mt-3 font-mono text-xs text-white/60">
-          {t("net_doh_desc")}
-        </p>
 
-        <div className="mt-5 flex gap-3">
+        <div className="flex flex-wrap gap-2.5 pt-1">
           <button
-            className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none hover:bg-live/90 px-4 py-2 transition-none"
+            className="btn btn-primary text-xs"
             onClick={async () => {
               setBusy(true);
               try {
@@ -237,7 +244,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             {t("net_doh_apply_btn")}
           </button>
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black text-white hover:border-white/70 font-mono font-bold uppercase text-xs tracking-wider shadow-[3px_3px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none"
+            className="btn btn-secondary text-xs"
             onClick={async () => {
               setBusy(true);
               try {
@@ -258,18 +265,20 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
       </section>
 
       {/* Discord Özel Onarım Paketi */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-          <RefreshCw size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("net_discord_title")}</h3>
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <RefreshCw size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("net_discord_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("net_discord_desc")}</p>
+          </div>
         </div>
-        <p className="mt-3 font-mono text-xs text-white/60">
-          {t("net_discord_desc")}
-        </p>
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2.5 pt-1">
           <button
-            className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none hover:bg-live/90 px-4 py-2 transition-none"
+            className="btn btn-primary text-xs"
             onClick={async () => {
               setBusy(true);
               try {
@@ -286,7 +295,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             {t("net_discord_update_btn")}
           </button>
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black text-white hover:border-white/70 font-mono font-bold uppercase text-xs tracking-wider shadow-[3px_3px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none"
+            className="btn btn-secondary text-xs"
             onClick={async () => {
               setBusy(true);
               try {

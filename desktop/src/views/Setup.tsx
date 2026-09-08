@@ -53,10 +53,10 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <header className="border-b-2 border-white/20 pb-4">
-        <h2 className="font-mono text-2xl font-black uppercase tracking-widest text-white">{t("setup_title")}</h2>
-        <p className="mt-1 text-xs font-mono text-white/60">{t("setup_desc")}</p>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <header className="pb-3 border-b border-white/[0.08]">
+        <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("setup_title")}</h2>
+        <p className="mt-0.5 text-xs text-paper-muted">{t("setup_desc")}</p>
       </header>
 
       <Guide
@@ -94,18 +94,22 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
         }
       />
 
-      {/* Servis */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)] font-mono">
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <Cog size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("setup_service_title")}</h3>
+      {/* Windows Servisi */}
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <Cog size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("setup_service_title")}</h3>
+          </div>
           <span
-            className={`ml-auto rounded-none px-2.5 py-1 font-mono text-xs font-black uppercase border ${
+            className={`badge ${
               status?.service_installed
                 ? status.service_running
-                  ? "border-live bg-live text-black"
-                  : "border-warn bg-warn/20 text-warn"
-                : "border-white/20 bg-black text-white/50"
+                  ? "badge-live"
+                  : "badge-warn"
+                : "badge-muted"
             }`}
           >
             {status?.service_installed
@@ -115,18 +119,18 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
               : t("setup_status_not_installed")}
           </span>
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-white/60">
+        <p className="text-xs leading-relaxed text-paper-muted">
           {t("setup_service_desc")}
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
           {!status?.service_installed && (
             <>
               <select
                 aria-label="Servis profili"
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
-                className="rounded-none border-2 border-white/20 bg-black px-3 py-1.5 font-mono text-xs text-white focus:border-live focus:outline-none"
+                className="input !w-auto text-xs py-1.5"
               >
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -135,63 +139,65 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
                 ))}
               </select>
               <button
-                className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none flex items-center gap-1.5 hover:bg-live/90"
+                className="btn btn-primary text-xs"
                 onClick={() => setConfirm("install")}
                 disabled={busy !== null}
               >
                 {busy === "install" ? (
-                  <LoaderCircle size={15} className="animate-spin text-black" aria-hidden strokeWidth={3} />
+                  <LoaderCircle size={14} className="animate-spin text-void" aria-hidden strokeWidth={2.5} />
                 ) : (
-                  <Download size={15} aria-hidden strokeWidth={2.5} />
+                  <Download size={14} aria-hidden strokeWidth={2} />
                 )}
-                {t("setup_service_btn")}
+                <span>{t("setup_service_btn")}</span>
               </button>
             </>
           )}
           {status?.service_installed && (
             <button
-              className="btn rounded-none border-2 border-alert bg-alert/20 text-alert hover:bg-alert hover:text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_rgba(255,51,102,0.3)] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none flex items-center gap-1.5"
+              className="btn btn-danger text-xs"
               onClick={() => setConfirm("uninstall")}
               disabled={busy !== null}
             >
               {busy === "uninstall" ? (
-                <LoaderCircle size={15} className="animate-spin text-black" aria-hidden strokeWidth={3} />
+                <LoaderCircle size={14} className="animate-spin" aria-hidden strokeWidth={2.5} />
               ) : (
-                <Square size={14} aria-hidden strokeWidth={2.5} />
+                <Square size={14} aria-hidden strokeWidth={2} />
               )}
-              {t("setup_service_remove")}
+              <span>{t("setup_service_remove")}</span>
             </button>
           )}
         </div>
       </section>
 
-      {/* Bağımsız */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)] font-mono">
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <Zap size={18} className="text-cyan" aria-hidden strokeWidth={2.5} />
-          <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("setup_detached_title")}</h3>
+      {/* Bağımsız Süreç */}
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-cyan/10 border border-cyan/25 text-cyan">
+              <Zap size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("setup_detached_title")}</h3>
+          </div>
           <span
-            className={`ml-auto rounded-none px-2.5 py-1 font-mono text-xs font-black uppercase border ${
-              status?.detached_running
-                ? "border-live bg-live text-black"
-                : "border-white/20 bg-black text-white/50"
+            className={`badge ${
+              status?.detached_running ? "badge-live" : "badge-muted"
             }`}
           >
             {status?.detached_running ? t("setup_status_running") : t("setup_status_off")}
           </span>
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-white/60">
+        <p className="text-xs leading-relaxed text-paper-muted">
           {t("setup_detached_desc")}
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
           {!status?.detached_running && (
             <>
               <select
                 aria-label="Bağımsız profil"
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
-                className="rounded-none border-2 border-white/20 bg-black px-3 py-1.5 font-mono text-xs text-white focus:border-live focus:outline-none"
+                className="input !w-auto text-xs py-1.5"
               >
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -200,7 +206,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
                 ))}
               </select>
               <button
-                className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none flex items-center gap-1.5 hover:bg-live/90"
+                className="btn btn-primary text-xs"
                 onClick={() =>
                   void run(
                     "detached_start",
@@ -211,35 +217,35 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
                 disabled={busy !== null}
               >
                 {busy === "detached_start" ? (
-                  <LoaderCircle size={15} className="animate-spin text-black" aria-hidden strokeWidth={3} />
+                  <LoaderCircle size={14} className="animate-spin text-void" aria-hidden strokeWidth={2.5} />
                 ) : (
-                  <Play size={15} aria-hidden strokeWidth={2.5} />
+                  <Play size={14} aria-hidden strokeWidth={2} />
                 )}
-                {t("setup_detached_btn")}
+                <span>{t("setup_detached_btn")}</span>
               </button>
             </>
           )}
           {status?.detached_running && (
             <button
-              className="btn rounded-none border-2 border-alert bg-alert/20 text-alert hover:bg-alert hover:text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_rgba(255,51,102,0.3)] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none flex items-center gap-1.5"
+              className="btn btn-danger text-xs"
               onClick={() =>
                 void run("detached_stop", () => api.detachedStop(), "[*] bağımsız motor durduruldu")
               }
               disabled={busy !== null}
             >
               {busy === "detached_stop" ? (
-                <LoaderCircle size={15} className="animate-spin text-black" aria-hidden strokeWidth={3} />
+                <LoaderCircle size={14} className="animate-spin" aria-hidden strokeWidth={2.5} />
               ) : (
-                <Square size={14} aria-hidden strokeWidth={2.5} />
+                <Square size={14} aria-hidden strokeWidth={2} />
               )}
-              {t("setup_detached_stop")}
+              <span>{t("setup_detached_stop")}</span>
             </button>
           )}
         </div>
       </section>
 
       {error && (
-        <p role="alert" className="rounded-none bg-black border-2 border-alert px-4 py-2 font-mono text-xs text-alert font-bold uppercase">
+        <p role="alert" className="rounded-xl bg-alert/10 border border-alert/25 p-3 text-xs text-alert font-semibold">
           {error}
         </p>
       )}

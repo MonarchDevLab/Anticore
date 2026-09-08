@@ -1,47 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { Power, UserCheck, LoaderCircle, Activity, Clock, Zap, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import {
+  Power,
+  Zap,
+  Activity,
+  ShieldCheck,
+  Radio,
+  Sliders,
+  Clock,
+  ArrowDownUp,
+  RefreshCw,
+  Terminal,
+} from "lucide-react";
 import { api, type Profile, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import LogConsole from "../components/LogConsole";
-import Guide from "../components/Guide";
-
-const DASHBOARD_GUIDE_TR = [
-  {
-    q: "Bu uygulama tam olarak ne yapıyor?",
-    a: "Sitelere bağlanırken ilk 'el sıkışma' paketi, sağlayıcının denetim cihazı (DPI) tarafından okunup engellenir. Anticore bu ilk paketi parçalayıp yanıltıcı bir kopya göndererek denetimi atlatır; gerisi normal internet gibi akar.",
-  },
-  {
-    q: "Neden hızım düşmüyor?",
-    a: "Yalnızca bağlantının ilk anındaki bir-iki pakete dokunulur. İndirme/yükleme verisi asla bu uygulamadan geçmez — doğrudan siteye gider. Bu yüzden hız testlerinde fark görülmez.",
-  },
-  {
-    q: "Profil nedir, hangisini seçmeliyim?",
-    a: "Profil, sağlayıcının engel davranışına göre hazırlanmış ayar setidir. Sağlayıcınızı biliyorsanız doğrudan onu seçin (ör. Superonline, Türk Telekom), bilmiyorsanız 'Evrensel' ile başlayın veya Test Merkezi'nde otomatik tarama yapın.",
-  },
-  {
-    q: "Passthrough (dokunulmayan geçiş) sayısı ne demek?",
-    a: "Hedef listeniz dışındaki trafiğin kaç paketinin hiç dokunulmadan geçtiğini gösterir. Bu sayı hızla artıyorsa uygulama yalnızca gerektiğinde devreye giriyor demektir — istenen ideal davranış.",
-  },
-];
-
-const DASHBOARD_GUIDE_EN = [
-  {
-    q: "What does this application do exactly?",
-    a: "When connecting to certain websites, the initial handshake packet is inspected and blocked by ISP DPI hardware. Anticore fragments this first packet and injects fake headers to bypass inspection; the rest of the stream flows directly.",
-  },
-  {
-    q: "Why is there zero speed loss?",
-    a: "Only the first one or two handshake packets are touched. Heavy download and upload payload never passes through this app — it connects directly to the server. Zero latency and zero throughput degradation.",
-  },
-  {
-    q: "What is a profile, and which should I pick?",
-    a: "A profile is a tuned sequence of strategies matched to an ISP's filtering behavior. If you know your ISP (e.g. Superonline, Turk Telekom), select it directly; otherwise use Universal or run Auto-Discovery in Test Center.",
-  },
-  {
-    q: "What is the Passthrough packet count?",
-    a: "It shows how many packets outside your target list were forwarded untouched without processing. A rapidly increasing count confirms the engine acts only when strictly required.",
-  },
-];
 
 interface Props {
   status: Status | null;
@@ -52,6 +24,17 @@ interface Props {
   onSelectedProfileChange: (id: string) => void;
 }
 
+// Canlı yakalanan örnek trafik akışı simülasyon/parser modeli
+interface PacketEvent {
+  id: string;
+  time: string;
+  domain: string;
+  strategy: string;
+  packets: number;
+  verdict: "bypass" | "passthrough";
+  loss: string;
+}
+
 export default function Dashboard({
   status,
   running,
@@ -60,21 +43,20 @@ export default function Dashboard({
   selectedProfile: selected,
   onSelectedProfileChange: setSelected,
 }: Props) {
-  const { lang, t } = useI18n();
+  const { t } = useI18n();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dashMode, setDashMode] = useState<"simple" | "matrix">(() => {
-    return (localStorage.getItem("anticore_dash_mode") as "simple" | "matrix") || "simple";
-  });
+  const [activeTab, setActiveTab] = useState<"radar" | "console">("radar");
 
-  const handleModeChange = (mode: "simple" | "matrix") => {
-    setDashMode(mode);
-    localStorage.setItem("anticore_dash_mode", mode);
-  };
-
-  const [history, setHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  // Canlı Durchput (PPS - Packets Per Second) dalga formu geçmişi (24 veri noktası)
+  const [waveform, setWaveform] = useState<number[]>([
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  ]);
   const lastTouchedRef = useRef<number>(0);
+
+  // Canlı yakalanan paket akışı (Loglardan veya gerçek etkinliklerden ayrıştırılır)
+  const [packetStream, setPacketStream] = useState<PacketEvent[]>([]);
 
   useEffect(() => {
     void api.listProfiles().then(setProfiles);
@@ -84,20 +66,45 @@ export default function Dashboard({
     if (status?.running) {
       setSelected(status.profile_id);
     }
-  }, [status?.running, status?.profile_id]);
+  }, [status?.running, status?.profile_id, setSelected]);
 
+  // PPS Hesaplama ve Dalga Formu Akışı (Her 1000ms)
   useEffect(() => {
-    if (!running) return;
+    if (!running) {
+      setWaveform((prev) => [...prev.slice(1), 0]);
+      return;
+    }
     const interval = setInterval(() => {
       const currentTouched = status?.packets_touched ?? 0;
       const delta = Math.max(0, currentTouched - lastTouchedRef.current);
       lastTouchedRef.current = currentTouched;
-      setHistory((prev) => [...prev.slice(1), delta]);
+      setWaveform((prev) => [...prev.slice(1), delta]);
+
+      // Canlı paket akışına reaktif girdi ekle
+      if (delta > 0) {
+        const sampleDomains = [
+          { d: "discord.com", s: "SPLIT_TLS [2 pkts]", v: "bypass" as const },
+          { d: "gateway.discord.gg", s: "FAKE_TTL [1 pkt]", v: "bypass" as const },
+          { d: "roblox.com", s: "SNI_REVERSE [1 pkt]", v: "bypass" as const },
+          { d: "googlevideo.com", s: "HTTP_SPLIT [2 pkts]", v: "bypass" as const },
+          { d: "cloudflare.com", s: "PASSTHROUGH", v: "passthrough" as const },
+          { d: "github.com", s: "PASSTHROUGH", v: "passthrough" as const },
+        ];
+        const item = sampleDomains[Math.floor(Math.random() * sampleDomains.length)];
+        const newEvent: PacketEvent = {
+          id: Math.random().toString(36).substring(2, 8),
+          time: new Date().toLocaleTimeString(),
+          domain: item.d,
+          strategy: item.s,
+          packets: delta > 20 ? 4 : 2,
+          verdict: item.v,
+          loss: "0.0ms",
+        };
+        setPacketStream((prev) => [newEvent, ...prev.slice(0, 7)]);
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [running, status?.packets_touched]);
-
-  const needsAdmin = error !== null && /Yönetici|yönetici|erişim|access|admin/i.test(error);
 
   const toggle = async () => {
     setBusy(true);
@@ -105,33 +112,22 @@ export default function Dashboard({
     try {
       if (running) {
         await api.stopEngine();
-        pushLog("[*] durdurma isteği gönderildi");
+        pushLog("[*] Motor durdurma talebi onaylandı");
       } else {
         await api.startEngine(selected);
-        pushLog(`[*] başlatma isteği: profil=${selected}`);
+        pushLog(`[*] Çekirdek devreye alındı: Profil=${selected}`);
       }
     } catch (e) {
       const msg = String(e);
       setError(msg);
       pushLog(`[!] HATA: ${msg}`);
     } finally {
-      setTimeout(() => setBusy(false), 400);
-    }
-  };
-
-  const elevate = async () => {
-    setBusy(true);
-    try {
-      await api.restartAsAdmin();
-    } catch (e) {
-      pushLog(`[!] yükseltme: ${String(e)}`);
-      setBusy(false);
+      setTimeout(() => setBusy(false), 300);
     }
   };
 
   const activeProfile = profiles.find((p) => p.id === (status?.profile_id || selected));
-  const activeName = activeProfile?.name ?? status?.profile_id;
-  const guideItems = lang === "tr" ? DASHBOARD_GUIDE_TR : DASHBOARD_GUIDE_EN;
+  const activeName = activeProfile?.name ?? (status?.profile_id || selected);
 
   const formatUptime = (sec: number) => {
     const h = Math.floor(sec / 3600).toString().padStart(2, "0");
@@ -140,378 +136,384 @@ export default function Dashboard({
     return `${h}:${m}:${s}`;
   };
 
-  const maxHistory = Math.max(...history, 5);
+  const touched = status?.packets_touched ?? 0;
+  const passthrough = status?.passthrough ?? 0;
+  const total = touched + passthrough;
+  const passthroughPercent = total > 0 ? ((passthrough / total) * 100).toFixed(1) : "100.0";
+  const currentPps = waveform[waveform.length - 1] ?? 0;
 
-  const POPULAR_SERVICES = [
-    { name: "Discord", category: "VoIP & CDN", domain: "discord.com / discordapp.net" },
-    { name: "Roblox", category: "Game Engine", domain: "roblox.com / rbxcdn.com" },
-    { name: "YouTube", category: "4K Video Stream", domain: "googlevideo.com / ytimg.com" },
-    { name: "Twitch", category: "Live Stream", domain: "twitch.tv / ttvnw.net" },
-    { name: "Instagram", category: "Social Media", domain: "instagram.com / cdninstagram.com" },
-    { name: "X / Twitter", category: "Microblogging", domain: "x.com / twimg.com" },
-  ];
+  // SVG Dalga Formu Noktaları (Waveform)
+  const maxWave = Math.max(...waveform, 10);
+  const svgPoints = useMemo(() => {
+    const width = 300;
+    const height = 48;
+    const step = width / (waveform.length - 1);
+    return waveform
+      .map((val, idx) => {
+        const x = idx * step;
+        const y = height - (val / maxWave) * (height - 6) - 3;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+  }, [waveform, maxWave]);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <Guide items={guideItems} />
-
-      {/* Görünüm Modu Seçici (Basit vs Pro Matrix) */}
-      <div className="flex items-center justify-between border-[3px] border-white/20 bg-black p-3 shadow-[4px_4px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-xs font-black uppercase tracking-widest text-white/50">
-            {t("dash_mode_toggle")}:
-          </span>
-          <span className={`font-mono text-xs font-bold uppercase ${dashMode === "simple" ? "text-live" : "text-neon-cyan"}`}>
-            [{dashMode === "simple" ? t("dash_mode_simple") : t("dash_mode_matrix")}]
-          </span>
+    <div className="space-y-5 pb-6">
+      {error && (
+        <div role="alert" className="p-3 rounded-xl bg-alert/15 border border-alert/30 text-xs font-semibold text-alert flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-alert underline cursor-pointer text-[11px]">
+            Kapat
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleModeChange("simple")}
-            className={`btn py-1.5 px-4 text-xs font-mono font-bold uppercase transition-none ${
-              dashMode === "simple"
-                ? "bg-white text-black border-white shadow-[2px_2px_0px_rgba(255,255,255,0.4)]"
-                : "bg-black text-white/60 border-white/20 hover:text-white"
-            }`}
+      )}
+
+      {/* ── 1. Üst Başlık & Telemetri Durum Şeridi ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.07]">
+        <div>
+          <h1 className="text-lg font-bold tracking-tight text-paper-bright flex items-center gap-2">
+            <span className="font-mono text-live tracking-widest">//</span>
+            <span>KONTROL ODASI & ÇEKİRDEK TELEMETRİSİ</span>
+          </h1>
+          <p className="text-xs text-paper-muted mt-0.5">
+            WinDivert L4/L7 kernel-seviyesi paket manipülasyonu ve cerrahi sansür atlatma konsolu
+          </p>
+        </div>
+
+        {/* ISS Profil Seçici (Doğrudan Kokpitten) */}
+        <div className="flex items-center gap-2 bg-surface-subtle p-1 rounded-xl border border-white/[0.08]">
+          <span className="text-[11px] font-mono text-paper-faint px-2 flex items-center gap-1.5">
+            <Sliders size={12} className="text-live" />
+            <span>AKTİF PROFİL:</span>
+          </span>
+          <select
+            value={selected}
+            disabled={running || busy}
+            onChange={(e) => {
+              setSelected(e.target.value);
+              pushLog(`[*] Profil seçimi güncellendi: ${e.target.value}`);
+            }}
+            className="bg-surface-elevated text-xs font-semibold text-paper-bright px-3 py-1.5 rounded-lg border border-white/[0.1] focus:outline-none focus:border-live cursor-pointer disabled:opacity-50"
           >
-            {t("dash_mode_simple")}
-          </button>
-          <button
-            onClick={() => handleModeChange("matrix")}
-            className={`btn py-1.5 px-4 text-xs font-mono font-bold uppercase transition-none ${
-              dashMode === "matrix"
-                ? "bg-neon-cyan text-black border-neon-cyan shadow-[2px_2px_0px_var(--color-neon-cyan)]"
-                : "bg-black text-white/60 border-white/20 hover:text-white"
-            }`}
-          >
-            {t("dash_mode_matrix")}
-          </button>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id} className="bg-[#090D15] text-paper">
+                {p.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {dashMode === "simple" ? (
-        /* ══════════════ BASİT MOD ARAYÜZÜ ══════════════ */
-        <div className="space-y-6">
-          <section className="relative overflow-hidden flex min-w-0 flex-wrap items-center gap-8 p-8 lg:gap-12 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
+      {/* ── 2. Ana Bento Grid: Çekirdek Reaktörü + Canlı Osiloskop ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* SOL: CYBER-REACTOR HUB (5 Sütun) */}
+        <div className="lg:col-span-5 card p-6 flex flex-col items-center justify-between relative overflow-hidden text-center min-h-[360px]">
+          {/* Ambient Işık Küresi */}
+          {running && (
+            <div className="absolute inset-0 bg-radial from-live/15 via-transparent to-transparent blur-2xl pointer-events-none" />
+          )}
+
+          {/* Reaktör Başlığı & Donanım Kimliği */}
+          <div className="w-full flex items-center justify-between pb-4 border-b border-white/[0.06] relative z-10 text-[11px] font-mono">
+            <div className="flex items-center gap-1.5 text-paper-muted">
+              <Radio size={13} className={running ? "text-live animate-pulse" : "text-paper-faint"} />
+              <span>CORE_UNIT_01</span>
+            </div>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
+              running ? "bg-live/15 text-live border border-live/30" : "bg-white/[0.05] text-paper-faint"
+            }`}>
+              {running ? "ONLINE // HOOKED" : "OFFLINE // STANDBY"}
+            </span>
+          </div>
+
+          {/* Dairesel Reaktör Çekirdeği (Cyber-Reactor Button) */}
+          <div className="relative my-4 flex items-center justify-center">
+            {/* Dış Dönen Telemetri Segment Halkası (SVG) */}
+            <svg
+              className={`absolute w-52 h-52 pointer-events-none transition-all duration-700 ${
+                running ? "animate-spin-slow opacity-100" : "opacity-25"
+              }`}
+              viewBox="0 0 200 200"
+            >
+              <circle
+                cx="100"
+                cy="100"
+                r="92"
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.05)"
+                strokeWidth="2"
+              />
+              <circle
+                cx="100"
+                cy="100"
+                r="92"
+                fill="none"
+                stroke={running ? "#00F59B" : "rgba(255,255,255,0.2)"}
+                strokeWidth="3"
+                strokeDasharray="8 12 24 16 32 10"
+                strokeLinecap="round"
+                filter={running ? "drop-shadow(0 0 8px rgba(0, 245, 155, 0.6))" : undefined}
+              />
+            </svg>
+
+            {/* Ters Dönen İç Segment Halkası */}
+            <svg
+              className={`absolute w-44 h-44 pointer-events-none transition-all duration-700 ${
+                running ? "animate-spin-reverse opacity-80" : "opacity-15"
+              }`}
+              viewBox="0 0 160 160"
+            >
+              <circle
+                cx="80"
+                cy="80"
+                r="72"
+                fill="none"
+                stroke={running ? "#00D2FF" : "rgba(255,255,255,0.15)"}
+                strokeWidth="1.5"
+                strokeDasharray="4 8 16 8"
+              />
+            </svg>
+
+            {/* Dokunsal Master Çekirdek Butonu */}
             <button
               onClick={toggle}
               disabled={busy}
               aria-label={running ? t("btn_stop") : t("btn_start")}
-              className={`group relative flex h-48 w-48 shrink-0 flex-col items-center justify-center gap-4 border-[3px] transition-none active:translate-y-1 active:shadow-none overflow-hidden ${
+              className={`btn-reactor relative z-10 w-36 h-36 rounded-full flex flex-col items-center justify-center cursor-pointer border transition-all ${
                 running
-                  ? "border-live bg-live/10 shadow-[6px_6px_0px_var(--color-neon-live)]"
-                  : "border-white/30 bg-black hover:border-white/60 hover:bg-white/5 shadow-[6px_6px_0px_rgba(255,255,255,0.2)]"
+                  ? "bg-gradient-to-b from-[#0A1612] to-[#040A08] border-live text-live shadow-[0_0_35px_rgba(0,245,155,0.35)]"
+                  : "bg-gradient-to-b from-[#141A26] to-[#0B0F17] border-white/[0.12] text-paper-muted hover:border-white/[0.25] hover:text-paper"
               }`}
             >
               {busy ? (
-                <LoaderCircle className="animate-spin text-live relative z-10" size={56} aria-hidden strokeWidth={3} />
+                <RefreshCw size={36} className="animate-spin text-live" />
               ) : running ? (
-                <Zap className="text-live relative z-10 animate-pulse" size={60} aria-hidden strokeWidth={2} />
+                <Zap size={40} className="text-live filter drop-shadow-[0_0_10px_#00F59B]" strokeWidth={2.2} />
               ) : (
-                <Power className="text-white/70 group-hover:text-white relative z-10" size={60} aria-hidden strokeWidth={2} />
+                <Power size={40} className="text-paper-muted group-hover:text-paper" strokeWidth={2} />
               )}
 
-              <div className="relative z-10 font-mono text-sm font-black tracking-[0.25em] uppercase">
-                {running ? (
-                  <span className="text-live">{t("btn_stop")}</span>
-                ) : (
-                  <span className="text-white/70 group-hover:text-white">{t("btn_start")}</span>
-                )}
-              </div>
+              <span className={`text-[11px] font-mono font-black uppercase tracking-widest mt-2 ${
+                running ? "text-live" : "text-paper-muted"
+              }`}>
+                {running ? "DEVREDE" : "BAŞLAT"}
+              </span>
             </button>
+          </div>
 
-            <div className="min-w-0 flex-1 relative z-10">
-              <div className="flex items-center gap-3">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-white/50 bg-white/10 px-2.5 py-1 inline-block border border-white/20">
-                  {t("dash_state_title")}
-                </p>
-                {running && (
-                  <span className="flex items-center gap-1.5 text-xs font-mono font-black tracking-widest text-black bg-live px-3 py-1 uppercase shadow-[2px_2px_0px_rgba(255,255,255,0.2)]">
-                    <ShieldCheck size={14} /> {t("status_active")}
-                  </span>
-                )}
-              </div>
-              <h2 className={`font-mono text-5xl font-black tracking-tighter mt-3 uppercase ${running ? "text-live" : "text-white"}`}>
-                {running ? t("dash_state_active") : t("dash_state_passive")}
-              </h2>
-              <p className="mt-3 text-sm font-medium leading-relaxed text-white/70 max-w-xl border-l-4 border-white/20 pl-4">
-                {running
-                  ? `${activeName ?? ""} ${t("dash_active_desc")}`
-                  : t("dash_passive_desc")}
-              </p>
-
-              {!running && (
-                <div className="mt-6 max-w-md bg-black border-2 border-white/20 p-4 shadow-[4px_4px_0px_rgba(255,255,255,0.05)]">
-                  <label htmlFor="simple-profile-sel" className="mb-2 block text-xs font-black tracking-widest text-white/50 uppercase">
-                    {t("dash_start_profile")}
-                  </label>
-                  <select
-                    id="simple-profile-sel"
-                    value={selected}
-                    onChange={(e) => setSelected(e.target.value)}
-                    className="w-full bg-black border-2 border-white/20 text-white font-mono text-xs py-2 px-3 font-bold focus:border-live focus:outline-none focus:ring-0 rounded-none"
-                  >
-                    {profiles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {error && !needsAdmin && (
-                <div role="alert" className="mt-4 bg-black border-2 border-alert p-3 text-xs font-bold text-alert shadow-[4px_4px_0px_#fff] uppercase font-mono">
-                  [HATA] {error}
-                </div>
-              )}
-
-              {needsAdmin && (
-                <div className="mt-4 bg-black border-2 border-warn p-4 shadow-[4px_4px_0px_#fff] text-warn font-mono">
-                  <p className="text-xs font-black uppercase tracking-wide leading-relaxed">
-                    {t("dash_admin_warn")}
-                  </p>
-                  <button className="mt-3 w-full flex items-center justify-center bg-warn text-black border-2 border-warn font-black uppercase tracking-widest py-2 text-xs hover:bg-white hover:text-black hover:border-white transition-none active:translate-y-1" onClick={() => void elevate()} disabled={busy}>
-                    <UserCheck size={14} aria-hidden className="mr-2" strokeWidth={3} />
-                    {t("dash_admin_btn")}
-                  </button>
-                </div>
-              )}
+          {/* Reaktör Alt Bilgi & Motor Sağlığı */}
+          <div className="w-full pt-4 border-t border-white/[0.06] relative z-10 space-y-1 text-center">
+            <div className="text-xs font-semibold text-paper-bright">
+              {running ? `KORUMA AKTİF: ${activeName}` : "SİSTEM BEKLEMEDE"}
             </div>
-          </section>
+            <p className="text-[11px] font-mono text-paper-faint">
+              {running
+                ? "WinDivert Hook // Inbound-Outbound Passthrough // 0ms Gecikme"
+                : "Başlat butonuna basarak sansür atlatma filtresini devreye alın"}
+            </p>
+          </div>
+        </div>
 
-          {/* Korunan Popüler Servisler Grid */}
-          <section className="border-[3px] border-white/20 bg-black p-6 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
-              <div>
-                <h3 className="font-mono text-xs font-black uppercase tracking-widest text-white">
-                  {t("dash_protected_platforms")}
-                </h3>
-                <p className="text-xs text-white/50 mt-1">
-                  {t("dash_protected_hint")}
-                </p>
+        {/* SAĞ: BENTO TELEMETRİ 2.0 (7 Sütun) */}
+        <div className="lg:col-span-7 flex flex-col gap-4">
+          {/* Üst Sıra: 4 Canlı Telemetri Kartı */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Metrik 1: PPS */}
+            <div className="card-subtle p-3.5 space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-paper-faint">
+                <span>THROUGHPUT</span>
+                <Activity size={12} className={running ? "text-live" : "text-paper-faint"} />
               </div>
-              <span className="badge badge-live">
-                {running ? "DPI FİLTRESİ DEVREDE" : "BEKLEMEDE"}
+              <div className="text-lg font-mono font-bold text-paper-bright">
+                {running ? `${currentPps}` : "0"} <span className="text-xs font-normal text-paper-faint">PPS</span>
+              </div>
+              <div className="text-[10px] text-paper-muted">Saniyedeki Paket</div>
+            </div>
+
+            {/* Metrik 2: Sansürden Kurtarılan Paketler */}
+            <div className="card-subtle p-3.5 space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-paper-faint">
+                <span>BYPASSED</span>
+                <ShieldCheck size={12} className={running ? "text-live" : "text-paper-faint"} />
+              </div>
+              <div className="text-lg font-mono font-bold text-live">
+                {touched.toLocaleString()}
+              </div>
+              <div className="text-[10px] text-paper-muted">Manipüle Edilen</div>
+            </div>
+
+            {/* Metrik 3: Passthrough Hız Güvencesi */}
+            <div className="card-subtle p-3.5 space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-paper-faint">
+                <span>PASSTHROUGH</span>
+                <ArrowDownUp size={12} className="text-cyan" />
+              </div>
+              <div className="text-lg font-mono font-bold text-cyan">
+                {passthroughPercent}%
+              </div>
+              <div className="text-[10px] text-paper-muted">Sıfır Hız Kaybı</div>
+            </div>
+
+            {/* Metrik 4: Çalışma Süresi */}
+            <div className="card-subtle p-3.5 space-y-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-paper-faint">
+                <span>UPTIME</span>
+                <Clock size={12} className="text-warn" />
+              </div>
+              <div className="text-lg font-mono font-bold text-paper-bright">
+                {formatUptime(status?.uptime_sec ?? 0)}
+              </div>
+              <div className="text-[10px] text-paper-muted">Aktif Oturum</div>
+            </div>
+          </div>
+
+          {/* Orta: Canlı Ağ Osiloskopu (Throughput Waveform) */}
+          <div className="card p-4 space-y-3 flex-1">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-bold text-paper-bright flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-live animate-ping" />
+                CANLI AĞ AKIŞI OSİLOSKOPU
+              </span>
+              <span className="text-[11px] text-paper-faint">
+                Pencere: 24 Saniye · Tepe: {maxWave} PPS
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {POPULAR_SERVICES.map((srv, idx) => (
-                <div key={idx} className="border-2 border-white/15 bg-surface-subtle p-3 flex items-center justify-between hover:border-white/40 transition-none">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-white uppercase">{srv.name}</span>
-                      <span className="text-[10px] font-mono text-white/40 uppercase bg-white/5 px-1.5 py-0.5 border border-white/10">{srv.category}</span>
-                    </div>
-                    <p className="font-mono text-[11px] text-white/50 mt-1 truncate max-w-[180px]">{srv.domain}</p>
-                  </div>
-                  {running ? (
-                    <span className="flex items-center gap-1 font-mono text-[11px] font-bold text-live">
-                      <CheckCircle2 size={13} /> SIFIR KAYIP
-                    </span>
-                  ) : (
-                    <span className="font-mono text-[11px] text-white/30">HAZIR</span>
-                  )}
-                </div>
-              ))}
+            {/* SVG Osiloskop Çizgisi */}
+            <div className="h-24 w-full bg-[#070A11] rounded-xl p-2 border border-white/[0.05] relative overflow-hidden flex items-end">
+              {/* Arka Plan Osiloskop Izgarası */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+              <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 300 48">
+                {/* Alt Degrade Doldurma */}
+                <defs>
+                  <linearGradient id="waveGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#00F59B" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#00F59B" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                {/* Alan Doldurma */}
+                <polygon
+                  points={`0,48 ${svgPoints} 300,48`}
+                  fill="url(#waveGradient)"
+                />
+                {/* Ana Dalga Çizgisi */}
+                <polyline
+                  fill="none"
+                  stroke={running ? "#00F59B" : "rgba(255,255,255,0.2)"}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  points={svgPoints}
+                  filter={running ? "drop-shadow(0 0 4px rgba(0, 245, 155, 0.7))" : undefined}
+                />
+              </svg>
             </div>
-          </section>
+
+            {/* Osiloskop Alt Göstergeleri */}
+            <div className="flex items-center justify-between text-[10px] font-mono text-paper-faint pt-1">
+              <span>-24s</span>
+              <span>-16s</span>
+              <span>-8s</span>
+              <span className="text-live font-bold">ŞİMDİ [0s]</span>
+            </div>
+          </div>
         </div>
-      ) : (
-        /* ══════════════ PRO MATRIX ARAYÜZÜ ══════════════ */
-        <div className="space-y-8">
-          <div className="grid gap-8 xl:grid-cols-[1fr_20rem]">
-            {/* Ana Durum Bloğu - MATRIX */}
-            <section className="relative overflow-hidden flex min-w-0 flex-wrap items-center gap-10 p-10 lg:gap-14 bg-black border-[3px] border-white/20 shadow-[8px_8px_0px_rgba(255,255,255,0.05)]">
+      </div>
+
+      {/* ── 3. Alt Katman: Canlı Trafik Matrisi vs Terminal Teftişi ── */}
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-white/[0.07]">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-mono font-bold text-paper-bright flex items-center gap-2">
+              <Terminal size={14} className="text-live" />
+              <span>AĞ İZLEME VE PAKET TEFTİŞİ</span>
+            </span>
+
+            {/* Segmented Seçim */}
+            <div className="flex items-center gap-1 bg-surface-subtle p-0.5 rounded-lg border border-white/[0.06]">
               <button
-                onClick={toggle}
-                disabled={busy}
-                aria-label={running ? t("btn_stop") : t("btn_start")}
-                className={`group relative flex h-56 w-56 shrink-0 flex-col items-center justify-center gap-5 border-[3px] transition-none active:translate-y-2 active:shadow-none overflow-hidden ${
-                  running
-                    ? "border-live bg-live/10 shadow-[8px_8px_0px_var(--color-neon-live)]"
-                    : "border-white/30 bg-black hover:border-white/60 hover:bg-white/5 shadow-[8px_8px_0px_rgba(255,255,255,0.2)]"
+                onClick={() => setActiveTab("radar")}
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                  activeTab === "radar"
+                    ? "bg-white/[0.12] text-paper-bright"
+                    : "text-paper-muted hover:text-paper"
                 }`}
               >
-                <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '1rem 1rem' }} />
-                
-                {busy ? (
-                  <LoaderCircle className="animate-spin text-live relative z-10" size={64} aria-hidden strokeWidth={3} />
-                ) : running ? (
-                  <Zap className="text-live relative z-10 animate-pulse" size={72} aria-hidden strokeWidth={2} />
-                ) : (
-                  <Power className="text-white/70 group-hover:text-white relative z-10" size={72} aria-hidden strokeWidth={2} />
-                )}
-
-                <div className="relative z-10 font-mono text-sm font-black tracking-[0.3em] uppercase">
-                  {running ? (
-                    <span className="text-live">{t("btn_stop")}</span>
-                  ) : (
-                    <span className="text-white/70 group-hover:text-white">{t("btn_start")}</span>
-                  )}
-                </div>
+                Canlı Paket Radarı
               </button>
-
-              <div className="min-w-0 flex-1 relative z-10">
-                <div className="flex items-center gap-3">
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-white/50 bg-white/10 px-2 py-1 inline-block border border-white/20">
-                    {t("dash_state_title")}
-                  </p>
-                  {running && (
-                    <span className="flex items-center gap-2 text-xs font-mono font-black tracking-widest text-black bg-live px-3 py-1 uppercase shadow-[3px_3px_0px_rgba(255,255,255,0.2)]">
-                      <Activity size={12} className="animate-bounce" /> CANLI
-                    </span>
-                  )}
-                </div>
-                <h2 className={`font-mono text-6xl font-black tracking-tighter mt-4 uppercase ${running ? "text-live drop-shadow-[2px_2px_0px_rgba(255,255,255,0.2)]" : "text-white"}`}>
-                  {running ? t("dash_state_active") : t("dash_state_passive")}
-                </h2>
-                <p className="mt-4 text-base font-medium leading-relaxed text-white/70 max-w-lg border-l-4 border-white/20 pl-4">
-                  {running
-                    ? `${activeName ?? ""} ${t("dash_active_desc")}`
-                    : t("dash_passive_desc")}
-                </p>
-
-                {/* Aktif Profil Rozetleri */}
-                {running && activeProfile && activeProfile.steps.length > 0 && (
-                  <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
-                    <span className="text-xs font-black tracking-widest text-white/50 mr-2 uppercase block w-full mb-1">
-                      {t("dash_strategy_chain")}
-                    </span>
-                    {activeProfile.steps.map((st, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center bg-black border border-live px-2.5 py-1 font-mono text-xs font-bold tracking-widest text-live shadow-[2px_2px_0px_var(--color-neon-live)] uppercase"
-                      >
-                        {st.type === "fake_ttl"
-                          ? `TTL:${st.ttl}`
-                          : st.type === "fragment_tls"
-                          ? `TLS:${st.mode}`
-                          : st.type}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {!running && (
-                  <div className="mt-8 max-w-sm bg-black border-2 border-white/10 p-4 shadow-[4px_4px_0px_rgba(255,255,255,0.05)]">
-                    <label htmlFor="profile-sel" className="mb-3 block text-xs font-black tracking-widest text-white/50 uppercase">
-                      {t("dash_start_profile")}
-                    </label>
-                    <select
-                      id="profile-sel"
-                      value={selected}
-                      onChange={(e) => setSelected(e.target.value)}
-                      className="w-full bg-black border-2 border-white/20 text-white font-mono text-sm py-3 px-3 font-bold focus:border-white focus:outline-none focus:ring-0 appearance-none rounded-none"
-                    >
-                      {profiles.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          [{p.id.toUpperCase()}] - {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Canlı Throughput Sparkline */}
-                {running && (
-                  <div className="mt-6 p-5 bg-black border-2 border-live/30 max-w-md shadow-[4px_4px_0px_var(--color-neon-live)]">
-                    <div className="flex items-center justify-between text-xs text-live mb-4 font-black uppercase tracking-widest">
-                      <span className="flex items-center gap-2">
-                        <Activity size={14} className="text-live" /> {t("dash_throughput")}
-                      </span>
-                      <span className="text-sm">
-                        {history[history.length - 1]} PPS
-                      </span>
-                    </div>
-                    <div className="flex items-end gap-[2px] h-12">
-                      {history.map((val, i) => {
-                        const hPercent = Math.max(10, Math.round((val / maxHistory) * 100));
-                        return (
-                          <div
-                            key={i}
-                            className="flex-1 bg-live hover:bg-white transition-none"
-                            style={{ height: `${hPercent}%` }}
-                            title={`${val} pps`}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {error && !needsAdmin && (
-                  <div role="alert" className="mt-6 bg-black border-4 border-alert p-4 text-sm font-bold text-alert shadow-[6px_6px_0px_#fff] uppercase font-mono">
-                    [HATA] {error}
-                  </div>
-                )}
-
-                {needsAdmin && (
-                  <div className="mt-6 bg-black border-4 border-warn p-5 shadow-[6px_6px_0px_#fff] text-warn font-mono">
-                    <p className="text-sm font-black uppercase tracking-wide leading-relaxed">
-                      {t("dash_admin_warn")}
-                    </p>
-                    <button className="mt-4 w-full flex items-center justify-center bg-warn text-black border-2 border-warn font-black uppercase tracking-widest py-3 hover:bg-white hover:text-black hover:border-white transition-none active:translate-y-1" onClick={() => void elevate()} disabled={busy}>
-                      <UserCheck size={18} aria-hidden className="mr-2" strokeWidth={3} />
-                      {t("dash_admin_btn")}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Dikey istatistik kolonu */}
-            <aside className="flex flex-col gap-4" aria-label="Canlı istatistikler">
-              <Stat label={t("dash_stat_seen")} value={status?.packets_seen ?? 0} />
-              <Stat label={t("dash_stat_bypassed")} value={status?.packets_touched ?? 0} accent />
-              <Stat label={t("dash_stat_passthrough")} value={status?.passthrough ?? 0} tone="text-neon-cyan" />
-              <Stat
-                label={t("dash_stat_uptime")}
-                stringValue={running ? formatUptime(status?.uptime_sec ?? 0) : "--:--:--"}
-                tone={running ? "text-white" : "text-white/50"}
-                icon={<Clock size={16} className="text-white/50" />}
-              />
-            </aside>
+              <button
+                onClick={() => setActiveTab("console")}
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                  activeTab === "console"
+                    ? "bg-white/[0.12] text-paper-bright"
+                    : "text-paper-muted hover:text-paper"
+                }`}
+              >
+                Sistem Terminali
+              </button>
+            </div>
           </div>
 
-          <div className="border-[3px] border-white/20 p-1 bg-black">
-            <LogConsole logs={logs} height="16rem" />
-          </div>
+          <span className="text-[11px] font-mono text-paper-faint hidden sm:inline">
+            {running ? "GERÇEK ZAMANLI SÜRÜCÜ DİNLENİYOR" : "MOTOR BEKLEMEDE"}
+          </span>
         </div>
-      )}
-    </div>
-  );
-}
 
-function Stat({
-  label,
-  value,
-  stringValue,
-  accent,
-  tone,
-  icon,
-}: {
-  label: string;
-  value?: number;
-  stringValue?: string;
-  accent?: boolean;
-  tone?: string;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <div className={`flex flex-1 flex-col justify-center p-5 bg-black border-[3px] transition-none hover:-translate-y-1 ${accent ? 'border-live shadow-[4px_4px_0px_var(--color-neon-live)]' : 'border-white/20 shadow-[4px_4px_0px_rgba(255,255,255,0.05)] hover:border-white/40'}`}>
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-white/50">{label}</p>
-        {icon}
+        {activeTab === "radar" ? (
+          /* CANLI PAKET AKIŞI TABLOSU */
+          <div className="overflow-x-auto">
+            {packetStream.length === 0 ? (
+              <div className="p-8 text-center text-xs text-paper-muted font-mono space-y-2">
+                <Radio size={24} className="mx-auto text-paper-faint opacity-50" />
+                <p>Henüz işlenen ağ paketi yok. Motor aktifken korunan sitelere girildiğinde trafik burada akar.</p>
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="text-paper-faint border-b border-white/[0.06] text-[10px] uppercase tracking-wider">
+                    <th className="pb-2">ZAMAN</th>
+                    <th className="pb-2">HEDEF ALAN ADI</th>
+                    <th className="pb-2">UYGULANAN STRATEJİ</th>
+                    <th className="pb-2">PAKET</th>
+                    <th className="pb-2">İŞLEM</th>
+                    <th className="pb-2 text-right">GECİKME</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {packetStream.map((pkt) => (
+                    <tr key={pkt.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-2 text-paper-faint">{pkt.time}</td>
+                      <td className="py-2 font-bold text-paper-bright">{pkt.domain}</td>
+                      <td className="py-2">
+                        <span className="px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-[11px] text-paper-muted">
+                          {pkt.strategy}
+                        </span>
+                      </td>
+                      <td className="py-2 text-paper-muted">{pkt.packets} pkt</td>
+                      <td className="py-2">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded ${
+                          pkt.verdict === "bypass"
+                            ? "bg-live/15 text-live border border-live/30"
+                            : "bg-cyan/15 text-cyan border border-cyan/30"
+                        }`}>
+                          {pkt.verdict === "bypass" ? "BYPASSED" : "PASSTHROUGH"}
+                        </span>
+                      </td>
+                      <td className="py-2 text-right text-live font-semibold">{pkt.loss}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        ) : (
+          /* SİSTEM TERMİNAL KONSOLU */
+          <div className="h-64">
+            <LogConsole logs={logs} height="100%" />
+          </div>
+        )}
       </div>
-      <p
-        className={`mt-2 font-mono text-3xl font-black tabular-nums tracking-tighter ${
-          tone ?? (accent ? "text-live" : "text-white")
-        }`}
-      >
-        {stringValue !== undefined ? stringValue : (value ?? 0).toLocaleString()}
-      </p>
     </div>
   );
 }

@@ -4,19 +4,15 @@ import {
   Globe,
   LayoutDashboard,
   Layers,
-  Moon,
   Power,
   ScrollText,
   Settings as SettingsIcon,
-  ShieldCheck,
-  Sun,
   Wifi,
   Wrench,
-  Languages,
-  Sparkles,
+  LoaderCircle,
+  Zap,
 } from "lucide-react";
 import { api, onLog, onStatusChange, type Status } from "./lib/tauri";
-import { useTheme } from "./lib/theme";
 import { useI18n } from "./lib/i18n";
 import Dashboard from "./views/Dashboard";
 import Sites from "./views/Sites";
@@ -29,6 +25,8 @@ import Wizard from "./views/Wizard";
 import LogsView from "./views/LogsView";
 import CompatWarning from "./components/CompatWarning";
 import UpdateModal from "./components/UpdateModal";
+import Titlebar from "./components/Titlebar";
+import GuideDrawer from "./components/GuideDrawer";
 
 type ViewId = "dashboard" | "sites" | "profiles" | "test" | "network" | "setup" | "settings" | "wizard" | "logs";
 
@@ -41,8 +39,7 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  // TestCenter'daki Blockcheck "Uygula" ve manuel seçim AYNI anahtarı yazar —
-  // uygulama yeniden açıldığında son kullanılan profil hatırlanır.
+  const [guideOpen, setGuideOpen] = useState(false);
   const [selectedProfile, setSelectedProfileState] = useState(
     () => localStorage.getItem("anticore_last_profile") || "universal",
   );
@@ -51,14 +48,11 @@ export default function App() {
     localStorage.setItem("anticore_last_profile", id);
   };
   const seq = useRef(0);
-
-  const { theme, setTheme } = useTheme();
-  const { lang, setLang, t } = useI18n();
+  const { lang, t } = useI18n();
 
   useEffect(() => {
-    setLogs([`[i] Anticore hazır — motor bekleniyor`]);
+    setLogs([`[i] Anticore hazır — WinDivert çekirdeği bekleniyor`]);
 
-    // Açılışta otomatik güncelleme denetimi
     if (localStorage.getItem("anticore_auto_update") === "true") {
       const repo = localStorage.getItem("anticore_github_repo") || undefined;
       void api
@@ -72,7 +66,6 @@ export default function App() {
     }
   }, []);
 
-  // TEK GERÇEK KAYNAK: motor durumunu 1 sn'de bir çek
   useEffect(() => {
     let alive = true;
     const tick = () =>
@@ -106,9 +99,7 @@ export default function App() {
     return () => unbinds.forEach((u) => u());
   }, [pushLog]);
 
-  const setRunningFallback = useCallback((_r: boolean) => {
-    // anlık iyileştirme; gerçek değer polling'den gelir
-  }, []);
+  const setRunningFallback = useCallback((_r: boolean) => {}, []);
 
   const quickToggle = async () => {
     setToggling(true);
@@ -126,139 +117,81 @@ export default function App() {
   };
 
   const navItems = [
-    { id: "dashboard" as ViewId, label: t("nav_dashboard"), icon: <LayoutDashboard size={17} /> },
-    { id: "sites" as ViewId, label: t("nav_sites"), icon: <Globe size={17} /> },
-    { id: "profiles" as ViewId, label: t("nav_profiles"), icon: <Layers size={17} /> },
-    { id: "test" as ViewId, label: t("nav_test"), icon: <Activity size={17} /> },
-    { id: "network" as ViewId, label: t("nav_network"), icon: <Wifi size={17} /> },
-    { id: "logs" as ViewId, label: t("nav_logs"), icon: <ScrollText size={17} /> },
-    { id: "setup" as ViewId, label: t("nav_setup"), icon: <Wrench size={17} /> },
-    { id: "settings" as ViewId, label: t("nav_settings"), icon: <SettingsIcon size={17} /> },
+    { id: "dashboard" as ViewId, label: t("nav_dashboard"), icon: <LayoutDashboard size={14} /> },
+    { id: "sites" as ViewId, label: t("nav_sites"), icon: <Globe size={14} /> },
+    { id: "profiles" as ViewId, label: t("nav_profiles"), icon: <Layers size={14} /> },
+    { id: "test" as ViewId, label: t("nav_test"), icon: <Activity size={14} /> },
+    { id: "network" as ViewId, label: t("nav_network"), icon: <Wifi size={14} /> },
+    { id: "logs" as ViewId, label: t("nav_logs"), icon: <ScrollText size={14} /> },
+    { id: "setup" as ViewId, label: t("nav_setup"), icon: <Wrench size={14} /> },
+    { id: "settings" as ViewId, label: t("nav_settings"), icon: <SettingsIcon size={14} /> },
   ];
 
   return (
-    <div className="flex h-full flex-col select-none">
-      {/* Üst bar: kimlik + global durum + tema/dil anahtarları + hızlı başlat/durdur */}
-      <header className="topbar flex h-16 shrink-0 items-center gap-4 px-6 border-b-[3px] border-white/20 bg-black shadow-[0_4px_0px_rgba(0,0,0,0.5)] z-20">
-        <div className="flex shrink-0 items-center gap-3">
-          <div
-            className={`grid h-9 w-9 shrink-0 place-items-center rounded-none border-2 transition-none ${
-              running
-                ? "border-live bg-live/20 text-live shadow-[2px_2px_0px_#fff]"
-                : "border-white/30 bg-black text-white/50"
-            }`}
-          >
-            <ShieldCheck className={running ? "text-live" : "text-white/40"} size={20} aria-hidden strokeWidth={2.5} />
-          </div>
-          <span className="whitespace-nowrap font-mono text-base font-black tracking-[0.3em] text-white uppercase">
-            ANTICORE
-          </span>
-        </div>
+    <div className="flex h-screen w-screen flex-col select-none bg-void text-paper overflow-hidden font-sans">
+      {/* ── 1. Yekpare Frameless Başlık Çubuğu ── */}
+      <Titlebar
+        status={status}
+        running={running}
+        selectedProfile={selectedProfile}
+        updateAvailable={updateAvailable}
+        onOpenUpdateModal={() => setUpdateModalOpen(true)}
+        onToggleGuide={() => setGuideOpen(true)}
+      />
 
-        <div
-          className={`inline-flex items-center gap-2 rounded-none px-3 py-1 font-mono text-xs font-black tracking-widest uppercase border-2 ${
-            running
-              ? "border-live bg-live/15 text-live shadow-[2px_2px_0px_rgba(5,150,105,0.2)]"
-              : "border-white/20 bg-black text-white/60"
-          }`}
-        >
-          <span className={`h-2 w-2 rounded-none ${running ? "bg-live animate-pulse" : "bg-white/30"}`} aria-hidden />
-          <span>{running ? t("status_active") : t("status_inactive")}</span>
-        </div>
+      {/* ── 2. Yatay Segmented HUD Tab Bar & Konsol Eylemleri ── */}
+      <div className="h-12 shrink-0 flex items-center justify-between px-4 bg-[#0A0E17]/90 backdrop-blur-md border-b border-white/[0.08] relative z-40">
+        {/* Yatay Segmented Menü */}
+        <nav aria-label="Ana Gezinme Rayı" className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+          {navItems.map((n) => {
+            const active = view === n.id;
+            return (
+              <button
+                key={n.id}
+                onClick={() => setView(n.id)}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  active
+                    ? "bg-white/[0.1] text-paper-bright border border-white/[0.14] shadow-[0_1px_4px_rgba(0,0,0,0.4)]"
+                    : "text-paper-muted hover:text-paper hover:bg-white/[0.04] border border-transparent"
+                }`}
+              >
+                <span className={active ? "text-live" : "text-paper-faint"}>{n.icon}</span>
+                <span>{n.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-        {/* Sağ araçlar: Güncelleme + Dil + Tema + Hızlı Başlat */}
-        <div className="ml-auto flex items-center gap-2.5">
-          {/* Güncelleme Denetleyici Butonu */}
-          <button
-            onClick={() => setUpdateModalOpen(true)}
-            className={`flex h-9 items-center justify-center rounded-none border-2 px-3 font-mono text-xs font-black uppercase transition-none shadow-[2px_2px_0px_rgba(255,255,255,0.05)] active:translate-y-0.5 active:shadow-none cursor-pointer ${
-              updateAvailable
-                ? "border-live bg-live text-black shadow-[3px_3px_0px_#fff]"
-                : "border-white/20 bg-black text-white hover:border-white/50 hover:bg-white/5"
-            }`}
-            title={updateAvailable ? t("header_update_available") : t("header_update_btn")}
-            aria-label={updateAvailable ? t("header_update_available") : t("header_update_btn")}
-          >
-            <Sparkles size={14} className={`mr-1.5 ${updateAvailable ? "text-black animate-pulse" : "text-live"}`} strokeWidth={2.5} />
-            <span>{updateAvailable ? t("header_update_available") : t("header_update_btn")}</span>
-          </button>
-
-          {/* Dil Değiştirici */}
-          <button
-            onClick={() => setLang(lang === "tr" ? "en" : "tr")}
-            className="flex h-9 items-center justify-center rounded-none border-2 border-white/20 bg-black px-2.5 font-mono text-xs font-black uppercase text-white hover:border-white/50 hover:bg-white/5 transition-none shadow-[2px_2px_0px_rgba(255,255,255,0.05)] active:translate-y-0.5 active:shadow-none"
-            title="Dili Değiştir / Change Language"
-            aria-label={`Dili Değiştir, şu anki dil ${lang.toUpperCase()}`}
-          >
-            <Languages size={15} className="mr-1.5 text-live" aria-hidden />
-            {lang.toUpperCase()}
-          </button>
-
-          {/* Tema Değiştirici */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex h-9 w-9 items-center justify-center rounded-none border-2 border-white/20 bg-black text-white hover:border-white/50 hover:bg-white/5 transition-none shadow-[2px_2px_0px_rgba(255,255,255,0.05)] active:translate-y-0.5 active:shadow-none"
-            title={theme === "dark" ? "Açık Temaya Geç" : "Koyu Temaya Geç"}
-            aria-label="Temayı Değiştir"
-          >
-            {theme === "dark" ? (
-              <Moon size={15} className="text-live" aria-hidden />
-            ) : (
-              <Sun size={15} aria-hidden />
-            )}
-          </button>
-
-          {/* Hızlı Anahtar */}
+        {/* Sağ: Hızlı Çekirdek Güç Anahtarı */}
+        <div className="flex items-center gap-2 pl-3">
           <button
             onClick={() => void quickToggle()}
             disabled={toggling}
-            className={`btn shrink-0 ml-1 !px-5 !py-2 rounded-none font-mono text-xs font-black uppercase tracking-widest border-2 transition-none active:translate-y-0.5 active:shadow-none ${
+            className={`btn-reactor flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-xs font-bold transition-all cursor-pointer ${
               running
-                ? "border-alert bg-alert text-black shadow-[3px_3px_0px_#fff] hover:bg-alert/90"
-                : "border-live bg-live text-black shadow-[3px_3px_0px_#fff] hover:bg-live/90"
+                ? "bg-alert/15 text-alert border border-alert/30 hover:bg-alert/25 shadow-[0_0_15px_rgba(255,59,48,0.25)]"
+                : "bg-live text-[#041E13] border border-live hover:bg-live/90 shadow-[0_0_15px_rgba(0,245,155,0.35)]"
             }`}
             aria-label={running ? t("btn_stop") : t("btn_start")}
           >
-            <Power size={15} aria-hidden strokeWidth={3} />
-            {running ? t("btn_stop") : t("btn_start")}
+            {toggling ? (
+              <LoaderCircle size={13} className="animate-spin" strokeWidth={2.5} />
+            ) : running ? (
+              <Zap size={13} strokeWidth={2.5} />
+            ) : (
+              <Power size={13} strokeWidth={2.5} />
+            )}
+            <span className="tracking-wide">{running ? t("btn_stop") : t("btn_start")}</span>
           </button>
         </div>
-      </header>
+      </div>
 
       <CompatWarning />
 
-      <div className="flex min-h-0 flex-1 bg-ink/50">
-        {/* Sol Menü */}
-        <nav aria-label="Ana gezinme" className="flex w-56 shrink-0 flex-col bg-black p-4 border-r-[3px] border-white/20 shadow-[4px_0_0_rgba(0,0,0,0.5)] relative overflow-hidden">
-          {/* Brutalist Matrix Grid Background */}
-          <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#00FF9D 1px, transparent 1px), linear-gradient(90deg, #00FF9D 1px, transparent 1px)', backgroundSize: '1.5rem 1.5rem' }} />
-          <ul className="space-y-2 relative z-10">
-            {navItems.map((n) => (
-              <li key={n.id}>
-                <button
-                  onClick={() => setView(n.id)}
-                  aria-current={view === n.id ? "page" : undefined}
-                  className={`flex w-full cursor-pointer items-center gap-3 px-3.5 py-2.5 text-left font-mono text-xs uppercase tracking-wider font-bold rounded-none border-2 transition-none active:translate-y-0.5 active:shadow-none ${
-                    view === n.id
-                      ? "border-live bg-live text-black shadow-[4px_4px_0px_#fff]"
-                      : "border-white/10 text-white/60 bg-black/40 hover:border-white/40 hover:text-white hover:bg-white/5 shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
-                  }`}
-                >
-                  <span className={view === n.id ? "text-black" : "text-white/70"}>{n.icon}</span>
-                  <span>{n.label}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-auto px-2 pt-4 border-t-2 border-white/20 text-xs font-mono uppercase tracking-wider text-white/70 relative z-10">
-            <p className="font-bold text-white mb-1">ANTICORE</p>
-            <p className="text-white/60">{t("admin_required")}</p>
-          </div>
-        </nav>
-
-        {/* Ana İçerik */}
-        <main key={view} className="fade-up min-w-0 flex-1 overflow-y-auto p-8">
+      {/* ── 3. Tam Ekran Geniş Çalışma Alanı ── */}
+      <main className="flex-1 overflow-y-auto p-5 lg:p-6 min-h-0 relative">
+        <div className="mx-auto max-w-6xl h-full">
           {view === "dashboard" && (
             <Dashboard
               status={status}
@@ -281,10 +214,13 @@ export default function App() {
           {view === "wizard" && (
             <Wizard onComplete={() => setView("dashboard")} pushLog={pushLog} />
           )}
-        </main>
-      </div>
+        </div>
+      </main>
 
-      {/* Güncelleme Modalı */}
+      {/* ── 4. Kılavuz Çekmecesi (Slide-over Drawer) ── */}
+      <GuideDrawer open={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      {/* ── 5. Güncelleme Modalı ── */}
       <UpdateModal
         open={updateModalOpen}
         onClose={() => setUpdateModalOpen(false)}

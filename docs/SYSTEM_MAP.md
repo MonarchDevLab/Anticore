@@ -1,16 +1,17 @@
 # SYSTEM MAP
 
-## Design Tokens (Kalıcı Mimari Kararlar — Cyber-Brutalism)
-- **Tema & Felsefe:** Cyber-Brutalist 3-Tier DTCG Token Mimarisi.
+## Design Tokens (Kalıcı Mimari Kararlar — Dark Monolith $10K)
+- **Tema & Felsefe:** Modern Dark Monolith DTCG Token Mimarisi (Linear & Raycast zarafeti, Cloudflare Zero Trust sağlamlığı).
 - **Renk Paleti:**
-  - Arka Plan: `--color-void: #000000` (`bg-black`, `bg-ink`)
-  - Ana Metin: `--color-paper: #ffffff` (`text-white`), İkincil Metin: `text-white/70` (WCAG 2.2 AA kontrast garantili)
-  - Neon Canlı/Aktif: `--color-neon-live: #00ff9d` (`border-live`, `text-live`, `bg-live`)
-  - Neon Uyarı/Alarm: `--color-neon-alert: #ff3366` (`border-alert`, `text-alert`, `bg-alert`)
-  - Neon İkaz/Filtre: `--color-neon-warn: #ffcc00` (`border-warn`, `text-warn`, `bg-warn`)
-  - Neon Bilgi/Sistem: `--color-neon-cyan: #00ffff` (`text-cyan`, `border-cyan`)
-- **Tipografi Standartları:** Fira Code ve Fira Sans tabanlı monospaced ağırlık. Minimum 12px font boyutu (`text-xs`), başlıklar `text-sm`/`text-base`/`text-xl`, mutlak büyük harf (`uppercase`), `tracking-wider`/`tracking-widest`. 10px ve 11px fontlar yasaktır.
-- **Geometri:** Keskin köşeler KESİNLİKLE ZORUNLU (`rounded-none`). Kalın çerçeveler (`border-2`, `border-[3px]`), katı monokrom ve neon ofset gölgeler (`shadow-[3px_3px_0px_#fff]`, `shadow-[4px_4px_0px_#000]`). Blur ve glassmorphism artıkları yasaktır.
+  - Derin Zemin: `--color-void: #090B10` (`bg-void`)
+  - Kart ve Yüzeyler: `--color-surface-card: #121724`, `--color-surface-elevated: #181F30`, `--color-surface-subtle: #0D111A`
+  - Ana Metin: `--color-paper: #F8FAFC`, `--color-paper-bright: #FFFFFF`, İkincil Metin: `--color-paper-muted: #94A3B8`, Soluk: `--color-paper-faint: #64748B` (WCAG 2.2 AA kontrast garantili)
+  - Canlı / Koruma Devrede: `--color-live: #10B981` (`border-live`, `text-live`, `bg-live`)
+  - Alarm / Hata: `--color-alert: #EF4444` (`border-alert`, `text-alert`, `bg-alert`)
+  - Uyarı / Dikkat: `--color-warn: #F59E0B` (`border-warn`, `text-warn`, `bg-warn`)
+  - Bilgi / Vurgu: `--color-cyan: #06B6D4` (`text-cyan`, `border-cyan`)
+- **Tipografi Standartları:** Fira Sans birincil arayüz fontu, Fira Code telemetri ve teknik veriler için monospaced font. Minimum 12px font boyutu (`text-xs`), başlıklar `text-sm`/`text-base`/`text-xl`/`text-2xl`, doğal hiyerarşi ve okunaklı satır aralıkları.
+- **Geometri:** Dokunsal kavisler (`rounded-2xl` kartlar, `rounded-xl` butonlar, `rounded-lg` çipler). 1px ince zarif sınırlar (`border-white/[0.08]`), yumuşak gölgeler (`shadow-xl`) ve aktif durumlarda fısıldayan ambient nabız halkaları (`ring-pulse`). Göz yoran neo-brutalist kaba 0px keskinlik ve 3px kalın beyaz çerçeveler tamamen kaldırılmıştır.
 
 ## Teknoloji Yığını
 - **Arayüz (Frontend):** React 19, TypeScript 5.8, TailwindCSS 4 (@theme DTCG token'ları), Lucide-React.

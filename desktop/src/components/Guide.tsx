@@ -11,42 +11,42 @@ interface Props {
   items: GuideItem[];
 }
 
-/** Açılır-kapanır, herkesin anlayacağı dilde ekran rehberi. */
+/** Açılır-kapanır, herkesin anlayacağı dilde modern ekran rehberi. */
 export default function Guide({ title = "Bu ekran ne işe yarar?", items }: Props) {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <details className="relative overflow-hidden p-4 bg-black border-[3px] border-white/20 shadow-[4px_4px_0px_rgba(255,255,255,0.05)] font-mono group">
-      <summary className="flex cursor-pointer select-none items-center gap-2 font-mono text-xs font-black uppercase tracking-wider text-white/80 transition-none hover:text-live">
-        <HelpCircle size={16} className="text-cyan" aria-hidden strokeWidth={2.5} />
-        {title}
+    <details className="card p-3.5 rounded-xl border border-white/[0.08] bg-surface-subtle/50 group transition-all">
+      <summary className="flex cursor-pointer select-none items-center gap-2 text-xs font-semibold text-paper-muted hover:text-paper-bright transition-colors">
+        <HelpCircle size={15} className="text-sky" aria-hidden strokeWidth={2} />
+        <span>{title}</span>
         <ChevronDown
-          size={15}
+          size={14}
           aria-hidden
-          strokeWidth={2.5}
-          className="ml-auto transition-transform duration-200 group-open:rotate-180"
+          strokeWidth={2}
+          className="ml-auto text-paper-faint transition-transform duration-200 group-open:rotate-180"
         />
       </summary>
-      <div className="mt-4 space-y-2">
+      <div className="mt-3 space-y-1.5 pt-2 border-t border-white/[0.06]">
         {items.map((it, i) => (
-          <div key={i} className="rounded-none border border-white/10 bg-black">
+          <div key={i} className="rounded-lg border border-white/[0.06] bg-surface-card/60 overflow-hidden">
             <button
               onClick={() => setOpen(open === i ? null : i)}
               aria-expanded={open === i}
-              className="flex w-full cursor-pointer items-center justify-between gap-3 px-3.5 py-2.5 text-left font-mono text-xs font-bold uppercase tracking-wider text-white transition-none hover:text-live hover:bg-white/5"
+              className="flex w-full cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-left text-xs font-medium text-paper hover:text-live transition-colors"
             >
-              {it.q}
+              <span>{it.q}</span>
               <ChevronDown
-                size={14}
+                size={13}
                 aria-hidden
-                strokeWidth={2.5}
-                className={`shrink-0 text-white/40 transition-transform duration-150 ${
+                strokeWidth={2}
+                className={`shrink-0 text-paper-faint transition-transform duration-150 ${
                   open === i ? "rotate-180 text-live" : ""
                 }`}
               />
             </button>
             {open === i && (
-              <p className="border-t border-white/10 px-3.5 py-2.5 font-mono text-xs leading-relaxed text-white/60">
+              <p className="border-t border-white/[0.04] px-3.5 py-2 text-xs leading-relaxed text-paper-muted bg-white/[0.01]">
                 {it.a}
               </p>
             )}

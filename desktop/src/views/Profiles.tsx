@@ -71,33 +71,33 @@ export default function Profiles() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <header className="flex items-end justify-between border-b-2 border-white/20 pb-4">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/[0.08]">
         <div>
-          <h2 className="font-mono text-2xl font-black uppercase tracking-widest text-white">{t("profiles_title")}</h2>
-          <p className="mt-1 text-xs font-mono text-white/60">{t("profiles_desc")}</p>
+          <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("profiles_title")}</h2>
+          <p className="mt-0.5 text-xs text-paper-muted">{t("profiles_desc")}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-start sm:self-auto">
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-1.5"
+            className="btn btn-secondary text-xs !py-1.5"
             onClick={() => void doImport()}
           >
-            <Upload size={14} aria-hidden strokeWidth={2.5} />
-            {t("profiles_import_btn")}
+            <Upload size={14} aria-hidden strokeWidth={2} />
+            <span>{t("profiles_import_btn")}</span>
           </button>
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-1.5"
+            className="btn btn-secondary text-xs !py-1.5"
             onClick={() => void doExport()}
           >
-            <Download size={14} aria-hidden strokeWidth={2.5} />
-            {t("profiles_export_btn")}
+            <Download size={14} aria-hidden strokeWidth={2} />
+            <span>{t("profiles_export_btn")}</span>
           </button>
           <button
-            className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-3.5 py-1.5 transition-none flex items-center gap-1.5 hover:bg-live/90"
+            className="btn btn-primary text-xs !py-1.5"
             onClick={() => void createBlank()}
           >
-            <Plus size={14} aria-hidden strokeWidth={3} />
-            {t("profiles_new_btn")}
+            <Plus size={14} aria-hidden strokeWidth={2.5} />
+            <span>{t("profiles_new_btn")}</span>
           </button>
         </div>
       </header>
@@ -130,61 +130,66 @@ export default function Profiles() {
       />
 
       {error && (
-        <p role="alert" className="rounded-none bg-black border-2 border-alert px-4 py-2 font-mono text-xs text-alert font-bold uppercase">
+        <p role="alert" className="rounded-xl bg-alert/10 border border-alert/25 px-4 py-2.5 text-xs text-alert font-semibold">
           {error}
         </p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-        {/* Liste */}
-        <section className="relative overflow-hidden p-4 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)] max-h-[32rem] overflow-y-auto" aria-label="Profil listesi">
+      <div className="grid gap-6 lg:grid-cols-[19rem_1fr]">
+        {/* Profil Listesi */}
+        <section className="card p-3 max-h-[32rem] overflow-y-auto space-y-1.5" aria-label="Profil listesi">
           {profiles.length === 0 && (
             <EmptyState icon={<Layers size={28} aria-hidden />} title={t("profiles_none_title")} hint="" />
           )}
-          <ul className="space-y-2 font-mono">
-            {profiles.map((p) => (
-              <li key={p.id}>
-                <button
-                  onClick={() => setSelectedId(p.id)}
-                  aria-current={selectedId === p.id ? "true" : undefined}
-                  className={`w-full cursor-pointer rounded-none p-3 text-left transition-none border-2 active:translate-y-0.5 active:shadow-none ${
-                    selectedId === p.id
-                      ? "bg-live border-live text-black shadow-[3px_3px_0px_#fff]"
-                      : "border-white/10 bg-black text-white/60 hover:border-white/40 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs font-black uppercase tracking-wider ${selectedId === p.id ? "text-black" : "text-white"}`}>{p.name}</span>
-                    <span
-                      className={`rounded-none px-2 py-0.5 font-mono text-[9px] font-black uppercase border ${
-                        selectedId === p.id
-                          ? "border-black bg-black text-white"
-                          : p.builtin
-                          ? "border-white/20 text-white/60 bg-black"
-                          : "border-live bg-live/20 text-live"
-                      }`}
-                    >
-                      {p.builtin ? t("profiles_template_badge") : t("profiles_custom_badge")}
-                    </span>
-                  </div>
-                  <p className={`mt-1 text-[11px] line-clamp-1 ${selectedId === p.id ? "text-black/80 font-medium" : "text-white/50"}`}>{p.description}</p>
-                </button>
-              </li>
-            ))}
+          <ul className="space-y-1.5">
+            {profiles.map((p) => {
+              const active = selectedId === p.id;
+              return (
+                <li key={p.id}>
+                  <button
+                    onClick={() => setSelectedId(p.id)}
+                    aria-current={active ? "true" : undefined}
+                    className={`w-full cursor-pointer rounded-xl p-3 text-left transition-all border ${
+                      active
+                        ? "bg-live/10 border-live/30 text-paper-bright shadow-sm"
+                        : "border-white/[0.06] bg-surface-subtle/50 text-paper-muted hover:border-white/[0.14] hover:text-paper"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-xs font-bold ${active ? "text-live" : "text-paper-bright"}`}>
+                        {p.name}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium border ${
+                          active
+                            ? "border-live/30 bg-live/20 text-live"
+                            : p.builtin
+                            ? "border-white/[0.08] text-paper-faint bg-white/[0.02]"
+                            : "border-live/25 bg-live/10 text-live"
+                        }`}
+                      >
+                        {p.builtin ? t("profiles_template_badge") : t("profiles_custom_badge")}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] line-clamp-1 text-paper-muted">{p.description}</p>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
 
-        {/* Detay/editör */}
+        {/* Detay / Editör Alanı */}
         <section aria-label="Profil detayı">
           {selected ? (
             <div className="space-y-3">
               {selected.builtin && (
                 <button
-                  className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-1.5"
+                  className="btn btn-secondary text-xs !py-1.5"
                   onClick={() => void createCopy(selected)}
                 >
-                  <Copy size={14} aria-hidden strokeWidth={2.5} />
-                  {t("profiles_copy_btn")}
+                  <Copy size={13} aria-hidden strokeWidth={2} />
+                  <span>{t("profiles_copy_btn")}</span>
                 </button>
               )}
               <ProfileEditor
@@ -202,7 +207,7 @@ export default function Profiles() {
               />
             </div>
           ) : (
-            <div className="relative overflow-hidden p-10 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)] grid h-full place-items-center">
+            <div className="card p-10 grid h-full place-items-center">
               <EmptyState
                 icon={<Layers size={32} aria-hidden />}
                 title={t("profiles_unselected_title")}

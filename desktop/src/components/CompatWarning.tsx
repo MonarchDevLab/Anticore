@@ -77,9 +77,9 @@ export default function CompatWarning() {
       <button
         onClick={() => setDismissed(true)}
         aria-label={t("dialog_cancel")}
-        className="shrink-0 rounded-none border border-current/30 p-1.5 text-current opacity-70 hover:opacity-100 transition-none"
+        className="shrink-0 rounded-lg p-1 text-current opacity-70 hover:opacity-100 hover:bg-white/[0.08] transition-colors cursor-pointer"
       >
-        <X size={16} aria-hidden />
+        <X size={15} aria-hidden />
       </button>
     </div>
   );

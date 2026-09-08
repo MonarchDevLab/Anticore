@@ -39,48 +39,48 @@ export default function LogConsole({ logs, className, height }: Props) {
   };
 
   return (
-    <section aria-label="Canlı log" className={`card p-4 space-y-2.5 ${className ?? ""}`}>
+    <section aria-label="Canlı log" className={`card p-4 space-y-3 ${className ?? ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-fog">
-          <TerminalSquare size={14} aria-hidden />
+        <div className="flex items-center gap-2 text-xs font-bold text-paper-bright">
+          <TerminalSquare size={15} className="text-live" aria-hidden />
           <span>{t("log_title")}</span>
-          <span className="font-mono text-xs text-fog/70">({logs.length})</span>
+          <span className="font-mono text-xs text-paper-faint">({logs.length})</span>
         </div>
 
-        <div className="flex items-center gap-1.5 ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           {/* Arama Inputu */}
           <div className="relative">
-            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-fog/60" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-paper-faint" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filtrele..."
-              className="rounded-none bg-black border-2 border-white/20 pl-7 pr-2 py-1 text-xs font-mono text-paper placeholder:text-fog/50 w-28 sm:w-36 focus:outline-none focus:border-live"
+              className="input pl-7 pr-2.5 py-1 text-xs !w-28 sm:!w-36 font-mono"
             />
           </div>
 
           {/* Seviye Butonları */}
-          <div className="flex rounded-none bg-black p-0.5 border-2 border-white/20">
+          <div className="flex rounded-lg bg-surface-subtle p-0.5 border border-white/[0.06]">
             <button
               onClick={() => setFilter("all")}
-              className={`px-2 py-0.5 text-xs font-mono rounded-none uppercase transition-none ${
-                filter === "all" ? "bg-white text-black font-bold" : "text-fog hover:text-paper"
+              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+                filter === "all" ? "bg-white/[0.12] text-paper-bright shadow-sm" : "text-paper-muted hover:text-paper"
               }`}
             >
               Tümü
             </button>
             <button
               onClick={() => setFilter("error")}
-              className={`px-2 py-0.5 text-xs font-mono rounded-none uppercase transition-none ${
-                filter === "error" ? "bg-alert text-black font-bold" : "text-fog hover:text-alert"
+              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+                filter === "error" ? "bg-alert/20 text-alert shadow-sm" : "text-paper-muted hover:text-alert"
               }`}
             >
               Hata
             </button>
             <button
               onClick={() => setFilter("success")}
-              className={`px-2 py-0.5 text-xs font-mono rounded-none uppercase transition-none ${
-                filter === "success" ? "bg-live text-black font-bold" : "text-fog hover:text-live"
+              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+                filter === "success" ? "bg-live/20 text-live shadow-sm" : "text-paper-muted hover:text-live"
               }`}
             >
               Başarı
@@ -90,7 +90,7 @@ export default function LogConsole({ logs, className, height }: Props) {
           {/* Kopyala Butonu */}
           <button
             onClick={copyLogs}
-            className="btn btn-ghost !p-1.5 !text-xs"
+            className="p-1.5 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] transition-colors cursor-pointer"
             title="Logları Panoya Kopyala"
           >
             {copied ? <Check size={14} className="text-live" /> : <Copy size={14} />}
@@ -102,11 +102,11 @@ export default function LogConsole({ logs, className, height }: Props) {
         ref={boxRef}
         role="log"
         aria-live="polite"
-        style={{ height: height ?? "calc(100% - 2rem)" }}
-        className="overflow-y-auto rounded-none bg-black border-2 border-white/10 p-3 font-mono text-xs leading-relaxed divide-y divide-white/[0.05]"
+        style={{ height: height ?? "calc(100% - 2.5rem)" }}
+        className="overflow-y-auto rounded-xl bg-void/80 border border-white/[0.06] p-3 font-mono text-xs leading-relaxed space-y-0.5 divide-y divide-white/[0.03]"
       >
         {filteredLogs.length === 0 && (
-          <span className="text-fog/60">{t("log_empty")}</span>
+          <span className="text-paper-faint text-xs">{t("log_empty")}</span>
         )}
         {filteredLogs.map((l, i) => (
           <div
@@ -117,8 +117,8 @@ export default function LogConsole({ logs, className, height }: Props) {
                 : l.includes("[+]")
                   ? "text-live font-medium"
                   : l.includes("[*]")
-                    ? "text-sky"
-                    : "text-fog"
+                    ? "text-cyan"
+                    : "text-paper-muted"
             }`}
           >
             {l}

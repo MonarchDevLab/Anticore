@@ -1,13 +1,10 @@
 # HANDOFF
 
 ## Anlık Durum
-Anticore, tam teşekküllü üretim kalitesine ulaştırıldı; tek tıkla güncelleme mekanizması entegre edildi, mülkiyet ve geliştirici kimliği resmi olarak **Monolith Works** (dağıtım kanalı: **MonarchDevLab**) olarak sabitlendi ve tüm sistem kişisel/yapay zeka izlerinden arındırıldı.
-- **Geliştirici Kimliği & Telif:** `LICENSE`, `Cargo.toml`, `package.json`, `tauri.conf.json`, `README.md` ve `README.en.md` resmi olarak **Monolith Works** (kod ve mülkiyet) ile **MonarchDevLab** (yayınlama ve dağıtım) künyesiyle donatıldı.
-- **Kurumsal Kod İzolasyonu:** Kod içi geliştirme jargonu temizlendi, tüm geçici çalışma kayıtları Git indeksinden arındırıldı (`.gitignore`).
-- **Özel ve Yerel Yol Referanslarının Sıfırlanması:** Çalışma alanındaki tüm dosyalar ve tüm Git commit diff geçmişi (`git-filter-repo`) taranarak yerel ortam ve kullanıcı adı ibareleri tamamen sıfırlandı.
-- **9 Aşamalı Mimari Tarihçe:** Monolith Works ekibinin sıfırdan geliştirdiği 9 kurumsal mimari commit zinciri oluşturuldu ve GitHub'a force push edildi (`11468d8`).
-- **Tek Tıkla Uygulama İçi Güncelleme:** `UpdateModal.tsx` Cyber-Brutalist bileşeni ve üst çubuk butonu aktif; canlı indirme ve yeniden başlatma hazır.
-- **Doğrulama:** `tsc && vite build` 0 hata, `cargo test --workspace` 46/46 yeşil, `cargo check` 0 hata.
+Anticore, 2026 Raycast / Warp / Little Snitch standartlarında $10K Cyber-Hardware arayüz mimarisine dönüştürüldü. Web SaaS klonu görünümüne yol açan çift başlık çubuğu ve 240px'lik sol dikey menü tamamen kaldırıldı; yerine yekpare Frameless Donanım Şasisi (`decorations: false`, `Titlebar.tsx`), yatay Segmented HUD Tab Bar (`App.tsx`), dönen çift segment halkalı dokunsal Cyber-Reactor Hub, canlı Throughput dalga formu osiloskopu, gerçek zamanlı paket teftiş radarı (`Dashboard.tsx`) ve Slide-over Kılavuz Çekmecesi (`GuideDrawer.tsx`) entegre edildi.
+- **Tasarım Sistemi:** Derin Uzay Obsidyeni (`#06080C`), yüksek voltajlı Hyper-Emerald (`#00F59B`), 1px sub-pixel hairline gradient kenarlıklar, ambient aura ve dokunsal buton çökme efektleri (`globals.css`).
+- **Çalışma Alanı:** Ekran genişliği %100 oranında çalışma alanına tahsis edildi.
+- **Doğrulama:** `npm run build` (11.04s) 0 hata, `cargo check` (desktop/src-tauri) 0 hata, `cargo test --workspace` 46/46 yeşil.
 
 ## Kritik Komutlar
 - Frontend Derleme: `npm run build` (`antikor/desktop`)
@@ -17,7 +14,7 @@ Anticore, tam teşekküllü üretim kalitesine ulaştırıldı; tek tıkla günc
 - Sürüm ve Varlık Kontrolü: `gh release view v0.3.0`
 
 ## Commit Zinciri
-- Son Commit: `48c5b83` (`docs(handoff): sync commit hash`)
+- Son Commit: `5a35dd0` (`feat(ui): transform interface to 10k cyber-hardware console`)
 - Durum: `main` dalı ve `v0.3.0` etiketi kurumsal mimari zincirle güncel ve senkronize.
 
 ## Riskler ve Öncelikler

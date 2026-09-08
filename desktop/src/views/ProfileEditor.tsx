@@ -85,13 +85,13 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
-          <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">
+      <div className="card p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+          <h3 className="text-sm font-bold text-paper-bright">
             {readonly ? t("profile_detail") : t("profile_edit")}
           </h3>
           {readonly && (
-            <span className="rounded-none border-2 border-white/20 bg-black px-2.5 py-1 font-mono text-xs font-black uppercase text-white/60">
+            <span className="badge badge-muted text-[11px]">
               {t("profile_builtin_badge")}
             </span>
           )}
@@ -99,166 +99,251 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="pf-name" className="mb-1 block font-mono text-xs font-black uppercase tracking-wider text-white/70">{t("profile_name")}</label>
-            <input id="pf-name" className="w-full rounded-none border-2 border-white/20 bg-black px-3 py-1.5 font-mono text-xs text-white focus:border-live shadow-[inset_2px_2px_0px_rgba(0,0,0,0.5)] focus:outline-none disabled:opacity-40" value={name} onChange={(e) => setName(e.target.value)} disabled={readonly} />
+            <label htmlFor="pf-name" className="mb-1.5 block text-xs font-semibold text-paper-muted">{t("profile_name")}</label>
+            <input
+              id="pf-name"
+              className="input text-xs"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={readonly}
+            />
           </div>
           <div>
-            <label htmlFor="pf-desc" className="mb-1 block font-mono text-xs font-black uppercase tracking-wider text-white/70">{t("profile_desc")}</label>
-            <input id="pf-desc" className="w-full rounded-none border-2 border-white/20 bg-black px-3 py-1.5 font-mono text-xs text-white focus:border-live shadow-[inset_2px_2px_0px_rgba(0,0,0,0.5)] focus:outline-none disabled:opacity-40" value={description} onChange={(e) => setDescription(e.target.value)} disabled={readonly} />
+            <label htmlFor="pf-desc" className="mb-1.5 block text-xs font-semibold text-paper-muted">{t("profile_desc")}</label>
+            <input
+              id="pf-desc"
+              className="input text-xs"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={readonly}
+            />
           </div>
         </div>
 
         {/* Adım zinciri */}
-        <p className="mb-2 mt-5 font-mono text-xs font-black uppercase tracking-wider text-white/60">
-          {t("profile_steps_chain")}
-        </p>
-        <ol className="space-y-2">
-          {steps.map((s, i) => (
-            <li key={i} className="flex items-center gap-2 rounded-none bg-black border-2 border-white/10 px-3.5 py-2.5 shadow-[2px_2px_0px_rgba(255,255,255,0.03)] font-mono">
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-none bg-live font-mono text-xs font-black text-black shadow-[2px_2px_0px_#fff]">
-                {i + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-white uppercase tracking-wider">{STEP_LABELS[s.type]}</p>
-                {stepDetail(s) && <p className="font-mono text-xs text-live">{stepDetail(s)}</p>}
-              </div>
-              {!readonly && (
-                <>
-                  <button aria-label="Yukarı taşı" disabled={i === 0} onClick={() => move(i, -1)}
-                    className="cursor-pointer border border-white/20 bg-black p-1 text-white/60 hover:text-white hover:border-white/50 disabled:opacity-20 transition-none">
-                    <ArrowUp size={14} aria-hidden strokeWidth={2.5} />
-                  </button>
-                  <button aria-label="Aşağı taşı" disabled={i === steps.length - 1} onClick={() => move(i, 1)}
-                    className="cursor-pointer border border-white/20 bg-black p-1 text-white/60 hover:text-white hover:border-white/50 disabled:opacity-20 transition-none">
-                    <ArrowDown size={14} aria-hidden strokeWidth={2.5} />
-                  </button>
-                  <button aria-label="Adımı sil" onClick={() => setSteps(steps.filter((_, j) => j !== i))}
-                    className="cursor-pointer border border-white/20 bg-black p-1 text-alert hover:bg-alert hover:text-black transition-none">
-                    <Trash2 size={14} aria-hidden strokeWidth={2.5} />
-                  </button>
-                </>
-              )}
-            </li>
-          ))}
-          {steps.length === 0 && <li className="py-3 text-center font-mono text-xs text-white/40">{t("profile_no_steps")}</li>}
-        </ol>
+        <div className="pt-2">
+          <p className="mb-2 text-xs font-semibold text-paper-muted uppercase tracking-wider">
+            {t("profile_steps_chain")}
+          </p>
+          <ol className="space-y-1.5">
+            {steps.map((s, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-xl bg-surface-subtle/60 border border-white/[0.06] p-3 transition-all"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-live/15 text-live font-mono text-xs font-bold border border-live/25">
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-paper-bright">{STEP_LABELS[s.type]}</p>
+                  {stepDetail(s) && <p className="font-mono text-xs text-live mt-0.5">{stepDetail(s)}</p>}
+                </div>
+                {!readonly && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      aria-label="Yukarı taşı"
+                      disabled={i === 0}
+                      onClick={() => move(i, -1)}
+                      className="p-1 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer"
+                    >
+                      <ArrowUp size={14} aria-hidden strokeWidth={2} />
+                    </button>
+                    <button
+                      aria-label="Aşağı taşı"
+                      disabled={i === steps.length - 1}
+                      onClick={() => move(i, 1)}
+                      className="p-1 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer"
+                    >
+                      <ArrowDown size={14} aria-hidden strokeWidth={2} />
+                    </button>
+                    <button
+                      aria-label="Adımı sil"
+                      onClick={() => setSteps(steps.filter((_, j) => j !== i))}
+                      className="p-1 rounded-lg text-paper-muted hover:text-alert hover:bg-alert/10 cursor-pointer"
+                    >
+                      <Trash2 size={14} aria-hidden strokeWidth={2} />
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+            {steps.length === 0 && (
+              <li className="py-4 text-center text-xs text-paper-faint">{t("profile_no_steps")}</li>
+            )}
+          </ol>
+        </div>
 
-        {/* Adım ekleme */}
+        {/* Adım ekleme paneli */}
         {!readonly && (
-          <div className="mt-4 rounded-none border-2 border-dashed border-white/20 bg-black p-4 font-mono">
-            <p className="mb-2 text-xs font-black uppercase tracking-wider text-white/60">{t("profile_add_step")}</p>
+          <div className="rounded-xl border border-dashed border-white/[0.12] bg-surface-subtle/30 p-3.5 space-y-2">
+            <p className="text-xs font-semibold text-paper-muted">{t("profile_add_step")}</p>
             <div className="flex flex-wrap items-center gap-2">
-              <select className="rounded-none border-2 border-white/20 bg-black px-3 py-1.5 font-mono text-xs text-white focus:border-live focus:outline-none" value={newType}
-                onChange={(e) => setNewType(e.target.value as StepDto["type"])} aria-label={t("profile_step_type")}>
+              <select
+                className="input !w-auto text-xs py-1.5"
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as StepDto["type"])}
+                aria-label={t("profile_step_type")}
+              >
                 {(Object.keys(STEP_LABELS) as StepDto["type"][]).map((tKey) => (
                   <option key={tKey} value={tKey}>{STEP_LABELS[tKey]}</option>
                 ))}
               </select>
+
               {newType === "fake_ttl" && (
-                <label className="flex items-center gap-2 font-mono text-xs text-white/60">
-                  TTL
-                  <input type="number" min={2} max={16} value={newTtl}
-                    onChange={(e) => setNewTtl(Number(e.target.value))} className="w-20 rounded-none border-2 border-white/20 bg-black px-2 py-1 font-mono text-xs text-white focus:border-live focus:outline-none" aria-label="TTL" />
+                <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                  <span>TTL:</span>
+                  <input
+                    type="number"
+                    min={2}
+                    max={16}
+                    value={newTtl}
+                    onChange={(e) => setNewTtl(Number(e.target.value))}
+                    className="input !w-16 !py-1 text-xs text-center"
+                    aria-label="TTL"
+                  />
                 </label>
               )}
+
               {newType === "fragment_tls" && (
                 <>
-                  <select className="rounded-none border-2 border-white/20 bg-black px-3 py-1.5 font-mono text-xs text-white focus:border-live focus:outline-none" value={newSplit}
-                    onChange={(e) => setNewSplit(e.target.value as typeof newSplit)} aria-label={t("profile_split_mode")}>
+                  <select
+                    className="input !w-auto text-xs py-1.5"
+                    value={newSplit}
+                    onChange={(e) => setNewSplit(e.target.value as typeof newSplit)}
+                    aria-label={t("profile_split_mode")}
+                  >
                     <option value="sni_mid">{t("profile_split_sni_mid")}</option>
                     <option value="sni_mid_reverse">{t("profile_split_sni_mid_reverse")}</option>
                     <option value="fixed">{t("profile_split_fixed")}</option>
                     <option value="reverse">{t("profile_split_reverse")}</option>
                   </select>
                   {newSplit !== "sni_mid" && newSplit !== "sni_mid_reverse" && (
-                    <label className="flex items-center gap-2 font-mono text-xs text-white/60">
-                      Ofset
-                      <input type="number" min={1} value={newOffset}
-                        onChange={(e) => setNewOffset(Number(e.target.value))} className="w-20 rounded-none border-2 border-white/20 bg-black px-2 py-1 font-mono text-xs text-white focus:border-live focus:outline-none" aria-label="Ofset" />
+                    <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                      <span>Ofset:</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={newOffset}
+                        onChange={(e) => setNewOffset(Number(e.target.value))}
+                        className="input !w-16 !py-1 text-xs text-center"
+                        aria-label="Ofset"
+                      />
                     </label>
                   )}
                 </>
               )}
+
               {newType === "oob" && (
                 <>
-                  <label className="flex items-center gap-2 font-mono text-xs text-white/60">
-                    Offset
-                    <input type="number" min={0} value={newOobOffset}
-                      onChange={(e) => setNewOobOffset(Number(e.target.value))} className="w-20 rounded-none border-2 border-white/20 bg-black px-2 py-1 font-mono text-xs text-white focus:border-live focus:outline-none" aria-label="OOB Offset" />
+                  <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                    <span>Offset:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={newOobOffset}
+                      onChange={(e) => setNewOobOffset(Number(e.target.value))}
+                      className="input !w-16 !py-1 text-xs text-center"
+                      aria-label="OOB Offset"
+                    />
                   </label>
-                  <label className="flex items-center gap-2 font-mono text-xs text-white/60">
-                    Byte (Dec)
-                    <input type="number" min={0} max={255} value={newOobPayload}
-                      onChange={(e) => setNewOobPayload(Number(e.target.value))} className="w-20 rounded-none border-2 border-white/20 bg-black px-2 py-1 font-mono text-xs text-white focus:border-live focus:outline-none" aria-label="OOB Byte" />
+                  <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                    <span>Byte:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={255}
+                      value={newOobPayload}
+                      onChange={(e) => setNewOobPayload(Number(e.target.value))}
+                      className="input !w-16 !py-1 text-xs text-center"
+                      aria-label="OOB Byte"
+                    />
                   </label>
                 </>
               )}
+
               {newType === "window_size" && (
-                <label className="flex items-center gap-2 font-mono text-xs text-white/60">
-                  Size
-                  <input type="number" min={1} value={newWindowSize}
-                    onChange={(e) => setNewWindowSize(Number(e.target.value))} className="w-24 rounded-none border-2 border-white/20 bg-black px-2 py-1 font-mono text-xs text-white focus:border-live focus:outline-none" aria-label="Window Size" />
+                <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                  <span>Size:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newWindowSize}
+                    onChange={(e) => setNewWindowSize(Number(e.target.value))}
+                    className="input !w-20 !py-1 text-xs text-center"
+                    aria-label="Window Size"
+                  />
                 </label>
               )}
+
               <button
-                className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[2px_2px_0px_#fff] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-1.5 hover:bg-live/90"
+                className="btn btn-primary text-xs !py-1.5 !px-3"
                 onClick={addStep}
               >
-                <Plus size={13} aria-hidden strokeWidth={3} />
-                {t("profile_btn_add")}
+                <Plus size={13} aria-hidden strokeWidth={2.5} />
+                <span>{t("profile_btn_add")}</span>
               </button>
             </div>
           </div>
         )}
 
         {/* Eylemler */}
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="flex justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
           {!readonly && (
             <button
-              className="btn rounded-none border-2 border-alert bg-alert/20 text-alert hover:bg-alert hover:text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_rgba(255,51,102,0.3)] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none flex items-center gap-1.5"
+              className="btn btn-danger text-xs !py-1.5"
               onClick={() => setConfirmDelete(true)}
             >
-              <Trash2 size={14} aria-hidden strokeWidth={2.5} />
-              {t("profile_btn_delete")}
+              <Trash2 size={13} aria-hidden strokeWidth={2} />
+              <span>{t("profile_btn_delete")}</span>
             </button>
           )}
           {!readonly && (
             <button
-              className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none flex items-center gap-1.5 hover:bg-live/90"
+              className="btn btn-primary text-xs !py-1.5"
               onClick={() => void save()}
               disabled={busy}
             >
-              <Save size={14} aria-hidden strokeWidth={2.5} />
-              {t("profile_btn_save")}
+              <Save size={13} aria-hidden strokeWidth={2} />
+              <span>{t("profile_btn_save")}</span>
             </button>
           )}
         </div>
+
         {readonly && (
-          <p className="mt-3 font-mono text-xs text-white/50">
+          <p className="text-xs text-paper-faint italic">
             {t("profile_readonly_hint")}
           </p>
         )}
       </div>
 
+      {/* Silme Onay Modalı */}
       {confirmDelete && (
-        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-6" onClick={() => setConfirmDelete(false)}>
-          <div className="relative overflow-hidden p-6 bg-black border-[3px] border-alert shadow-[8px_8px_0px_#fff] w-full max-w-sm font-mono" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-black uppercase tracking-wider text-alert">{t("profile_delete_title")}</h3>
-            <p className="mt-2 text-xs text-white/70">"{profile.name}" {t("profile_delete_desc")}</p>
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4"
+          onClick={() => setConfirmDelete(false)}
+        >
+          <div
+            className="card rounded-2xl p-6 bg-surface-card border border-alert/40 shadow-2xl w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-bold text-alert">{t("profile_delete_title")}</h3>
+            <p className="mt-2 text-xs text-paper-muted">"{profile.name}" {t("profile_delete_desc")}</p>
             <div className="mt-5 flex justify-end gap-2">
               <button
-                className="btn rounded-none border-2 border-white/30 bg-black text-white hover:border-white/70 font-mono font-bold uppercase text-xs px-3 py-1.5 shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none transition-none flex items-center gap-1"
+                className="btn btn-secondary text-xs"
                 onClick={() => setConfirmDelete(false)}
               >
-                <X size={14} aria-hidden strokeWidth={2.5} />
-                {t("dialog_cancel")}
+                <X size={13} aria-hidden strokeWidth={2} />
+                <span>{t("dialog_cancel")}</span>
               </button>
               <button
-                className="btn rounded-none border-2 border-alert bg-alert text-black font-mono font-black uppercase text-xs px-3 py-1.5 shadow-[2px_2px_0px_#fff] active:translate-y-0.5 active:shadow-none transition-none flex items-center gap-1"
+                className="btn btn-danger text-xs"
                 onClick={() => void remove()}
                 disabled={busy}
               >
-                {t("profile_btn_delete")}
+                <span>{t("profile_btn_delete")}</span>
               </button>
             </div>
           </div>

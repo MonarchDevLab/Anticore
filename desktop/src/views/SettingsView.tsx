@@ -101,18 +101,12 @@ export default function SettingsView({
     try {
       await api.setStartupEnabled(next);
       setStartup(next);
-      pushLog(`[+] Başlangıç ayarı: ${next ? "açık" : "kapalı"}`);
+      pushLog(`[+] başlangıçta çalışma: ${next ? "açık" : "kapalı"}`);
     } catch (e) {
-      pushLog(`[!] Başlangıç ayarı hatası: ${String(e)}`);
+      pushLog(`[!] başlangıç ayarı hatası: ${String(e)}`);
     } finally {
       setStartupBusy(false);
     }
-  };
-
-  const toggleAutoUpdate = (v: boolean) => {
-    setAutoUpdate(v);
-    localStorage.setItem("anticore_auto_update", v ? "true" : "false");
-    pushLog(`[+] Otomatik güncelleme denetimi: ${v ? "açık" : "kapalı"}`);
   };
 
   const handleSaveRepo = (val: string) => {
@@ -120,14 +114,22 @@ export default function SettingsView({
     localStorage.setItem("anticore_github_repo", val);
   };
 
+  const toggleAutoUpdate = (val: boolean) => {
+    setAutoUpdate(val);
+    localStorage.setItem("anticore_auto_update", val ? "true" : "false");
+  };
+
   const runCompatScan = async () => {
     setCompatBusy(true);
     try {
-      const report = await api.checkCompatibility();
-      setCompat(report);
-      pushLog("[i] Uyumluluk taraması tamamlandı");
+      const rep = await api.checkCompatibility();
+      setCompat(rep);
+      const avCnt = rep.av_detected.length;
+      const vpnCnt = rep.vpn_detected.length;
+      const legCnt = rep.legacy_services.length;
+      pushLog(`[*] Uyumluluk taraması: ${avCnt} antivirüs, ${vpnCnt} VPN/adaptör, ${legCnt} eski servis`);
     } catch (e) {
-      pushLog(`[!] Uyumluluk tarama hatası: ${String(e)}`);
+      pushLog(`[!] Uyumluluk taraması hatası: ${String(e)}`);
     } finally {
       setCompatBusy(false);
     }
@@ -139,9 +141,11 @@ export default function SettingsView({
     try {
       const res = await api.dnsLeakTest();
       setLeakResult(res);
-      pushLog(`[i] DNS test: ${res}`);
+      pushLog(`[*] DNS Testi: ${res}`);
     } catch (e) {
-      setLeakResult(`${t("settings_error_prefix")}: ${String(e)}`);
+      const err = `Hata: ${String(e)}`;
+      setLeakResult(err);
+      pushLog(`[!] DNS Test hatası: ${String(e)}`);
     } finally {
       setLeakBusy(false);
     }
@@ -150,11 +154,13 @@ export default function SettingsView({
   const scanLegacy = async () => {
     setLegacyBusy("scan");
     try {
-      const found = await api.scanLegacyServices();
-      setLegacyServices(found);
-      setLegacySelected(new Set(found.filter((s) => s.installed).map((s) => s.id)));
+      const res = await api.scanLegacyServices();
+      setLegacyServices(res);
+      const installed = res.filter((s) => s.installed).map((s) => s.id);
+      setLegacySelected(new Set(installed));
+      pushLog(`[*] Eski servis taraması: ${installed.length} kurulu servis bulundu`);
     } catch (e) {
-      pushLog(`[!] Servis taraması hatası: ${String(e)}`);
+      pushLog(`[!] Servis tarama hatası: ${String(e)}`);
     } finally {
       setLegacyBusy(null);
     }
@@ -173,10 +179,10 @@ export default function SettingsView({
     if (legacySelected.size === 0) return;
     setLegacyBusy("clean");
     try {
-      const cleaned = await api.cleanupLegacyServices(Array.from(legacySelected));
-      pushLog(`[+] ${cleaned.length} eski servis kaldırıldı: ${cleaned.join(", ") || "—"}`);
+      const ids = Array.from(legacySelected);
+      const res = await api.cleanupLegacyServices(ids);
+      pushLog(`[+] ${res.length} servis temizlendi: ${res.join(", ")}`);
       await scanLegacy();
-      await runCompatScan();
     } catch (e) {
       pushLog(`[!] Servis temizleme hatası: ${String(e)}`);
     } finally {
@@ -202,9 +208,6 @@ export default function SettingsView({
     setFactoryBusy(true);
     try {
       await api.factoryReset();
-      // Backend yalnızca disk dosyalarını (blacklist/profiles/config) sıfırlar;
-      // tema/dil/onboarding gibi arayüz tercihleri localStorage'da tutulur —
-      // "fabrika ayarları" ikisini de kapsamalı.
       localStorage.clear();
       pushLog("[*] Fabrika ayarlarına dönüldü, uygulama yeniden başlatılıyor...");
       window.location.reload();
@@ -246,8 +249,6 @@ export default function SettingsView({
       await downloadAndInstallUpdate((downloaded, total) => {
         setInstallProgress({ downloaded, total });
       });
-      // downloadAndInstallUpdate başarılıysa uygulama relaunch() ile
-      // yeniden başlar; buraya normal şartlarda dönülmez.
     } catch (e) {
       const msg = String(e);
       setInstallState("error");
@@ -256,98 +257,93 @@ export default function SettingsView({
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <header className="border-b-2 border-white/20 pb-4">
-        <h2 className="font-mono text-2xl font-black uppercase tracking-widest text-white">{t("settings_title")}</h2>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <header className="pb-3 border-b border-white/[0.08]">
+        <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("settings_title")}</h2>
       </header>
 
       {/* Görünüm ve Tema */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <h3 className="flex items-center gap-3 font-mono text-sm font-black uppercase tracking-wider text-white border-b border-white/10 pb-3">
-          <Monitor size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          {t("settings_theme_title")}
-        </h3>
-        <p className="mt-2 text-xs font-mono text-white/60">{t("settings_theme_desc")}</p>
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <Monitor size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("settings_theme_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_theme_desc")}</p>
+          </div>
+        </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <button
-            onClick={() => setTheme("system")}
-            className={`btn !py-3 flex flex-col items-center gap-2 rounded-none border-2 font-mono text-xs uppercase tracking-wider font-bold transition-none active:translate-y-0.5 active:shadow-none ${
-              theme === "system"
-                ? "border-live bg-live text-black shadow-[3px_3px_0px_#fff]"
-                : "border-white/20 bg-black text-white/60 hover:border-white/50 hover:text-white shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
-            }`}
-          >
-            <Monitor size={18} strokeWidth={2.5} />
-            <span>{t("settings_theme_system")}</span>
-          </button>
-
-          <button
-            onClick={() => setTheme("dark")}
-            className={`btn !py-3 flex flex-col items-center gap-2 rounded-none border-2 font-mono text-xs uppercase tracking-wider font-bold transition-none active:translate-y-0.5 active:shadow-none ${
-              theme === "dark"
-                ? "border-live bg-live text-black shadow-[3px_3px_0px_#fff]"
-                : "border-white/20 bg-black text-white/60 hover:border-white/50 hover:text-white shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
-            }`}
-          >
-            <Moon size={18} strokeWidth={2.5} />
-            <span>{t("settings_theme_dark")}</span>
-          </button>
-
-          <button
-            onClick={() => setTheme("light")}
-            className={`btn !py-3 flex flex-col items-center gap-2 rounded-none border-2 font-mono text-xs uppercase tracking-wider font-bold transition-none active:translate-y-0.5 active:shadow-none ${
-              theme === "light"
-                ? "border-live bg-live text-black shadow-[3px_3px_0px_#fff]"
-                : "border-white/20 bg-black text-white/60 hover:border-white/50 hover:text-white shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
-            }`}
-          >
-            <Sun size={18} strokeWidth={2.5} />
-            <span>{t("settings_theme_light")}</span>
-          </button>
+        <div className="grid grid-cols-3 gap-3 pt-1">
+          {[
+            { id: "system", label: t("settings_theme_system"), icon: Monitor },
+            { id: "dark", label: t("settings_theme_dark"), icon: Moon },
+            { id: "light", label: t("settings_theme_light"), icon: Sun },
+          ].map((item) => {
+            const active = theme === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setTheme(item.id as "system" | "dark" | "light")}
+                className={`py-3 px-4 flex flex-col items-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  active
+                    ? "bg-live/15 text-live border-live/35 shadow-sm"
+                    : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
+                }`}
+              >
+                <Icon size={18} strokeWidth={2} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
       {/* Dil Seçimi */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <h3 className="flex items-center gap-3 font-mono text-sm font-black uppercase tracking-wider text-white border-b border-white/10 pb-3">
-          <Languages size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          {t("settings_lang_title")}
-        </h3>
-        <p className="mt-2 text-xs font-mono text-white/60">{t("settings_lang_desc")}</p>
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <Languages size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("settings_lang_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_lang_desc")}</p>
+          </div>
+        </div>
 
-        <div className="mt-4 flex gap-3">
+        <div className="grid grid-cols-2 gap-3 pt-1">
           <button
             onClick={() => setLang("tr")}
-            className={`btn flex-1 !py-3 rounded-none border-2 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider font-bold transition-none active:translate-y-0.5 active:shadow-none ${
+            className={`py-3 px-4 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
               lang === "tr"
-                ? "border-live bg-live text-black shadow-[3px_3px_0px_#fff]"
-                : "border-white/20 bg-black text-white/60 hover:border-white/50 hover:text-white shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
+                ? "bg-live/15 text-live border-live/35 shadow-sm"
+                : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
             }`}
           >
-            <span className={`font-mono text-[11px] font-black px-1.5 py-0.5 border ${lang === "tr" ? "bg-black text-white border-black" : "bg-live/20 text-live border-live/40"}`}>TR</span>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${lang === "tr" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>TR</span>
             <span>TÜRKÇE ({t("settings_lang_default")})</span>
           </button>
           <button
             onClick={() => setLang("en")}
-            className={`btn flex-1 !py-3 rounded-none border-2 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-wider font-bold transition-none active:translate-y-0.5 active:shadow-none ${
+            className={`py-3 px-4 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
               lang === "en"
-                ? "border-live bg-live text-black shadow-[3px_3px_0px_#fff]"
-                : "border-white/20 bg-black text-white/60 hover:border-white/50 hover:text-white shadow-[2px_2px_0px_rgba(255,255,255,0.05)]"
+                ? "bg-live/15 text-live border-live/35 shadow-sm"
+                : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
             }`}
           >
-            <span className={`font-mono text-[11px] font-black px-1.5 py-0.5 border ${lang === "en" ? "bg-black text-white border-black" : "bg-live/20 text-live border-live/40"}`}>EN</span>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${lang === "en" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>EN</span>
             <span>ENGLISH</span>
           </button>
         </div>
       </section>
 
       {/* Windows Başlangıcı */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card shadow-xl">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("settings_startup_title")}</h3>
-            <p className="mt-1 text-xs font-mono text-white/60">{t("settings_startup_desc")}</p>
+            <h3 className="text-sm font-bold text-paper-bright">{t("settings_startup_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_startup_desc")}</p>
           </div>
           <button
             role="switch"
@@ -355,28 +351,23 @@ export default function SettingsView({
             aria-label={t("settings_startup_title")}
             disabled={startupBusy}
             onClick={() => void toggleStartup()}
-            className={`relative h-6 w-12 shrink-0 cursor-pointer rounded-none border-2 transition-none active:translate-y-0.5 ${
-              startup ? "border-live bg-live text-black" : "border-white/30 bg-black text-white/50"
-            }`}
+            className={`toggle-track ${startup ? "is-active" : ""}`}
           >
-            <span
-              aria-hidden
-              className={`absolute top-0.5 h-4 w-5 rounded-none transition-transform ${
-                startup ? "translate-x-5 bg-black" : "translate-x-0.5 bg-white/60"
-              }`}
-            />
+            <span className="toggle-thumb" />
           </button>
         </div>
       </section>
 
       {/* Kapatınca Tray'e Küçült */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card shadow-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <PictureInPicture2 size={18} className="text-live" aria-hidden strokeWidth={2.5} />
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <PictureInPicture2 size={18} aria-hidden strokeWidth={2} />
+            </div>
             <div>
-              <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("settings_tray_title")}</h3>
-              <p className="mt-1 text-xs font-mono text-white/60">{t("settings_tray_desc")}</p>
+              <h3 className="text-sm font-bold text-paper-bright">{t("settings_tray_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
             </div>
           </div>
           <button
@@ -385,35 +376,32 @@ export default function SettingsView({
             aria-label={t("settings_tray_title")}
             disabled={trayBusy}
             onClick={() => void toggleTrayMinimize()}
-            className={`relative h-6 w-12 shrink-0 cursor-pointer rounded-none border-2 transition-none active:translate-y-0.5 ${
-              trayMinimize ? "border-live bg-live text-black" : "border-white/30 bg-black text-white/50"
-            }`}
+            className={`toggle-track ${trayMinimize ? "is-active" : ""}`}
           >
-            <span
-              aria-hidden
-              className={`absolute top-0.5 h-4 w-5 rounded-none transition-transform ${
-                trayMinimize ? "translate-x-5 bg-black" : "translate-x-0.5 bg-white/60"
-              }`}
-            />
+            <span className="toggle-thumb" />
           </button>
         </div>
       </section>
 
       {/* Motor Savunma Katmanları */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <h3 className="flex items-center gap-3 font-mono text-sm font-black uppercase tracking-wider text-white border-b border-white/10 pb-3">
-          <ShieldCheck size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          {t("settings_defense_title")}
-        </h3>
-        <p className="mt-2 text-xs font-mono text-white/60">{t("settings_defense_desc")}</p>
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <ShieldCheck size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("settings_defense_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_defense_desc")}</p>
+          </div>
+        </div>
 
         {config === null ? (
-          <p className="mt-4 flex items-center gap-2 font-mono text-xs text-white/50">
-            <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={3} />
-            {t("loading")}
+          <p className="flex items-center gap-2 text-xs text-paper-muted">
+            <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={2.5} />
+            <span>{t("loading")}</span>
           </p>
         ) : (
-          <div className="mt-4 space-y-3">
+          <div className="space-y-3 pt-1">
             <Toggle
               label={t("settings_passive_rst")}
               desc={t("settings_passive_rst_desc")}
@@ -432,56 +420,54 @@ export default function SettingsView({
         )}
       </section>
 
-      {/* Uyumluluk ve Güvenlik Raporu (Kaspersky, WARP, Eski Servisler) */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+      {/* Uyumluluk ve Güvenlik Raporu */}
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-3">
-            <AlertTriangle size={18} className="text-warn" aria-hidden strokeWidth={2.5} />
+            <div className="p-2 rounded-xl bg-warn/10 border border-warn/25 text-warn">
+              <AlertTriangle size={18} aria-hidden strokeWidth={2} />
+            </div>
             <div>
-              <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">
-                {t("settings_compat_title")}
-              </h3>
-              <p className="mt-0.5 text-xs font-mono text-white/60">{t("settings_compat_desc")}</p>
+              <h3 className="text-sm font-bold text-paper-bright">{t("settings_compat_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("settings_compat_desc")}</p>
             </div>
           </div>
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-2"
+            className="btn btn-secondary text-xs self-start sm:self-auto"
             onClick={() => void runCompatScan()}
             disabled={compatBusy}
           >
-            {compatBusy ? <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={3} /> : <RefreshCw size={14} strokeWidth={2.5} />}
-            {t("btn_scan")}
+            {compatBusy ? <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={2.5} /> : <RefreshCw size={14} strokeWidth={2} />}
+            <span>{t("btn_scan")}</span>
           </button>
         </div>
 
         {compat && (
-          <div className="mt-4 space-y-3 font-mono text-xs">
+          <div className="space-y-3 pt-1 text-xs">
             {compat.av_detected.length === 0 &&
             compat.vpn_detected.length === 0 &&
             compat.legacy_services.length === 0 ? (
-              <div className="flex items-center gap-2 border-2 border-live/50 bg-black p-3 text-live shadow-[2px_2px_0px_rgba(5,150,105,0.2)]">
-                <CheckCircle2 size={16} strokeWidth={2.5} />
-                <span className="font-bold uppercase tracking-wider">{t("settings_compat_clean")}</span>
+              <div className="flex items-center gap-2 rounded-xl border border-live/30 bg-live/10 p-3 text-live">
+                <CheckCircle2 size={16} strokeWidth={2} />
+                <span className="font-semibold">{t("settings_compat_clean")}</span>
               </div>
             ) : (
               <div className="space-y-2">
                 {compat.av_detected.length > 0 && (
-                  <div className="flex items-start gap-2 border-2 border-warn/50 bg-black p-3 text-warn shadow-[2px_2px_0px_rgba(255,204,0,0.2)]">
-                    <AlertTriangle size={16} className="mt-0.5 shrink-0" strokeWidth={2.5} />
+                  <div className="flex items-start gap-2.5 rounded-xl border border-warn/30 bg-warn/10 p-3.5 text-warn">
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0" strokeWidth={2} />
                     <div>
-                      <p className="font-bold uppercase tracking-wider">{t("settings_compat_av_found")}: {compat.av_detected.join(", ")}</p>
-                      <p className="text-xs mt-1 text-white/60">
-                        {t("settings_compat_av_hint")}
-                      </p>
+                      <p className="font-semibold">{t("settings_compat_av_found")}: {compat.av_detected.join(", ")}</p>
+                      <p className="text-xs mt-1 text-paper-muted">{t("settings_compat_av_hint")}</p>
                     </div>
                   </div>
                 )}
 
                 {compat.legacy_services.length > 0 && (
-                  <div className="flex items-center justify-between border-2 border-alert/50 bg-black p-3 text-alert shadow-[2px_2px_0px_rgba(255,51,102,0.2)]">
+                  <div className="flex items-center justify-between rounded-xl border border-alert/30 bg-alert/10 p-3.5 text-alert">
                     <div>
-                      <p className="font-bold uppercase tracking-wider">{t("settings_compat_legacy_found")}: {compat.legacy_services.join(", ")}</p>
-                      <p className="text-xs mt-1 text-white/60">{t("settings_compat_legacy_hint")}</p>
+                      <p className="font-semibold">{t("settings_compat_legacy_found")}: {compat.legacy_services.join(", ")}</p>
+                      <p className="text-xs mt-1 text-paper-muted">{t("settings_compat_legacy_hint")}</p>
                     </div>
                   </div>
                 )}
@@ -491,34 +477,34 @@ export default function SettingsView({
         )}
       </section>
 
-      {/* Kuru Legacy Servis Tarayıcısı — önce liste, kullanıcı seçer, sonra sil */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+      {/* Legacy Servis Tarayıcısı */}
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-3">
-            <Trash2 size={18} className="text-alert" aria-hidden strokeWidth={2.5} />
+            <div className="p-2 rounded-xl bg-alert/10 border border-alert/25 text-alert">
+              <Trash2 size={18} aria-hidden strokeWidth={2} />
+            </div>
             <div>
-              <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">
-                {t("settings_legacy_title")}
-              </h3>
-              <p className="mt-0.5 text-xs font-mono text-white/60">{t("settings_legacy_desc")}</p>
+              <h3 className="text-sm font-bold text-paper-bright">{t("settings_legacy_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("settings_legacy_desc")}</p>
             </div>
           </div>
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-2"
+            className="btn btn-secondary text-xs self-start sm:self-auto"
             onClick={() => void scanLegacy()}
             disabled={legacyBusy !== null}
           >
-            {legacyBusy === "scan" ? <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={3} /> : <RefreshCw size={14} strokeWidth={2.5} />}
-            {t("btn_scan")}
+            {legacyBusy === "scan" ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <RefreshCw size={14} strokeWidth={2} />}
+            <span>{t("btn_scan")}</span>
           </button>
         </div>
 
         {legacyServices && (
-          <div className="mt-4 space-y-2 font-mono">
+          <div className="space-y-2 pt-1">
             {legacyServices.filter((s) => s.installed).length === 0 ? (
-              <div className="flex items-center gap-2 border-2 border-live/50 bg-black p-3 text-xs text-live shadow-[2px_2px_0px_rgba(5,150,105,0.2)]">
-                <CheckCircle2 size={16} strokeWidth={2.5} />
-                <span className="font-bold uppercase tracking-wider">{t("settings_legacy_none")}</span>
+              <div className="flex items-center gap-2 rounded-xl border border-live/30 bg-live/10 p-3 text-xs text-live">
+                <CheckCircle2 size={16} strokeWidth={2} />
+                <span className="font-semibold">{t("settings_legacy_none")}</span>
               </div>
             ) : (
               <>
@@ -527,27 +513,27 @@ export default function SettingsView({
                   .map((s) => (
                     <label
                       key={s.id}
-                      className="flex cursor-pointer items-center gap-3 rounded-none border-2 border-white/10 bg-black p-3 text-xs shadow-[2px_2px_0px_rgba(255,255,255,0.03)]"
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3 text-xs hover:border-white/[0.14] transition-all"
                     >
                       <input
                         type="checkbox"
                         checked={legacySelected.has(s.id)}
                         onChange={() => toggleLegacySelected(s.id)}
-                        className="rounded-none border-2 border-white/40 bg-black text-alert focus:ring-0"
+                        className="w-4 h-4 accent-alert rounded"
                       />
-                      <div className="min-w-0 flex-1 font-mono">
-                        <p className="font-bold text-white uppercase tracking-wider">{s.name}</p>
-                        <p className="text-xs text-white/50">{s.id} — {s.status}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-paper-bright">{s.name}</p>
+                        <p className="text-xs text-paper-muted font-mono">{s.id} — {s.status}</p>
                       </div>
                     </label>
                   ))}
                 <button
-                  className="btn rounded-none border-2 border-alert bg-alert text-black hover:bg-alert/90 font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-4 py-2 mt-2 transition-none flex items-center gap-2"
+                  className="btn btn-danger text-xs mt-2"
                   onClick={() => void cleanSelectedLegacy()}
                   disabled={legacyBusy !== null || legacySelected.size === 0}
                 >
-                  {legacyBusy === "clean" ? <LoaderCircle size={13} className="animate-spin" strokeWidth={3} /> : <Trash2 size={13} strokeWidth={2.5} />}
-                  {t("btn_clean")} ({legacySelected.size})
+                  {legacyBusy === "clean" ? <LoaderCircle size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                  <span>{t("btn_clean")} ({legacySelected.size})</span>
                 </button>
               </>
             )}
@@ -556,125 +542,117 @@ export default function SettingsView({
       </section>
 
       {/* DNS Sızıntı & Çözümleme Testi */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-3">
-            <Activity size={18} className="text-live" aria-hidden strokeWidth={2.5} />
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <Activity size={18} aria-hidden strokeWidth={2} />
+            </div>
             <div>
-              <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">
-                {t("settings_dnscheck_title")}
-              </h3>
-              <p className="mt-0.5 text-xs font-mono text-white/60">{t("settings_dnscheck_desc")}</p>
+              <h3 className="text-sm font-bold text-paper-bright">{t("settings_dnscheck_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("settings_dnscheck_desc")}</p>
             </div>
           </div>
           <button
-            className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-4 py-1.5 transition-none flex items-center gap-2"
+            className="btn btn-primary text-xs self-start sm:self-auto"
             onClick={() => void runDnsLeakTest()}
             disabled={leakBusy}
           >
-            {leakBusy ? <LoaderCircle size={14} className="animate-spin text-black" strokeWidth={3} /> : <Radio size={14} strokeWidth={2.5} />}
-            {t("btn_test")}
+            {leakBusy ? <LoaderCircle size={14} className="animate-spin text-void" strokeWidth={2.5} /> : <Radio size={14} strokeWidth={2} />}
+            <span>{t("btn_test")}</span>
           </button>
         </div>
         {leakResult && (
-          <p className="mt-4 font-mono text-xs p-3 rounded-none bg-black text-live border-2 border-live/50 shadow-[2px_2px_0px_rgba(5,150,105,0.3)]">
+          <p className="font-mono text-xs p-3 rounded-xl bg-live/10 text-live border border-live/30">
             {leakResult}
           </p>
         )}
       </section>
 
       {/* GitHub Güncelleyici & Dağıtım */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)] space-y-4">
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-3">
-            <Download size={18} className="text-live" aria-hidden strokeWidth={2.5} />
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <Download size={18} aria-hidden strokeWidth={2} />
+            </div>
             <div>
-              <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">
-                {t("settings_updates_title")}
-              </h3>
-              <p className="mt-0.5 text-xs font-mono text-white/60">{t("settings_updates_desc")}</p>
+              <h3 className="text-sm font-bold text-paper-bright">{t("settings_updates_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("settings_updates_desc")}</p>
             </div>
           </div>
           <button
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-2 shrink-0"
+            className="btn btn-secondary text-xs shrink-0 self-start sm:self-auto"
             onClick={() => void checkUpdate()}
             disabled={updState === "checking"}
           >
             {updState === "checking" ? (
-              <LoaderCircle size={15} className="animate-spin text-live" aria-hidden strokeWidth={3} />
+              <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={2.5} />
             ) : (
-              <RefreshCw size={15} aria-hidden strokeWidth={2.5} />
+              <RefreshCw size={14} strokeWidth={2} />
             )}
-            {t("settings_check_updates_btn")}
+            <span>{t("settings_check_updates_btn")}</span>
           </button>
         </div>
 
         {/* Depo Yapılandırması & Otomatik Kontrol */}
-        <div className="grid gap-3 sm:grid-cols-2 pt-1 font-mono">
+        <div className="grid gap-3 sm:grid-cols-2 pt-1">
           <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-white/50 mb-1">
+            <label className="block text-xs font-semibold text-paper-muted mb-1.5">
               {t("settings_repo_label")}
             </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <GitBranch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-                <input
-                  value={repoInput}
-                  onChange={(e) => handleSaveRepo(e.target.value)}
-                  placeholder="MonarchDevLab/Anticore"
-                  className="w-full rounded-none border-2 border-white/20 bg-black pl-9 pr-3 py-1.5 font-mono text-xs text-white focus:border-live shadow-[inset_2px_2px_0px_rgba(0,0,0,0.5)] focus:outline-none"
-                />
-              </div>
+            <div className="relative">
+              <GitBranch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-paper-faint" />
+              <input
+                value={repoInput}
+                onChange={(e) => handleSaveRepo(e.target.value)}
+                placeholder="MonarchDevLab/Anticore"
+                className="input pl-9 text-xs font-mono"
+              />
             </div>
           </div>
-          <div className="flex items-center justify-between rounded-none bg-black p-3 border-2 border-white/10 shadow-[2px_2px_0px_rgba(255,255,255,0.03)]">
+          <div className="flex items-center justify-between rounded-xl bg-surface-subtle/50 p-3.5 border border-white/[0.06]">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-white">{t("settings_autocheck_title")}</p>
-              <p className="text-[10px] text-white/50">{t("settings_autocheck_desc")}</p>
+              <p className="text-xs font-bold text-paper-bright">{t("settings_autocheck_title")}</p>
+              <p className="text-[11px] text-paper-muted">{t("settings_autocheck_desc")}</p>
             </div>
             <button
               role="switch"
               aria-checked={autoUpdate}
               onClick={() => toggleAutoUpdate(!autoUpdate)}
-              className={`relative h-5 w-10 shrink-0 rounded-none border-2 transition-none active:translate-y-0.5 ${
-                autoUpdate ? "border-live bg-live text-black" : "border-white/30 bg-black text-white/50"
-              }`}
+              className={`toggle-track ${autoUpdate ? "is-active" : ""}`}
             >
-              <span
-                className={`absolute top-0.5 h-3 w-4 rounded-none transition-transform ${
-                  autoUpdate ? "translate-x-4 bg-black" : "translate-x-0.5 bg-white/60"
-                }`}
-              />
+              <span className="toggle-thumb" />
             </button>
           </div>
         </div>
 
         {/* Sonuç Kartı */}
         {updState === "done" && updInfo && (
-          <div className="rounded-none border-2 border-white/20 bg-black p-4 space-y-3 font-mono shadow-[4px_4px_0px_rgba(255,255,255,0.05)]">
+          <div className="rounded-xl border border-white/[0.08] bg-surface-subtle/40 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs">
                 {updInfo.has_update ? (
-                  <span className="flex items-center gap-1.5 font-black uppercase text-live tracking-wider">
-                    <CheckCircle2 size={16} strokeWidth={2.5} /> {t("settings_update_available")}
+                  <span className="badge badge-live flex items-center gap-1.5">
+                    <CheckCircle2 size={14} /> {t("settings_update_available")}
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 font-black uppercase text-white/60 tracking-wider">
-                    <CheckCircle2 size={16} className="text-live" strokeWidth={2.5} /> {t("settings_update_current")}
+                  <span className="badge badge-muted flex items-center gap-1.5">
+                    <CheckCircle2 size={14} className="text-live" /> {t("settings_update_current")}
                   </span>
                 )}
               </div>
               {updInfo.published_at && (
-                <span className="font-mono text-[10px] text-white/40">
+                <span className="font-mono text-[11px] text-paper-faint">
                   {new Date(updInfo.published_at).toLocaleDateString()}
                 </span>
               )}
             </div>
 
             {updInfo.has_update && updInfo.release_notes && (
-              <div className="rounded-none bg-black p-3 border-2 border-white/10">
-                <p className="text-[11px] font-black uppercase tracking-wider text-white/80 mb-1">{t("settings_release_notes")}:</p>
-                <div className="font-mono text-[11px] text-white/80 max-h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+              <div className="rounded-xl bg-void/60 p-3 border border-white/[0.06]">
+                <p className="text-xs font-semibold text-paper-muted mb-1">{t("settings_release_notes")}:</p>
+                <div className="font-mono text-[11px] text-paper max-h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed">
                   {updInfo.release_notes}
                 </div>
               </div>
@@ -685,37 +663,39 @@ export default function SettingsView({
                 <button
                   onClick={() => void installUpdate()}
                   disabled={installState === "installing"}
-                  className="btn rounded-none border-2 border-live bg-live text-black font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-4 py-1.5 transition-none flex items-center gap-1.5"
+                  className="btn btn-primary text-xs"
                 >
                   {installState === "installing" ? (
-                    <LoaderCircle size={14} className="animate-spin text-black" strokeWidth={3} />
+                    <LoaderCircle size={14} className="animate-spin text-void" strokeWidth={2.5} />
                   ) : (
-                    <Download size={14} strokeWidth={2.5} />
+                    <Download size={14} strokeWidth={2} />
                   )}
-                  {installState === "installing"
-                    ? installProgress && installProgress.total > 0
-                      ? `${t("settings_downloading")}… ${Math.round((installProgress.downloaded / installProgress.total) * 100)}%`
-                      : `${t("settings_downloading")}…`
-                    : t("settings_update_now_btn")}
+                  <span>
+                    {installState === "installing"
+                      ? installProgress && installProgress.total > 0
+                        ? `${t("settings_downloading")}… ${Math.round((installProgress.downloaded / installProgress.total) * 100)}%`
+                        : `${t("settings_downloading")}…`
+                      : t("settings_update_now_btn")}
+                  </span>
                 </button>
                 {updInfo.download_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updInfo.download_url!)}
-                    className="btn rounded-none border-2 border-white/30 bg-black text-white hover:border-white/70 font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-1.5"
+                    className="btn btn-secondary text-xs"
                   >
-                    <Download size={13} /> {t("settings_manual_download_btn")}
+                    <Download size={13} /> <span>{t("settings_manual_download_btn")}</span>
                   </button>
                 )}
                 <button
                   onClick={() => void api.openBrowserUrl(updInfo.html_url)}
-                  className="btn rounded-none border-2 border-white/30 bg-black text-white hover:border-white/70 font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-3 py-1.5 transition-none flex items-center gap-1.5"
+                  className="btn btn-secondary text-xs"
                 >
-                  <ExternalLink size={13} /> {t("settings_release_page_btn")}
+                  <ExternalLink size={13} /> <span>{t("settings_release_page_btn")}</span>
                 </button>
               </div>
             )}
             {installState === "error" && (
-              <p className="text-xs text-alert bg-black p-2.5 rounded-none border-2 border-alert font-bold uppercase">
+              <p className="text-xs text-alert bg-alert/10 p-3 rounded-xl border border-alert/25 font-semibold">
                 {t("settings_install_failed")}
               </p>
             )}
@@ -723,40 +703,46 @@ export default function SettingsView({
         )}
 
         {updState === "error" && updError && (
-          <div className="flex items-start gap-2 rounded-none bg-black p-3 text-xs text-alert border-2 border-alert font-mono">
-            <AlertTriangle size={15} className="mt-0.5 shrink-0" strokeWidth={2.5} />
+          <div className="flex items-start gap-2.5 rounded-xl bg-alert/10 p-3.5 text-xs text-alert border border-alert/25">
+            <AlertTriangle size={15} className="mt-0.5 shrink-0" strokeWidth={2} />
             <div>
-              <p className="font-black uppercase tracking-wider">{t("settings_update_check_failed")}</p>
-              <p className="mt-0.5 text-xs text-white/70">{updError}</p>
+              <p className="font-semibold">{t("settings_update_check_failed")}</p>
+              <p className="mt-0.5 text-xs text-paper-muted">{updError}</p>
             </div>
           </div>
         )}
       </section>
 
       {/* Fabrika Sıfırlama */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-alert/40 shadow-[6px_6px_0px_rgba(255,51,102,0.1)]">
-        <h3 className="flex items-center gap-3 font-mono text-sm font-black uppercase tracking-wider text-alert border-b border-white/10 pb-3">
-          <RotateCcw size={18} className="text-alert" aria-hidden strokeWidth={2.5} />
-          {t("settings_factory_title")}
-        </h3>
-        <p className="mt-2 text-xs font-mono text-white/60">{t("settings_factory_desc")}</p>
+      <section className="card p-5 lg:p-6 border border-alert/30 rounded-2xl bg-surface-card space-y-3 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-alert/10 border border-alert/25 text-alert">
+            <RotateCcw size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-alert">{t("settings_factory_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_factory_desc")}</p>
+          </div>
+        </div>
         <button
-          className="btn rounded-none border-2 border-alert bg-alert text-black hover:bg-alert/90 font-mono font-black uppercase text-xs tracking-wider shadow-[3px_3px_0px_#fff] active:translate-y-0.5 active:shadow-none px-4 py-2 mt-4 transition-none flex items-center gap-2"
+          className="btn btn-danger text-xs mt-2"
           onClick={() => setFactoryConfirm(true)}
           disabled={factoryBusy}
         >
-          {factoryBusy ? <LoaderCircle size={14} className="animate-spin text-black" strokeWidth={3} /> : <RotateCcw size={14} strokeWidth={2.5} />}
-          {t("settings_factory_btn")}
+          {factoryBusy ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <RotateCcw size={14} strokeWidth={2} />}
+          <span>{t("settings_factory_btn")}</span>
         </button>
       </section>
 
       {/* Güvenlik Modeli */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <h3 className="flex items-center gap-3 font-mono text-sm font-black uppercase tracking-wider text-live border-b border-white/10 pb-3">
-          <Lock size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          {t("settings_security_title")}
-        </h3>
-        <ul className="mt-4 list-disc space-y-2 pl-5 font-mono text-xs leading-relaxed text-white/70">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-3 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <Lock size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <h3 className="text-sm font-bold text-live">{t("settings_security_title")}</h3>
+        </div>
+        <ul className="list-disc space-y-2 pl-5 text-xs leading-relaxed text-paper-muted">
           <li>{t("settings_security_1")}</li>
           <li>{t("settings_security_2")}</li>
           <li>{t("settings_security_3")}</li>
@@ -765,34 +751,34 @@ export default function SettingsView({
 
       {/* Kurulum Sihirbazı */}
       {onOpenWizard && (
-        <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)] flex items-center justify-between">
+        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xl">
           <div>
-            <h3 className="font-mono text-sm font-black uppercase tracking-wider text-white">{t("settings_rerun_wizard_title")}</h3>
-            <p className="mt-1 text-xs font-mono text-white/60">
-              {t("settings_rerun_wizard_desc")}
-            </p>
+            <h3 className="text-sm font-bold text-paper-bright">{t("settings_rerun_wizard_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_rerun_wizard_desc")}</p>
           </div>
           <button
             type="button"
-            className="btn rounded-none border-2 border-white/30 bg-black hover:border-white/70 text-white font-mono font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_rgba(255,255,255,0.1)] active:translate-y-0.5 active:shadow-none px-4 py-2 transition-none"
+            className="btn btn-secondary text-xs self-start sm:self-auto"
             onClick={onOpenWizard}
           >
-            {t("settings_rerun_wizard_btn")}
+            <span>{t("settings_rerun_wizard_btn")}</span>
           </button>
         </section>
       )}
 
       {/* Hakkında */}
-      <section className="relative overflow-hidden p-8 bg-black border-[3px] border-white/20 shadow-[6px_6px_0px_rgba(255,255,255,0.05)]">
-        <h3 className="flex items-center gap-3 font-mono text-sm font-black uppercase tracking-wider text-white border-b border-white/10 pb-3">
-          <Info size={18} className="text-live" aria-hidden strokeWidth={2.5} />
-          {t("settings_about_title")}
-        </h3>
-        <dl className="mt-4 grid grid-cols-[10rem_1fr] gap-y-2 font-mono text-xs">
-          <dt className="text-white/50 uppercase tracking-wider font-bold">{t("settings_about_engine")}</dt>
-          <dd className="text-white font-medium">{t("settings_about_engine_value")}</dd>
-          <dt className="text-white/50 uppercase tracking-wider font-bold">{t("settings_about_license")}</dt>
-          <dd className="text-white font-black">MIT</dd>
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-3 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <Info size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <h3 className="text-sm font-bold text-paper-bright">{t("settings_about_title")}</h3>
+        </div>
+        <dl className="grid grid-cols-[10rem_1fr] gap-y-2 text-xs">
+          <dt className="text-paper-muted font-medium">{t("settings_about_engine")}</dt>
+          <dd className="text-paper-bright font-mono">{t("settings_about_engine_value")}</dd>
+          <dt className="text-paper-muted font-medium">{t("settings_about_license")}</dt>
+          <dd className="text-paper-bright font-semibold">MIT License — Monolith Works</dd>
         </dl>
       </section>
 
@@ -824,10 +810,10 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-none bg-black p-4 border-2 border-white/10 shadow-[2px_2px_0px_rgba(255,255,255,0.03)]">
+    <div className="flex items-start justify-between gap-4 rounded-xl bg-surface-subtle/50 p-4 border border-white/[0.06] hover:border-white/[0.12] transition-all">
       <div className="min-w-0">
-        <p className="font-mono text-xs font-bold text-white uppercase tracking-wider">{label}</p>
-        <p className="mt-1 font-mono text-[11px] leading-relaxed text-white/50">{desc}</p>
+        <p className="text-xs font-bold text-paper-bright">{label}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-paper-muted">{desc}</p>
       </div>
       <button
         role="switch"
@@ -835,16 +821,9 @@ function Toggle({
         aria-label={label}
         disabled={busy}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-12 shrink-0 cursor-pointer rounded-none border-2 transition-none active:translate-y-0.5 ${
-          checked ? "border-live bg-live text-black" : "border-white/30 bg-black text-white/50"
-        }`}
+        className={`toggle-track ${checked ? "is-active" : ""}`}
       >
-        <span
-          aria-hidden
-          className={`absolute top-0.5 h-4 w-5 rounded-none transition-transform ${
-            checked ? "translate-x-5 bg-black" : "translate-x-0.5 bg-white/60"
-          }`}
-        />
+        <span className="toggle-thumb" />
       </button>
     </div>
   );
