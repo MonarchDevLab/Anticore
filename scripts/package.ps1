@@ -21,17 +21,28 @@ Copy-Item $cli "$root\dist\anticore-cli.exe" -Force
 Copy-Item $cli "$root\dist-portable\Anticore\anticore-cli.exe" -Force
 Copy-Item $cli "$root\dist-portable\Anticore\bin\anticore.exe" -Force
 
+function Safe-Copy {
+    param([string]$Src, [string]$Dest)
+    try {
+        Copy-Item $Src $Dest -Force -ErrorAction Stop
+    } catch {
+        if (-not (Test-Path $Dest)) {
+            throw $_
+        }
+    }
+}
+
 # 4. Surucu ve DLL Dosyalarini Esitle
-Copy-Item "$root\WinDivert.dll" "$root\bin\WinDivert.dll" -Force
-Copy-Item "$root\WinDivert64.sys" "$root\bin\WinDivert64.sys" -Force
-Copy-Item "$root\WinDivert.dll" "$root\dist\WinDivert.dll" -Force
-Copy-Item "$root\WinDivert64.sys" "$root\dist\WinDivert64.sys" -Force
-Copy-Item "$root\WebView2Loader.dll" "$root\dist\WebView2Loader.dll" -Force
-Copy-Item "$root\WinDivert.dll" "$root\dist-portable\Anticore\WinDivert.dll" -Force
-Copy-Item "$root\WinDivert64.sys" "$root\dist-portable\Anticore\WinDivert64.sys" -Force
-Copy-Item "$root\WebView2Loader.dll" "$root\dist-portable\Anticore\WebView2Loader.dll" -Force
-Copy-Item "$root\WinDivert.dll" "$root\dist-portable\Anticore\bin\WinDivert.dll" -Force
-Copy-Item "$root\WinDivert64.sys" "$root\dist-portable\Anticore\bin\WinDivert64.sys" -Force
+Safe-Copy "$root\WinDivert.dll" "$root\bin\WinDivert.dll"
+Safe-Copy "$root\WinDivert64.sys" "$root\bin\WinDivert64.sys"
+Safe-Copy "$root\WinDivert.dll" "$root\dist\WinDivert.dll"
+Safe-Copy "$root\WinDivert64.sys" "$root\dist\WinDivert64.sys"
+Safe-Copy "$root\WebView2Loader.dll" "$root\dist\WebView2Loader.dll"
+Safe-Copy "$root\WinDivert.dll" "$root\dist-portable\Anticore\WinDivert.dll"
+Safe-Copy "$root\WinDivert64.sys" "$root\dist-portable\Anticore\WinDivert64.sys"
+Safe-Copy "$root\WebView2Loader.dll" "$root\dist-portable\Anticore\WebView2Loader.dll"
+Safe-Copy "$root\WinDivert.dll" "$root\dist-portable\Anticore\bin\WinDivert.dll"
+Safe-Copy "$root\WinDivert64.sys" "$root\dist-portable\Anticore\bin\WinDivert64.sys"
 
 $packageJson = Get-Content "$root\desktop\package.json" -Raw | ConvertFrom-Json
 $ver = $packageJson.version

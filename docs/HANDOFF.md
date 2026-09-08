@@ -3,12 +3,12 @@
 ## Anlık Durum
 Anticore v0.3.0, Ouroboros v6.0 disiplini ve 3 bağımsız uzman ajan denetimi ile derinlemesine restore edildi:
 - **Faz 29 Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli (2026-09-07):**
-  - Sistem tepsisindeki Anticore simgesine sol tıklandığında açılan ve Windows görev çubuğu üzerinde yüzen kompakt (340x460px) `quick-panel` inşa edildi.
+  - Sistem tepsisindeki Anticore simgesine tek tıklandığında açılan ve Windows görev çubuğu üzerinde yüzen kompakt (340x460px) `quick-panel` inşa edildi. Çift tıklandığında ise tek tık iptal edilerek doğrudan 1080x720 ana pencere (`main`) öne getirilir (`TrayIconEvent::DoubleClick` + 220ms `AtomicU64` nesil gecikmesi ile sıfır flicker).
   - Rust katmanında `position_quick_panel` ile tepsi koordinatlarına (`rect`) ve ekran çalışma alanına (`work_area`) göre milimetrik sağ alt köşe konumlandırması sağlandı; `TrayIconEvent::Click` sol tık toggle mekanizması bağlandı.
   - `WindowEvent::Focused(false)` ile panel dışına tıklandığında (blur) ve `Esc` basıldığında panelin otomatik ve pürüzsüz kapanması (auto-dismiss) sağlandı.
+  - `commands.rs` içine `exit_app` komutu eklendi: motoru, bağımsız süreci ve arka plan servisini durdurup TCB Keep-Alive soketlerini ve DNS önbelleğini temizleyerek tüm süreci kapatır (`app.exit(0)`). `TrayQuickPanel.tsx` çıkış butonu buna bağlandı.
   - `TrayQuickPanel.tsx`: $10K Premium Tasarım standardında, 8 donanım temasıyla tam senkron, Hero Dokunsal Güç Reaktörü, Hızlı Profil Seçici Dropdown, Canlı 3'lü Telemetri HUD (PPS, %100 Atlatma, <0.05ms gecikme), 1-Click DNS & Discord Tamiri, "Ana Kokpiti Aç" ve "Çıkış" kontrolleri eksiksiz kodlandı.
-  - `commands.rs` ve `tauri.ts` içerisine `show_main_window` ve `hide_quick_panel` köprüleri eklendi; `i18n.ts` TR/EN sözlükleri tamamlandı.
-  - Doğrulama: `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata, 3.96s).
+  - Doğrulama: `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata, 4.17s).
 - **Faz 28 Bütünsel Kod Bloğu Denetimi & Kusursuzlaştırma (2026-09-07):**
   - `net_teardown.rs` 32-bit row offset taşma riski saturating arithmetic ile güvenceye alındı.
   - `service.rs` blocking FFI shutdown öncesi Mutex serbest bırakıldı, deadlock/starvation engellendi.

@@ -412,7 +412,7 @@ export default function TrayQuickPanel() {
         </button>
 
         <button
-          onClick={() => void api.closeWindow()}
+          onClick={() => void api.exitApp()}
           className="flex items-center gap-1 text-alert hover:text-alert-dim font-semibold transition-colors cursor-pointer py-1 px-1.5 rounded hover:bg-alert/10"
         >
           <LogOut size={13} />

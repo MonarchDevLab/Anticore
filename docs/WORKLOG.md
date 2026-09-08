@@ -18,6 +18,10 @@
      - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata, 3.96s).
 
 ## Mimari Kararlar
+- `[KARAR-027]` **Sistem Tepsisi Çift Kademeli Etkileşim & Anti-Flicker Mimarisi:**
+  1. Windows tepsi ikonlarında tek tık mini hızlı panele (`quick-panel`), çift tık ise ana tam ekran kokpite (`main`) ayrılmıştır.
+  2. Windows'un çift tıkta önce `Click` sonra `DoubleClick` göndermesi nedeniyle arayüz titremesini (flicker) önlemek için `AtomicU64` nesil sayacı ile 220ms asenkron gecikme uygulanır. Çift tık geldiğinde sayaç artırılarak bekleyen tek tık iptal edilir; böylece mini panel parlamadan doğrudan ana pencere açılır.
+  3. Küçük paneldeki "Çıkış" eylemi standart pencere gizleme (`window_close`) yerine doğrudan `exit_app` çağırarak motoru, bağımsız süreci ve servisleri durdurup TCP TCB soketlerini ve DNS önbelleğini temizler, ardından `app.exit(0)` ile süreci sonlandırır.
 - `[KARAR-026]` **Sistem Tepsisi Hızlı Erişim Paneli & Çift Katmanlı UX Standardı:**
   1. DPI atlatma araçlarında günlük kullanıcı ihtiyacının %90'ı motoru başlatmak/durdurmak, anlık canlı akışı teyit etmek ve profil değiştirmekten ibarettir. 1080x720 devasa ana kokpit yerine tepsi sol tıkında açılan 340x460px hafif `quick-panel` (Flyout) bilişsel yükü ve pencere açılış gecikmesini sıfırlar.
   2. Panel dışına tıklandığında (`WindowEvent::Focused(false)`) veya `Esc` tuşuna basıldığında panel otomatik olarak gizlenmelidir (Auto-dismiss). Böylece sistem tepsisi menüsü Windows Action Center ergonomisinde davranır.
@@ -78,3 +82,4 @@
 - *Semptom:* `App.tsx` ve diğer bileşenlerdeki 10-11px metinler ve düşük opaklıklı yazılar erişilebilirlik taramasında okunamaz bulunuyor. -> *Çözüm:* Proje genelinde minimum font boyutunu 12px (`text-xs`) olarak sabitle; `text-[10px]` ve `text-[11px]` kullanımını tamamen kaldır.
 - *Semptom:* `tsconfig.json` dosyasında `noUnusedLocals: true` açık olduğu için kullanılmayan importlar derlemeyi kesiyor. -> *Çözüm:* Bileşen düzenlemelerinden sonra daima `npm run build` ile doğrula; kullanılmayan hook veya ikonları hemen temizle.
 - *Semptom:* GitHub deposu `PRIVATE` iken unauthenticated `releases/latest` isteği `404 Not Found` dönüyor. -> *Sebep:* GitHub API yetkisiz isteklerde gizli repo release'lerini gizler. -> *Çözüm:* `commands.rs::check_update` içine `token_override` ve `GITHUB_TOKEN` environment desteği eklendi; repo public olduğunda ek ayara gerek kalmaksızın çalışır.
+- *Semptom:* `package.ps1` çalıştırıldığında `dist\WinDivert64.sys` için "başka bir işlem tarafından kullanıldığından erişilemiyor" (IOException) hatası. -> *Sebep:* WinDivert çekirdek sürücüsü bellekte yüklüyken Windows dosyayı özel kilitler. -> *Çözüm:* `package.ps1` içinde `Safe-Copy` fonksiyonu tanımlanarak hedef dosya zaten mevcutsa hata yutularak paketlemenin kesintisiz devam etmesi sağlandı.

@@ -1900,6 +1900,12 @@ pub fn hide_quick_panel(app: AppHandle) {
     }
 }
 
+#[tauri::command]
+pub fn exit_app(app: AppHandle, engine: tauri::State<Engine>) {
+    let _ = stop_engine(app.clone(), engine);
+    app.exit(0);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

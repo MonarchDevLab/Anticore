@@ -27,6 +27,10 @@
   - `desktop/src/lib/tauri.ts` & `i18n.ts`: `api.showMainWindow`, `api.hideQuickPanel` IPC köprüsü ve TR/EN yerelleştirmeleri eklendi.
 - `[x]` 29.4 (2026-09-07) **Bütünsel Doğrulama:**
   - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata, 3.96s).
+- `[x]` 29.5 (2026-09-07) **Tek Tık vs Çift Tık ve Güvenli Çıkış Restorasyonu:**
+  - `tray.rs`: `TrayIconEvent::DoubleClick` dinleyicisi eklendi; `AtomicU64` nesil sayacı ile 220ms tek tık gecikmesi bağlandı. Logoya tek tıklandığında mini panel, çift tıklandığında ise tek tık iptal edilerek ana pencere (`main`) pürüzsüzce açılır (sıfır flicker).
+  - `commands.rs` & `main.rs`: `exit_app` komutu tanımlandı; motoru, arka plan bağımsız sürecini ve Windows servisini durdurup Keep-Alive TCB soketlerini ve DNS önbelleğini temizledikten sonra `app.exit(0)` çağırarak tüm uygulamayı kapatır.
+  - `TrayQuickPanel.tsx`: "Çıkış" butonu `api.closeWindow` (yalnızca tray'e küçültme yapıyordu) yerine `api.exitApp()`'e bağlandı.
 
 ### Faz 28 — Tüm Ajanlar Derinlemesine Kod Satırı Denetimi & Çok Katmanlı Kusursuzlaştırma (TAMAMLANDI)
 - `[x]` 28.1 (2026-09-07, 9da9a0a) **Rust Backend Çekirdek & FFI Güvenliği:**

@@ -127,29 +127,59 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }
+    let click_count = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
+    let click_counter = click_count.clone();
+
     let tray = builder
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                rect,
-                ..
-            } = event
-            {
-                let app = tray.app_handle();
-                if let Some(panel) = app.get_webview_window("quick-panel") {
-                    let is_vis = panel.is_visible().unwrap_or(false);
-                    if is_vis {
+        .on_tray_icon_event(move |tray, event| {
+            match event {
+                TrayIconEvent::DoubleClick {
+                    button: MouseButton::Left,
+                    ..
+                } => {
+                    // Çift tıklama algılandı: bekleyen tek tık görevini iptal et ve ana pencereyi aç
+                    click_counter.fetch_add(1, Ordering::SeqCst);
+                    let app = tray.app_handle();
+                    if let Some(panel) = app.get_webview_window("quick-panel") {
                         let _ = panel.hide();
-                    } else {
-                        position_quick_panel(&panel, &rect);
-                        let _ = panel.show();
-                        let _ = panel.set_focus();
                     }
-                } else if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.unminimize();
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
                 }
+                TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    rect,
+                    ..
+                } => {
+                    let app = tray.app_handle().clone();
+                    let current_gen = click_counter.fetch_add(1, Ordering::SeqCst) + 1;
+                    let counter = click_counter.clone();
+
+                    tauri::async_runtime::spawn(async move {
+                        tokio::time::sleep(std::time::Duration::from_millis(220)).await;
+                        // Eğer aradan geçen 220ms içinde çift tıklama veya yeni bir tık gelmediyse aç
+                        if counter.load(Ordering::SeqCst) == current_gen {
+                            if let Some(panel) = app.get_webview_window("quick-panel") {
+                                let is_vis = panel.is_visible().unwrap_or(false);
+                                if is_vis {
+                                    let _ = panel.hide();
+                                } else {
+                                    position_quick_panel(&panel, &rect);
+                                    let _ = panel.show();
+                                    let _ = panel.set_focus();
+                                }
+                            } else if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    });
+                }
+                _ => {}
             }
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
