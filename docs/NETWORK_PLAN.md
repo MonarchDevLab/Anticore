@@ -1,7 +1,7 @@
 # Anticore: Measured Network Quality Implementation Plan
 
 Date: 2026-09-07. Owner: Monolith Works. Distribution: MonarchDevLab.
-Record update: 2026-09-08. Setup corrections: `511a0bb`. EXE, NSIS, MSI and portable regenerated; GUI copies and ZIP payload SHA256 match. Eleven frontend, nine backend and forty-eight engine tests pass. Authorized live detached/SCM start-stop passed with test service removed and DNS unchanged. Native UI end-to-end acceptance and field throughput measurements remain open.
+Record update: 2026-09-08 17:15. Setup corrections: `511a0bb`; lifecycle follow-up: `ef32270`. EXE, NSIS, MSI and portable regenerated; GUI copies and ZIP payload SHA256 match. Fourteen frontend and nine backend tests pass; forty-eight engine tests are from the preceding run. Previous authorized live detached/SCM start-stop passed with test service removed and DNS unchanged; it does not cover the new stop IPC path. Native UI end-to-end acceptance and field throughput measurements remain open.
 
 ## Goal and scope
 

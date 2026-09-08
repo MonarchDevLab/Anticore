@@ -3,7 +3,7 @@
 2026-09-08 — Kayıt girişi: çalışma modu kodu `511a0bb`, arayüz/sihirbaz kodu `48536eb`, önceki kanıt kaydı `27ab0e8`. Ayrıntılı oturum envanteri, SHA-256 tablosu ve geri dönüş bilgisi `docs/WORKLOG.md` içindeki “2026-09-08 tam oturum kaydı” bölümündedir. Görevlerin tek güncel kaynağı `docs/TASKS.md`.
 
 ## Anlık Durum
-2026-09-08 — Dal `feat/complete-tool-workspace`, çalışma modu düzeltmeleri `511a0bb`. 11 frontend, 9 backend, 48 motor testi geçti. Canlı CLI ve geçici SCM hizmeti start/stop geçti; test servisi kaldırıldı, DNS değiştirilmedi. Root/dist/portable EXE ve ZIP içeriği eşleşiyor; NSIS/MSI kaynak yerleşimi düzeltildi. GUI SHA256: `C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4`. Eski çıktılar/imzalar `package-backups/` altında. Güncel çalıştırılacak dosya `dist/Anticore.exe`. Native UI uçtan uca kabulü, kurulu sistem yükseltmesi ve saha hız ölçümü açık; tam ürün hatasızlığı iddia edilmez. Aşağıdaki eski kayıtlar tarihçedir.
+2026-09-08 17:15 — Dal `feat/complete-tool-workspace`, son kaynak `ef32270`: dış modlarla başlangıç kontrolü, doğrulanmış durdurma ve güncel veri/profil düzeltmeleri. 14 frontend/9 backend geçti; motor 48 testi önceki turda geçti. EXE/NSIS/MSI/portable yeniden üretildi. GUI ve ZIP içeriği SHA256: `02533DBEB03EFD9DC006F1E268587CC2A3C8AD82B57637018A7914A88C6F4C89`. Çalıştırılacak dosya `dist/Anticore.exe`. Önceki canlı CLI/SCM testi başarılıdır fakat yeni stop IPC yolunu veya native UI'ı doğrulamaz. Native son kullanıcı kabulü, kurulu sistem yükseltmesi, çoklu süreç, imzalama/yayın ve saha hız ölçümü açık. Aşağıdaki kayıtlar tarihçedir.
 
 2026-09-08 — `251f083`: arayüz ana ekranı ve uygulama kabuğu yeniden yazıldı. Yan gezinme, gerçek motor durumu, profil kilidi, paket örnekleri ve kullanıcı başlatmalı TLS testleri var. 5 frontend testi, üretim build ve Edge kabul senaryoları geçti. Ekran görüntüleri test IPC verisi kullanır. Diğer araç sayfaları işlevlerini korur; tüm alt sayfalar yeniden tasarlanmadı. Yayın paketleri güncellenmedi; saha hız doğrulaması bekliyor.
 
@@ -99,6 +99,7 @@
 - Rust Backend Testleri: `cargo test` (`antikor/desktop/src-tauri`)
 
 ## Commit Zinciri
+- `ef32270` — mod çakışması kontrolü, durdurma hatalarının taşınması ve eski bağlantı verilerinin temizlenmesi.
 - `3d7505f` — tam oturum envanteri, yeniden okunan dağıtım hash'leri, yedekler ve kanıt sınırları.
 - `511a0bb` — Setup hata/izin kapıları, gerçek bağımsız hazır kontrolü, SC argümanları ve doğru kurulum kaynak yerleşimi.
 - `48536eb` — tema renkli güç kontrolü, ortak araç stilleri ve güvenli sihirbaz.

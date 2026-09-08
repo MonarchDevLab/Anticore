@@ -1,11 +1,11 @@
 # TASKS
 
 > Tek gerçek kaynak. Kod/git ile çeliştiğinde git kazanır, bu dosya düzeltilir.
-> Son doğrulama: 2026-09-08 — 11/11 frontend, 9/9 backend, 48/48 motor; TypeScript/Vite, native release, NSIS/MSI başarılı. EXE ve portable ZIP içerik hash'i eşleşti.
+> Son doğrulama: 2026-09-08 17:15 — `ef32270`: 14/14 frontend, 9/9 backend; TypeScript/Vite, native release, NSIS/MSI başarılı. EXE ve portable ZIP içerik hash'i eşleşti. 48/48 motor önceki tur kanıtıdır.
 > Canlı bağımsız motor ve SCM başlat/durdur geçti; geçici servis kaldırıldı. Native UI düğmelerinin uçtan uca otomasyonu ve saha hız ölçümü yapılmadı.
 
 ## ŞİMDİ `[~]`
-- *(Yok; açık kabul işleri SIRADAKİ bölümündedir.)*
+- *(Yok; native son kullanıcı kabulü SIRADAKİ bölümündedir.)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
@@ -19,6 +19,7 @@
 - `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-08 — `ef32270`: ana durdurmada dış mod hataları taşınır, STOPPED doğrulaması beklenir; başlangıçta dış mod/geçiş kontrolü; başarısız taskkill sonrası PID korunur; mod adları profil olarak kaydedilmez; başarısız yenileme eski bağlantı verisini temizler. 14 frontend/9 backend testi ve tüm paketler geçti. Yeni ana durdurma yolunun native canlı kabulü yapılmadı. GUI SHA256 `02533DBEB03EFD9DC006F1E268587CC2A3C8AD82B57637018A7914A88C6F4C89`.
 - `[x]` 2026-09-08 — `3d7505f`: tam oturum envanteri, kaynak commitleri, beş dağıtım hash'i, yedek/geri dönüş konumları, test kanıtları, başarısız denemelerin nedenleri ve açık kabul sınırları kaydedildi. Eski commit edilmedi/paketler eski/tasarım token ifadeleri güncel kayıtlarda düzeltildi. Bu kayıt turunda kod, ikililer, ağ veya test sonuçları yeniden üretilmedi.
 - `[x]` 2026-09-08 — `48536eb`: tema rengini kullanan merkezi güç kontrolü; araç sayfalarında ortak yüzey/kontrol stilleri; ayarlarda bölüm bağlantıları ve seçim durumu; native onay diyaloğu; profil/günlük yükleme hataları; sihirbazda DNS opt-in, başarısız başlangıçta tamamlanmama ve başarılı profil kaydı. Yeni sihirbaz testleri dahil son toplam frontend 11/11. Bu satır uygulama kapsamıdır; tüm arayüzlerin görsel/erişilebilirlik kabulü değildir.
 - `[x]` 2026-09-08 — `511a0bb`: Setup hata/izin kapıları, SC argümanları, bağımsız hazır kontrolü ve kurulum kaynak konumları düzeltildi. 11 frontend / 9 backend / 48 motor testi geçti. İzinli canlı CLI+SCM start/stop geçti; DNS değiştirilmedi. EXE/NSIS/MSI/portable yenilendi; tüm GUI kopyaları ve ZIP içeriği SHA256 `C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4`. Eski çıktılar/imzalar package-backups altında korundu; yayın yapılmadı.

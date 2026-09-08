@@ -1,6 +1,20 @@
 # WORKLOG
 
+## 2026-09-08 kabul devamı — ef32270
+- Son paketleme: 17:15; EXE/NSIS/MSI/portable yeniden üretildi, GUI root/dist/portable/ZIP içeriği eşleşti. Yeni imza/yayın veya canlı ağ işlemi yapılmadı. Önceki dağıtım yedeklendi.
+- GUI SHA256: `02533DBEB03EFD9DC006F1E268587CC2A3C8AD82B57637018A7914A88C6F4C89`.
+- Portable ZIP SHA256: `C8FA180BB91C59E8A9FC0CAE924BE2ED2D8DB77212835EFA53B965FA59B0AE3E`.
+- NSIS SHA256: `C5EAD756958E6613B536A1918A5D8F1D0B5A8A388921F493B130EA2855F3272B`.
+- MSI SHA256: `DF40893F8D96CE1BF9D0081D582A0EE1310812C1ACA72499DB1BF505F33693E5`.
+- Ana durdurma yolu bağımsız süreç ve SCM hatalarını artık yutmaz; başarısız taskkill sonrası PID kaydı korunur. Servis stop komutundan sonra STOPPED veya kaldırılmış durum görülmeden başarı bildirilmez; 5 saniye zaman sınırı vardır.
+- Panel başlangıcı bağımsız motor veya çalışır/geçiş halindeki servis varken reddedilir. Bu yerel kontrol bütün çoklu GUI süreçlerinin atomik koordinasyonu değildir.
+- Dashboard yalnız bilinen profil kimliğini saklar; `service` ve `detached` mod adları seçim olarak yazılmaz. Başarısız veri yenilemesinde eski profil/hedef/DNS verisi temizlenir.
+- Yeni regresyon senaryolarıyla 6 frontend dosyasında 14 test ve mevcut 9 backend testi geçti; TypeScript/Vite geçti. Core değişmedi; 48 motor testi önceki tur kanıtıdır, bu tur yeniden çalıştırılmadı.
+- Yeni stop IPC yolunun native UI/SCM hata enjeksiyonu ile canlı uçtan uca testi yapılmadı. Önceki CLI/SCM kabulü bu yeni yolun canlı kanıtı sayılmaz.
+
 ## 2026-09-08 tam oturum kaydı
+
+Bu bölüm 12:32 dağıtımının tarihsel anlık kaydıdır; daha yeni kabul devamı ve HANDOFF/TASKS önceliklidir.
 
 ### Kapsam ve commitler
 - Proje: `E:\Personel\Branding\Uygulama\Anticore\antikor`; dal: `feat/complete-tool-workspace`; başlangıç güvenli kaydı: `8379a9e`.
