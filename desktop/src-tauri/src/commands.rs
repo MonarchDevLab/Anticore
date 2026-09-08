@@ -241,17 +241,22 @@ fn is_detached_running(app: &AppHandle) -> bool {
 }
 
 #[tauri::command]
-pub fn get_setup_status(app: AppHandle) -> SetupStatusDto {
-    let q = sc_query(SERVICE_NAME);
+pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
+    let output = silent_command("sc").args(["query", SERVICE_NAME]).output()
+        .map_err(|e| format!("Servis durumu sorgulanamadı: {e}"))?;
+    if !output.status.success() && output.status.code() != Some(1060) {
+        return Err(format!("Servis durumu sorgulanamadı: {} {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr)));
+    }
+    let q = String::from_utf8_lossy(&output.stdout);
     let service_installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
     let service_running = service_installed && q.contains("RUNNING");
     let detached_running = is_detached_running(&app);
 
-    SetupStatusDto {
+    Ok(SetupStatusDto {
         service_installed,
         service_running,
         detached_running,
-    }
+    })
 }
 
 #[tauri::command]
@@ -260,8 +265,16 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
         return Err("Windows servisi kurmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
     }
 
-    // Çalışan panel motoruyla çakışmayı önle
-    app.state::<Engine>().stop().ok();
+    if app.state::<Engine>().running.load(Ordering::SeqCst) || is_detached_running(&app) {
+        return Err("Önce çalışan panel veya bağımsız motoru durdurun.".into());
+    }
+    resolve_steps(&app, &profile_id)?;
+    if !profile_id.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.')) {
+        return Err("Servis profili kimliği geçersiz.".into());
+    }
+    if get_setup_status(app.clone())?.service_installed {
+        return Err("Servis zaten kurulu. Yeniden kurmadan önce kaldırın.".into());
+    }
     let motor = find_motor_exe(&app)?;
     let data_dir = app_dir(&app);
     let exe_str = motor.to_string_lossy().to_string();
@@ -274,23 +287,14 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
         dir = dir_str
     );
 
-    for cmd in [
-        vec!["stop".to_string(), SERVICE_NAME.to_string()],
-        vec!["delete".to_string(), SERVICE_NAME.to_string()],
-    ] {
-        let _ = silent_command("sc").args(&cmd).output();
-        std::thread::sleep(std::time::Duration::from_millis(500));
-    }
-
-    let bin_arg = format!("binPath= {}", bin_path);
     let out = silent_command("sc")
-        .args(["create", SERVICE_NAME, &bin_arg, "start= auto"])
+        .args(["create", SERVICE_NAME, "binPath=", &bin_path, "start=", "auto"])
         .output()
         .map_err(|e| format!("sc çalıştırılamadı: {e}"))?;
     if !out.status.success() {
         return Err(format!(
-            "servis oluşturulamadı: {}",
-            String::from_utf8_lossy(&out.stderr)
+            "servis oluşturulamadı: {} {}",
+            String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr)
         ));
     }
     let _ = silent_command("sc")
@@ -342,6 +346,10 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     if app.state::<Engine>().running.load(Ordering::SeqCst) {
         return Err("Panel motoru çalışıyor; önce onu durdurun".into());
     }
+    if is_detached_running(&app) {
+        return Err("Bağımsız motor zaten çalışıyor.".into());
+    }
+    resolve_steps(&app, &profile_id)?;
     let q = sc_query(SERVICE_NAME);
     if q.contains("SERVICE_NAME:") && !q.contains("1060") {
         return Err("Servis kurulu; çakışmayı önlemek için önce servisi kaldırın".into());
@@ -351,20 +359,44 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     let data_dir = app_dir(&app);
     let work_dir = motor.parent().unwrap_or(&data_dir);
 
+    let log_path = data_dir.join("detached-startup.log");
+    let log = std::fs::File::create(&log_path).map_err(|e| format!("Motor günlüğü açılamadı: {e}"))?;
+    let error_log = log.try_clone().map_err(|e| e.to_string())?;
     let mut cmd = silent_command(&motor.to_string_lossy());
     cmd.current_dir(work_dir)
         .args(["run", "--profile", &profile_id, "--data-dir"])
         .arg(&data_dir)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stdout(Stdio::from(log))
+        .stderr(Stdio::from(error_log));
 
-    let child = cmd.spawn().map_err(|e| format!("motor başlatılamadı: {e}"))?;
+    let mut child = cmd.spawn().map_err(|e| format!("motor başlatılamadı: {e}"))?;
+    let mut ready = false;
+    for _ in 0..50 {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        let output = std::fs::read_to_string(&log_path).unwrap_or_default();
+        if let Some(exit) = child.try_wait().map_err(|e| e.to_string())? {
+            return Err(format!("Motor başlangıçta kapandı ({exit}): {output}"));
+        }
+        if output.contains("[+] aktif. Ctrl+C ile durdurun.") {
+            ready = true;
+            break;
+        }
+    }
+    if !ready {
+        child.kill().map_err(|e| format!("Yanıt vermeyen motor durdurulamadı: {e}"))?;
+        child.wait().map_err(|e| e.to_string())?;
+        return Err("Motor 5 saniye içinde hazır olmadı; başlangıç iptal edildi.".into());
+    }
 
     std::fs::write(
         app_dir(&app).join("detached.pid"),
         child.id().to_string(),
     )
-    .ok();
+    .map_err(|e| {
+        let _ = child.kill();
+        let _ = child.wait();
+        format!("Motor PID kaydı yazılamadı: {e}")
+    })?;
     drop(child);
     app.emit(
         "log",

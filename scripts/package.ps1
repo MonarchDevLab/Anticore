@@ -1,5 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$backup = Join-Path $root ('package-backups\' + [DateTime]::Now.ToString('yyyyMMdd-HHmmss'))
+New-Item -ItemType Directory -Path $backup -Force | Out-Null
 
 # 1. Klasorleri garanti et
 New-Item -ItemType Directory -Force -Path "$root\bin" | Out-Null
@@ -8,17 +10,17 @@ New-Item -ItemType Directory -Force -Path "$root\dist-portable\Anticore\bin" | O
 
 function Safe-Replace-Exe {
     param([string]$Src, [string]$Dest)
-    try {
-        Copy-Item $Src $Dest -Force -ErrorAction Stop
-    } catch {
-        $old = "$Dest.old"
-        try {
-            if (Test-Path $old) { Remove-Item $old -Force -ErrorAction SilentlyContinue }
-            Move-Item $Dest $old -Force -ErrorAction Stop
-            Copy-Item $Src $Dest -Force -ErrorAction Stop
-        } catch {
-            Write-Warning "Dosya kilitli ve kopyalanamadi: $Dest ($_)"
-        }
+    if (Test-Path -LiteralPath $Dest) {
+        $relative = [IO.Path]::GetRelativePath($root, $Dest).Replace('\', '_')
+        Copy-Item -LiteralPath $Dest -Destination (Join-Path $backup $relative) -ErrorAction Stop
+    }
+    Copy-Item -LiteralPath $Src -Destination $Dest -Force -ErrorAction Stop
+    if (Test-Path -LiteralPath "$Dest.sig") {
+        $signatureBackup = [IO.Path]::GetRelativePath($root, "$Dest.sig").Replace('\', '_')
+        Move-Item -LiteralPath "$Dest.sig" -Destination (Join-Path $backup $signatureBackup) -ErrorAction Stop
+    }
+    if ((Get-FileHash -LiteralPath $Src).Hash -ne (Get-FileHash -LiteralPath $Dest).Hash) {
+        throw "Package hash mismatch: $Dest"
     }
 }
 
@@ -39,12 +41,9 @@ Safe-Replace-Exe $cli "$root\dist-portable\Anticore\bin\anticore.exe"
 
 function Safe-Copy {
     param([string]$Src, [string]$Dest)
-    try {
-        Copy-Item $Src $Dest -Force -ErrorAction Stop
-    } catch {
-        if (-not (Test-Path $Dest)) {
-            throw $_
-        }
+    Copy-Item -LiteralPath $Src -Destination $Dest -Force -ErrorAction Stop
+    if ((Get-FileHash -LiteralPath $Src).Hash -ne (Get-FileHash -LiteralPath $Dest).Hash) {
+        throw "Package hash mismatch: $Dest"
     }
 }
 
@@ -66,20 +65,21 @@ $ver = $packageJson.version
 # 5. Kurulum Paketlerini Kopyala
 $nsis = "$root\desktop\src-tauri\target\release\bundle\nsis\Anticore_${ver}_x64-setup.exe"
 if (Test-Path $nsis) {
-    Copy-Item $nsis "$root\dist\Anticore_${ver}_x64-setup.exe" -Force
+    if ((Get-Item $nsis).LastWriteTimeUtc -lt (Get-Item "$root\desktop\dist\index.html").LastWriteTimeUtc) { throw 'NSIS installer is stale; rebuild it first' }
+    Safe-Replace-Exe $nsis "$root\dist\Anticore_${ver}_x64-setup.exe"
 }
 $msi = "$root\desktop\src-tauri\target\release\bundle\msi\Anticore_${ver}_x64_en-US.msi"
 if (Test-Path $msi) {
-    Copy-Item $msi "$root\dist\Anticore_${ver}_x64_en-US.msi" -Force
+    if ((Get-Item $msi).LastWriteTimeUtc -lt (Get-Item "$root\desktop\dist\index.html").LastWriteTimeUtc) { throw 'MSI installer is stale; rebuild it first' }
+    Safe-Replace-Exe $msi "$root\dist\Anticore_${ver}_x64_en-US.msi"
 }
 
 # 6. Portable ZIP Paketi Olustur
 $zipTarget = "$root\dist-portable\Anticore_${ver}_x64-portable.zip"
-if (Test-Path $zipTarget) {
-    Remove-Item $zipTarget -Force
-}
-Compress-Archive -Path "$root\dist-portable\Anticore\*" -DestinationPath $zipTarget -CompressionLevel Optimal
-Copy-Item $zipTarget "$root\dist\Anticore_${ver}_x64-portable.zip" -Force
+$zipStaging = Join-Path $backup 'new-portable.zip'
+Compress-Archive -Path "$root\dist-portable\Anticore\*" -DestinationPath $zipStaging -CompressionLevel Optimal
+Safe-Replace-Exe $zipStaging $zipTarget
+Safe-Replace-Exe $zipStaging "$root\dist\Anticore_${ver}_x64-portable.zip"
 
 Write-Host "Paketler hazirlandi."
 Get-ChildItem -Path "$root\dist" | Select-Object Name, Length, LastWriteTime

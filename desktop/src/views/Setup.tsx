@@ -27,13 +27,16 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   const refresh = useCallback(() => {
-    void api.getSetupStatus().then(setStatus);
+    return api.getSetupStatus().then(setStatus).catch((error: unknown) => {
+      setStatus(null);
+      setError(String(error));
+    });
   }, []);
 
   useEffect(() => {
     refresh();
-    void api.listProfiles().then(setProfiles);
-    void api.checkIsAdmin().then(setIsAdmin);
+    void api.listProfiles().then(setProfiles).catch((error: unknown) => setError(String(error)));
+    void api.checkIsAdmin().then(setIsAdmin).catch((error: unknown) => setError(String(error)));
   }, [refresh]);
 
   useEffect(() => {
@@ -42,10 +45,11 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
   }, [refresh]);
 
   const run = async (kind: string, fn: () => Promise<void>, okMsg: string) => {
+    if (busy !== null) return;
     setBusy(kind);
     setError(null);
     try {
-      if (isAdmin === false) {
+      if (isAdmin !== true) {
         throw new Error(
           lang === "tr"
             ? "Yönetici yetkisi gerekiyor. Lütfen 'Yönetici Olarak Yeniden Başlat' butonunu kullanın."
@@ -54,7 +58,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
       }
       await fn();
       pushLog(okMsg);
-      refresh();
+      await refresh();
     } catch (e) {
       setError(String(e));
       pushLog(`[!] HATA: ${String(e)}`);
@@ -160,7 +164,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
                 : "badge-muted"
             }`}
           >
-            {status?.service_installed
+            {status === null ? (lang === "tr" ? "Durum bilinmiyor" : "Status unknown") : status.service_installed
               ? status.service_running
                 ? t("setup_status_running")
                 : t("setup_status_stopped")
@@ -189,7 +193,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
               <button
                 className="btn btn-primary text-xs"
                 onClick={() => setConfirm("install")}
-                disabled={busy !== null}
+                disabled={busy !== null || !status || isAdmin !== true || !profiles.length}
               >
                 {busy === "install" ? (
                   <LoaderCircle size={14} className="animate-spin text-void" aria-hidden strokeWidth={2.5} />
@@ -204,7 +208,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
             <button
               className="btn btn-danger text-xs"
               onClick={() => setConfirm("uninstall")}
-              disabled={busy !== null}
+              disabled={busy !== null || !status || isAdmin !== true}
             >
               {busy === "uninstall" ? (
                 <LoaderCircle size={14} className="animate-spin" aria-hidden strokeWidth={2.5} />
@@ -231,7 +235,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
               status?.detached_running ? "badge-live" : "badge-muted"
             }`}
           >
-            {status?.detached_running ? t("setup_status_running") : t("setup_status_off")}
+            {status === null ? (lang === "tr" ? "Durum bilinmiyor" : "Status unknown") : status.detached_running ? t("setup_status_running") : t("setup_status_off")}
           </span>
         </div>
         <p className="text-xs leading-relaxed text-paper-muted">
@@ -262,7 +266,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
                     `[+] bağımsız motor başladı (profil=${selected})`,
                   )
                 }
-                disabled={busy !== null}
+                disabled={busy !== null || !status || isAdmin !== true || !profiles.length || status.service_installed}
               >
                 {busy === "detached_start" ? (
                   <LoaderCircle size={14} className="animate-spin text-void" aria-hidden strokeWidth={2.5} />
@@ -279,7 +283,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
               onClick={() =>
                 void run("detached_stop", () => api.detachedStop(), "[*] bağımsız motor durduruldu")
               }
-              disabled={busy !== null}
+              disabled={busy !== null || !status || isAdmin !== true}
             >
               {busy === "detached_stop" ? (
                 <LoaderCircle size={14} className="animate-spin" aria-hidden strokeWidth={2.5} />

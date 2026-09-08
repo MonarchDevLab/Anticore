@@ -53,12 +53,12 @@
       "icons/128x128@2x.png",
       "icons/icon.ico"
     ],
-    "resources": [
-      "../../WinDivert.dll",
-      "../../WinDivert64.sys",
-      "../../WebView2Loader.dll",
-      "../../engine/target/release/anticore.exe"
-    ]
+    "resources": {
+      "../../WinDivert.dll": "WinDivert.dll",
+      "../../WinDivert64.sys": "WinDivert64.sys",
+      "../../WebView2Loader.dll": "WebView2Loader.dll",
+      "../../engine/target/release/anticore.exe": "anticore-cli.exe"
+    }
   },
   "plugins": {
     "updater": {

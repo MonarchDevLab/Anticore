@@ -66,3 +66,9 @@ keys/
 id_rsa*
 id_ecdsa*
 id_ed25519*
+
+# Local release rollback and acceptance artifacts
+package-backups/
+live-test-data/
+live-CloseApps.txt
+live-Verify.txt
