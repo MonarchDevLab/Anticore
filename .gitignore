@@ -72,3 +72,13 @@ package-backups/
 live-test-data/
 live-CloseApps.txt
 live-Verify.txt
+
+# Monolith Works Dahili Protokol, Ajan Kurallari ve Operasyonel Hafiza (Gizli/Yerel)
+.agents/
+docs/MONOLITH_CHAIN.md
+docs/HANDOFF.md
+docs/TASKS.md
+docs/WORKLOG.md
+docs/SYSTEM_MAP.md
+design-system/
+

@@ -1,6 +1,6 @@
 # Katkı ve Mühendislik Standartları (CONTRIBUTING)
 
-Anticore projesine katkıda bulunmak isteyen mühendisler, **Monolith Works & MonarchDevLab Kurumsal Mühendislik Standartları** (`docs/MONOLITH_CHAIN.md`) ilkelerine tam uyum sağlamakla yükümlüdür.
+Anticore projesine katkıda bulunmak isteyen mühendisler, **Monolith Works & MonarchDevLab Kurumsal Mühendislik Standartları** ilkelerine tam uyum sağlamakla yükümlüdür.
 
 ## 1. Mülkiyet ve Lisanslama
 - Projedeki tüm fikri mülkiyet, kod hakları ve algoritmalar istisnasız **Monolith Works**'e aittir.

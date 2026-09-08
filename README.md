@@ -1,111 +1,98 @@
 <div align="center">
 
+```diff
++  █████╗ ███╗   ██╗████████╗██╗ ██████╗ ██████╗ ██████╗ ███████╗
++ ██╔══██╗████╗  ██║╚══██╔══╝██║██╔════╝██╔═══██╗██╔══██╗██╔════╝
++ ███████║██╔██╗ ██║   ██║   ██║██║     ██║   ██║██████╔╝█████╗  
++ ██╔══██║██║╚██╗██║   ██║   ██║██║     ██║   ██║██╔══██╗██╔════╝  
++ ██║  ██║██║ ╚████║   ██║   ██║╚██████╗╚██████╔╝██║  ██║███████╗
++ ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
 ```
-   █████╗ ███╗   ██╗████████╗██╗ ██████╗ ██████╗ ██████╗ ███████╗
-  ██╔══██╗████╗  ██║╚══██╔══╝██║██╔════╝██╔═══██╗██╔══██╗██╔════╝
-  ███████║██╔██╗ ██║   ██║   ██║██║     ██║   ██║██████╔╝█████╗  
-  ██╔══██║██║╚██╗██║   ██║   ██║██║     ██║   ██║██╔══██╗██╔════╝  
-  ██║  ██║██║ ╚████║   ██║   ██║╚██████╗╚██████╔╝██║  ██║███████╗
-  ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
-```
 
-### Windows için Sıfır Hız Kayıplı DPI Aşma Aracı
-**Türkiye internet servis sağlayıcılarının engelleme kutularına karşı geliştirilmiş, trafiği tünellemeden çalışan açık kaynaklı paket manipülasyon motoru.**
+# <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/desktop/src-tauri/icons/32x32.png"><img alt="Anticore" src="desktop/src-tauri/icons/32x32.png" width="28" height="28" align="center" /></picture> ANTICORE
 
-[![Sürüm](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=flat-square&color=00FF9D&labelColor=000000)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-00FFFF?style=flat-square&labelColor=000000)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Çekirdek](https://img.shields.io/badge/Çekirdek-Rust%20%2B%20WinDivert-FF3366?style=flat-square&labelColor=000000)](https://github.com/MonarchDevLab/Anticore)
-[![Arayüz](https://img.shields.io/badge/Arayüz-Tauri%202.0%20%2B%20React%2019-FFCC00?style=flat-square&labelColor=000000)](https://github.com/MonarchDevLab/Anticore)
-[![Lisans](https://img.shields.io/badge/Lisans-MIT-FFFFFF?style=flat-square&labelColor=000000)](LICENSE)
-[![Doğrulama](https://img.shields.io/badge/İmza-Minisign%20Doğrulamalı-00FF9D?style=flat-square&labelColor=000000)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+### Windows İçin Sıfır Hız Kayıplı Açık Kaynak DPI Aşma ve Ağ Özgürlüğü Motoru
 
-[İndirme Seçenekleri](#indirme-secenekleri-v030) | [Anticore Nedir ve Ne Değildir?](#anticore-nedir-ve-ne-degildir) | [GoodbyeDPI ve SplitWire ile Karşılaştırma](#goodbyedpi-ve-splitwire-ile-karsilastirma) | [Nasıl Çalışır?](#nasil-calisir) | [Sık Sorulan Sorular](#sik-sorulan-sorular-ve-bilinen-durumlar) | [English Version](README.en.md)
+[![Sürüm](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=00FF9D&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-00E5FF?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Çekirdek](https://img.shields.io/badge/Çekirdek-Rust%20%2B%20WinDivert-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Arayüz](https://img.shields.io/badge/Arayüz-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Lisans](https://img.shields.io/badge/Lisans-MIT-FFFFFF?style=for-the-badge&labelColor=08090D)](LICENSE)
+[![Doğrulama](https://img.shields.io/badge/İmza-Minisign%20Doğrulamalı-00FF9D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+
+**Türkiye internet servis sağlayıcılarının sansür ve engelleme altyapılarına karşı geliştirilmiş; trafiği üçüncü taraf uzak sunuculara yönlendirmeden, internet hızınızı ve ping değerinizi %100 koruyarak çalışan yeni nesil paket manipülasyon yazılımı.**
+
+[İndirme Seçenekleri](#indirme-seçenekleri-v030) • [Anticore Nedir?](#anticore-nedir-ve-ne-değildir) • [Öne Çıkan Özellikler](#öne-çıkan-yetenekler) • [Nasıl Çalışır?](#nasıl-çalışır) • [Karşılaştırma](#goodbyedpi-splitwire-ve-vpn-karşılaştırması) • [Güvenlik & Doğrulama](#güvenlik-ve-bütünlük-doğrulama) • [English](README.en.md)
 
 </div>
 
 ---
 
-## İndirme Seçenekleri
+## İndirme Seçenekleri (v0.3.0)
 
-İhtiyacınıza göre iki farklı sürüm hazırlanmıştır. Her iki sürüm de aynı Rust çekirdeğini ve aynı ağ motorunu kullanır. Tüm dosyalar derleme sunucusunda Minisign ile imzalanır.
+Tüm ikili dosyalar derleme aşamasında yerel geliştirici yollarından arındırılmış olup dijital olarak imzalanmıştır.
 
-| Paket Türü | Dosya Adı | Boyut | İndirme | Ne Zaman Tercih Edilmeli? |
-|---|---|---|:---:|---|
-| **Taşınabilir (Portable)** | `Anticore_x64-portable.zip` | 6.1 MB | [İndir (.zip)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64-portable.zip) | Kurulum istemiyorsanız, USB bellekten çalıştıracaksanız veya sisteme dosya bırakmak istemiyorsanız bunu indirin. Zipten çıkarıp doğrudan `Anticore.exe` dosyasını yönetici olarak başlatmanız yeterlidir. |
-| **Kurulumlu (Setup EXE)** | `Anticore_x64-setup.exe` | 14.8 MB | [İndir (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64-setup.exe) | Masaüstü kısayolu, Başlat menüsü simgesi ve uygulama içi tek tıkla otomatik güncelleme bildirimleri istiyorsanız kurulumlu sürümü tercih edin. |
-| **Kurumsal (MSI)** | `Anticore_x64_en-US.msi` | 16.5 MB | [İndir (.msi)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64_en-US.msi) | Active Directory veya grup ilkeleri (GPO) üzerinden birden fazla bilgisayara sessiz kurulum yapacak sistem yöneticileri içindir. |
+| Paket Türü | Dosya Adı | Boyut | İndirme | Kullanım Amacı |
+|---|---|:---:|:---:|---|
+| **Taşınabilir (Portable)** | `Anticore_0.3.0_x64-portable.zip` | ~6.2 MB | [İndir (.zip)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64-portable.zip) | **Kurulumsuz.** Klasöre veya USB belleğe çıkartıp doğrudan `Anticore.exe` dosyasını yönetici olarak çalıştırın. Sistemde artık bırakmaz. |
+| **Kurulumlu (Setup EXE)** | `Anticore_0.3.0_x64-setup.exe` | ~4.3 MB | [İndir (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64-setup.exe) | Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili otomatik güncelleme desteği isteyen son kullanıcılar içindir. |
+| **Kurumsal Dağıtım (MSI)** | `Anticore_0.3.0_x64_en-US.msi` | ~6.0 MB | [İndir (.msi)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64_en-US.msi) | Active Directory, Intune veya GPO üzerinden çoklu bilgisayara sessiz kurulum yapacak sistem yöneticileri içindir. |
 
-> **Önemli Not:** Windows ağ kartından geçen paketleri çekirdek seviyesinde yakalayabilmek için `WinDivert` sürücüsü kullanılır. Bu nedenle uygulamanın **Yönetici Olarak Çalıştırılması** zorunludur. Standart kullanıcı olarak açarsanız uygulama sizi uyarır ve tek tıkla kendini yönetici yetkisiyle yeniden başlatır.
+> **Sistem Gereksinimi & Yönetici İzni:** Windows ağ kartından geçen ham paketleri çekirdek katmanında dinleyip düzenleyebilmek için `WinDivert` sürücüsü kullanılır. Bu nedenle uygulamanın **Yönetici Olarak Çalıştırılması** teknik bir zorunluluktur. Standart kullanıcı olarak başlatıldığında uygulama sizi uyarır ve tek tıkla kendini yönetici yetkisiyle yeniden başlatabilir.
 
 ---
 
 ## Anticore Nedir ve Ne Değildir?
 
-Discord kapatıldığında, Roblox engellendiğinde ya da bazı platformlara erişim kısıtlandığında akla ilk gelen çözüm bir VPN açmaktır. Ancak VPN kullanmanın günlük kullanımda ciddi bedelleri vardır:
+Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim sınırlandığında akla ilk gelen çözüm bir VPN açmaktır. Ancak VPN kullanmak günlük deneyimi ciddi şekilde bozar:
 
-- Tüm internet trafiğiniz yurt dışındaki bir sunucuya tünellendiği için indirme hızınız yüzde 50 ile 80 arasında düşer.
-- Rekabetçi oyunlarda veya sesli görüşmelerde ping süreniz 30 milisaniyeden 120 milisaniyeye fırlar.
-- Banka veya e-Devlet siteleri yurt dışı IP adresi gördüğü an güvenlik doğrulaması ister ya da hesabınızı kilitler.
-- Tüm özel verileriniz üçüncü parti bir VPN şirketinin sunucularından geçer.
+- İnternet trafiğiniz yurt dışındaki bir sunucuya tünellendiği için indirme ve yükleme hızınız **%50 ile %80 arasında düşer**.
+- Oyunlarda veya sesli iletişimde ping süreniz **30 ms'den 120+ ms'ye** fırlar.
+- Bankacılık veya e-Devlet siteleri yurt dışı IP gördüğü anda güvenlik doğrulaması ister ya da hesabınızı askıya alır.
+- Tüm özel verileriniz üçüncü parti bir VPN sağlayıcısının sunucularından geçer.
 
-**Anticore bir VPN veya Proxy değildir.**
+### Anticore Bir VPN veya Proxy Değildir
 
-Trafiğinizi hiçbir uzak sunucuya yönlendirmez. Türkiye'deki servis sağlayıcılar (Türk Telekom, Superonline, Kablonet, Vodafone vb.) engellemeyi genellikle ilk bağlantı kurulurken giden paketin içindeki alan adı etiketine (TLS ClientHello SNI) bakarak yapar. 
+Anticore trafiğinizi hiçbir uzak sunucuya yönlendirmez. Türkiye'deki servis sağlayıcılar (Türk Telekom, Superonline, Kablonet, Vodafone vb.) engellemeyi genellikle ilk bağlantı kurulurken giden paketin içindeki alan adı etiketine (**TLS ClientHello SNI**) bakarak gerçekleştirir.
 
-Anticore sadece bu ilk el sıkışma anında devreye girer:
-1. Paketi hedef sunucunun anlayabileceği ancak sağlayıcının DPI kutusunun okuyamayacağı şekilde ufak parçalara böler veya düşük TTL değerli sahte bir paketle denetim kutusunu atlatır.
+Anticore yalnızca bu ilk el sıkışma anında devreye girer:
+1. Paketi hedef sunucunun anlayabileceği ancak sağlayıcının DPI (Derin Paket İnceleme) kutusunun okuyamayacağı şekilde ufak parçalara böler veya düşük TTL değerli sahte bir paketle denetim kutusunu atlatır.
 2. Karşı sunucu ile bilgisayarınız el sıkıştığı anda filtre aradan çekilir.
-3. Bundan sonraki tüm indirme, yükleme ve canlı yayın trafiği doğrudan kendi internet sağlayıcınız üzerinden tam hızla akar. İnternet hattınız 1000 Mbps ise, 1000 Mbps hız almaya devam edersiniz.
+3. Bundan sonraki tüm indirme, yükleme ve canlı yayın trafiği doğrudan kendi internet sağlayıcınız üzerinden tam hat hızıyla akar. **1000 Mbps internetiniz varsa, 1000 Mbps almaya devam edersiniz.**
 
 ---
 
-## GoodbyeDPI ve SplitWire ile Karşılaştırma
+## Öne Çıkan Yetenekler
 
-Türkiye'de bu alanda daha önce geliştirilmiş değerli araçlar mevcuttur. Anticore, bu araçların tecrübelerinden yararlanarak ve eksik kalan taraflarını tamamlayarak tasarlandı:
+### 1. Çift Modlu Arayüz Mimarisi
+- **Basit Mod (Son Kullanıcı):** Karmaşık ağ parametreleriyle uğraşmadan tek tıkla büyük güç reaktörüne basarak korumayı başlatın. Discord, Roblox, Ekşi Sözlük ve hedef sitelerin durumunu tek bakışta görün.
+- **Pro Matrix Operasyon Konsolu (Uzmanlar):** WinDivert L3 çekirdek halka tamponu, mikrosaniye gecikme telemetrisi, canlı milisaniyelik Throughput (PPS) sparkline grafiği, aktif strateji zinciri ve terminal log konsolu.
 
-| Karşılaştırma Kriteri | Geleneksel VPN | GoodbyeDPI | SplitWire | Anticore |
-|---|:---:|:---:|:---:|:---:|
-| **Hız Kaybı** | Yüzde 50 - 80 Düşüş | Sıfır Kayıp | Sıfır Kayıp | **Sıfır Kayıp (Tam Hat Hızı)** |
-| **Ping Artışı** | +50ms ila 200ms | 0 ms | 0 ms | **0 ms (Doğrudan Bağlantı)** |
-| **Kullanıcı Arayüzü** | Tipik SaaS Menüsü | Yok (Komut Satırı / .cmd) | Temel Arayüz | **Çift Modlu Cyber-Brutalist Panel** |
-| **Kullanım Zorluğu** | Kolay | Karmaşık parametreler | Basit | **Tek Tık Başlat veya İleri Düzey Konsol** |
-| **Windows Servis Modu** | Kısmi | Manuel `sc` komutları | Yok | **Yerleşik Windows Hizmet Yöneticisi** |
-| **Otomatik Keşif (Blockcheck)** | Yok | Var (Python/CLI gerektirir) | Yok | **Tek Tıkla Görsel Teşhis Akışı** |
-| **Discord Özel Onarımı** | Yok | Yok | Yok | **Ses Kopması ve Güncelleme Döngüsü Çözümü** |
-| **Sistem Tepsisi (Tray) Desteği** | Var | Yok | Kısmi | **Pencere Kapanınca Arka Planda Sessiz Çalışma** |
-| **Otomatik Güncelleme** | Var | Manuel dosya takibi | Manuel indirme | **İmzalı Tauri Otomatik Güncelleyici** |
-| **Bellek ve Kaynak Tüketimi** | 150 - 300 MB | ~10 MB | ~80 MB | **~25 MB (Rust Motoru + WebView2)** |
+### 2. Sistem Tepsisi (Tray) Hızlı Erişim Paneli
+- Görev çubuğundaki simgeye tek tıklandığında ekranın sağ alt köşesinde kompakt (340x460px) yüzen kokpit açılır.
+- Ana pencereyi açmaya gerek kalmadan tek tıkla motoru açıp kapatabilir, profil değiştirebilir veya DNS onarımı yapabilirsiniz.
+- Çift tıklama ana pencereyi öne getirir.
 
-GoodbyeDPI yıllardır bu konseptin teknik temelini oluşturmaktadır; fakat siyah bir konsol penceresi, onlarca karmaşık komut satırı parametresi ve çöken servislerle uğraşmak sıradan kullanıcılar için zordur. SplitWire bu duruma grafik arayüz kazandırmış olsa da Windows hizmet entegrasyonu, Discord güncelleme kilitlenmeleri ve derin analiz ekranları konusunda sınırlı kalmıştır. 
+### 3. Otomatik DNS Zehirlenmesi ve Discord Onarımı
+- Türkiye'deki ISP'lerin `discord.com` sorgusunu mahkeme kararıyla BTK engelleme sunucusuna (`195.175.254.2`) yönlendirmesini otomatik olarak tespit eder.
+- Tek tıkla güvenli Cloudflare DNS ve yerel Windows DoH (DNS-over-HTTPS) kaydı oluşturarak ses kanalı kopmalarını ("RTC Connecting") ve sonsuz güncelleme döngüsünü çözer.
 
-Anticore, bu iki dünyanın güçlü yanlarını bir araya getirir: Rust ile sıfırdan yazılmış hafif bir çekirdek, modern bir masaüstü kontrol paneli ve Türkiye ağlarına göre ayarlanmış hazır stratejiler.
-
----
-
-## İki Farklı Çalışma Modu
-
-Anticore arayüzünde kullanıcıyı iki farklı deneyim karşılar:
-
-### 1. Basit Mod (Son Kullanıcılar İçin)
-Karmaşık ağ terimleriyle uğraşmak istemiyorsanız Basit Mod tam size göredir:
-- Ortadaki büyük güç butonuna basarak korumayı başlatabilirsiniz.
-- İnternet servis sağlayıcınızı (Türk Telekom, Superonline, Kablonet, Vodafone) listeden seçtiğinizde arka plandaki tüm TTL ve paket bölme parametreleri otomatik olarak en kararlı ayarlara getirilir.
-- Discord, Roblox, YouTube 4K, Twitch ve diğer popüler platformların erişim durumunu yeşil durum rozetleriyle doğrudan teyit edebilirsiniz.
-
-### 2. Pro Matrix Konsolu (Meraklılar ve Ağ Uzmanları İçin)
-Arka planda ne olup bittiğini görmek isteyenler için teknik bir gösterge paneli bulunur:
-- **Canlı Throughput (PPS) Grafiği:** Ağ kartınızdan geçen paket sıklığını anlık milisaniyelik sparkline grafiğiyle çizer.
-- **Aktif Strateji Zinciri:** Hangi paket bölme yönteminin devrede olduğunu adım adım gösterir (örneğin: `[TTL=3] -> [SPLIT=SNI+2]`).
-- **Dörtlü Sayaç:** Görülen hedef paketler, başarıyla atlatılan el sıkışmalar, doğrudan geçirilen normal trafik ve uygulamanın açık kalma süresi.
-- **Terminal Log Konsolu:** Hata, bilgi ve başarı mesajlarını filtreleyebileceğiniz, arama yapabileceğiniz ve panoya kopyalayabileceğiniz canlı log alanı.
+### 4. 8 Tam Morfolojik Donanım Teması
+Standart renk değiştirmenin ötesinde köşe geometrisi, kart dokusu, scanline atmosferi ve tipografisiyle 8 bağımsız dünya:
+- **Obsidian Emerald:** Cyber-hardware koyu şasi, neon zümrüt telemetri (Varsayılan).
+- **Amber CRT:** Kehribar fosfor ışıması, tam ekran scanline katmanı ve monospace terminal tipografisi.
+- **Cobalt Matrix:** Taktik denizaltı C2 muharebe konsolu, derin okyanus mavisi.
+- **Cyberpunk Volt:** Endüstriyel HUD grid matrisi, 45° agresif kesimler ve yüksek gerilim sarısı.
+- **Quiet Luxury:** Editoryal serif tipografi, kadife siyahı ve şampanya altını.
+- **Crimson Hazard:** Taktik askeri kırmızı lazer HUD ve acil durum komuta paneli.
+- **Amethyst Nebula:** Yumuşak buzlu cam derinliği ve spektral mor nebula.
+- **Titanium Laboratory:** Klinik açık mod, CNC işlenmiş açık gri cerrahi lab.
 
 ---
 
 ## Nasıl Çalışır?
 
-Servis sağlayıcıların DPI (Derin Paket İnceleme) cihazları, kullanıcıların hangi siteye gittiğini anlamak için TLS bağlantısının henüz şifrelenmemiş olan ilk paketine bakar. Bu paketin içinde sitenin açık adı (SNI: Server Name Indication) yer alır.
-
-```
+```text
 [ Tarayıcı ya da Oyun ]
            │
            │ 1. TLS ClientHello (Hedef: discord.com)
@@ -113,7 +100,7 @@ Servis sağlayıcıların DPI (Derin Paket İnceleme) cihazları, kullanıcılar
 ┌─────────────────────────────────────────────────────────────┐
 │  ANTICORE MOTORU (Rust + WinDivert Sürücüsü)                │
 │                                                             │
-│  - Yalnızca hedef listedeki sitelerin paketlerini dinler.   │
+│  - Yalnızca hedef listedeki alan adlarının paketini yakalar.│
 │  - Düşük TTL değerli sahte bir paket üretir.                │
 │  - Gerçek ClientHello paketini SNI etiketinin ortasından    │
 │    iki ayrı TCP parçasına böler.                            │
@@ -122,7 +109,7 @@ Servis sağlayıcıların DPI (Derin Paket İnceleme) cihazları, kullanıcılar
      ┌─────┴──────────────────────────────┐
      │ 2. Sahte Paket (TTL=3)             │ 3. Bölünmüş Gerçek Paketler
      ▼                                    ▼
-[ ISS DPI Filtre Kutusu ]         [ Hedef Sunucu (Discord) ]
+[ ISS DPI Sansür Kutusu ]         [ Hedef Sunucu (Discord) ]
 (Sahte paketle meşgul olur)       (TCP parçalarını birleştirir)
                                           │
                                           │ 4. Güvenli Bağlantı Kuruldu!
@@ -130,94 +117,83 @@ Servis sağlayıcıların DPI (Derin Paket İnceleme) cihazları, kullanıcılar
                       [ Kalan TÜM indirme verisi %100 hızla akar ]
 ```
 
-1. **Sahte Paket Enjeksiyonu (Fake Packet with TTL):** ISS omurgasındaki filtre kutusuna kadar gidebilecek ancak ana internet düğümlerini geçemeden ömrü tükenecek (Time-to-Live süresi bitmiş) sahte bir paket yollanır. Filtreleme cihazı bu sahte veriyi işlerken arkadan gelen gerçek paketi kaçırır.
+1. **Sahte Paket Enjeksiyonu (Fake Packet with TTL):** ISS omurgasındaki filtre kutusuna kadar gidebilecek ancak ana internet düğümlerini geçemeden ömrü tükenecek sahte bir paket yollanır. Filtre cihazı bu sahte veriyi işlerken arkadan gelen gerçek paketi kaçırır.
 2. **Paket Bölme (SNI Splitting):** Alan adını taşıyan ilk paket küçük parçalara bölünür. Basit sansür cihazları bu parçaları belleğinde birleştirip denetleyemediği için engelleme uygulayamaz.
-3. **Pasif Savunma (RST Drop):** Sağlayıcı tarafından bağlantıyı zorla kapatmak için gönderilen sahte TCP RST paketleri işletim sistemine ulaşmadan düşürülür.
-4. **QUIC / HTTP3 Engelleme:** UDP tabanlı QUIC bağlantıları TLS'e düşürülür; böylece paket atlatma kuralları tarayıcılarda kesintisiz çalışır.
+3. **Pasif Savunma (RST Drop):** Sağlayıcı tarafından bağlantıyı zorla koparmak için gönderilen sahte TCP RST paketleri işletim sistemine ulaşmadan düşürülür.
+4. **QUIC / HTTP3 Düşürme:** UDP tabanlı QUIC bağlantıları TLS'e düşürülür; böylece tarayıcılarda paket atlatma kuralları kesintisiz devrede kalır.
 
 ---
 
-## Dahili Ağ Onarım Araçları
+## GoodbyeDPI, SplitWire ve VPN Karşılaştırması
 
-- **Discord Kurtarma Aracı:** Discord açılırken oluşan sonsuz "Checking for updates" döngüsünü, ses kanallarında (RTC) yaşanan bağlantı kopmalarını ve önbellek kilitlenmelerini çözer.
-- **Windows DoH (DNS-over-HTTPS) Entegrasyonu:** Servis sağlayıcıların DNS zehirleme yöntemlerini engellemek için Cloudflare, Google, Quad9 veya AdGuard DoH adreslerini doğrudan Windows kayıt defterine tanımlar.
-- **DNS Sızıntı Testi:** DNS sorgularınızın yerel operatörünüze açık metin olarak gidip gitmediğini otomatik olarak test eder.
-
----
-
-## Sık Sorulan Sorular ve Bilinen Durumlar
-
-#### 1. Neden Yönetici İzni Gerekiyor?
-Windows, ağ kartı üzerinden geçen ham TCP/IP paketlerini okuma ve değiştirme iznini yalnızca sistem yöneticilerine verir. WinDivert sürücüsünün yüklenebilmesi ve paketlerin manipüle edilebilmesi için yönetici yetkisi teknik bir zorunluluktur.
-
-#### 2. Antivirüs Yazılımım Uyarı Verir mi?
-WinDivert, tüm dünyada ağ analiz ve güvenlik araçlarında kullanılan meşru bir açık kaynak sürücüdür. Ancak bazı antivirüsler derin paket sürücülerini tanımadığı için genel bir uyarı verebilir. Anticore'un kaynak kodları tamamen açıktır; hiçbir zararlı yazılım, reklam veya gizli veri toplama modülü barındırmaz. İkili dosyalarımız Minisign ile imzalanmıştır.
-
-#### 3. Tek Başına DPI Aşmak Neden Bazen Yetmez?
-Eğer internet sağlayıcınız engellemeyi DPI yerine doğrudan DNS düzeyinde yapıyorsa (yani discord.com sorgusuna yanlış bir IP adresi döndürüyorsa), DPI motoru doğru sunucuya ulaşamaz. Bu nedenle arayüzdeki Ağ Onarımı bölümünden DoH (DNS-over-HTTPS) özelliğini açmanız tavsiye edilir.
+| Kriter | Standart VPN | GoodbyeDPI | SplitWire | ANTICORE |
+|---|:---:|:---:|:---:|:---:|
+| **Hız Kaybı** | %50 ila %80 Düşüş | Sıfır Kayıp | Sıfır Kayıp | **Sıfır Kayıp (Tam Hat Hızı)** |
+| **Ping Artışı** | +50 ms ila 200 ms | 0 ms | 0 ms | **0 ms (Doğrudan Bağlantı)** |
+| **Kullanıcı Arayüzü** | Standart SaaS | Yok (.cmd / Siyah Ekran) | Temel GUI | **Çift Modlu Cyber-Hardware Panel** |
+| **Sistem Tepsisi (Tray)** | Var | Yok | Kısmi | **Flyout Hızlı Kokpit & Arka Plan Modu** |
+| **Windows Hizmet (Service) Modu** | Kısmi | Manuel `sc` komutu | Yok | **Entegre Windows Servis Yöneticisi** |
+| **Otomatik DNS & Discord Tamiri** | Yok | Yok | Yok | **Tek Tıkla Zehirlenme ve RTC Tamiri** |
+| **Bellek Tüketimi** | 150 - 300 MB | ~10 MB | ~80 MB | **~25 MB (Rust + WebView2)** |
+| **Otomatik Güncelleme** | Var | Manuel | Manuel | **Tauri İmzalı Otomatik Güncelleyici** |
 
 ---
 
-## Kaynak Koddan Derleme
+## Güvenlik ve Bütünlük Doğrulama
 
-Kendi ikili dosyalarınızı kendiniz derlemek isterseniz aşağıdaki adımları izleyebilirsiniz:
+Resmi GitHub Releases sayfasından indirdiğiniz kurulum ve taşınabilir paketleri aşağıdaki açık anahtar ile Minisign kullanarak doğrulayabilirsiniz:
 
-### Gereksinimler
-- Rust 1.80 veya üzeri (`rustup`)
-- Node.js 18 veya üzeri (`npm`)
-- Visual Studio 2022 C++ Derleme Araçları (MSVC x64)
-
-### Derleme Adımları
-
-```powershell
-# 1. Projeyi bilgisayarınıza klonlayın
-git clone https://github.com/MonarchDevLab/Anticore.git
-cd Anticore/antikor
-
-# 2. Rust motor testlerini çalıştırın (46 test paketi)
-cargo test --workspace
-
-# 3. Bağımsız motoru derleyin
-cargo build --release --workspace
-
-# 4. Masaüstü arayüz bağımlılıklarını yükleyin
-cd desktop
-npm install
-
-# 5. Geliştirici modunda arayüzü başlatın
-npm run tauri dev
-
-# 6. Üretim paketlerini (EXE, MSI, Portable) üretin
-npm run tauri build
-```
-
----
-
-## Güvenlik ve Doğrulama
-
-Resmi GitHub Releases sayfasından indirdiğiniz dosyaları aşağıdaki açık anahtar ile doğrulayabilirsiniz:
-
-```
+```text
 dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE1QTRFREEwMDFGNDFFNTMKUldSVEh2UUJvTzJrRmE3UGFDdG81YWtnYUdYSkhFdWQxVGJ0V2VVdHFKNDJvaGZRWS90TWx3ejMK
 ```
 
 Doğrulama komutu:
 ```powershell
-minisign -Vm Anticore_x64-setup.exe -p anticore.key.pub
+minisign -Vm Anticore_0.3.0_x64-setup.exe -p anticore.key.pub
 ```
 
 Güvenlik politikamız ve güvenlik açığı bildirim süreçlerimiz için [SECURITY.md](SECURITY.md) belgesine bakabilirsiniz.
 
 ---
 
-## Lisans
+## Kaynak Koddan Derleme
+
+Kendi ikili dosyalarınızı kaynak koddan üretmek isterseniz:
+
+### Gereksinimler
+- Rust 1.80+ (`rustup`)
+- Node.js 20+ (`npm`)
+- Visual Studio 2022 C++ Derleme Araçları (MSVC x64)
+
+```powershell
+# 1. Depoyu klonlayın
+git clone https://github.com/MonarchDevLab/Anticore.git
+cd Anticore/antikor
+
+# 2. Rust testlerini çalıştırın (48 test paketi)
+cd engine
+cargo test --workspace
+
+# 3. Bağımsız motoru derleyin
+cargo build --release --workspace
+
+# 4. Masaüstü arayüz bağımlılıklarını kurun ve derleyin
+cd ../desktop
+npm install
+npm test
+npm run tauri build
+```
+
+---
+
+## Lisans ve Telif
 
 Bu yazılım [MIT Lisansı](LICENSE) kapsamında dağıtılmaktadır.
 
-- **WinDivert:** [LGPLv3](https://reqrypt.org/windivert.html) lisansına sahip bağımsız ağ filtreleme sürücüsüdür.
+- **WinDivert:** [LGPLv3](https://reqrypt.org/windivert.html) lisansına sahip bağımsız açık kaynak ağ filtreleme sürücüsüdür; değiştirilmeden dinamik olarak yüklenir.
 - **WebView2:** Microsoft Corporation mülkiyetindedir.
-- **Yasal Sorumluluk:** Anticore, ağ analizi, kişisel gizlilik ve sansürsüz bilgiye erişim amacıyla geliştirilmiştir. Kullanıcıların yerel yasalara ve servis kullanım şartlarına uygun hareket etmesi kendi sorumluluğundadır.
+- **Yasal Sorumluluk:** Anticore; ağ analizi, kişisel gizlilik ve sansürsüz bilgiye erişim amacıyla geliştirilmiştir. Kullanıcıların yerel yasalara uygun hareket etmesi kendi sorumluluğundadır.
 
 <div align="center">
-  <sub>Monolith Works tarafından geliştirilmekte, MonarchDevLab üzerinden dağıtılmaktadır. Türkiye'deki tüm kullanıcılara hızlı, güvenli ve bağımsız bir internet deneyimi sunmak amacıyla açık kaynak olarak paylaşılmıştır.</sub>
+  <sub>Kod sahibi ve tüm haklar <b>Monolith Works</b>'e aittir. Dağıtım resmi kanalı <b>MonarchDevLab</b>'dir.</sub>
 </div>
