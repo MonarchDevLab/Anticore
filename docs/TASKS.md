@@ -5,13 +5,13 @@
 > Canlı bağımsız motor ve SCM başlat/durdur geçti; geçici servis kaldırıldı. Native UI düğmelerinin uçtan uca otomasyonu ve saha hız ölçümü yapılmadı.
 
 ## ŞİMDİ `[~]`
-- *(Yok; native son kullanıcı kabulü SIRADAKİ bölümündedir.)*
+- *(Yok)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` `48536eb` güç kontrolü tasarımının nihai kullanıcı kabulü; ortak stiller uygulanan araç ekranları tam sayfa yeniden tasarımı olarak sayılmamalı.
+- `[ ]` `0f07227` yeni bağlantı konsolunun nihai kullanıcı kabulü; alt araç sayfalarının tam yeniden tasarımı yapılmadı.
 - `[ ]` Çalışma modlarının native UI üzerinden son kullanıcı kabulü; UI gösterimleri, tekrar başlatma, kurulu sistem yükseltmesi ve eşzamanlı çoklu uygulama örnekleri ayrı denetlenmeli.
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
 - `[ ]` 33 NETWORK_PLAN.md P1: uyarlanabilir profil seçimi ve geri dönüş davranışı.
@@ -19,6 +19,7 @@
 - `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-08 — `0f07227`: yatay bağlantı paneli, kare güç kontrolü, birleşik sayaç şeridi, tema uyumlu gezinme/yüzeyler ve açık tema kontrast düzeltmesi. 14/14 frontend testi, TypeScript/Vite, native release ve mevcut Edge kabul senaryoları geçti (390/768/1080px, açık/koyu, kilitler, bilinmeyen durum). Görseller test IPC verisidir. Yeni EXE: `desktop/src-tauri/target/release/anticore-desktop.exe`; dist kurulum/portable paketleri bu turda yenilenmedi.
 - `[x]` 2026-09-08 — `ef32270`: ana durdurmada dış mod hataları taşınır, STOPPED doğrulaması beklenir; başlangıçta dış mod/geçiş kontrolü; başarısız taskkill sonrası PID korunur; mod adları profil olarak kaydedilmez; başarısız yenileme eski bağlantı verisini temizler. 14 frontend/9 backend testi ve tüm paketler geçti. Yeni ana durdurma yolunun native canlı kabulü yapılmadı. GUI SHA256 `02533DBEB03EFD9DC006F1E268587CC2A3C8AD82B57637018A7914A88C6F4C89`.
 - `[x]` 2026-09-08 — `3d7505f`: tam oturum envanteri, kaynak commitleri, beş dağıtım hash'i, yedek/geri dönüş konumları, test kanıtları, başarısız denemelerin nedenleri ve açık kabul sınırları kaydedildi. Eski commit edilmedi/paketler eski/tasarım token ifadeleri güncel kayıtlarda düzeltildi. Bu kayıt turunda kod, ikililer, ağ veya test sonuçları yeniden üretilmedi.
 - `[x]` 2026-09-08 — `48536eb`: tema rengini kullanan merkezi güç kontrolü; araç sayfalarında ortak yüzey/kontrol stilleri; ayarlarda bölüm bağlantıları ve seçim durumu; native onay diyaloğu; profil/günlük yükleme hataları; sihirbazda DNS opt-in, başarısız başlangıçta tamamlanmama ve başarılı profil kaydı. Yeni sihirbaz testleri dahil son toplam frontend 11/11. Bu satır uygulama kapsamıdır; tüm arayüzlerin görsel/erişilebilirlik kabulü değildir.
