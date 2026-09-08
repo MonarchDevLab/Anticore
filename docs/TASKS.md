@@ -1,7 +1,7 @@
 # TASKS
 
 > Tek gerçek kaynak. Kod/git ile çeliştiğinde git kazanır, bu dosya düzeltilir.
-> Son doğrulama: 2026-09-08 17:15 — `ef32270`: 14/14 frontend, 9/9 backend; TypeScript/Vite, native release, NSIS/MSI başarılı. EXE ve portable ZIP içerik hash'i eşleşti. 48/48 motor önceki tur kanıtıdır.
+> Son doğrulama: 2026-09-09 00:32 — `e2bdef9`: 14/14 frontend, TypeScript/Vite, Edge kabulü, native release, NSIS/MSI başarılı. Başlatıcı, EXE ve portable ZIP içerik hash'i eşleşti. Backend/motor testleri önceki tur kanıtıdır.
 > Canlı bağımsız motor ve SCM başlat/durdur geçti; geçici servis kaldırıldı. Native UI düğmelerinin uçtan uca otomasyonu ve saha hız ölçümü yapılmadı.
 
 ## ŞİMDİ `[~]`
@@ -11,7 +11,7 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` `0f07227` yeni bağlantı konsolunun nihai kullanıcı kabulü; alt araç sayfalarının tam yeniden tasarımı yapılmadı.
+- `[ ]` `e2bdef9` yoğun operasyon konsolunun nihai kullanıcı kabulü; `0f07227` tasarımı kullanıcı tarafından reddedildi. Alt araç sayfaları ortak görünümü kullanır; tam sayfa yeniden tasarımı yapılmadı.
 - `[ ]` Çalışma modlarının native UI üzerinden son kullanıcı kabulü; UI gösterimleri, tekrar başlatma, kurulu sistem yükseltmesi ve eşzamanlı çoklu uygulama örnekleri ayrı denetlenmeli.
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
 - `[ ]` 33 NETWORK_PLAN.md P1: uyarlanabilir profil seçimi ve geri dönüş davranışı.
@@ -19,6 +19,7 @@
 - `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-09 — `e2bdef9`: yoğun operasyon konsolu, çekirdek durum göstergesi, bitişik telemetri, yatay TLS denetimi, kompakt olay/araç alanı ve ortak görünüm. 14 frontend testi, Edge kabulü, 1080×720 görünürlük, 390/768/1080px taşma, açık/koyu örnek kontrastları geçti. Native EXE/NSIS/MSI/portable ve normal başlatıcı yenilendi. GUI SHA256 `7BA061F6D35F8DF1E126BDC6595FDEC72D2B2CF56EEF050138AAA2807F3C80D1`; ZIP ve başlatıcı eşleşiyor. Yedek `package-backups/20260909-003218`. Native etkileşim kabulü ve yayın yapılmadı.
 - `[x]` 2026-09-08 — `0f07227`: yatay bağlantı paneli, kare güç kontrolü, birleşik sayaç şeridi, tema uyumlu gezinme/yüzeyler ve açık tema kontrast düzeltmesi. 14/14 frontend testi, TypeScript/Vite, native release ve mevcut Edge kabul senaryoları geçti (390/768/1080px, açık/koyu, kilitler, bilinmeyen durum). Görseller test IPC verisidir. Yeni EXE: `desktop/src-tauri/target/release/anticore-desktop.exe`; dist kurulum/portable paketleri bu turda yenilenmedi.
 - `[x]` 2026-09-08 — `ef32270`: ana durdurmada dış mod hataları taşınır, STOPPED doğrulaması beklenir; başlangıçta dış mod/geçiş kontrolü; başarısız taskkill sonrası PID korunur; mod adları profil olarak kaydedilmez; başarısız yenileme eski bağlantı verisini temizler. 14 frontend/9 backend testi ve tüm paketler geçti. Yeni ana durdurma yolunun native canlı kabulü yapılmadı. GUI SHA256 `02533DBEB03EFD9DC006F1E268587CC2A3C8AD82B57637018A7914A88C6F4C89`.
 - `[x]` 2026-09-08 — `3d7505f`: tam oturum envanteri, kaynak commitleri, beş dağıtım hash'i, yedek/geri dönüş konumları, test kanıtları, başarısız denemelerin nedenleri ve açık kabul sınırları kaydedildi. Eski commit edilmedi/paketler eski/tasarım token ifadeleri güncel kayıtlarda düzeltildi. Bu kayıt turunda kod, ikililer, ağ veya test sonuçları yeniden üretilmedi.
