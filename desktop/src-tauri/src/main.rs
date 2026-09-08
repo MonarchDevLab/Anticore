@@ -2,6 +2,7 @@
 #![windows_subsystem = "windows"]
 
 mod commands;
+pub mod net_teardown;
 mod service;
 mod tray;
 
@@ -24,6 +25,9 @@ fn main() {
             // kontrolü ve bildirim katmanı hâlâ `commands::check_update`.
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             tray::setup(app)?;
+            let args: Vec<String> = std::env::args().collect();
+            let start_hidden = args.iter().any(|a| a == "--hidden" || a == "--minimized" || a == "-m");
+
             if let Some(window) = app.get_webview_window("main") {
                 let window_for_close = window.clone();
                 window.on_window_event(move |event| {
@@ -31,8 +35,12 @@ fn main() {
                         tray::handle_close_request(&window_for_close, api);
                     }
                 });
-                let _ = window.show();
-                let _ = window.set_focus();
+                if !start_hidden {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                } else {
+                    let _ = window.hide();
+                }
             }
             Ok(())
         })
@@ -43,6 +51,7 @@ fn main() {
             commands::delete_profile,
             commands::get_blacklist,
             commands::add_site,
+            commands::add_sites,
             commands::remove_site,
             commands::resolve_domain,
             commands::export_sites_to_file,
@@ -80,6 +89,7 @@ fn main() {
             commands::get_doh_status,
             commands::factory_reset,
             commands::check_update,
+            commands::fetch_community_blacklist,
             commands::get_app_version,
             commands::open_browser_url,
             tray::get_tray_minimize,

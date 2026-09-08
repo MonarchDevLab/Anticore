@@ -1,17 +1,17 @@
 # SYSTEM MAP
 
-## Design Tokens (Kalıcı Mimari Kararlar — Dark Monolith $10K)
-- **Tema & Felsefe:** Modern Dark Monolith DTCG Token Mimarisi (Linear & Raycast zarafeti, Cloudflare Zero Trust sağlamlığı).
-- **Renk Paleti:**
-  - Derin Zemin: `--color-void: #090B10` (`bg-void`)
-  - Kart ve Yüzeyler: `--color-surface-card: #121724`, `--color-surface-elevated: #181F30`, `--color-surface-subtle: #0D111A`
-  - Ana Metin: `--color-paper: #F8FAFC`, `--color-paper-bright: #FFFFFF`, İkincil Metin: `--color-paper-muted: #94A3B8`, Soluk: `--color-paper-faint: #64748B` (WCAG 2.2 AA kontrast garantili)
-  - Canlı / Koruma Devrede: `--color-live: #10B981` (`border-live`, `text-live`, `bg-live`)
-  - Alarm / Hata: `--color-alert: #EF4444` (`border-alert`, `text-alert`, `bg-alert`)
-  - Uyarı / Dikkat: `--color-warn: #F59E0B` (`border-warn`, `text-warn`, `bg-warn`)
-  - Bilgi / Vurgu: `--color-cyan: #06B6D4` (`text-cyan`, `border-cyan`)
-- **Tipografi Standartları:** Fira Sans birincil arayüz fontu, Fira Code telemetri ve teknik veriler için monospaced font. Minimum 12px font boyutu (`text-xs`), başlıklar `text-sm`/`text-base`/`text-xl`/`text-2xl`, doğal hiyerarşi ve okunaklı satır aralıkları.
-- **Geometri:** Dokunsal kavisler (`rounded-2xl` kartlar, `rounded-xl` butonlar, `rounded-lg` çipler). 1px ince zarif sınırlar (`border-white/[0.08]`), yumuşak gölgeler (`shadow-xl`) ve aktif durumlarda fısıldayan ambient nabız halkaları (`ring-pulse`). Göz yoran neo-brutalist kaba 0px keskinlik ve 3px kalın beyaz çerçeveler tamamen kaldırılmıştır.
+## Design Tokens (Kalıcı Mimari Kararlar — 2026 Cyber-Hardware & 6 Donanım Teması)
+- **Tema & Felsefe:** 2026 Developer Araçları (Raycast, Linear, Warp, Little Snitch 6) Estetiği. Sub-pixel mikro-sınırlar (`rgba(255,255,255,0.08)`), subsurface radyal aura, `tabular-nums` veri sakinliği ve dokunsal geri bildirim.
+- **6 Yüksek Karakterli Donanım Teması (+ Sistem Modu):**
+  1. *Obsidian Emerald* (`--color-void: #06080C`, `--color-surface-card: #0E131F`, `--color-neon-live: #00F59B`) — Varsayılan siber donanım (15.2:1 AAA).
+  2. *Amber CRT* (`--color-void: #0C0A06`, `--color-surface-card: #1C150B`, `--color-neon-live: #FFB020`) — Endüstriyel fosfor kehribar monitör (12.8:1 AAA).
+  3. *Cobalt Matrix* (`--color-void: #050B14`, `--color-surface-card: #0B1526`, `--color-neon-live: #00E5FF`) — Taktik C2 denizaltı konsolu (14.6:1 AAA).
+  4. *Cyberpunk Volt* (`--color-void: #08090D`, `--color-surface-card: #151924`, `--color-neon-live: #FFE600`) — Yüksek voltajlı neon & titanyum (16.4:1 AAA).
+  5. *Amethyst Nebula* (`--color-void: #090610`, `--color-surface-card: #18112E`, `--color-neon-live: #B388FF`) — Spektral kozmik ametist (11.4:1 AAA).
+  6. *Titanium Laboratory* (`--color-void: #F1F5F9`, `--color-surface-card: #FFFFFF`, `--color-neon-live: #047857`) — CNC işlenmiş açık seramik (9.8:1 AAA).
+  + *Sistem Senkronizasyonu* modu.
+- **Tipografi Standartları:** Fira Sans birincil arayüz fontu, Fira Code telemetri ve teknik veriler için monospaced font (`tabular-nums`). Minimum 12px font boyutu (`text-xs`), başlıklar `text-sm`/`text-base`/`text-xl`/`text-2xl`, doğal hiyerarşi ve okunaklı satır aralıkları.
+- **Geometri:** Dokunsal kavisler (`rounded-2xl` kartlar, `rounded-xl` butonlar, `rounded-lg` çipler). 1px ince zarif sınırlar (`border-white/[0.08]`), yumuşak gölgeler (`shadow-xl`), aktif reaktör basma aurası (`btn-reactor`).
 
 ## Teknoloji Yığını
 - **Arayüz (Frontend):** React 19, TypeScript 5.8, TailwindCSS 4 (@theme DTCG token'ları), Lucide-React.
@@ -20,14 +20,19 @@
 - **Paketleme & Güvenlik:** NSIS, MSI, Taşınabilir (Portable ZIP), Minisign dijital imzalama.
 
 ## Mimari ve Modül Sınırları
-- **/src/views/Dashboard.tsx:** Çift modlu kontrol merkezi.
-  - *Basit Mod:* Tek dokunuşla başlat/durdur butonu, ISS profil seçici, Discord/Roblox/YouTube yeşil durum rozetleri.
-  - *Pro Matrix Modu:* Canlı Throughput (PPS) sparkline grafiği, aktif strateji zinciri (`[TTL=3] -> [SPLIT=SNI+2]`), 4 telemetri sayacı (Görülen, Bypass Edilen, Passthrough, Uptime) ve dahili terminal konsolu.
-- **/src/views/Sites.tsx:** Sıfır Hız Kaybı garantisi sağlayan hedef listesi (whitelist). Yalnızca bu listedeki alan adlarının ilk el sıkışma paketi işlenir; geri kalan tüm veri akışı dokunulmadan (`PacketVerdict::Passthrough`) geçer.
-- **/src/views/Profiles.tsx & ProfileEditor.tsx:** TT, Superonline, Kablonet ve mobil için hazırlanmış strateji zinciri yöneticisi.
-- **/src/views/NetworkRepair.tsx:** Discord sonsuz güncelleme döngüsü ("Checking for updates") ve ses kanalı (RTC) kopması onarımı, Windows kayıt defteri düzeyinde DoH (Cloudflare, Google, Quad9, AdGuard) aktivatörü.
-- **/src/views/TestCenter.tsx:** Otomatik sağlayıcı analizi (Blockcheck) ve DNS sızıntı denetimi.
-- **/src-tauri/src/commands.rs:** Tauri IPC köprüsü. `find_motor_exe` ile GUI ve CLI ikililerinin (`anticore-cli.exe`, `bin/anticore.exe`) NTFS dosya sistemi çakışmasını önleyen çözümleyici.
+- **/src/components/Titlebar.tsx:** 40px Yekpare Frameless Custom Titlebar (`decorations: false`), canlı telemetri LED rozeti, tema döngüsü butonu (`Palette`), kılavuz çekmecesi ve yerel pencere kontrolleri.
+- **/src/App.tsx:** Yatay Segmented HUD kontrol rayı, hızlı çekirdek reaktör anahtarı, tam ekran modüler çalışma alanı.
+- **/src/views/Dashboard.tsx:**
+  - *Cyber-Reactor Hub:* Çift dönen SVG segment telemetri halkaları (`animate-spin-slow`), dokunsal basılma hissiyatı (`btn-reactor`) ve aktif radyal aura.
+  - *Canlı Ağ Osiloskopu:* Saniyedeki paketleri (PPS) çizen canlı SVG Throughput dalga formu.
+  - *Pro Matrix:* WinDivert L3 sürücü katmanı (8192 KB Ring Buffer, <0.05ms gecikme), 5 aşamalı cerrahi paket boru hattı (NIC -> Demux -> Trie -> Evasion -> Reinject) ve protokol analizörleri.
+  - *Paket Radarı:* Canlı paket akış tablosu (zaman, hedef domain, strateji, verdict, gecikme).
+- **/src/views/Sites.tsx:** 100+ varsayılan TR engelli hedef, 6 mega preset grubu ve `bol-van/zapret` turkey_dns.txt veritabanını tek tıkla çeken canlı senkronizasyon motoru.
+- **/src/views/Profiles.tsx & ProfileEditor.tsx:** TT, Superonline, Kablonet ve mobil için optimize edilmiş taktik adımları (Fake TTL, Bad Checksum, SNI Mid Split, OOB, TCP Window Size) yönetimi.
+- **/src/views/NetworkRepair.tsx:** Güvenli DNS (Google, Cloudflare, Quad9, Yandex) ve DHCP sıfırlama, Windows 11 DoH Registry aktivasyonu, Discord otomatik güncelleme ve ses kanalı RTC onarım araçları.
+- **/src/views/TestCenter.tsx:** Tekli TCP/TLS sonda, 4'lü toplu test, ISS Blockcheck taraması ve motor AÇIK vs KAPALI A/B kıyaslama mekanizması.
+- **/src-tauri/src/commands.rs:** Tauri IPC köprüsü; `CREATE_NO_WINDOW` (0x08000000) ile sıfır CMD konsolu garantisi, Windows Task Scheduler (`schtasks`) yönetici başlangıcı ve tam sistem fabrika sıfırlaması (`factoryReset`).
+- **/src-tauri/src/net_teardown.rs:** Win32 `GetTcpTable` / `SetTcpEntry` (`MIB_TCP_STATE_DELETE_TCB` = 12) ile motor durdurulduğunda aktif Keep-Alive / HTTP/2 web oturumlarını koparan ve `DnsFlushResolverCache` ile DNS önbelleğini temizleyen çekirdek sonlandırma modülü.
 - **/src/components/UpdateModal.tsx:** Tek tıkla uygulama içi güncelleme denetimi, indirme ilerleme çubuğu ve otomatik yeniden başlatma modalı.
 
 ## Geliştirici Kimliği & Mülkiyet

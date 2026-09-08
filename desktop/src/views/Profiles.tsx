@@ -15,7 +15,11 @@ export default function Profiles() {
   const refresh = (selectId?: string) =>
     void api.listProfiles().then((ps) => {
       setProfiles(ps);
-      if (selectId) setSelectedId(selectId);
+      if (selectId) {
+        setSelectedId(selectId);
+      } else if (ps.length > 0) {
+        setSelectedId((prev) => (prev && ps.some((p) => p.id === prev) ? prev : ps[0].id));
+      }
     });
   useEffect(() => {
     refresh();

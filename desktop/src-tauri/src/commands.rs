@@ -114,7 +114,21 @@ pub fn set_engine_config(app: AppHandle, config: EngineConfigDto) -> Result<(), 
 
 pub const SERVICE_NAME: &str = "AnticoreService";
 
-/// Motor ikili dosyasını bulur: önce panel yanında, sonra derleme çıktıları.
+#[cfg(windows)]
+pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+/// Windows konsol pencerelerinin ekranda patlamasını önleyen sessiz komut oluşturucu.
+pub fn silent_command(program: &str) -> std::process::Command {
+    let mut cmd = std::process::Command::new(program);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    cmd
+}
+
+/// Motor ikili dosyasını bulur ve mutlak/temiz bir dosya yoluna çözümler.
 fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
     let mut candidates: Vec<PathBuf> = Vec::new();
     if let Ok(exe) = std::env::current_exe() {
@@ -122,7 +136,6 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
             candidates.push(dir.join("anticore.exe"));
             candidates.push(dir.join("anticore-cli.exe"));
             candidates.push(dir.join("bin").join("anticore.exe"));
-            // resource dizini (bundle)
             if let Some(parent) = dir.parent() {
                 candidates.push(parent.join("anticore.exe"));
                 candidates.push(parent.join("bin").join("anticore.exe"));
@@ -143,14 +156,22 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
         candidates.push(PathBuf::from(rel));
     }
     candidates.retain(|p| p.is_file());
-    candidates
+    let found = candidates
         .into_iter()
         .next()
-        .ok_or_else(|| "anticore.exe bulunamadı (motor ikili dosyası panel yanında olmalı)".into())
+        .ok_or_else(|| "anticore.exe bulunamadı (motor ikili dosyası panel yanında olmalı)".to_string())?;
+
+    if let Ok(canon) = found.canonicalize() {
+        let s = canon.to_string_lossy().to_string();
+        let clean = s.strip_prefix(r"\\?\").unwrap_or(&s).to_string();
+        Ok(PathBuf::from(clean))
+    } else {
+        Ok(found)
+    }
 }
 
 fn sc_query(service: &str) -> String {
-    std::process::Command::new("sc")
+    silent_command("sc")
         .args(["query", service])
         .output()
         .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
@@ -164,19 +185,14 @@ pub struct SetupStatusDto {
     pub detached_running: bool,
 }
 
-#[tauri::command]
-pub fn get_setup_status(app: AppHandle) -> SetupStatusDto {
-    let q = sc_query(SERVICE_NAME);
-    let service_installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
-    let service_running = service_installed && q.contains("RUNNING");
-
-    let pid_file = app_dir(&app).join("detached.pid");
-    let detached_running = pid_file.is_file()
+fn is_detached_running(app: &AppHandle) -> bool {
+    let pid_file = app_dir(app).join("detached.pid");
+    pid_file.is_file()
         && std::fs::read_to_string(&pid_file)
             .ok()
             .and_then(|s| s.trim().parse::<u32>().ok())
             .map(|pid| {
-                std::process::Command::new("tasklist")
+                silent_command("tasklist")
                     .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
                     .output()
                     .map(|o| {
@@ -185,7 +201,15 @@ pub fn get_setup_status(app: AppHandle) -> SetupStatusDto {
                     })
                     .unwrap_or(false)
             })
-            .unwrap_or(false);
+            .unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn get_setup_status(app: AppHandle) -> SetupStatusDto {
+    let q = sc_query(SERVICE_NAME);
+    let service_installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
+    let service_running = service_installed && q.contains("RUNNING");
+    let detached_running = is_detached_running(&app);
 
     SetupStatusDto {
         service_installed,
@@ -214,12 +238,13 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
         vec!["stop".to_string(), SERVICE_NAME.to_string()],
         vec!["delete".to_string(), SERVICE_NAME.to_string()],
     ] {
-        let _ = std::process::Command::new("sc").args(&cmd).output();
-        std::thread::sleep(std::time::Duration::from_millis(800));
+        let _ = silent_command("sc").args(&cmd).output();
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 
-    let out = std::process::Command::new("sc")
-        .args(["create", SERVICE_NAME, "binPath=", &bin_path, "start=", "auto"])
+    let bin_arg = format!("binPath= {}", bin_path);
+    let out = silent_command("sc")
+        .args(["create", SERVICE_NAME, &bin_arg, "start= auto"])
         .output()
         .map_err(|e| format!("sc çalıştırılamadı: {e}"))?;
     if !out.status.success() {
@@ -228,19 +253,19 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
             String::from_utf8_lossy(&out.stderr)
         ));
     }
-    let _ = std::process::Command::new("sc")
-        .args(["description", SERVICE_NAME, "Anticore paket motoru servisi"])
+    let _ = silent_command("sc")
+        .args(["description", SERVICE_NAME, "Anticore DPI Paket Filtreleme ve Koruma Servisi"])
         .output();
 
-    let start = std::process::Command::new("sc")
+    let start = silent_command("sc")
         .args(["start", SERVICE_NAME])
         .output()
         .map_err(|e| format!("sc start başarısız: {e}"))?;
     if !start.status.success() {
-        return Err(format!(
-            "servis başlatılamadı: {}",
-            String::from_utf8_lossy(&start.stderr)
-        ));
+        let err = String::from_utf8_lossy(&start.stderr).trim().to_string();
+        let out_msg = String::from_utf8_lossy(&start.stdout).trim().to_string();
+        let msg = if !err.is_empty() { err } else { out_msg };
+        return Err(format!("servis başlatılamadı: {msg}"));
     }
     app.emit("log", format!("[+] servis kuruldu ve başlatıldı (profil={profile_id})"))
         .ok();
@@ -249,9 +274,9 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
 
 #[tauri::command]
 pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
-    let _ = std::process::Command::new("sc").args(["stop", SERVICE_NAME]).output();
-    std::thread::sleep(std::time::Duration::from_millis(1500));
-    let out = std::process::Command::new("sc")
+    let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
+    std::thread::sleep(std::time::Duration::from_millis(1000));
+    let out = silent_command("sc")
         .args(["delete", SERVICE_NAME])
         .output()
         .map_err(|e| format!("sc delete başarısız: {e}"))?;
@@ -261,6 +286,7 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
     app.emit("log", "[-] servis kaldırıldı".to_string()).ok();
     Ok(())
 }
+
 
 #[tauri::command]
 pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> {
@@ -277,14 +303,11 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     let motor = find_motor_exe(&app)?;
     let data_dir = app_dir(&app);
 
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    let child = std::process::Command::new(&motor)
+    let child = silent_command(&motor.to_string_lossy())
         .args(["run", "--profile", &profile_id, "--data-dir"])
         .arg(&data_dir)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .map_err(|e| format!("motor başlatılamadı: {e}"))?;
 
@@ -309,7 +332,7 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
         .ok()
         .and_then(|s| s.trim().parse::<u32>().ok())
         .ok_or_else(|| "çalışan bağımsız motor bulunamadı".to_string())?;
-    let out = std::process::Command::new("taskkill")
+    let out = silent_command("taskkill")
         .args(["/PID", &pid.to_string(), "/F"])
         .output()
         .map_err(|e| format!("taskkill başarısız: {e}"))?;
@@ -390,10 +413,33 @@ fn resolve_steps(app: &AppHandle, profile_id: &str) -> Result<Vec<anticore_core:
 // ---------- durum ----------
 
 #[tauri::command]
-pub fn get_status(engine: tauri::State<Engine>) -> StatusDto {
+pub fn get_status(app: AppHandle, engine: tauri::State<Engine>) -> StatusDto {
+    let panel_running = engine.running.load(Ordering::SeqCst);
+    let service_running = if !panel_running {
+        sc_query(SERVICE_NAME).contains("RUNNING")
+    } else {
+        false
+    };
+    let detached_running = if !panel_running && !service_running {
+        is_detached_running(&app)
+    } else {
+        false
+    };
+
+    let running = panel_running || service_running || detached_running;
+    let profile_id = if panel_running {
+        engine.profile_id.lock().unwrap().clone()
+    } else if service_running {
+        "service".into()
+    } else if detached_running {
+        "detached".into()
+    } else {
+        engine.profile_id.lock().unwrap().clone()
+    };
+
     StatusDto {
-        running: engine.running.load(Ordering::SeqCst),
-        profile_id: engine.profile_id.lock().unwrap().clone(),
+        running,
+        profile_id,
         packets_seen: engine.stats.packets_seen.load(Ordering::Relaxed),
         packets_touched: engine.stats.packets_touched.load(Ordering::Relaxed),
         passthrough: engine.stats.passthrough.load(Ordering::Relaxed),
@@ -587,6 +633,27 @@ pub fn add_site(app: AppHandle, domain: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Birden fazla alan adını tek disk yazma işlemiyle kara listeye ekler.
+#[tauri::command]
+pub fn add_sites(app: AppHandle, domains: Vec<String>) -> Result<usize, String> {
+    let current = get_blacklist(app.clone());
+    let mut set: std::collections::HashSet<String> = current.into_iter().collect();
+    let mut added = 0usize;
+    for domain in domains {
+        let d = domain.trim().to_lowercase();
+        if !d.is_empty() && d.contains('.') && !d.contains(' ') && set.insert(d) {
+            added += 1;
+        }
+    }
+    if added > 0 {
+        let mut sorted: Vec<String> = set.into_iter().collect();
+        sorted.sort();
+        save_blacklist(&app, &sorted)?;
+        app.emit("log", format!("[+] {added} yeni hedef listeye eklendi")).ok();
+    }
+    Ok(added)
+}
+
 /// Domain DNS'ten çözümlenebiliyor mu — Sites view'da ekleme öncesi yazım
 /// hatalarını yakalamak için. Ağ gerektirir ama tek bir sistem çağrısı
 /// kadar hafiftir (`ToSocketAddrs`, port 443 varsayımıyla); ayrı bir TLS
@@ -620,6 +687,10 @@ fn save_blacklist(app: &AppHandle, domains: &[String]) -> Result<(), String> {
 
 #[tauri::command]
 pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: String) -> Result<(), String> {
+    // Eski bayat/takılı kalmış soketleri ve DNS önbelleğini temizle
+    crate::net_teardown::reset_http_connections();
+    crate::net_teardown::flush_dns_cache();
+
     let bl = load_blacklist(&app);
     let steps = resolve_steps(&app, &profile_id)?;
     let config = load_engine_config(&app);
@@ -648,8 +719,41 @@ pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: St
 
 #[tauri::command]
 pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
-    engine.stop()?;
+    // 1. Panel motorunu durdur
+    let panel_res = engine.stop();
+
+    // 2. Bağımsız motor (detached.pid / anticore.exe) varsa durdur
+    let _ = detached_stop(app.clone());
+
+    // 3. AnticoreService arka plan servisi çalışıyorsa durdur
+    let q = sc_query(SERVICE_NAME);
+    if q.contains("RUNNING") {
+        let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
+        app.emit("log", "[*] Arka plan servisi durduruldu".to_string()).ok();
+    }
+
+    // 4. Tarayıcıların ve istemcilerin (Chrome, Discord, Roblox vb.) Keep-Alive / HTTP/2
+    // üzerinden açık tuttuğu kalıcı bağlantıları derhal sonlandır (TCP delete TCB)
+    let closed = crate::net_teardown::reset_http_connections();
+    if closed > 0 {
+        app.emit(
+            "log",
+            format!("[*] {closed} aktif HTTP/HTTPS soketi sıfırlandı (Keep-Alive sonlandırıldı)"),
+        )
+        .ok();
+    }
+
+    // 5. DNS çözümleyici önbelleğini boşalt
+    crate::net_teardown::flush_dns_cache();
+    app.emit("log", "[*] DNS çözümleyici önbelleği temizlendi".to_string()).ok();
+
     app.emit("status_changed", false).ok();
+
+    if let Err(ref e) = panel_res {
+        if e != "Motor zaten durdurulmuş" {
+            return panel_res;
+        }
+    }
     Ok(())
 }
 
@@ -659,7 +763,7 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let exe_str = exe.to_string_lossy().replace('\'', "''");
     let script = format!("Start-Process -FilePath '{}' -Verb RunAs", exe_str);
-    let status = std::process::Command::new("powershell")
+    let status = silent_command("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", &script])
         .status()
         .map_err(|e| format!("yükseltme başlatılamadı: {e}"))?;
@@ -878,7 +982,7 @@ fn run_powershell(command: &str) -> String {
         "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); $OutputEncoding = [System.Text.UTF8Encoding]::new($false); {}",
         command
     );
-    std::process::Command::new("powershell")
+    silent_command("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", &utf8_cmd])
         .output()
         .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
@@ -892,7 +996,7 @@ fn run_powershell_script(script: &str) -> Result<(), String> {
         script
     );
     std::fs::write(&path, full_script.as_bytes()).map_err(|e| e.to_string())?;
-    let out = std::process::Command::new("powershell")
+    let out = silent_command("powershell")
         .args([
             "-NoProfile",
             "-NonInteractive",
@@ -908,7 +1012,7 @@ fn run_powershell_script(script: &str) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!(
-            "ağ işlemi başarısız: {}",
+            "PowerShell betiği başarısız: {}",
             String::from_utf8_lossy(&out.stderr)
         ))
     }
@@ -990,9 +1094,9 @@ pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>)
 
     let mut cleaned = Vec::new();
     for srv in &to_clean {
-        let _ = std::process::Command::new("sc").args(["stop", srv]).output();
+        let _ = silent_command("sc").args(["stop", srv]).output();
         std::thread::sleep(std::time::Duration::from_millis(300));
-        let out = std::process::Command::new("sc").args(["delete", srv]).output();
+        let out = silent_command("sc").args(["delete", srv]).output();
         if let Ok(o) = out {
             if o.status.success() {
                 cleaned.push(srv.clone());
@@ -1011,6 +1115,18 @@ pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>)
 #[cfg(windows)]
 #[tauri::command]
 pub fn get_startup_enabled() -> bool {
+    // 1. Görev Zamanlayıcısı (Task Scheduler) kontrolü
+    let task_exists = silent_command("schtasks")
+        .args(["/Query", "/TN", "Anticore"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+
+    if task_exists {
+        return true;
+    }
+
+    // 2. Registry kontrolü (yedek)
     windows_registry::CURRENT_USER
         .open("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
         .and_then(|k| k.get_string("Anticore"))
@@ -1029,20 +1145,43 @@ pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> 
     let run_key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
     if enabled {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-        let exe_str = exe.to_string_lossy();
-        let run_key = windows_registry::CURRENT_USER
-            .create(run_key_path)
-            .map_err(|e| format!("Kayıt defteri açılamadı: {e}"))?;
-        let value = format!("\"{}\" --hidden", exe_str);
-        run_key
-            .set_string("Anticore", &value)
-            .map_err(|e| format!("Başlangıç değeri yazılamadı: {e}"))?;
-        app.emit("log", "[+] Başlangıçta çalıştır açıldı (Native Registry)".to_string()).ok();
+        let exe_str = exe.to_string_lossy().to_string();
+        let tr_arg = format!("\"{}\" --hidden", exe_str);
+
+        // Birincil Yöntem: Windows Task Scheduler (Yönetici yetkisiyle logon anında başlar, WinDivert için UAC'siz şarttır)
+        let sch_res = silent_command("schtasks")
+            .args([
+                "/Create",
+                "/TN", "Anticore",
+                "/TR", &tr_arg,
+                "/SC", "ONLOGON",
+                "/RL", "HIGHEST",
+                "/F",
+            ])
+            .output();
+
+        // İkincil Yöntem: Standart HKCU Run anahtarı
+        if let Ok(run_key) = windows_registry::CURRENT_USER.create(run_key_path) {
+            let _ = run_key.set_string("Anticore", &tr_arg);
+        }
+
+        let is_elevated = sch_res.map(|o| o.status.success()).unwrap_or(false);
+        if is_elevated {
+            app.emit("log", "[+] Windows başlangıcı etkinleştirildi (Task Scheduler - Yönetici Modu)".to_string()).ok();
+        } else {
+            app.emit("log", "[+] Windows başlangıcı etkinleştirildi (Kayıt Defteri)".to_string()).ok();
+        }
     } else {
+        // Task Scheduler görevini sil
+        let _ = silent_command("schtasks")
+            .args(["/Delete", "/TN", "Anticore", "/F"])
+            .output();
+
+        // Registry Run değerini sil
         if let Ok(run_key) = windows_registry::CURRENT_USER.open(run_key_path) {
             let _ = run_key.remove_value("Anticore");
         }
-        app.emit("log", "[-] Başlangıçta çalıştır kapatıldı (Native Registry)".to_string()).ok();
+        app.emit("log", "[-] Windows başlangıcı devre dışı bırakıldı".to_string()).ok();
     }
     Ok(())
 }
@@ -1138,11 +1277,14 @@ pub fn reset_doh_registry(_app: AppHandle) -> Result<(), String> {
 pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
     engine.stop().ok();
 
+    // 1. Blacklist varsayılana sıfırlanır
     std::fs::write(blacklist_path(&app), anticore_core::config::DEFAULT_BLACKLIST)
         .map_err(|e| format!("Blacklist sıfırlanamadı: {e}"))?;
 
+    // 2. Özel profiller kaldırılır
     let _ = std::fs::remove_file(profiles_path(&app));
 
+    // 3. Yapılandırma varsayılana döndürülür
     let default_cfg = crate::service::EngineConfig::default();
     let cfg_dto = EngineConfigDto {
         pasif_savunma: default_cfg.pasif_savunma,
@@ -1154,13 +1296,23 @@ pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(),
     )
     .map_err(|e| format!("Yapılandırma sıfırlanamadı: {e}"))?;
 
+    // 4. Bağımsız motor pid dosyasını kaldır
     let _ = std::fs::remove_file(app_dir(&app).join("detached.pid"));
 
+    // 5. Başlangıçta çalıştırma görev ve kayıtlarını sil
+    set_startup_enabled(app.clone(), false).ok();
+
+    // 6. DNS ve DoH kayıt defterini sıfırla
+    reset_dns(app.clone()).ok();
+    #[cfg(windows)]
+    reset_doh_registry(app.clone()).ok();
+
+    // 7. Log dosyasını temizle
     clear_log_file(app.clone()).ok();
 
     app.emit(
         "log",
-        "[!] Fabrika sıfırlama tamamlandı: Tüm profiller, hedef listesi ve yapılandırma varsayılana döndürüldü.".to_string(),
+        "[!] Fabrika sıfırlama tamamlandı: Tüm profiller, hedef listesi, DNS ayarları ve yapılandırma varsayılana döndürüldü.".to_string(),
     )
     .ok();
     Ok(())
@@ -1294,7 +1446,7 @@ pub fn check_update(
     let mut req = ureq::get(&uri)
         .set("User-Agent", &format!("Anticore-Desktop/{current_ver}"))
         .set("Accept", "application/vnd.github+json")
-        .timeout(std::time::Duration::from_secs(10));
+        .timeout(std::time::Duration::from_secs(5));
 
     let token = token_override
         .filter(|s| !s.trim().is_empty())
@@ -1305,7 +1457,21 @@ pub fn check_update(
         req = req.set("Authorization", &format!("Bearer {}", tok.trim()));
     }
 
-    let resp = req.call().map_err(|e| format!("GitHub API isteği başarısız: {e}"))?;
+    let resp = match req.call() {
+        Ok(r) => r,
+        Err(ureq::Error::Status(404, _)) => {
+            return Err(format!(
+                "GitHub deposu ({}) özel (private) modda veya henüz bir 'Release' yayımlanmamış. Güncelleme denetimi için geçerli bir GitHub Token tanımlayabilir veya depoyu genel erişime açabilirsiniz.",
+                repo.trim()
+            ));
+        }
+        Err(ureq::Error::Status(403, _)) => {
+            return Err("GitHub API hız sınırı (rate limit) aşıldı veya yetkisiz erişim.".into());
+        }
+        Err(e) => {
+            return Err(format!("Güncelleme sunucusuna ulaşılamadı (zaman aşımı veya ağ hatası): {e}"));
+        }
+    };
 
     let parsed: GhRelease = resp
         .into_json()
@@ -1331,6 +1497,66 @@ pub fn check_update(
         download_url,
         published_at: parsed.published_at.unwrap_or_default(),
     })
+}
+
+#[tauri::command]
+pub fn fetch_community_blacklist(app: AppHandle, source_url: Option<String>) -> Result<usize, String> {
+    let url = source_url
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or_else(|| {
+            "https://raw.githubusercontent.com/bol-van/zapret/master/docs/turkey_dns.txt".to_string()
+        });
+
+    let resp = ureq::get(&url)
+        .set("User-Agent", "Anticore-Desktop/0.3.0")
+        .timeout(std::time::Duration::from_secs(8))
+        .call()
+        .map_err(|e| format!("Topluluk hedef listesi indirilemedi: {e}"))?;
+
+    let text = resp
+        .into_string()
+        .map_err(|e| format!("İçerik okunamadı: {e}"))?;
+
+    let path = blacklist_path(&app);
+    let existing_text = std::fs::read_to_string(&path).unwrap_or_default();
+    let mut existing_set = std::collections::HashSet::new();
+    let mut lines = Vec::new();
+
+    for line in existing_text.lines() {
+        let trimmed = line.trim();
+        if !trimmed.is_empty() {
+            if !trimmed.starts_with('#') {
+                existing_set.insert(trimmed.to_ascii_lowercase());
+            }
+            lines.push(trimmed.to_string());
+        }
+    }
+
+    let mut added_count = 0;
+    lines.push("\n# --- Topluluk Listesinden İçe Aktarılanlar ---".to_string());
+
+    for line in text.lines() {
+        let trimmed = line.trim().trim_start_matches("*.").to_ascii_lowercase();
+        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.contains('/') || trimmed.contains(' ') {
+            continue;
+        }
+        if !existing_set.contains(&trimmed) {
+            existing_set.insert(trimmed.clone());
+            lines.push(trimmed);
+            added_count += 1;
+        }
+    }
+
+    std::fs::write(&path, lines.join("\n"))
+        .map_err(|e| format!("Hedef listesi kaydedilemedi: {e}"))?;
+
+    app.emit(
+        "log",
+        format!("[+] Topluluk listesinden {} yeni alan adı içe aktarıldı", added_count),
+    )
+    .ok();
+
+    Ok(added_count)
 }
 
 /// `current`/`remote`, başında opsiyonel "v" ile, semver olarak karşılaştırılır.
@@ -1416,5 +1642,28 @@ mod tests {
         assert_eq!(ts.len(), 20);
         assert!(ts.ends_with('Z'));
         assert_eq!(&ts[10..11], "T");
+    }
+
+    #[test]
+    fn batch_domains_filter_logic() {
+        let incoming = vec![
+            "  EXAMPLE.COM  ".to_string(),
+            "invalid_domain".to_string(),
+            "domain with space.com".to_string(),
+            "".to_string(),
+            "example.com".to_string(),
+            "new-site.org".to_string(),
+        ];
+        let mut existing = std::collections::HashSet::new();
+        existing.insert("example.com".to_string());
+        let mut added = 0;
+        for d in incoming {
+            let clean = d.trim().to_lowercase();
+            if !clean.is_empty() && clean.contains('.') && !clean.contains(' ') && existing.insert(clean) {
+                added += 1;
+            }
+        }
+        assert_eq!(added, 1);
+        assert!(existing.contains("new-site.org"));
     }
 }

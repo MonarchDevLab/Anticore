@@ -16,7 +16,7 @@ const KNOWN_SECURE_SERVERS = new Set<string>(DNS_PROVIDERS.map((p) => p.primary)
 export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => void }) {
   const { t, lang } = useI18n();
   const [dns, setDns] = useState<string[] | null>(null);
-  const [dialog, setDialog] = useState<"apply" | "reset" | null>(null);
+  const [dialog, setDialog] = useState<"apply" | "reset" | "discord-repair" | "discord-cache" | null>(null);
   const [busy, setBusy] = useState(false);
   const [provider, setProvider] = useState<(typeof DNS_PROVIDERS)[number]["id"]>("google");
   const [adapters, setAdapters] = useState<AdapterDnsInfo[] | null>(null);
@@ -34,16 +34,26 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
     refreshDoh();
   }, []);
 
-  const run = async (kind: "apply" | "reset") => {
+  const run = async (kind: "apply" | "reset" | "discord-repair" | "discord-cache") => {
     setBusy(true);
     try {
-      if (kind === "apply") await api.applySecureDns(provider);
-      else await api.resetDns();
-      pushLog(kind === "apply" ? `[+] güvenli DNS uygulandı (${DNS_PROVIDERS.find((p) => p.id === provider)?.label})` : "[*] DNS sıfırlandı");
+      if (kind === "apply") {
+        await api.applySecureDns(provider);
+        pushLog(`[+] güvenli DNS uygulandı (${DNS_PROVIDERS.find((p) => p.id === provider)?.label})`);
+      } else if (kind === "reset") {
+        await api.resetDns();
+        pushLog("[*] DNS sıfırlandı");
+      } else if (kind === "discord-repair") {
+        const res = await api.repairDiscordUpdates();
+        pushLog(`[+] ${res}`);
+      } else if (kind === "discord-cache") {
+        const res = await api.clearDiscordCache();
+        pushLog(`[+] ${res}`);
+      }
       refreshDns();
       refreshAdapters();
     } catch (e) {
-      pushLog(`[!] DNS işlemi başarısız: ${String(e)}`);
+      pushLog(`[!] İşlem başarısız: ${String(e)}`);
     } finally {
       setBusy(false);
       setDialog(null);
@@ -279,34 +289,14 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         <div className="flex flex-wrap gap-2.5 pt-1">
           <button
             className="btn btn-primary text-xs"
-            onClick={async () => {
-              setBusy(true);
-              try {
-                const res = await api.repairDiscordUpdates();
-                pushLog(`[+] ${res}`);
-              } catch (e) {
-                pushLog(`[!] Discord onarım hatası: ${String(e)}`);
-              } finally {
-                setBusy(false);
-              }
-            }}
+            onClick={() => setDialog("discord-repair")}
             disabled={busy}
           >
             {t("net_discord_update_btn")}
           </button>
           <button
             className="btn btn-secondary text-xs"
-            onClick={async () => {
-              setBusy(true);
-              try {
-                const res = await api.clearDiscordCache();
-                pushLog(`[+] ${res}`);
-              } catch (e) {
-                pushLog(`[!] Discord önbellek temizleme hatası: ${String(e)}`);
-              } finally {
-                setBusy(false);
-              }
-            }}
+            onClick={() => setDialog("discord-cache")}
             disabled={busy}
           >
             {t("net_discord_cache_btn")}
@@ -316,14 +306,36 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
 
       <ConfirmDialog
         open={dialog !== null}
-        title={dialog === "apply" ? t("net_apply_confirm_title") : t("net_reset_confirm_title")}
+        title={
+          dialog === "apply"
+            ? t("net_apply_confirm_title")
+            : dialog === "reset"
+            ? t("net_reset_confirm_title")
+            : dialog === "discord-repair"
+            ? (lang === "tr" ? "Discord Güncelleme Onarımı" : "Discord Update Repair")
+            : (lang === "tr" ? "Discord Önbellek Temizleme" : "Discord Cache Clear")
+        }
         body={
           dialog === "apply"
             ? `${t("net_apply_confirm_body")} (${DNS_PROVIDERS.find((p) => p.id === provider)?.label})`
-            : t("net_reset_confirm_body")
+            : dialog === "reset"
+            ? t("net_reset_confirm_body")
+            : dialog === "discord-repair"
+            ? (lang === "tr"
+                ? "Discord uygulaması geçici olarak kapatılacak, güncelleme kilitleri ve DNS önbelleği temizlenecektir. Devam etmek istiyor musunuz?"
+                : "Discord process will be closed temporarily, update locks and DNS cache will be cleared. Do you want to continue?")
+            : (lang === "tr"
+                ? "Discord kapatılacak ve önbellek dosyaları (Cache/Code Cache/GPUCache) temizlenecektir. Devam etmek istiyor musunuz?"
+                : "Discord will be closed and cache files (Cache/Code Cache/GPUCache) will be deleted. Do you want to continue?")
         }
-        confirmLabel={dialog === "apply" ? t("net_apply_btn") : t("net_reset_btn")}
-        danger={dialog === "reset"}
+        confirmLabel={
+          dialog === "apply"
+            ? t("net_apply_btn")
+            : dialog === "reset"
+            ? t("net_reset_btn")
+            : (lang === "tr" ? "Onayla ve Temizle" : "Confirm and Clean")
+        }
+        danger={dialog === "reset" || dialog === "discord-cache"}
         busy={busy}
         onConfirm={() => dialog && void run(dialog)}
         onCancel={() => setDialog(null)}

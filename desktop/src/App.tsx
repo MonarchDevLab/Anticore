@@ -209,7 +209,7 @@ export default function App() {
           {view === "logs" && <LogsView liveLogs={logs} pushLog={pushLog} />}
           {view === "setup" && <Setup pushLog={pushLog} />}
           {view === "settings" && (
-            <SettingsView pushLog={pushLog} onOpenWizard={() => setView("wizard")} />
+            <SettingsView pushLog={pushLog} onOpenWizard={() => setView("wizard")} running={running} />
           )}
           {view === "wizard" && (
             <Wizard onComplete={() => setView("dashboard")} pushLog={pushLog} />

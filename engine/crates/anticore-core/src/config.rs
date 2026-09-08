@@ -68,23 +68,110 @@ impl Blacklist {
     }
 }
 
-/// Kullanıcının mevcut bat script'inden taşınan başlangıç listesi.
-pub const DEFAULT_BLACKLIST: &str = r#"# Anticore varsayılan hedef listesi
+/// Türkiye ve küresel engelli siteler için genişletilmiş varsayılan hedef listesi.
+pub const DEFAULT_BLACKLIST: &str = r#"# Anticore Varsayılan Hedef Listesi (Türkiye & Global Sansür Atlatma)
+
+# --- Discord Ekosistemi ---
 discord.com
 gateway.discord.gg
 cdn.discordapp.com
 discordapp.net
 discordapp.com
-instagram.com
-cdninstagram.com
+discord.gg
+discord.media
+discordstatus.com
+media.discordapp.net
+images-ext-1.discordapp.net
+images-ext-2.discordapp.net
+dis.gd
+
+# --- Roblox Ekosistemi ---
 roblox.com
 rbxcdn.com
+roblox.cn
+setup.rbxcdn.com
+api.roblox.com
+assetdelivery.roblox.com
+clientsettings.roblox.com
+clientsettingscdn.roblox.com
+versioncompatibility.api.roblox.com
+
+# --- Wattpad & Yayıncılık ---
+wattpad.com
+wp-assets.emu.io
+wattpad.net
+
+# --- Ekşi Sözlük ve Aynaları ---
+eksisozluk.com
+eksisozluk1923.com
+eksisozluk2023.com
+eksisozluk42.com
+eksisozluk111.com
+eksisozluk.org
+
+# --- Resim & Dosya Depolama ---
+imgur.com
+i.imgur.com
+imgur.io
+upload.ee
+
+# --- Arşiv & Paste Servisleri ---
+archive.org
+web.archive.org
+wayback.org
+pastebin.com
+ghostbin.com
+justpaste.it
+
+# --- Gizlilik, Mail & VPN Servisleri ---
+proton.me
+protonmail.com
+protonvpn.com
+mullvad.net
+mullvad.com
+nordvpn.com
+surfshark.com
+torproject.org
+bridges.torproject.org
+tailscale.com
+wireguard.com
+
+# --- Oyun, Akış ve Topluluk ---
 steamcommunity.com
 steampowered.com
 geforcenow.com
 nvidiagrid.net
+kick.com
 nyaa.si
+nyaa.land
+torrentfreak.com
+1337x.to
+thepiratebay.org
+rutracker.org
+fitgirl-repacks.site
+dodi-repacks.site
+
+# --- Sosyal Medya & Ağ ---
+instagram.com
+cdninstagram.com
+threads.net
+
+# --- Bağımsız Haber & Bilgi Kaynakları ---
+dw.com
+voaturkce.com
+amerikaninsesi.com
+artigercek.com
+habersol.org.tr
+
+# --- Yetişkin & Kısıtlı İçerik ---
+pornhub.com
+xvideos.com
+xnxx.com
+redtube.com
+youporn.com
+onlyfans.com
 "#;
+
 
 #[cfg(test)]
 mod tests {

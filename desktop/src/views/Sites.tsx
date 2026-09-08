@@ -1,39 +1,66 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckSquare, Download, Globe, LoaderCircle, Plus, Search, Square, Trash2, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckSquare,
+  Download,
+  Globe,
+  LoaderCircle,
+  Plus,
+  Search,
+  Square,
+  Trash2,
+  Upload,
+  CloudDownload,
+  Check,
+} from "lucide-react";
 import { api } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 
 const PRESET_GROUPS = [
   {
-    id: "tr-bypass",
+    id: "tr-core",
     label: "Türkiye Mega Paketi",
     domains: [
       "discord.com", "gateway.discord.gg", "cdn.discordapp.com", "discordapp.net", "discordapp.com",
       "roblox.com", "rbxcdn.com", "roblox.qq.com",
-      "pastebin.com", "imgur.com", "reddit.com", "wattpad.com",
+      "eksisozluk.com", "eksisozluk1923.com", "eksisozluk2023.com", "eksisozluk111.com",
+      "wattpad.com", "pastebin.com", "imgur.com", "archive.org", "archive.is",
+      "kick.com", "twitch.tv", "patreon.com",
       "instagram.com", "cdninstagram.com", "x.com", "twitter.com", "twimg.com",
-      "kick.com", "twitch.tv"
+      "threads.net", "reddit.com"
+    ],
+  },
+  {
+    id: "discord-roblox",
+    label: "Discord & Roblox Tam Altyapı",
+    domains: [
+      "discord.com", "discord.gg", "discord.media", "discordapp.com", "discordapp.net",
+      "discordstatus.com", "gateway.discord.gg", "cdn.discordapp.com", "media.discordapp.net",
+      "roblox.com", "rbxcdn.com", "roblox.qq.com", "setup.rbxcdn.com"
+    ],
+  },
+  {
+    id: "vpn-privacy",
+    label: "Gizlilik, VPN & Tor Ağları",
+    domains: [
+      "proton.me", "protonvpn.com", "mullvad.net", "torproject.org",
+      "windscribe.com", "nordvpn.com", "surfshark.com", "expressvpn.com", "psiphon.ca"
     ],
   },
   {
     id: "sohbet",
-    label: "Sohbet / Chat",
-    domains: ["telegram.org", "wa.me", "signal.org"],
-  },
-  {
-    id: "sosyal",
-    label: "Sosyal Medya",
-    domains: ["tiktok.com", "facebook.com"],
+    label: "Sohbet & İletişim",
+    domains: ["telegram.org", "t.me", "wa.me", "whatsapp.com", "signal.org", "element.io"],
   },
   {
     id: "oyun",
-    label: "Oyun / Gaming",
-    domains: ["steamcommunity.com", "steampowered.com", "geforcenow.com", "nvidiagrid.net"],
+    label: "Oyun & Bulut Servisleri",
+    domains: ["steamcommunity.com", "steampowered.com", "geforcenow.com", "nvidiagrid.net", "epicgames.com"],
   },
   {
     id: "ai",
-    label: "Yapay Zeka & Platform",
-    domains: ["openai.com", "anthropic.com", "gemini.google.com", "huggingface.co"],
+    label: "Yapay Zeka & Geliştirici",
+    domains: ["openai.com", "anthropic.com", "claude.ai", "gemini.google.com", "huggingface.co", "github.com"],
   },
 ];
 
@@ -49,6 +76,8 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
   const [unresolved, setUnresolved] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [fetchBusy, setFetchBusy] = useState(false);
+  const [fetchMsg, setFetchMsg] = useState<string | null>(null);
 
   const refresh = () =>
     void api.getBlacklist().then((s) => {
@@ -56,6 +85,25 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
       setLoaded(true);
     });
   useEffect(refresh, []);
+
+  const syncCommunityList = async () => {
+    setFetchBusy(true);
+    setFetchMsg(null);
+    try {
+      pushLog("[*] Topluluk engelli hedef listesi indiriliyor (bol-van zapret)...");
+      const count = await api.fetchCommunityBlacklist();
+      setFetchMsg(`+${count} yeni alan adı başarıyla eklendi ve senkronize edildi!`);
+      pushLog(`[+] Topluluk listesinden ${count} yeni alan adı eklendi`);
+      refresh();
+      setTimeout(() => setFetchMsg(null), 6000);
+    } catch (err) {
+      const msg = String(err);
+      setFetchMsg(`Hata: ${msg}`);
+      pushLog(`[!] Topluluk listesi hatası: ${msg}`);
+    } finally {
+      setFetchBusy(false);
+    }
+  };
 
   const addUnchecked = async (domain: string) => {
     setError(null);
@@ -90,13 +138,13 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
 
   const addBatch = async (domains: string[]) => {
     setError(null);
-    for (const d of domains) {
-      try {
-        await api.addSite(d);
-      } catch {}
+    try {
+      const count = await api.addSites(domains);
+      pushLog(`[+] ${count} domain listeye eklendi`);
+      refresh();
+    } catch (e) {
+      pushLog(`[!] Ekleme hatası: ${String(e)}`);
     }
-    pushLog(`[+] ${domains.length} domain eklendi`);
-    refresh();
   };
 
   const filtered = useMemo(() => {
@@ -157,18 +205,17 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
 
   const importList = async (file: File) => {
     const text = await file.text();
-    let added = 0;
-    for (const line of text.split(/\r?\n/)) {
-      const d = line.trim().toLowerCase();
-      if (d && d.includes(".") && !d.startsWith("#")) {
-        try {
-          await api.addSite(d);
-          added += 1;
-        } catch {}
-      }
+    const candidates = text
+      .split(/\r?\n/)
+      .map((l) => l.trim().toLowerCase())
+      .filter((d) => d && d.includes(".") && !d.startsWith("#"));
+    try {
+      const added = await api.addSites(candidates);
+      pushLog(`[+] ${added} yeni domain içe aktarıldı`);
+      refresh();
+    } catch (e) {
+      pushLog(`[!] İçe aktarma hatası: ${String(e)}`);
     }
-    pushLog(`[+] ${added} domain içe aktarıldı`);
-    refresh();
   };
 
   const missingPresets = PRESET_GROUPS.map((g) => ({
@@ -196,6 +243,39 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           {t("sites_whitelist_desc")} 
           <span className="text-live font-semibold ml-1">{t("sites_zero_loss_note")}</span>
         </p>
+      </div>
+
+      {/* Topluluk ve Canlı Kara Liste Senkronizasyonu */}
+      <div className="card p-4 bg-surface-subtle/70 border border-live/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-md">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-live animate-pulse" />
+            <h3 className="text-xs font-bold text-paper-bright">
+              Türkiye Topluluk Kara Listesi (Bol-van Zapret / DNS Engelli Veritabanı)
+            </h3>
+          </div>
+          <p className="text-[11px] text-paper-muted">
+            BTK ve mahkeme kararlarıyla engellenen güncel Türkiye alan adlarını doğrudan tek tıkla yerel hedeflerinize senkronize edin.
+          </p>
+          {fetchMsg && (
+            <p className="text-xs font-bold text-live flex items-center gap-1.5 pt-1">
+              <Check size={13} />
+              <span>{fetchMsg}</span>
+            </p>
+          )}
+        </div>
+        <button
+          onClick={syncCommunityList}
+          disabled={fetchBusy}
+          className="btn btn-secondary !py-2 !px-4 text-xs font-bold text-live border-live/30 hover:bg-live/15 shrink-0 self-start sm:self-auto cursor-pointer"
+        >
+          {fetchBusy ? (
+            <LoaderCircle size={14} className="animate-spin" />
+          ) : (
+            <CloudDownload size={14} />
+          )}
+          <span>{fetchBusy ? "İndiriliyor..." : "Topluluk Listesini Çek"}</span>
+        </button>
       </div>
 
       {/* Domain Ekleme Formu */}
@@ -321,9 +401,10 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
         <div className="flex flex-wrap gap-1.5">
           {[
             { id: "all", label: "Tümü" },
-            { id: "tr-bypass", label: "TR Yasaklılar" },
+            { id: "tr-core", label: "TR Mega Paket" },
+            { id: "discord-roblox", label: "Discord & Roblox" },
+            { id: "vpn-privacy", label: "VPN & Gizlilik" },
             { id: "sohbet", label: "Sohbet" },
-            { id: "sosyal", label: "Sosyal" },
             { id: "oyun", label: "Oyun" },
             { id: "ai", label: "Platform & AI" },
           ].map((cat) => (

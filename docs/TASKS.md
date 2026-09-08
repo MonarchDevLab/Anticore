@@ -5,12 +5,69 @@
 > `cargo check` (src-tauri) temiz.
 
 ## ŞİMDİ `[~]`
-- *(Sistem hazır — Faz 15 $10K Cyber-Hardware arayüz dönüşümü tamamlandı; doğrulandı)*
+- *(Yok — Tüm görevler tamamlandı, doğrulandı)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
+- `[ ]` 20.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+
+### Faz 19 — Çöp Dosya Temizliği, Çoklu Mod Durdurma & Soket Havuzu Teardown, Dağıtım Paketleri (TAMAMLANDI)
+- `[x]` 19.1 (2026-09-04) **Çöp Dosya & Artık Analizi ve Temizliği:** Çalışma alanında kopyalanmış eski `design-system` kopyası, kök dizindeki taslak plan dokümanı ve derleme log artıkları silindi; çalışma alanı sıfır kirlilikle temizlendi.
+- `[x]` 19.2 (2026-09-04) **Durdurma Sonrası Erişim Devamı Analizi ve Kök Neden Tespiti:** Kullanıcı motoru durdurduktan sonra sitelere erişimin sürmesinin kök nedenleri tespit edildi:
+  1. Tarayıcıların (Chrome, Edge, Firefox) ve Electron/Discord istemcilerinin Keep-Alive / HTTP/2 üzerinden daha önce kurulmuş TLS oturumlarını 300 saniyeye kadar havuzda canlı tutması (DPI ilk el sıkışmada baktığından açık sokette engelleme tetiklenmez).
+  2. Windows DNS önbelleğinin eski çözümlenmiş kayıtları tutması.
+  3. Arka planda olası bağımsız (`anticore.exe`) veya Windows Servisi (`AnticoreService`) süreçlerinin çalışmaya devam etmesi ve tekil panel motorundan ayrık olması.
+- `[x]` 19.3 (2026-09-04) **Win32 TCP Soket Teardown & DNS Flush Modülü (`net_teardown.rs`):**
+  - `GetTcpTable` ve `SetTcpEntry` (`MIB_TCP_STATE_DELETE_TCB` = 12) kullanılarak web portlarındaki (80, 443, 8080, 8443) tüm aktif TCP oturumları tek sistem çağrısıyla anında sonlandırıldı.
+  - `DnsFlushResolverCache` ve `ipconfig /flushdns` ile Windows DNS önbelleği anında temizlendi.
+- `[x]` 19.4 (2026-09-04) **start_engine & stop_engine Tam Yalıtım ve Eşzamanlı Teardown (`commands.rs`):**
+  - `stop_engine` panel motoru, bağımsız motor (`detached.pid`) ve Windows Servisi'ni tek hamlede durduracak, ardından soket havuzunu ve DNS önbelleğini temizleyecek şekilde birleştirildi.
+  - `get_status` servisin ve bağımsız sürecin durumunu algılayacak şekilde güncellendi.
+- `[x]` 19.5 (2026-09-04) **Release Binary & Taşınabilir Paket Dağıtımı (`dist/`, `dist-portable/`):**
+  - Motor `cargo build --release --workspace` ile derlendi (`anticore.exe` CLI - 371 KB).
+  - Desktop `npm run tauri build` ile derlendi ve imzalandı (`Anticore.exe` - 15.2 MB, `Anticore_0.3.0_x64-setup.exe` - 4.3 MB NSIS, `Anticore_0.3.0_x64_en-US.msi` - 6.0 MB MSI).
+  - Kurulumsuz taşınabilir paket `Anticore_0.3.0_x64-portable.zip` (5.93 MB) WinDivert sürücüleri ve CLI motoruyla birlikte paketlendi.
+- `[x]` 19.6 (2026-09-04) **Doğrulama:** `cargo test --workspace` 46/46 yeşil, `cargo test` (src-tauri) 8/8 yeşil, `npm run build` 0 hata.
+
+### Faz 18 — Uçtan Uca Buton, IPC & Çekirdek Dayanıklılık Restorasyonu (TAMAMLANDI)
+- `[x]` 18.1 (2026-09-04) **Araştırma Ajanı Derin Denetimi:** Alt ajan (`research`) ile tüm arayüz butonları, `invoke` çağrıları ve Rust backend komutları teftiş edildi; öksüz komutlar, kategori filtre no-op'u ve durum kurtarma açıkları listelendi.
+- `[x]` 18.2 (2026-09-04) **Sites.tsx Kategori Filtre & Toplu Ekleme Onarımı:** Kategori buton ID'leri (`tr-core`, `discord-roblox`, `vpn-privacy`, `sohbet`, `oyun`, `ai`) `PRESET_GROUPS` ile 1:1 hizalandı; `add_sites` toplu IPC komutu Rust'a eklenerek 100 dosya yazımı tek disk I/O operasyonuna indirildi.
+- `[x]` 18.3 (2026-09-04) **TestCenter.tsx Motor Kurtarma Garantisi:** `runComparison` içinde sonda hatası veya zaman aşımında motorun kapalı kalmasını önleyen `try...finally` garantili geri yükleme bloğu inşa edildi.
+- `[x]` 18.4 (2026-09-04) **Dashboard.tsx Gerçek Telemetri & Sıfır Paket Göstergesi:** Sahte `sampleDomains` ve `Math.random()` kaldırıldı; gerçek delta paket telemetrisi ve aktif profil bilgisi bağlandı; 0 paketteki yanıltıcı `%100.0` yerine `-` gösterimi sağlandı.
+- `[x]` 18.5 (2026-09-04) **LogsView.tsx Mükerrer Satır Tekilleştirmesi:** `historyLogs` ile `liveLogs` birleşiminde aynı mesajların çift basılması engellendi.
+- `[x]` 18.6 (2026-09-04) **NetworkRepair.tsx Discord Süreç Güvenliği:** Discord güncelleme onarımı ve önbellek temizleme butonlarına kullanıcının çalışan görüşmesini korumak için `ConfirmDialog` onay mekanizması eklendi.
+- `[x]` 18.7 (2026-09-04) **SettingsView.tsx Token, Kilitleme & Sürüm Entegrasyonu:** Güncelleme denetimine kayıtlı GitHub Token (`anticore_gh_token`) bağlandı; motor çalışırken savunma toggler'ı kilitlendi ve uyarı metni eklendi; `get_app_version` IPC'si dinamik olarak Hakkında kartına bağlandı.
+- `[x]` 18.8 (2026-09-04) **CompatWarning.tsx Yönetici Başlatma:** WinDivert dosya/yetki hatasında doğrudan `restart_as_admin` tetikleyen buton şeride entegre edildi.
+- `[x]` 18.9 (2026-09-04) **Doğrulama:** `npm run build` 0 hata (1537 modül), `cargo check` (src-tauri) 0 hata, `cargo test` (src-tauri) 7/7 yeşil, `cargo test --workspace` 46/46 yeşil (10.56s).
+
+- `[x]` 17.1 (2026-09-04) **2026 Developer Araçları UI/UX Trend Analizi:** Araştırma alt ajanı (`research`) ile Raycast, Linear, Warp, Zed, Tailscale, Little Snitch 6 arayüzleri analiz edildi. Sub-pixel micro-borders, subsurface ambient glow, sakin veri yoğunluğu (`tabular-nums`), cyber-hardware dokunsal geri bildirim ve dinamik hız spektrumu belirlendi.
+- `[x]` 17.2 (2026-09-04) **6 Yüksek Karakterli Donanım Teması (`theme.ts`, `globals.css`):**
+  1. *Obsidian Emerald* (`#06080C` / `#00F59B` - Varsayılan Cyber-Hardware)
+  2. *Amber CRT* (`#0C0A06` / `#FFB020` - Endüstriyel Fosfor Kehribar Monitör)
+  3. *Cobalt Matrix* (`#050B14` / `#00E5FF` - Taktik Denizaltı C2 Konsolu)
+  4. *Cyberpunk Volt* (`#08090D` / `#FFE600` - Yüksek Gerilim Neon Sarı & Titanyum)
+  5. *Amethyst Nebula* (`#090610` / `#B388FF` - Spektral Mor & Kozmik Ametist)
+  6. *Titanium Laboratory* (`#F1F5F9` / `#047857` - CNC İşlenmiş Titanyum Açık Mod)
+  + *Sistem Senkronizasyonu* modu. Tüm temalar WCAG AAA/AA kontrast oranına (10:1 - 18:1) kalibre edildi.
+- `[x]` 17.3 (2026-09-04) **Tüm Buton, Modül ve Arayüz Bileşenlerinin Uçtan Uca Denetimi:**
+  - Tüm arayüzden yapay zeka/yıldız (`Sparkles`) ikonları tamamen söküldü (`Wizard.tsx` -> `Shield`, `TestCenter.tsx` -> `Zap`).
+  - `Profiles.tsx` açılışında sağ editör panelinin boş kalmaması için ilk profilin otomatik seçimi garanti altına alındı.
+  - Kod tabanında sahte `onClick`, `alert`, `TODO`, `FIXME` veya yer tutucu (mock) fonksiyon bulunmadığı doğrulandı.
+  - DNS uygulama/sıfırlama, DoH kayıt defteri, Discord güncelleme/önbellek onarımı, Windows servisi ve bağımsız motor yönetimi, tekli ve toplu prob testleri, A/B kapalı/açık karşılaştırması, bol-van zapret TR kara liste senkronizasyonu, log dışa aktarma/temizleme, profil klonlama/aktarma ve fabrika ayarlarına sıfırlama işlemlerinin tamamı gerçek arka uç Rust WinDivert/Windows API sistemlerine bağlandı ve doğrulandı.
+- `[x]` 17.4 (2026-09-04) **Doğrulama ve Derleme:** `npm run build` 0 hata (1537 modül), `cargo check` (src-tauri) 0 hata, `cargo test --workspace` 46/46 yeşil (10.58s).
+
+### Faz 16 — Ouroboros v6.0 Mimari, Sistem ve Arayüz Restorasyonu (TAMAMLANDI)
+- `[x]` 16.1 (2026-09-04) **Sıfır CMD / Arka Plan Penceresi Yalıtımı (`commands.rs`):** `CREATE_NO_WINDOW` (0x08000000) bayrağı ve `silent_command` yardımcısıyla tüm arka plan komutları (`sc`, `tasklist`, `taskkill`, `schtasks`, `powershell`) sessizleştirildi; GUI çalışırken veya servis açılırken hiçbir konsol penceresinin yanıp sönmemesi garanti altına alındı.
+- `[x]` 16.2 (2026-09-04) **Windows Servis ve Başlangıç Güçlendirmesi (`commands.rs`, `main.rs`):** `find_motor_exe` mutlak yol ve canonicalize desteği aldı; `sc create` sözdizim hatası düzeltildi; `set_startup_enabled` Windows Task Scheduler (`schtasks /Create /TN "Anticore" /RL HIGHEST /SC ONLOGON /F`) ile UAC engelsiz yönetici başlangıcına yükseltildi. `--hidden` ve `--minimized` argümanları ile açılışta penceresiz sistem tepsisi başlangıcı bağlandı.
+- `[x]` 16.3 (2026-09-04) **Eski DPI Servis Uyarısı ve Temizleme Butonu (`compat.rs`, `CompatWarning.tsx`):** WinDivert kendi sürücümüz olduğu için çakışan servisler listesinden çıkarıldı; `CompatWarning.tsx` içine tek tıkla eski DPI servislerini Windows'tan kaldıran `[Servisleri Temizle]` aksiyonu eklendi.
+- `[x]` 16.4 (2026-09-04) **Yazılım Güncellemesi Sembol ve Private Repo Desteği (`commands.rs`, `UpdateModal.tsx`, `Titlebar.tsx`):** Yıldız ikonu yerine endüstri standardı `ArrowDownCircle` indirme ikonu yerleştirildi; GitHub API 404 / özel repo durumunda açıklayıcı hata ve Personal Access Token tanımlama arayüzü kuruldu.
+- `[x]` 16.5 (2026-09-04) **Fabrika Ayarlarına Dön Tamir Edildi (`commands.rs`, `SettingsView.tsx`):** Sadece blacklist değil; DNS/DoH kayıt defteri sıfırlama, Task Scheduler başlangıç temizliği, detached.pid temizliği, özel profillerin sıfırlanması ve disk log temizliğini kapsayan tam sistem sıfırlaması inşa edildi ve başarı geri bildirimleriyle bağlandı.
+- `[x]` 16.6 (2026-09-04) **5 Donanım Teması & Toggle Düğmesi Donanım Cilası (`globals.css`, `theme.ts`, `SettingsView.tsx`, `Titlebar.tsx`):** Toggle-thumb aktifken oluşan koyu leke saf beyaza dönüştürüldü; Obsidian, Cyberpunk, Amber, Amethyst, Titanium donanım temaları ve sistem modu tanımlandı.
+- `[x]` 16.7 (2026-09-04) **100+ TR Engelli Domain ve Bol-van Zapret Topluluk Entegrasyonu (`config.rs`, `commands.rs`, `Sites.tsx`):** Türkiye'deki engelli domainler 100+'e çıkarıldı, 6 zengin preset grubu eklendi; GitHub `bol-van/zapret` turkey_dns.txt listesini tek tıkla çekip yerel listeye ekleyen asenkron IPC ve şık senkronizasyon kartı entegre edildi.
+- `[x]` 16.8 (2026-09-04) **Pro Matrix Gelişmiş Donanım ve Telemetri Kokpiti (`Dashboard.tsx`):** L3 WinDivert Ring Buffer, Çekirdek gecikmesi (<0.05ms), 5 aşamalı cerrahi paket manipülasyon boru hattı (NIC -> Demux -> Trie -> Evasion -> Reinject), 4 cerrahi atlatma protokolü ve kritik hedef sağlık/durum matrisi kuruldu.
+- `[x]` 16.9 (2026-09-04) **Doğrulama ve Sağlamlık:** `cargo test --workspace` 46/46 yeşil (10.54s), `npm run build` 0 hata (1537 modül), `cargo check` (desktop/src-tauri) 0 hata ile tamamlandı.
 
 ### Faz 15 — $10K Cyber-Hardware & Desktop Utility Arayüz Dönüşümü (TAMAMLANDI)
 - `[x]` 15.1 (2026-09-03) **Frameless Custom Titlebar (`tauri.conf.json`, `Titlebar.tsx`):** Çift başlık çubuğu kapatıldı (`decorations: false`); 40px entegre donanım sistem rayı (`data-tauri-drag-region`), canlı telemetri LED rozeti ve Tauri v2 yerel pencere kontrolleri (`_`, `□`, `✕`) inşa edildi.

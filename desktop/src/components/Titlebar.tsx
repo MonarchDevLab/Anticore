@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, Minus, Square, X, RefreshCw, HelpCircle, Moon, Sun, Globe } from "lucide-react";
+import { ShieldCheck, Minus, Square, X, ArrowDownCircle, HelpCircle, Palette, Globe } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useI18n } from "../lib/i18n";
 import type { Status } from "../lib/tauri";
@@ -21,7 +21,7 @@ export default function Titlebar({
   onOpenUpdateModal,
   onToggleGuide,
 }: Props) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, options } = useTheme();
   const { lang, setLang, t } = useI18n();
   const [isMaximized, setIsMaximized] = useState(false);
 
@@ -34,6 +34,15 @@ export default function Titlebar({
       return null;
     }
   };
+
+  const handleNextTheme = () => {
+    const ids = options.map((o) => o.id);
+    const currIdx = ids.indexOf(theme);
+    const next = ids[(currIdx + 1) % ids.length];
+    setTheme(next);
+  };
+
+  const currentThemeObj = options.find((o) => o.id === theme) || options[0];
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -118,10 +127,10 @@ export default function Titlebar({
         {updateAvailable && (
           <button
             onClick={onOpenUpdateModal}
-            className="flex items-center gap-1 text-[10px] font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-all cursor-pointer mr-1"
+            className="flex items-center gap-1.5 text-[10px] font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-all cursor-pointer mr-1"
             title="Yeni sürüm hazır"
           >
-            <RefreshCw size={10} className="animate-spin text-live" />
+            <ArrowDownCircle size={12} className="text-live" />
             <span className="hidden sm:inline">GÜNCELLE</span>
           </button>
         )}
@@ -145,13 +154,14 @@ export default function Titlebar({
           <span>{lang.toUpperCase()}</span>
         </button>
 
-        {/* Tema Değiştirici */}
+        {/* Tema Değiştirici (5 Donanım Teması) */}
         <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="h-7 w-7 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
-          title="Tema"
+          onClick={handleNextTheme}
+          className="h-7 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
+          title={`Tema: ${currentThemeObj.name} (Tıkla ve Değiştir)`}
         >
-          {theme === "dark" ? <Sun size={13} /> : <Moon size={13} />}
+          <Palette size={13} style={{ color: currentThemeObj.accent }} />
+          <span className="text-[10px] font-mono hidden md:inline">{currentThemeObj.name.split(" ")[0]}</span>
         </button>
 
         {/* Dikey ayırıcı */}

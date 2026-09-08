@@ -5,7 +5,7 @@ import {
   GitCompare,
   LoaderCircle,
   Play,
-  Sparkles,
+  Zap,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
@@ -105,25 +105,32 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
       const restoreProfile = wasRunning ? initial.profile_id : null;
       const compareProfile = initial.profile_id || localStorage.getItem(LAST_PROFILE_KEY) || "universal";
 
-      if (wasRunning) {
-        await api.stopEngine();
-        await new Promise((r) => setTimeout(r, 200));
+      try {
+        if (wasRunning) {
+          await api.stopEngine();
+          await new Promise((r) => setTimeout(r, 200));
+        }
+        const off = await api.probeTarget(target);
+
+        await api.startEngine(compareProfile);
+        await new Promise((r) => setTimeout(r, 300));
+        const on = await api.probeTarget(target);
+
+        setCompareResult({ off, on });
+        pushLog(`[i] Kıyaslama (${target}): KAPALI=${off.result} → AÇIK=${on.result}`);
+      } finally {
+        if (!wasRunning) {
+          await api.stopEngine().catch(() => {});
+        } else {
+          const current = await api.getStatus().catch(() => null);
+          if (!current?.running) {
+            await api.startEngine(restoreProfile || compareProfile).catch(() => {});
+          } else if (restoreProfile && current.profile_id !== restoreProfile) {
+            await api.stopEngine().catch(() => {});
+            await api.startEngine(restoreProfile).catch(() => {});
+          }
+        }
       }
-      const off = await api.probeTarget(target);
-
-      await api.startEngine(compareProfile);
-      await new Promise((r) => setTimeout(r, 300));
-      const on = await api.probeTarget(target);
-
-      if (!wasRunning) {
-        await api.stopEngine();
-      } else if (restoreProfile && restoreProfile !== compareProfile) {
-        await api.stopEngine();
-        await api.startEngine(restoreProfile);
-      }
-
-      setCompareResult({ off, on });
-      pushLog(`[i] Kıyaslama (${target}): KAPALI=${off.result} → AÇIK=${on.result}`);
     } catch (e) {
       pushLog(`[!] Kıyaslama hatası: ${String(e)}`);
     } finally {
@@ -186,7 +193,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
-              <Sparkles size={18} strokeWidth={2} />
+              <Zap size={18} strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-sm font-bold text-paper-bright">
@@ -202,7 +209,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
             disabled={blockcheckBusy}
             className="btn btn-primary text-xs self-start sm:self-auto"
           >
-            {blockcheckBusy ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <Sparkles size={14} strokeWidth={2} />}
+            {blockcheckBusy ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <Zap size={14} strokeWidth={2} />}
             <span>{t("test_blockcheck_start")}</span>
           </button>
         </div>

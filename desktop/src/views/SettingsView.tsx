@@ -11,8 +11,6 @@ import {
   Trash2,
   Radio,
   Monitor,
-  Moon,
-  Sun,
   Languages,
   Activity,
   GitBranch,
@@ -35,15 +33,18 @@ import ConfirmDialog from "../components/ConfirmDialog";
 export default function SettingsView({
   pushLog,
   onOpenWizard,
+  running = false,
 }: {
   pushLog: (l: string) => void;
   onOpenWizard?: () => void;
+  running?: boolean;
 }) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, options: themeOptions } = useTheme();
   const { lang, setLang, t } = useI18n();
 
   const [config, setConfig] = useState<EngineConfig | null>(null);
   const [cfgBusy, setCfgBusy] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState<string>("");
 
   // GitHub Updater State
   const [repoInput, setRepoInput] = useState(() => localStorage.getItem("anticore_github_repo") || "MonarchDevLab/Anticore");
@@ -73,11 +74,14 @@ export default function SettingsView({
 
   const [factoryConfirm, setFactoryConfirm] = useState(false);
   const [factoryBusy, setFactoryBusy] = useState(false);
+  const [factorySuccess, setFactorySuccess] = useState(false);
+  const [factoryError, setFactoryError] = useState<string | null>(null);
 
   useEffect(() => {
     void api.getEngineConfig().then(setConfig);
     void api.getStartupEnabled().then(setStartup);
     void api.getTrayMinimize().then(setTrayMinimize).catch(() => {});
+    void api.getAppVersion().then(setAppVersion).catch(() => {});
   }, []);
 
   const patchConfig = async (patch: Partial<EngineConfig>) => {
@@ -206,14 +210,19 @@ export default function SettingsView({
 
   const runFactoryReset = async () => {
     setFactoryBusy(true);
+    setFactoryError(null);
     try {
       await api.factoryReset();
       localStorage.clear();
-      pushLog("[*] Fabrika ayarlarına dönüldü, uygulama yeniden başlatılıyor...");
-      window.location.reload();
+      setFactorySuccess(true);
+      pushLog("[*] Fabrika ayarlarına başarıyla dönüldü, uygulama tazeleniyor...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
     } catch (e) {
-      pushLog(`[!] Fabrika sıfırlama hatası: ${String(e)}`);
-    } finally {
+      const msg = String(e);
+      setFactoryError(msg);
+      pushLog(`[!] Fabrika sıfırlama hatası: ${msg}`);
       setFactoryBusy(false);
       setFactoryConfirm(false);
     }
@@ -225,7 +234,8 @@ export default function SettingsView({
     setUpdError(null);
     try {
       pushLog(`[*] GitHub güncellemeleri denetleniyor: ${repoInput}...`);
-      const info = await api.checkUpdate(repoInput.trim());
+      const token = localStorage.getItem("anticore_gh_token") || undefined;
+      const info = await api.checkUpdate(repoInput.trim(), token);
       setUpdInfo(info);
       setUpdState("done");
       if (info.has_update) {
@@ -262,7 +272,7 @@ export default function SettingsView({
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("settings_title")}</h2>
       </header>
 
-      {/* Görünüm ve Tema */}
+      {/* Görünüm ve Tema (5 Donanım Teması + Sistem) */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
@@ -274,26 +284,36 @@ export default function SettingsView({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 pt-1">
-          {[
-            { id: "system", label: t("settings_theme_system"), icon: Monitor },
-            { id: "dark", label: t("settings_theme_dark"), icon: Moon },
-            { id: "light", label: t("settings_theme_light"), icon: Sun },
-          ].map((item) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+          {themeOptions.map((item) => {
             const active = theme === item.id;
-            const Icon = item.icon;
             return (
               <button
                 key={item.id}
-                onClick={() => setTheme(item.id as "system" | "dark" | "light")}
-                className={`py-3 px-4 flex flex-col items-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                onClick={() => setTheme(item.id)}
+                className={`p-3.5 flex flex-col items-start gap-2 rounded-xl border text-xs transition-all cursor-pointer text-left relative overflow-hidden ${
                   active
-                    ? "bg-live/15 text-live border-live/35 shadow-sm"
-                    : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
+                    ? "bg-surface-elevated border-live shadow-md ring-1 ring-live/30"
+                    : "bg-surface-subtle/60 border-white/[0.06] hover:border-white/[0.15] hover:bg-surface-subtle"
                 }`}
               >
-                <Icon size={18} strokeWidth={2} />
-                <span>{item.label}</span>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm"
+                      style={{ backgroundColor: item.accent }}
+                    />
+                    <span className={`font-bold ${active ? "text-paper-bright" : "text-paper"}`}>
+                      {item.name}
+                    </span>
+                  </div>
+                  {active && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-live animate-pulse" />
+                  )}
+                </div>
+                <p className="text-[11px] text-paper-muted line-clamp-2 leading-relaxed">
+                  {item.description}
+                </p>
               </button>
             );
           })}
@@ -402,11 +422,22 @@ export default function SettingsView({
           </p>
         ) : (
           <div className="space-y-3 pt-1">
+            {running && (
+              <p className="text-[11px] text-warn font-semibold flex items-center gap-1.5 p-2 rounded-lg bg-warn/10 border border-warn/20">
+                <AlertTriangle size={13} className="shrink-0" />
+                <span>
+                  {lang === "tr"
+                    ? "Motor çalışırken savunma katmanları kilitlidir. Değiştirmek için önce motoru durdurun."
+                    : "Defense layers are locked while the engine is running. Stop the engine first to edit."}
+                </span>
+              </p>
+            )}
             <Toggle
               label={t("settings_passive_rst")}
               desc={t("settings_passive_rst_desc")}
               checked={config.pasif_savunma}
               busy={cfgBusy === "pasif_savunma"}
+              disabled={running}
               onChange={(v) => void patchConfig({ pasif_savunma: v })}
             />
             <Toggle
@@ -414,6 +445,7 @@ export default function SettingsView({
               desc={t("settings_quic_desc")}
               checked={config.quic_engelle}
               busy={cfgBusy === "quic_engelle"}
+              disabled={running}
               onChange={(v) => void patchConfig({ quic_engelle: v })}
             />
           </div>
@@ -724,6 +756,19 @@ export default function SettingsView({
             <p className="text-xs text-paper-muted mt-0.5">{t("settings_factory_desc")}</p>
           </div>
         </div>
+        {factorySuccess && (
+          <div className="p-3 rounded-xl bg-live/10 border border-live/25 text-live text-xs flex items-center gap-2">
+            <CheckCircle2 size={14} />
+            <span>Fabrika ayarlarına başarıyla sıfırlandı. Uygulama yeniden başlatılıyor...</span>
+          </div>
+        )}
+        {factoryError && (
+          <div className="p-3 rounded-xl bg-alert/10 border border-alert/25 text-alert text-xs flex items-center gap-2">
+            <AlertTriangle size={14} />
+            <span>Sıfırlama hatası: {factoryError}</span>
+          </div>
+        )}
+
         <button
           className="btn btn-danger text-xs mt-2"
           onClick={() => setFactoryConfirm(true)}
@@ -776,7 +821,7 @@ export default function SettingsView({
         </div>
         <dl className="grid grid-cols-[10rem_1fr] gap-y-2 text-xs">
           <dt className="text-paper-muted font-medium">{t("settings_about_engine")}</dt>
-          <dd className="text-paper-bright font-mono">{t("settings_about_engine_value")}</dd>
+          <dd className="text-paper-bright font-mono">{appVersion ? `Anticore v${appVersion} (Rust Kernel)` : t("settings_about_engine_value")}</dd>
           <dt className="text-paper-muted font-medium">{t("settings_about_license")}</dt>
           <dd className="text-paper-bright font-semibold">MIT License — Monolith Works</dd>
         </dl>
@@ -801,16 +846,18 @@ function Toggle({
   desc,
   checked,
   busy,
+  disabled = false,
   onChange,
 }: {
   label: string;
   desc: string;
   checked: boolean;
   busy: boolean;
+  disabled?: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-xl bg-surface-subtle/50 p-4 border border-white/[0.06] hover:border-white/[0.12] transition-all">
+    <div className={`flex items-start justify-between gap-4 rounded-xl bg-surface-subtle/50 p-4 border border-white/[0.06] transition-all ${disabled ? "opacity-60 cursor-not-allowed" : "hover:border-white/[0.12]"}`}>
       <div className="min-w-0">
         <p className="text-xs font-bold text-paper-bright">{label}</p>
         <p className="mt-0.5 text-xs leading-relaxed text-paper-muted">{desc}</p>
@@ -819,9 +866,9 @@ function Toggle({
         role="switch"
         aria-checked={checked}
         aria-label={label}
-        disabled={busy}
-        onClick={() => onChange(!checked)}
-        className={`toggle-track ${checked ? "is-active" : ""}`}
+        disabled={busy || disabled}
+        onClick={() => !disabled && onChange(!checked)}
+        className={`toggle-track ${checked ? "is-active" : ""} ${disabled ? "cursor-not-allowed" : ""}`}
       >
         <span className="toggle-thumb" />
       </button>

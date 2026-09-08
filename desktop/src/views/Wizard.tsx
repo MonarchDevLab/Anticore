@@ -4,7 +4,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
-  Sparkles,
+  Shield,
   Layers,
   Wifi,
   Zap,
@@ -140,7 +140,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
         <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-2xl bg-surface-card space-y-6 shadow-2xl">
           <div className="flex items-center gap-3.5 border-b border-white/[0.08] pb-4">
             <div className="p-3 rounded-2xl bg-live/15 text-live border border-live/30">
-              <Sparkles size={24} strokeWidth={2} />
+              <Shield size={24} strokeWidth={2} />
             </div>
             <div>
               <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("wiz_step_1_title")}</h2>

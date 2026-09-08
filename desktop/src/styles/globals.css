@@ -71,46 +71,120 @@
   --shadow-brutal-lg: 0 14px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Açık Tema (Yüksek Standartlı Rafine Slate) ── */
-html.light,
-[data-theme="light"] {
-  --color-void: #F8FAFC;
-  --color-surface-subtle: #F1F5F9;
-  --color-surface-card: #FFFFFF;
-  --color-surface-elevated: #FFFFFF;
+/* ── 1. Obsidian Emerald (Varsayılan Cyber-Hardware) ── */
+[data-theme="obsidian"],
+html.dark:not([data-theme]) {
+  --color-void: #06080C;
+  --color-surface-subtle: #0A0E17;
+  --color-surface-card: #0E131F;
+  --color-surface-elevated: #141B2B;
+  --color-surface-hover: #1A2338;
+  --color-neon-live: #00F59B;
+  --color-neon-live-dim: #059669;
+  --color-neon-cyan: #00D2FF;
+  --glow-live: 0 0 25px rgba(0, 245, 155, 0.35), 0 0 50px rgba(0, 245, 155, 0.15);
+  --shadow-brutal-live: 0 0 25px rgba(0, 245, 155, 0.3);
+}
 
-  --color-border-brutal: rgba(0, 0, 0, 0.08);
-  --color-border-brutal-subtle: rgba(0, 0, 0, 0.05);
-  --color-border-brutal-strong: rgba(0, 0, 0, 0.15);
+/* ── 2. Cyberpunk Volt (Yüksek Gerilim Neon) ── */
+[data-theme="cyberpunk"] {
+  --color-void: #08090D;
+  --color-surface-subtle: #0F121A;
+  --color-surface-card: #151924;
+  --color-surface-elevated: #1D2333;
+  --color-surface-hover: #262E44;
+  --color-neon-live: #FFE600;
+  --color-neon-live-dim: #D97706;
+  --color-neon-cyan: #00F0FF;
+  --glow-live: 0 0 25px rgba(255, 230, 0, 0.35), 0 0 50px rgba(255, 230, 0, 0.15);
+  --shadow-brutal-live: 0 0 25px rgba(255, 230, 0, 0.3);
+}
+
+/* ── 3. Amber CRT (Endüstriyel Fosfor Kehribar) ── */
+[data-theme="amber"] {
+  --color-void: #0C0904;
+  --color-surface-subtle: #140F08;
+  --color-surface-card: #1C150B;
+  --color-surface-elevated: #261D0F;
+  --color-surface-hover: #332714;
+  --color-neon-live: #FFB020;
+  --color-neon-live-dim: #B45309;
+  --color-neon-cyan: #FB923C;
+  --glow-live: 0 0 25px rgba(255, 176, 32, 0.35), 0 0 50px rgba(255, 176, 32, 0.15);
+  --shadow-brutal-live: 0 0 25px rgba(255, 176, 32, 0.3);
+}
+
+/* ── 4. Cobalt Matrix (Taktik C2 Ağ Konsolu) ── */
+[data-theme="cobalt"] {
+  --color-void: #050B14;
+  --color-surface-subtle: #080F1D;
+  --color-surface-card: #0B1526;
+  --color-surface-elevated: #112038;
+  --color-surface-hover: #162947;
+  --color-neon-live: #00E5FF;
+  --color-neon-live-dim: #0284C7;
+  --color-neon-cyan: #60A5FA;
+  --glow-live: 0 0 25px rgba(0, 229, 255, 0.35), 0 0 50px rgba(0, 229, 255, 0.15);
+  --shadow-brutal-live: 0 0 25px rgba(0, 229, 255, 0.3);
+}
+
+/* ── 5. Amethyst Nebula (Kozmik Derin Mor) ── */
+[data-theme="amethyst"] {
+  --color-void: #090611;
+  --color-surface-subtle: #110C21;
+  --color-surface-card: #18112E;
+  --color-surface-elevated: #221841;
+  --color-surface-hover: #2E2057;
+  --color-neon-live: #B388FF;
+  --color-neon-live-dim: #7C3AED;
+  --color-neon-cyan: #E879F9;
+  --glow-live: 0 0 25px rgba(179, 136, 255, 0.35), 0 0 50px rgba(179, 136, 255, 0.15);
+  --shadow-brutal-live: 0 0 25px rgba(179, 136, 255, 0.3);
+}
+
+/* ── 6. Titanium Laboratory (CNC Titanyum Açık Mod) ── */
+html.light,
+[data-theme="titanium"],
+[data-theme="light"] {
+  --color-void: #F1F5F9;
+  --color-surface-subtle: #E2E8F0;
+  --color-surface-card: #FFFFFF;
+  --color-surface-elevated: #E2E8F0;
+  --color-surface-hover: #CBD5E1;
+
+  --color-border-brutal: rgba(15, 23, 42, 0.08);
+  --color-border-brutal-subtle: rgba(15, 23, 42, 0.04);
+  --color-border-brutal-strong: rgba(15, 23, 42, 0.16);
 
   --color-paper: #0F172A;
-  --color-paper-bright: #020617;
-  --color-paper-muted: #64748B;
-  --color-paper-faint: #94A3B8;
+  --color-paper-bright: #090D16;
+  --color-paper-muted: #475569;
+  --color-paper-faint: #64748B;
 
-  --color-ink: #F8FAFC;
-  --color-ink-deep: #F1F5F9;
+  --color-ink: #F1F5F9;
+  --color-ink-deep: #E2E8F0;
   --color-panel: #FFFFFF;
-  --color-panel-muted: #F1F5F9;
-  --color-edge: rgba(0, 0, 0, 0.08);
-  --color-fog: #64748B;
+  --color-panel-muted: #E2E8F0;
+  --color-edge: rgba(15, 23, 42, 0.08);
+  --color-fog: #475569;
 
-  --color-neon-live: #059669;
+  --color-neon-live: #047857;
+  --color-neon-live-dim: #065F46;
   --color-neon-alert: #DC2626;
   --color-neon-warn: #D97706;
-  --color-neon-cyan: #0284C7;
+  --color-neon-cyan: #0369A1;
 
-  --color-live: #059669;
+  --color-live: #047857;
   --color-alert: #DC2626;
   --color-warn: #D97706;
-  --color-sky: #0284C7;
+  --color-sky: #0369A1;
 
   --shadow-brutal-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-brutal: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-brutal-live: 0 0 12px rgba(5, 150, 105, 0.15);
+  --shadow-brutal-live: 0 0 16px rgba(4, 120, 87, 0.20);
   --shadow-brutal-alert: 0 0 12px rgba(220, 38, 38, 0.15);
   --shadow-brutal-warn: 0 0 12px rgba(217, 119, 6, 0.15);
-  --shadow-brutal-cyan: 0 0 12px rgba(2, 132, 199, 0.15);
+  --shadow-brutal-cyan: 0 0 12px rgba(3, 105, 161, 0.15);
   --shadow-brutal-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -351,21 +425,22 @@ html.light,
   .badge-cyan { background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.25); color: #38bdf8; }
   .badge-muted { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.08); color: var(--color-paper-muted); }
 
-  /* ── Modern Toggle Switch ── */
+  /* ── Modern Toggle Switch ($10K Hardware Micro-Interactions) ── */
   .toggle-track {
     position: relative;
     width: 2.75rem;
     height: 1.5rem;
     border-radius: 9999px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     cursor: pointer;
     flex-shrink: 0;
     background: rgba(255, 255, 255, 0.08);
-    transition: background 200ms ease, border-color 200ms ease;
+    transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
   }
   .toggle-track[aria-checked="true"] {
     background: var(--color-neon-live);
     border-color: var(--color-neon-live);
+    box-shadow: 0 0 12px rgba(0, 245, 155, 0.25);
   }
   .toggle-track:disabled { opacity: 0.35; cursor: not-allowed; }
   .toggle-thumb {
@@ -375,16 +450,17 @@ html.light,
     height: 1.25rem;
     border-radius: 9999px;
     background: #FFFFFF;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 200ms ease;
   }
   .toggle-track[aria-checked="true"] .toggle-thumb {
     transform: translateX(1.3rem);
-    background: #031E13;
+    background: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 6px rgba(255, 255, 255, 0.8);
   }
   .toggle-track[aria-checked="false"] .toggle-thumb {
     transform: translateX(2px);
-    background: rgba(255, 255, 255, 0.7);
+    background: #CBD5E1;
   }
 
   /* ── İlerleme Çubuğu ── */

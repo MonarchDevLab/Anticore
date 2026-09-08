@@ -61,16 +61,30 @@ pub const KNOWN_VPN_PROCESSES: &[(&str, &str)] = &[
     ("zerotier-one.exe", "ZeroTier"),
 ];
 
-/// Çakışabilecek eski servisler listesi.
+/// Çakışabilecek eski servisler listesi (WinDivert hariç tutulmuştur; zira Anticore'un kendi çekirdek sürücüsüdür).
 pub const KNOWN_LEGACY_SERVICES: &[&str] = &[
     "GoodbyeDPI",
+    "GoodbyeDPI-Turkey",
     "zapret",
     "winws1",
     "winws2",
     "WireSock",
-    "WinDivert",
-    "WinDivert14",
+    "WireSockService",
+    "ProxiFyre",
 ];
+
+#[cfg(windows)]
+fn silent_cmd(program: &str) -> Command {
+    use std::os::windows::process::CommandExt;
+    let mut cmd = Command::new(program);
+    cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    cmd
+}
+
+#[cfg(not(windows))]
+fn silent_cmd(program: &str) -> Command {
+    Command::new(program)
+}
 
 /// Tasklist CSV / metin çıktısını ayrıştırarak tespit edilen AV ve VPN'leri döner.
 pub fn parse_tasklist_output(tasklist_raw: &str) -> (Vec<String>, Vec<String>) {
@@ -132,23 +146,24 @@ pub fn check_compatibility() -> CompatReport {
         windivert_ok: false,
     };
 
-    // 1. Process Check
-    if let Ok(output) = Command::new("tasklist").args(["/FO", "CSV", "/NH"]).output() {
+    // 1. Process Check (Penceresiz sessiz komut)
+    if let Ok(output) = silent_cmd("tasklist").args(["/FO", "CSV", "/NH"]).output() {
         let tasklist = String::from_utf8_lossy(&output.stdout);
         let (avs, vpns) = parse_tasklist_output(&tasklist);
         report.av_detected = avs;
         report.vpn_detected = vpns;
     }
 
-    // 2. Legacy Services Check
+    // 2. Legacy Services Check (Penceresiz sessiz komut)
     for srv in KNOWN_LEGACY_SERVICES {
-        if let Ok(output) = Command::new("sc").args(["query", srv]).output() {
+        if let Ok(output) = silent_cmd("sc").args(["query", srv]).output() {
             let out = String::from_utf8_lossy(&output.stdout);
             if parse_sc_query_output(output.status.success(), &out) {
                 report.legacy_services.push(srv.to_string());
             }
         }
     }
+
 
     // 3. WinDivert Files Check
     let mut search_paths = Vec::new();

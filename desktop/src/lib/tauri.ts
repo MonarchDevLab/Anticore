@@ -162,6 +162,7 @@ export const api = {
   deleteProfile: (id: string) => invoke<void>("delete_profile", { id }),
   getBlacklist: () => invoke<string[]>("get_blacklist"),
   addSite: (domain: string) => invoke<void>("add_site", { domain }),
+  addSites: (domains: string[]) => invoke<number>("add_sites", { domains }),
   removeSite: (domain: string) => invoke<void>("remove_site", { domain }),
   resolveDomain: (domain: string) => invoke<boolean>("resolve_domain", { domain }),
   exportSitesToFile: () => invoke<boolean>("export_sites_to_file"),
@@ -200,6 +201,8 @@ export const api = {
   clearDiscordCache: () => invoke<string>("clear_discord_cache"),
   checkUpdate: (repoOverride?: string, tokenOverride?: string) =>
     invoke<UpdateInfoDto>("check_update", { repoOverride, tokenOverride }),
+  fetchCommunityBlacklist: (sourceUrl?: string) =>
+    invoke<number>("fetch_community_blacklist", { sourceUrl }),
   getAppVersion: () => invoke<string>("get_app_version"),
   openBrowserUrl: (url: string) => invoke<void>("open_browser_url", { url }),
 };

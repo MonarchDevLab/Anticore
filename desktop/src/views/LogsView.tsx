@@ -31,7 +31,26 @@ export default function LogsView({ liveLogs, pushLog }: Props) {
   };
   useEffect(loadHistory, []);
 
-  const allLogs = useMemo(() => [...historyLogs, ...liveLogs], [historyLogs, liveLogs]);
+  const allLogs = useMemo(() => {
+    if (historyLogs.length === 0) return liveLogs;
+    if (liveLogs.length === 0) return historyLogs;
+    const cleanMsg = (s: string) => s.replace(/^\[.*?\]\s*/, "").replace(/^\d{1,2}:\d{2}:\d{2}\s*/, "").trim();
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    for (const line of historyLogs) {
+      merged.push(line);
+      const c = cleanMsg(line);
+      if (c) seen.add(c);
+    }
+    for (const line of liveLogs) {
+      const c = cleanMsg(line);
+      if (c && !seen.has(c)) {
+        seen.add(c);
+        merged.push(line);
+      }
+    }
+    return merged;
+  }, [historyLogs, liveLogs]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
