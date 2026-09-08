@@ -231,6 +231,8 @@ export const api = {
   minimizeWindow: () => invoke<void>("window_minimize"),
   toggleMaximizeWindow: () => invoke<boolean>("window_toggle_maximize"),
   isWindowMaximized: () => invoke<boolean>("window_is_maximized"),
+  showMainWindow: () => invoke<void>("show_main_window"),
+  hideQuickPanel: () => invoke<void>("hide_quick_panel"),
 };
 
 export function onLog(cb: (line: string) => void): Promise<() => void> {

@@ -5,13 +5,28 @@
 > `npm test` 4/4 (vitest), `npm run build` 0 hata, release binary ve portable zip paketlendi.
 
 ## ŞİMDİ `[~]`
-- *(Yok — Faz 28 Tüm Ajanlar Derinlemesine Kod Satırı Denetimi ve Kusursuzlaştırma tamamlandı)*
+- *(Yok — Faz 29 Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli tamamlandı)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması.
+
+### Faz 29 — Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli (Tray Quick Panel / Flyout) (TAMAMLANDI)
+- `[x]` 29.1 (2026-09-07) **Tauri Çoklu Pencere & Yetki Mimarisi:**
+  - `tauri.conf.json`: `quick-panel` frameless pencere tanımı eklendi (340x460px, `decorations: false`, `shadow: true`, `alwaysOnTop: true`, `skipTaskbar: true`, `visible: false`).
+  - `capabilities/default.json`: `"windows": ["main", "quick-panel"]` yetkilendirmesi yapıldı.
+- `[x]` 29.2 (2026-09-07) **Rust Sistem Tepsisi (Tray) & Akıllı Konumlandırma:**
+  - `tray.rs`: Sol tık olayında (`TrayIconEvent::Click`) tepsi koordinatları (`rect`) ve birincil monitör çalışma alanı (`work_area`) üzerinden paneli sağ alt köşeye milimetrik hizalayan `position_quick_panel` algoritması yazıldı; toggle mekanizması bağlandı.
+  - `main.rs`: `WindowEvent::Focused(false)` ile dışarı tıklandığında (blur) panelin pürüzsüzce kendiliğinden kapanması (auto-dismiss) sağlandı.
+  - `commands.rs`: `show_main_window` ve `hide_quick_panel` komutları yazıldı ve `main.rs` handler'ına kaydedildi.
+- `[x]` 29.3 (2026-09-07) **Frontend Mini Kokpit & Reaktif Tasarım:**
+  - `desktop/src/views/TrayQuickPanel.tsx`: $10K Premium Tasarım standardında, 8 donanım temasıyla tam senkron, Hero Dokunsal Güç Reaktörü, Hızlı Profil Seçici Dropdown, Canlı 3'lü Telemetri HUD (PPS, %100 Atlatma, <0.05ms gecikme), 1-Click DNS & Discord Tamir Butonları, "Ana Kokpiti Aç" ve "Çıkış" kontrolleri inşa edildi.
+  - `desktop/src/main.tsx`: Webview window etiketine göre (`getCurrentWindow().label === "quick-panel"`) anında hafif paneli yükleyen köprü kuruldu.
+  - `desktop/src/lib/tauri.ts` & `i18n.ts`: `api.showMainWindow`, `api.hideQuickPanel` IPC köprüsü ve TR/EN yerelleştirmeleri eklendi.
+- `[x]` 29.4 (2026-09-07) **Bütünsel Doğrulama:**
+  - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata, 3.96s).
 
 ### Faz 28 — Tüm Ajanlar Derinlemesine Kod Satırı Denetimi & Çok Katmanlı Kusursuzlaştırma (TAMAMLANDI)
 - `[x]` 28.1 (2026-09-07, 9da9a0a) **Rust Backend Çekirdek & FFI Güvenliği:**

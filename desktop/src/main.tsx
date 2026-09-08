@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import TrayQuickPanel from "./views/TrayQuickPanel";
 import "./styles/globals.css";
 
 class ErrorBoundary extends React.Component<
@@ -41,10 +42,39 @@ class ErrorBoundary extends React.Component<
   }
 }
 
+function Root() {
+  const [windowLabel, setWindowLabel] = useState<string>("main");
+
+  useEffect(() => {
+    const detectWindow = async () => {
+      try {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        const currentWin = getCurrentWindow();
+        if (currentWin && currentWin.label) {
+          setWindowLabel(currentWin.label);
+        }
+      } catch {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("window") === "quick-panel" || window.location.hash === "#quick-panel") {
+          setWindowLabel("quick-panel");
+        }
+      }
+    };
+    void detectWindow();
+  }, []);
+
+  if (windowLabel === "quick-panel") {
+    return <TrayQuickPanel />;
+  }
+
+  return <App />;
+}
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <Root />
     </ErrorBoundary>
   </React.StrictMode>,
 );
+

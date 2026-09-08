@@ -2,27 +2,27 @@
 
 ## Aktif Oturum (Son Oturumun Detayları)
 - **Tarih:** 2026-09-07
-- **Gerçekleşenler (Faz 28 - Tüm Ajanlar Derinlemesine Kod Satırı Denetimi & Çok Katmanlı Kusursuzlaştırma):**
-  1. Rust Backend Çekirdek & FFI Güvenliği:
-     - `net_teardown.rs` içinde 32-bit TCP tablosu row offset hesaplamasına `saturating_add` ve `saturating_mul` eklenerek olası integer overflow panik riski kapatıldı.
-     - `service.rs` içinde `Engine::stop()` metodu, blocking FFI `shutdown()` çağrısı öncesinde `active_handles` MutexGuard kilidini serbest bırakacak şekilde ayrıştırıldı (`handles.collect()` pattern); işletim sistemi soket kapatmasında deadlock/starvation önlendi.
-     - `net.rs` içinde `ip_total` ve `tcp_total` boyutları `u16::try_from().unwrap_or(u16::MAX)` ile kelepçelendi; 65535 üzeri sahte payload'larda sessiz integer truncation engellendi.
-     - `commands.rs` içinde `get_status` metodunda `engine.profile_id.lock()` poisoned mutex'e karşı `unwrap_or_else` korumasına alındı.
-     - `divert.rs` içinde WinDivert sürücüsüne gitmeden önce filtre dizesinde interior null (`\0`) karakteri taranarak null-byte enjeksiyonu engellendi.
-  2. Frontend Hata Yönetimi, Validasyon & A11y:
-     - `Sites.tsx` alan adı ekleme formuna `https?://` ve yol temizleme ile RFC standardı Domain Regex kontrolü eklendi; `useEffect` unmount koruması getirildi; toplu silmede silinen/hatalı öğe ayrımı loglandı.
-     - `TestCenter.tsx` ve `Dashboard.tsx` içindeki sessiz `catch` blokları kullanıcı log konsoluna bağlandı.
-     - `ProfileEditor.tsx` içine profil başına maksimum 20 adım sınırı konuldu; silme modalına WCAG standardında `Escape` klavye dinleyicisi eklendi.
-  3. Tauri Güvenlik, CI/CD & Paketleme:
-     - `tauri.conf.json` içinde `"csp": null` kaldırılarak katı CSP uygulandı.
-     - `capabilities/default.json` pencere yetkileri genel `"*"` yerine `["main"]` ile sınırlandı.
-     - `.github/workflows/release.yml` tag adı `${{ github.ref_name }}` ile dinamikleştirildi.
-     - `scripts/package.ps1` paket versiyonlaması `package.json` üzerinden dinamik `$ver` ile bağlandı.
-  4. Doğrulama ve Dağıtım:
-     - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (4/4 yeşil), `npm run build` (0 hata, 3.85s).
-     - `package.ps1` ile `Anticore.exe` (13.0 MB), `anticore-cli.exe` (479 KB) ve `Anticore_0.3.0_x64-portable.zip` (6.09 MB) üretildi ve doğrulandı.
+- **Gerçekleşenler (Faz 29 - Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli):**
+  1. Tauri Çoklu Pencere & Yetki Mimarisi:
+     - `tauri.conf.json` içinde 340x460px boyutunda, frameless, gölgeli, her zaman üstte ve görev çubuğunda simge açmayan `quick-panel` penceresi tanımlandı.
+     - `capabilities/default.json` yetki kapsamına `"windows": ["main", "quick-panel"]` eklenerek pencerenin Tauri çekirdek komutlarına erişimi sağlandı.
+  2. Rust Sistem Tepsisi (Tray) & Akıllı Konumlandırma:
+     - `tray.rs` içinde `TrayIconEvent::Click` sol tık yakalayıcısı genişletildi; `position_quick_panel` algoritması ile tepsi ikonu (`rect`) ve birincil monitör çalışma alanı (`work_area`) üzerinden panel ekranın sağ alt köşesine, görev çubuğunun hemen üzerine milimetrik yerleştirildi ve görünürlüğü toggle edildi.
+     - `main.rs` içinde `WindowEvent::Focused(false)` olayı dinlenerek kullanıcının panel dışına tıkladığı anda (blur) panelin kendiliğinden pürüzsüzce kapanması (auto-dismiss) sağlandı.
+     - `commands.rs` içine `show_main_window` ve `hide_quick_panel` komutları eklendi.
+  3. Frontend Mini Kokpit & Reaktif Tasarım ($10K Standart):
+     - `desktop/src/views/TrayQuickPanel.tsx`: 8 donanım temasıyla tam senkron, Hero Dokunsal Güç Reaktörü, Hızlı Profil Seçici Dropdown, Canlı 3'lü Telemetri HUD (PPS, %100 Atlatma, <0.05ms gecikme), 1-Click DNS & Discord Tamiri, "Ana Kokpiti Aç" ve "Çıkış" kontrolleri inşa edildi. `Esc` klavye dinleyicisi eklendi.
+     - `desktop/src/main.tsx` içinde pencere etiketine göre (`getCurrentWindow().label === "quick-panel"`) anında hafif paneli yükleyen köprü kuruldu.
+     - `desktop/src/lib/tauri.ts` & `i18n.ts`: `api.showMainWindow`, `api.hideQuickPanel` IPC köprüsü ve TR/EN yerelleştirmeleri eklendi.
+  4. Doğrulama:
+     - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata, 3.96s).
 
 ## Mimari Kararlar
+- `[KARAR-026]` **Sistem Tepsisi Hızlı Erişim Paneli & Çift Katmanlı UX Standardı:**
+  1. DPI atlatma araçlarında günlük kullanıcı ihtiyacının %90'ı motoru başlatmak/durdurmak, anlık canlı akışı teyit etmek ve profil değiştirmekten ibarettir. 1080x720 devasa ana kokpit yerine tepsi sol tıkında açılan 340x460px hafif `quick-panel` (Flyout) bilişsel yükü ve pencere açılış gecikmesini sıfırlar.
+  2. Panel dışına tıklandığında (`WindowEvent::Focused(false)`) veya `Esc` tuşuna basıldığında panel otomatik olarak gizlenmelidir (Auto-dismiss). Böylece sistem tepsisi menüsü Windows Action Center ergonomisinde davranır.
+  3. Tepsi sağ tık menüsü (Aç / Başlat-Durdur / Çıkış) klasik Windows bağlam menüsü olarak korunmalı; sol tık ise zengin mini kokpite ayrılmalıdır.
+  4. Tek kaynaklı durum: Mini panel ayrı bir durum yönetimi kurmaz; mevcut `api.getStatus()`, `onStatusChange`, `localStorage` ve `theme.ts` yapısını doğrudan miras alarak ana kokpitle %100 senkronize çalışır.
 - `[KARAR-025]` **Derin Savunma (Defense-in-Depth) & Sıfır Sessiz Hata Prensibi:**
   1. Çekirdek sürücü ve işletim sistemi çağrılarında (FFI, TCP TCB teardown, WinDivert open) hiçbir girdi varsayımsız kabul edilmemeli; integer taşmalarına karşı saturating tipler, C string dönüşümlerinde interior null koruması ve donanım bellek hizalamasında unaligned okuma zorunludur.
   2. İşletim sistemi ağ sürücüsünü kapatan (WinDivertClose vb.) blocking FFI çağrıları yapılırken uygulama seviyesindeki Mutex kilitleri asla tutulmamalıdır; önce handle'lar yerel vektöre çekilip kilit düşürülmeli, ardından soket kapatma yürütülmelidir.

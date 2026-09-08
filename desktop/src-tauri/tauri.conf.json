@@ -22,6 +22,19 @@
         "center": true,
         "visible": true,
         "focus": true
+      },
+      {
+        "label": "quick-panel",
+        "title": "Anticore Quick Panel",
+        "width": 340,
+        "height": 460,
+        "resizable": false,
+        "decorations": false,
+        "shadow": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "focus": false
       }
     ],
     "security": {

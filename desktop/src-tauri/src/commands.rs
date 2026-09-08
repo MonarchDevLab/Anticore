@@ -1881,6 +1881,25 @@ pub fn window_is_maximized(app: AppHandle) -> bool {
     }
 }
 
+#[tauri::command]
+pub fn show_main_window(app: AppHandle) {
+    if let Some(panel) = app.get_webview_window("quick-panel") {
+        let _ = panel.hide();
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+#[tauri::command]
+pub fn hide_quick_panel(app: AppHandle) {
+    if let Some(panel) = app.get_webview_window("quick-panel") {
+        let _ = panel.hide();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -72,6 +72,37 @@ pub fn set_tray_minimize(app: AppHandle, enabled: bool) -> Result<(), String> {
 /// Tray simgesi + menü + olay dinleyicileri kurar. `app.manage()` ile
 /// saklanan `TrayHandles`, motor durumu değiştikçe (status_changed olayı)
 /// tepsi ipucu (tooltip) metnini ve menü öğesi etiketini günceller.
+fn position_quick_panel(panel: &tauri::WebviewWindow, tray_rect: &tauri::Rect) {
+    if let Ok(Some(monitor)) = panel.current_monitor() {
+        let scale = monitor.scale_factor();
+        let work_area = monitor.work_area();
+        let panel_width = (340.0 * scale) as i32;
+        let panel_height = (460.0 * scale) as i32;
+
+        let tray_pos = tray_rect.position.to_physical::<i32>(scale);
+        let tray_size = tray_rect.size.to_physical::<u32>(scale);
+
+        let target_x = if tray_size.width > 0 {
+            tray_pos.x + (tray_size.width as i32 / 2) - (panel_width / 2)
+        } else {
+            work_area.position.x + work_area.size.width as i32 - panel_width - 12
+        };
+
+        let clamped_x = target_x.clamp(
+            work_area.position.x + 8,
+            work_area.position.x + work_area.size.width as i32 - panel_width - 8,
+        );
+
+        let clamped_y = (work_area.position.y + work_area.size.height as i32 - panel_height - 8)
+            .max(work_area.position.y + 8);
+
+        let _ = panel.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: clamped_x,
+            y: clamped_y,
+        }));
+    }
+}
+
 pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     let show_i = MenuItem::with_id(app, "show", "Aç", true, None::<&str>)?;
     let toggle_i = MenuItem::with_id(app, "toggle", "Başlat", true, None::<&str>)?;
@@ -101,11 +132,21 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
                 button_state: MouseButtonState::Up,
+                rect,
                 ..
             } = event
             {
                 let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("main") {
+                if let Some(panel) = app.get_webview_window("quick-panel") {
+                    let is_vis = panel.is_visible().unwrap_or(false);
+                    if is_vis {
+                        let _ = panel.hide();
+                    } else {
+                        position_quick_panel(&panel, &rect);
+                        let _ = panel.show();
+                        let _ = panel.set_focus();
+                    }
+                } else if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
                     let _ = window.set_focus();
                 }

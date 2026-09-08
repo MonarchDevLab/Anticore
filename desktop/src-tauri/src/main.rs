@@ -42,6 +42,14 @@ fn main() {
                     let _ = window.hide();
                 }
             }
+            if let Some(panel) = app.get_webview_window("quick-panel") {
+                let panel_clone = panel.clone();
+                panel.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Focused(false) = event {
+                        let _ = panel_clone.hide();
+                    }
+                });
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -99,6 +107,8 @@ fn main() {
             commands::window_minimize,
             commands::window_toggle_maximize,
             commands::window_is_maximized,
+            commands::show_main_window,
+            commands::hide_quick_panel,
             tray::get_tray_minimize,
             tray::set_tray_minimize,
         ])

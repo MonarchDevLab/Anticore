@@ -351,6 +351,23 @@ export const translations = {
     logs_level_success: "Başarı",
     logs_level_info: "Bilgi",
     logs_level_error: "Hata",
+
+    // Quick Panel
+    qp_title: "Hızlı Erişim",
+    qp_active: "KORUMA AKTİF",
+    qp_passive: "KORUMA PASİF",
+    qp_engine_active: "WinDivert L3 Çekirdeği Devrede",
+    qp_engine_passive: "Filtrelemeyi Başlatmak İçin Dokun",
+    qp_profile: "Aktif Profil",
+    qp_telemetry_pps: "Canlı Akış",
+    qp_telemetry_bypass: "DPI Atlatma",
+    qp_telemetry_latency: "Kernel Gecikme",
+    qp_action_dns: "Güvenli DNS / DoH",
+    qp_action_discord: "Discord Tamiri",
+    qp_open_main: "Ana Kokpiti Aç",
+    qp_quit: "Çıkış",
+    qp_dns_success: "Güvenli DNS uygulandı!",
+    qp_discord_success: "Discord önbelleği temizlendi ve onarıldı!",
   },
   en: {
     // Navigation
@@ -698,6 +715,23 @@ export const translations = {
     logs_level_success: "Success",
     logs_level_info: "Info",
     logs_level_error: "Error",
+
+    // Quick Panel
+    qp_title: "Quick Access",
+    qp_active: "PROTECTION ACTIVE",
+    qp_passive: "PROTECTION OFF",
+    qp_engine_active: "WinDivert L3 Kernel Active",
+    qp_engine_passive: "Tap to Start Filtering",
+    qp_profile: "Active Profile",
+    qp_telemetry_pps: "Live Flow",
+    qp_telemetry_bypass: "DPI Evasion",
+    qp_telemetry_latency: "Kernel Latency",
+    qp_action_dns: "Secure DNS / DoH",
+    qp_action_discord: "Discord Repair",
+    qp_open_main: "Open Full Cockpit",
+    qp_quit: "Quit",
+    qp_dns_success: "Secure DNS applied!",
+    qp_discord_success: "Discord cache cleared and repaired!",
   },
 };
 
