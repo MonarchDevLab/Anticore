@@ -99,6 +99,7 @@
 - Rust Backend Testleri: `cargo test` (`antikor/desktop/src-tauri`)
 
 ## Commit Zinciri
+- `3d7505f` — tam oturum envanteri, yeniden okunan dağıtım hash'leri, yedekler ve kanıt sınırları.
 - `511a0bb` — Setup hata/izin kapıları, gerçek bağımsız hazır kontrolü, SC argümanları ve doğru kurulum kaynak yerleşimi.
 - `48536eb` — tema renkli güç kontrolü, ortak araç stilleri ve güvenli sihirbaz.
 - `27ab0e8` — canlı kabul ve dağıtım doğrulamalarının ilk kaydı.

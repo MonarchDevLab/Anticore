@@ -5,7 +5,7 @@
 > Canlı bağımsız motor ve SCM başlat/durdur geçti; geçici servis kaldırıldı. Native UI düğmelerinin uçtan uca otomasyonu ve saha hız ölçümü yapılmadı.
 
 ## ŞİMDİ `[~]`
-- `[~]` 2026-09-08 — Tam kayıt eşitlemesi: commitler, paket hash'leri, yedekler, yapılanlar ve doğrulanmamış kabul kapıları kaydediliyor. Uygulama kodu/paketler bu kayıt turunda değiştirilmiyor.
+- *(Yok; açık kabul işleri SIRADAKİ bölümündedir.)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
@@ -19,6 +19,7 @@
 - `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-08 — `3d7505f`: tam oturum envanteri, kaynak commitleri, beş dağıtım hash'i, yedek/geri dönüş konumları, test kanıtları, başarısız denemelerin nedenleri ve açık kabul sınırları kaydedildi. Eski commit edilmedi/paketler eski/tasarım token ifadeleri güncel kayıtlarda düzeltildi. Bu kayıt turunda kod, ikililer, ağ veya test sonuçları yeniden üretilmedi.
 - `[x]` 2026-09-08 — `48536eb`: tema rengini kullanan merkezi güç kontrolü; araç sayfalarında ortak yüzey/kontrol stilleri; ayarlarda bölüm bağlantıları ve seçim durumu; native onay diyaloğu; profil/günlük yükleme hataları; sihirbazda DNS opt-in, başarısız başlangıçta tamamlanmama ve başarılı profil kaydı. Yeni sihirbaz testleri dahil son toplam frontend 11/11. Bu satır uygulama kapsamıdır; tüm arayüzlerin görsel/erişilebilirlik kabulü değildir.
 - `[x]` 2026-09-08 — `511a0bb`: Setup hata/izin kapıları, SC argümanları, bağımsız hazır kontrolü ve kurulum kaynak konumları düzeltildi. 11 frontend / 9 backend / 48 motor testi geçti. İzinli canlı CLI+SCM start/stop geçti; DNS değiştirilmedi. EXE/NSIS/MSI/portable yenilendi; tüm GUI kopyaları ve ZIP içeriği SHA256 `C149475929E4F03B62AEDECC1A8CC5EB3AF353AB3FEC28AADE1DF292AC49DBB4`. Eski çıktılar/imzalar package-backups altında korundu; yayın yapılmadı.
 - `[x]` 2026-09-08 — `f227c3d` sonrası kayıt eşitlemesi: doğrulama tarihleri, tamamlanan arayüz kapsamı, kalan kabul işleri ve release çıktısı güncellendi. Bu kayıt turunda testler yeniden çalıştırılmadı.
