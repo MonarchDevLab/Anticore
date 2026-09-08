@@ -1,5 +1,20 @@
 # Design System Master File
 
+## Connection workspace — 2026-09-07
+
+This section supersedes the historical dashboard specifications below for the application shell and connection workspace. Subject: a local Windows network utility for everyday users. Primary job: operate the engine and distinguish its state from measured reachability.
+
+- Direction: graphite instrument panel, calm slate-blue illumination, restrained green status. Signature: a split connection path between device and destination; an explanatory diagram, never a fabricated traffic map.
+- Tokens: existing theme surfaces `--color-void` (#06080C), `--color-surface-card` (#0E131F), text `--color-paper` (#F1F5F9), secondary `--color-paper-muted` (#94A3B8), interaction `--color-sky` (#00D2FF), state `--color-live` (#00F59B). Alternate themes inherit their existing equivalents. Raw colors belong only to token definitions.
+- Type: locally bundled Fira Sans for 28–36px headings and 14px body, Fira Code for measured values and technical labels. Minimum label size 12px.
+- Layout: 208px grouped side navigation; a spacious connection panel paired with configuration; measured activity and on-demand target checks below. Narrow windows collapse navigation; no horizontal page overflow.
+- Controls: one primary engine action on the dashboard, shared operation lock across views; native labelled profile selector; 44px controls, visible focus, loading/empty/error/stale states. All existing routes remain reachable.
+- Metrics: no random series, inferred success or decorative counts. Failed status polling makes the state unavailable. Endpoint probes show their exact result; no inference of download speed.
+- Motion: 180–240ms opacity/transform for deliberate interactions; no ambient rotating machinery. Reduced motion disables non-essential effects.
+- Validation: existing tests/build, focused interaction tests for unknown/busy state, browser screenshots at desktop and narrow widths, keyboard and text contrast checks. Browser fixtures are testing-only and never part of production data.
+
+Design research: ui-ux-pro-max `network monitoring dashboard` returned a matching Fira Code/Fira Sans operations direction. Its marketing sections and heavy glass effects are not applicable to this desktop workflow. The prior generic hero/CTA result was rejected. No additional font, animation or UI dependency is introduced.
+
 > **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
 > If that file exists, its rules **override** this Master file.
 > If not, strictly follow the rules below.

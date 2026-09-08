@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import TrayQuickPanel from "./views/TrayQuickPanel";
 import "./styles/globals.css";
+import "./styles/workspace.css";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },

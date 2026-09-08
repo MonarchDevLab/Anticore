@@ -112,7 +112,7 @@ export default function Titlebar({
   return (
     <header
       data-tauri-drag-region
-      className="h-10 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono"
+      className="workspace-titlebar h-12 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono"
     >
       {/* Sol: Logo & Marka Donanım Etiketi */}
       <div className="flex items-center gap-2.5 pointer-events-none">
@@ -124,11 +124,11 @@ export default function Titlebar({
           <ShieldCheck size={13} strokeWidth={2.5} />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="font-bold tracking-widest text-paper-bright text-[11px]">
+          <span className="font-bold tracking-widest text-paper-bright text-xs">
             ANTICORE
           </span>
-          <span className="text-[10px] text-paper-faint tracking-wider hidden sm:inline">
-            // KERNEL ENGINE
+          <span className="text-xs text-paper-faint tracking-wider hidden sm:inline">
+            Monolith Works
           </span>
         </div>
       </div>
@@ -140,8 +140,8 @@ export default function Titlebar({
             running ? "bg-live shadow-[var(--shadow-brutal-live)] animate-pulse" : "bg-paper-faint"
           }`}
         />
-        <span className="text-[10px] uppercase tracking-wider text-paper-muted">
-          {running ? (
+        <span className="text-xs uppercase tracking-wider text-paper-muted">
+          {!status ? ( <span>{lang === "tr" ? "Durum doğrulanamadı" : "Status unverified"}</span> ) : running ? (
             <span className="text-paper-bright">
               <strong className="text-live font-bold">{t("status_active")}</strong> · {status?.profile_id || selectedProfile}
             </span>
@@ -157,7 +157,7 @@ export default function Titlebar({
         {updateAvailable && (
           <button
             onClick={onOpenUpdateModal}
-            className="flex items-center gap-1.5 text-[10px] font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-all cursor-pointer mr-1"
+            className="flex items-center gap-1.5 text-xs font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-all cursor-pointer mr-1"
             title="Yeni sürüm hazır"
           >
             <ArrowDownCircle size={12} className="text-live" />
@@ -168,7 +168,7 @@ export default function Titlebar({
         {/* Kılavuz Çekmecesi Butonu */}
         <button
           onClick={onToggleGuide}
-          className="h-7 w-7 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="h-11 w-11 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
           title="Kullanım Rehberi & Bilgi Bankası (F1)"
         >
           <HelpCircle size={14} />
@@ -177,7 +177,7 @@ export default function Titlebar({
         {/* Dil Değiştirici */}
         <button
           onClick={() => setLang(lang === "tr" ? "en" : "tr")}
-          className="h-7 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors text-[10px] font-bold cursor-pointer"
+          className="h-11 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors text-xs font-bold cursor-pointer"
           title="Dili Değiştir / Switch Language"
         >
           <Globe size={12} />
@@ -187,11 +187,11 @@ export default function Titlebar({
         {/* Tema Değiştirici (5 Donanım Teması) */}
         <button
           onClick={handleNextTheme}
-          className="h-7 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="h-11 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
           title={`Tema: ${currentThemeObj.name} (Tıkla ve Değiştir)`}
         >
           <Palette size={13} style={{ color: currentThemeObj.accent }} />
-          <span className="text-[10px] font-mono hidden md:inline">{currentThemeObj.name.split(" ")[0]}</span>
+          <span className="text-xs font-mono hidden md:inline">{currentThemeObj.name.split(" ")[0]}</span>
         </button>
 
         {/* Dikey ayırıcı */}
@@ -201,21 +201,21 @@ export default function Titlebar({
         <div className="flex items-center">
           <button
             onClick={handleMinimize}
-            className="h-7 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
+            className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
             aria-label="Küçült"
           >
             <Minus size={13} />
           </button>
           <button
             onClick={handleToggleMaximize}
-            className="h-7 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
+            className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
             aria-label={isMaximized ? "Geri Yükle" : "Büyüt"}
           >
             <Square size={11} />
           </button>
           <button
             onClick={handleClose}
-            className="h-7 w-9 flex items-center justify-center text-paper-muted hover:text-white hover:bg-alert transition-colors cursor-pointer"
+            className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-white hover:bg-alert transition-colors cursor-pointer"
             aria-label="Kapat"
           >
             <X size={14} />

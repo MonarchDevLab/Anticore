@@ -1,21 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Activity,
-  Globe,
-  LayoutDashboard,
-  Layers,
-  Power,
-  ScrollText,
-  Settings as SettingsIcon,
-  Wifi,
-  Wrench,
-  LoaderCircle,
-  Zap,
-  ShieldAlert,
-  Shield,
-  X,
-} from "lucide-react";
-import { api, onLog, onStatusChange, type Status } from "./lib/tauri";
+import { ShieldAlert, Shield, X } from "lucide-react";
+import { api, onLog, type Status } from "./lib/tauri";
 import { useI18n } from "./lib/i18n";
 import Dashboard from "./views/Dashboard";
 import Sites from "./views/Sites";
@@ -31,7 +16,7 @@ import UpdateModal from "./components/UpdateModal";
 import Titlebar from "./components/Titlebar";
 import GuideDrawer from "./components/GuideDrawer";
 
-type ViewId = "dashboard" | "sites" | "profiles" | "test" | "network" | "setup" | "settings" | "wizard" | "logs";
+import AppNavigation, { type ViewId } from "./components/AppNavigation";
 
 export default function App() {
   const [view, setView] = useState<ViewId>(() => {
@@ -39,6 +24,7 @@ export default function App() {
   });
   const [status, setStatus] = useState<Status | null>(null);
   const [toggling, setToggling] = useState(false);
+  const togglePending = useRef(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
@@ -47,10 +33,10 @@ export default function App() {
   const [selectedProfile, setSelectedProfileState] = useState(
     () => localStorage.getItem("anticore_last_profile") || "universal",
   );
-  const setSelectedProfile = (id: string) => {
+  const setSelectedProfile = useCallback((id: string) => {
     setSelectedProfileState(id);
     localStorage.setItem("anticore_last_profile", id);
-  };
+  }, []);
   const seq = useRef(0);
   const { lang, t } = useI18n();
   const langRef = useRef(lang);
@@ -85,14 +71,24 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
-    const tick = () =>
-      void api
-        .getStatus()
-        .then((s) => {
-          if (alive) setStatus(s);
-        })
-        .catch(() => {});
-    tick();
+    let polling = false;
+    const tick = async () => {
+      if (polling) return;
+      polling = true;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const next = await Promise.race([api.getStatus(), new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(new Error("Status timeout")), 4000);
+        })]);
+        if (alive) setStatus(next);
+      } catch {
+        if (alive) setStatus(null);
+      } finally {
+        clearTimeout(timeout);
+        polling = false;
+      }
+    };
+    void tick();
     const id = setInterval(tick, 1000);
     return () => {
       alive = false;
@@ -115,26 +111,16 @@ export default function App() {
     void onLog(pushLog).then((u) => {
       if (cancelled) u();
       else unbinds.push(u);
-    });
-    void onStatusChange((r) => {
-      void api
-        .getStatus()
-        .then((s) => setStatus(s))
-        .catch(() => {});
-      setRunningFallback(r);
-    }).then((u) => {
-      if (cancelled) u();
-      else unbinds.push(u);
-    });
+    }).catch((error) => pushLog(`[!] ${String(error)}`));
     return () => {
       cancelled = true;
       unbinds.forEach((u) => u());
     };
   }, [pushLog]);
 
-  const setRunningFallback = useCallback((_r: boolean) => {}, []);
-
   const quickToggle = async () => {
+    if (togglePending.current || !status) return;
+    togglePending.current = true;
     setToggling(true);
     setTopError(null);
     try {
@@ -143,28 +129,20 @@ export default function App() {
       } else {
         await api.startEngine(selectedProfile);
       }
+      setStatus(await api.getStatus());
     } catch (e) {
       const msg = String(e);
       pushLog(`[!] HATA: ${msg}`);
       setTopError(msg);
     } finally {
+      togglePending.current = false;
       setToggling(false);
     }
   };
 
-  const navItems = [
-    { id: "dashboard" as ViewId, label: t("nav_dashboard"), icon: <LayoutDashboard size={14} /> },
-    { id: "sites" as ViewId, label: t("nav_sites"), icon: <Globe size={14} /> },
-    { id: "profiles" as ViewId, label: t("nav_profiles"), icon: <Layers size={14} /> },
-    { id: "test" as ViewId, label: t("nav_test"), icon: <Activity size={14} /> },
-    { id: "network" as ViewId, label: t("nav_network"), icon: <Wifi size={14} /> },
-    { id: "logs" as ViewId, label: t("nav_logs"), icon: <ScrollText size={14} /> },
-    { id: "setup" as ViewId, label: t("nav_setup"), icon: <Wrench size={14} /> },
-    { id: "settings" as ViewId, label: t("nav_settings"), icon: <SettingsIcon size={14} /> },
-  ];
 
   return (
-    <div className="flex h-screen w-screen flex-col select-none bg-void text-paper overflow-hidden font-sans">
+    <div className="app-workspace flex h-screen w-screen flex-col bg-void text-paper overflow-hidden font-sans">
       {/* ── 1. Yekpare Frameless Başlık Çubuğu ── */}
       <Titlebar
         status={status}
@@ -175,60 +153,15 @@ export default function App() {
         onToggleGuide={() => setGuideOpen(true)}
       />
 
-      {/* ── 2. Yatay Segmented HUD Tab Bar & Konsol Eylemleri ── */}
-      <div className="h-12 shrink-0 flex items-center justify-between px-4 bg-surface-subtle/90 backdrop-blur-md border-b border-border-brutal relative z-40">
-        {/* Yatay Segmented Menü */}
-        <nav aria-label="Ana Gezinme Rayı" className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
-          {navItems.map((n) => {
-            const active = view === n.id;
-            return (
-              <button
-                key={n.id}
-                onClick={() => setView(n.id)}
-                aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                  active
-                    ? "bg-surface-elevated text-paper-bright border border-border-brutal-strong shadow-sm"
-                    : "text-paper-muted hover:text-paper hover:bg-surface-hover border border-transparent"
-                }`}
-              >
-                <span className={active ? "text-live" : "text-paper-faint"}>{n.icon}</span>
-                <span>{n.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Sağ: Hızlı Çekirdek Güç Anahtarı */}
-        <div className="flex items-center gap-2 pl-3">
-          <button
-            onClick={() => void quickToggle()}
-            disabled={toggling}
-            className={`btn-reactor flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-xs font-bold transition-all cursor-pointer ${
-              running
-                ? "bg-alert/15 text-alert border border-alert/30 hover:bg-alert/25 shadow-[var(--shadow-brutal-alert)]"
-                : "btn-primary shadow-[var(--shadow-brutal-live)]"
-            }`}
-            aria-label={running ? t("btn_stop") : t("btn_start")}
-          >
-            {toggling ? (
-              <LoaderCircle size={13} className="animate-spin" strokeWidth={2.5} />
-            ) : running ? (
-              <Zap size={13} strokeWidth={2.5} />
-            ) : (
-              <Power size={13} strokeWidth={2.5} />
-            )}
-            <span className="tracking-wide">{running ? t("btn_stop") : t("btn_start")}</span>
-          </button>
-        </div>
-      </div>
-
+      <div className="workspace-layout">
+        <AppNavigation view={view} onNavigate={setView} running={running} known={status !== null} busy={toggling} onToggle={() => void quickToggle()} />
+        <div className="workspace-content">
       <CompatWarning />
       {topError && (
-        <div className="mx-4 mt-3 p-3 rounded-xl bg-alert/15 border border-alert/30 text-paper-bright flex items-center justify-between gap-3 text-xs shadow-lg animate-fade-in z-30">
+        <div role="alert" className="mx-4 mt-3 p-3 rounded-xl bg-alert/15 border border-alert/30 text-paper-bright flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg animate-fade-in z-30">
           <div className="flex items-center gap-2.5 min-w-0">
             <ShieldAlert size={16} className="text-alert shrink-0" />
-            <span className="truncate">
+            <span className="break-all">
               {topError.toLowerCase().includes("yönetici") ||
               topError.toLowerCase().includes("admin") ||
               topError.toLowerCase().includes("windivert") ||
@@ -264,7 +197,8 @@ export default function App() {
             <button
               type="button"
               onClick={() => setTopError(null)}
-              className="text-paper-muted hover:text-paper-bright cursor-pointer p-1"
+              aria-label={lang === "tr" ? "Uyarıyı kapat" : "Dismiss alert"}
+              className="text-paper-muted hover:text-paper-bright cursor-pointer p-3"
             >
               <X size={14} />
             </button>
@@ -273,14 +207,16 @@ export default function App() {
       )}
 
       {/* ── 3. Tam Ekran Geniş Çalışma Alanı ── */}
-      <main className="flex-1 overflow-y-auto p-5 lg:p-6 min-h-0 relative">
-        <div className="mx-auto max-w-6xl h-full">
+      <main id="workspace-main" className="workspace-main" tabIndex={-1}>
+        <div className="workspace-page">
           {view === "dashboard" && (
             <Dashboard
               status={status}
               running={running}
               logs={logs}
-              pushLog={pushLog}
+              onNavigate={setView}
+              busy={toggling}
+              onToggle={() => void quickToggle()}
               selectedProfile={selectedProfile}
               onSelectedProfileChange={setSelectedProfile}
             />
@@ -299,6 +235,8 @@ export default function App() {
           )}
         </div>
       </main>
+        </div>
+      </div>
 
       {/* ── 4. Kılavuz Çekmecesi (Slide-over Drawer) ── */}
       <GuideDrawer open={guideOpen} onClose={() => setGuideOpen(false)} />
