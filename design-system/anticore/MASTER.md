@@ -1,5 +1,11 @@
 # Design System Master File
 
+## Compact connection console — current revision 2026-09-08
+
+Supersedes prior power-console geometry. A horizontal connection card pairs left-aligned state and explanation with a filled, rounded-square power control. Profile selection remains adjacent; measured counters share a single inset strip. Shared panels use 20px radius, active navigation uses a restrained theme tint, and utility shortcuts use inset icon surfaces. Below 430px the power control becomes a full-width 56px action. Retain bundled Fira Sans / Fira Code and installed theme colors: void #06080C, card #0E131F, paper #F1F5F9, muted #94A3B8, accent #00F59B. Light actions use existing live-dim #047857 on white for 5.48:1 contrast. No new dependencies or data behavior changes. Reduced motion covers the connection workspace and navigation.
+
+Local design research matched network monitoring and the existing Fira pairing; its marketing layout and glass effects were excluded from this utility. Verified in Edge at 390, 768 and 1080px, plus light/dark desktop captures. Fixture data is only for acceptance tests.
+
 ## Power console — revision 2026-09-08
 
 User rejected the slate workspace. Restore the installed theme accent and compact instrument character without restoring fabricated metrics. Signature: a large physical-style power control, paired with profile selection. Fira Sans semibold titles, Fira Code counters. Existing palette: void #06080C, card #0E131F, paper #F1F5F9, live #00F59B; use theme tokens, not hardcoded component colors. Radius 16px, 8px spacing grid, 44px minimum actions. Unknown backend state stays visibly unknown and cannot start. This section supersedes the slate-blue visual direction below.

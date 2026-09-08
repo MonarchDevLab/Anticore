@@ -1,5 +1,9 @@
 # SYSTEM MAP
 
+## Compact connection console — 2026-09-08 (current visual revision)
+- `workspace.css`: horizontal status/action composition; 128px rounded-square power control, 104px at intermediate widths, full-width 56px below 430px. Shared radius 20px. Native theme accent retained; light actions use `--color-live-dim` on `--color-surface-card`. Fira Sans/Code remain local. A single inset counter strip and tinted navigation establish hierarchy. This supersedes prior geometry and light action tokens below.
+- Existing Edge acceptance now targets `.power-switch` for contrast; sample ratios 5.48–13.87:1. Start/profile locks, unknown state, target reset and 390/768/1080px overflow checks pass. No backend changes.
+
 ## Setup and distribution — 2026-09-08
 - Explicit Tauri resource map installs `anticore-cli.exe`, WinDivert DLL/SYS and WebView2 loader beside the GUI, not `_up_` directories. Packaging backs up replaced outputs, verifies hashes and removes stale signature sidecars to backup. Detached startup captures local output and waits for driver-ready output; query failures are IPC errors rather than false stopped state.
 

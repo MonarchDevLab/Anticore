@@ -6,7 +6,7 @@ async function checkContrast(page) {
  const ratios = await page.evaluate(() => {
   const rgb = value => value.match(/[\d.]+/g).slice(0,3).map(Number);
   const luminance = value => rgb(value).map(v => {v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0);
-  return ['.profile-description','.chart-caption','.nav-label','.workspace-button.primary'].map(selector=>{
+  return ['.profile-description','.chart-caption','.nav-label','.power-switch'].map(selector=>{
    const el=document.querySelector(selector); let parent=el;
    while(parent && getComputedStyle(parent).backgroundColor==='rgba(0, 0, 0, 0)') parent=parent.parentElement;
    const a=luminance(getComputedStyle(el).color), b=luminance(getComputedStyle(parent).backgroundColor);
