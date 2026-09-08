@@ -11,13 +11,26 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 24.2 Sahada canlı ISP testi ve kullanıcı kabulü.
+- `[ ]` 24.4 Sahada canlı ISP testi ve kullanıcı kabulü.
 
-### Faz 24 — UI Hassas Geometri ve Donanım Anahtarı (Toggle) Hizalama Restorasyonu (TAMAMLANDI)
+### Faz 24 — UI Hassas Geometri & Kurulum/Çalıştırma Modları Restorasyonu + Release ve Portable Paket Dağıtımı (TAMAMLANDI)
 - `[x]` 24.1 (2026-09-04) **Modern Donanım Toggle Anahtar Geometrisi & Taşıma Hatası Düzeltmesi (`globals.css`, `SettingsView.tsx`):**
   - `.toggle-thumb` içindeki eksik `left` tanımı sebebiyle `<button>` varsayılan `text-align: center` merkezlemesinden ötürü butonun dışına taşan (aktifte +8.8px sağa taşma, pasifte ortada asılı kalma) CSS matematik hatası giderildi.
   - Kapsül `display: inline-flex`, `align-items: center`, `padding: 0`, `box-sizing: border-box` yapısına kavuşturuldu; `top: 2px`, `left: 2px`, `1.125rem` (18px) thumb geometrisi ve aktifte `translateX(1.25rem)` ile her 4 yönden kusursuz 3px donanım payı sağlandı.
   - `button[role="switch"]` öğelerine `type="button"` eklendi; `npm run build` ile doğrulandı.
+- `[x]` 24.2 (2026-09-04) **Kurulum ve Çalıştırma Modları (Servis & Bağımsız) Derin Onarımı (`commands.rs`, `Setup.tsx`, `tauri.ts`):**
+  - *Kök Neden Tespiti:* Windows NTFS'in büyük/küçük harf duyarsızlığı sebebiyle `Anticore.exe` (15.3 MB GUI) ikilisi `dir.join("anticore.exe")` aramasında kendini motor sanarak kendi kendini servis ve arka plan motoru olarak çalıştırmaktaydı; bu yüzden Windows SCM servis başlatmada (Error 1053) düşüyor ve bağımsız başlatmada yeni GUI penceresi fırlıyordu.
+  - `find_motor_exe` fonksiyonu güncellendi; panelin kendisini (`current_exe()`) ve 5MB'dan büyük GUI dosyalarını motor olarak seçmesi kesin olarak engellendi; `anticore-cli.exe` ve `bin/anticore.exe` (371 KB CLI motoru) mutlak öncelikle bağlandı.
+  - `is_detached_running` fonksiyonu `tasklist` çıktısında hem `anticore.exe` hem `anticore-cli.exe` durumunu yakalayacak şekilde `to_lowercase().contains("anticore")` ile güçlendirildi.
+  - `install_service`, `uninstall_service`, `detached_start`, `detached_stop` komutlarına yönetici oturum doğrulaması (`is_running_as_admin()`) eklendi.
+  - `Setup.tsx` içerisine `api.checkIsAdmin()` kontrolü, Yönetici Uyarısı bilgi şeridi ve tek tıkla UAC yükselten "Yönetici Olarak Yeniden Başlat" butonu entegre edildi; yetkisiz çağrılarda açıklayıcı hata mesajı sağlandı.
+- `[x]` 24.3 (2026-09-04) **Yeniden Üretilen Release Binary'leri ve Taşınabilir Paket Dağıtımı (`dist/`, `dist-portable/`, `scripts/package.ps1`):**
+  - `Anticore.exe` (15.3 MB GUI) ve `anticore-desktop.exe` güncel toggle ve kurulum düzeltmeleriyle derlendi.
+  - `anticore-cli.exe` (371 KB CLI motoru) kök dizin, `bin/`, `dist/` ve `dist-portable/` içine yerleştirildi.
+  - `WinDivert.dll`, `WinDivert64.sys` ve `WebView2Loader.dll` sürücüleri `bin/` ve `dist-portable/` içerisine senkronize edildi.
+  - `Anticore_0.3.0_x64-setup.exe` (NSIS) ve `Anticore_0.3.0_x64_en-US.msi` (Wix MSI) yeniden üretildi.
+  - `Anticore_0.3.0_x64-portable.zip` (6.18 MB) kurulumsuz paket olarak paketlendi ve doğrulandı.
+  - Doğrulama: `cargo test --workspace` (46/46 yeşil), `cargo test` desktop (9/9 yeşil), `npm run build` (0 hata).
 
 ### Faz 23 — Kod Tabanı Derin Denetimi, ECH/Kyber 2048B Yükseltmesi, Asenkron Kilitlenmesiz DNS & Güvenli Mimari Restorasyonu (TAMAMLANDI)
 - `[x]` 23.1 (2026-09-04) **Büyük Paket ve Modern TLS/ECH/Kyber El Sıkışma Restorasyonu (`dispatch.rs`):**

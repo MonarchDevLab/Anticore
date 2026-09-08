@@ -13,7 +13,9 @@ node_modules/
 # bunlar tauri.conf.json bundle.resources'un derleme-zamanı girdisidir;
 # untrack etmeden önce CI'da vendor-fetch adımı gerekir (henüz yok).
 /anticore.exe
+/anticore-cli.exe
 /anticore-desktop.exe
+/bin/
 
 # Yerel çalışma dosyaları
 *.log

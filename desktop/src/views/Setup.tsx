@@ -5,6 +5,8 @@ import {
   LoaderCircle,
   Play,
   RefreshCw,
+  Shield,
+  ShieldAlert,
   Square,
   Zap,
 } from "lucide-react";
@@ -22,6 +24,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<"install" | "uninstall" | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   const refresh = useCallback(() => {
     void api.getSetupStatus().then(setStatus);
@@ -30,6 +33,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
   useEffect(() => {
     refresh();
     void api.listProfiles().then(setProfiles);
+    void api.checkIsAdmin().then(setIsAdmin);
   }, [refresh]);
 
   useEffect(() => {
@@ -41,6 +45,13 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
     setBusy(kind);
     setError(null);
     try {
+      if (isAdmin === false) {
+        throw new Error(
+          lang === "tr"
+            ? "Yönetici yetkisi gerekiyor. Lütfen 'Yönetici Olarak Yeniden Başlat' butonunu kullanın."
+            : "Administrator privileges required. Please use 'Restart as Administrator' button."
+        );
+      }
       await fn();
       pushLog(okMsg);
       refresh();
@@ -93,6 +104,43 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
               ]
         }
       />
+
+      {isAdmin === false && (
+        <div
+          role="alert"
+          className="p-4 rounded-xl bg-warn/15 border border-warn/35 text-paper-bright flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-lg bg-warn/20 text-warn shrink-0 flex items-center justify-center">
+              <ShieldAlert size={20} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-warn tracking-wide uppercase">
+                {t("privilege_required_title")}
+              </div>
+              <div className="text-xs text-paper-muted mt-0.5">
+                {lang === "tr"
+                  ? "Windows Servisi kurmak veya arka planda bağımsız motor çalıştırmak için Yönetici yetkisi gereklidir."
+                  : "Administrator privileges are required to install a Windows Service or run a detached engine."}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await api.restartAsAdmin();
+              } catch (err) {
+                setError(String(err));
+              }
+            }}
+            className="btn btn-primary px-3.5 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer shrink-0 self-end sm:self-center"
+          >
+            <Shield size={14} />
+            <span>{t("dash_admin_btn")}</span>
+          </button>
+        </div>
+      )}
 
       {/* Windows Servisi */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">

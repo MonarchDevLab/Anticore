@@ -176,6 +176,7 @@ export const api = {
   startEngine: (profileId: string) => invoke<void>("start_engine", { profileId }),
   stopEngine: () => invoke<void>("stop_engine"),
   restartAsAdmin: () => invoke<void>("restart_as_admin"),
+  checkIsAdmin: () => invoke<boolean>("check_is_admin"),
   probeTarget: (host: string) => invoke<ProbeDto>("probe_target", { req: { host } }),
   getDnsServers: () => invoke<{ servers: string[] }>("get_dns_servers"),
   getAdapterDnsInfo: () => invoke<AdapterDnsInfo[]>("get_adapter_dns_info"),

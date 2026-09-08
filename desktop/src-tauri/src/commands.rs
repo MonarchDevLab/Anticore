@@ -137,37 +137,65 @@ pub fn silent_command(program: &str) -> std::process::Command {
 }
 
 /// Motor ikili dosyasını bulur ve mutlak/temiz bir dosya yoluna çözümler.
+/// GUI panel ikili dosyasını asla motor olarak kabul etmez.
 fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
+    let current_exe = std::env::current_exe().ok();
     let mut candidates: Vec<PathBuf> = Vec::new();
-    if let Ok(exe) = std::env::current_exe() {
+    if let Some(ref exe) = current_exe {
         if let Some(dir) = exe.parent() {
-            candidates.push(dir.join("anticore.exe"));
             candidates.push(dir.join("anticore-cli.exe"));
             candidates.push(dir.join("bin").join("anticore.exe"));
+            candidates.push(dir.join("engine").join("target").join("release").join("anticore.exe"));
+            candidates.push(dir.join("dist").join("anticore-cli.exe"));
+            candidates.push(dir.join("anticore.exe"));
             if let Some(parent) = dir.parent() {
-                candidates.push(parent.join("anticore.exe"));
+                candidates.push(parent.join("anticore-cli.exe"));
                 candidates.push(parent.join("bin").join("anticore.exe"));
+                candidates.push(parent.join("engine").join("target").join("release").join("anticore.exe"));
+                candidates.push(parent.join("dist").join("anticore-cli.exe"));
             }
         }
     }
     for rel in [
+        "anticore-cli.exe",
+        "bin/anticore.exe",
+        "engine/target/release/anticore.exe",
+        "dist/anticore-cli.exe",
         "../../engine/target/release/anticore.exe",
-        "../../engine/target/debug/anticore.exe",
         "../../../engine/target/release/anticore.exe",
-        "../../../engine/target/debug/anticore.exe",
     ] {
-        if let Ok(exe) = std::env::current_exe() {
+        if let Some(ref exe) = current_exe {
             if let Some(dir) = exe.parent() {
                 candidates.push(dir.join(rel));
             }
         }
         candidates.push(PathBuf::from(rel));
     }
-    candidates.retain(|p| p.is_file());
+    candidates.retain(|p| {
+        if !p.is_file() {
+            return false;
+        }
+        // Panelin kendisini motor olarak kabul etmeyi kesinlikle engelle
+        if let Some(ref cur) = current_exe {
+            if let (Ok(c1), Ok(c2)) = (p.canonicalize(), cur.canonicalize()) {
+                if c1 == c2 {
+                    return false;
+                }
+            }
+        }
+        // GUI dosyası (> 5MB) motor olamaz (CLI ~370KB'dır)
+        if let Ok(meta) = p.metadata() {
+            if meta.len() > 5 * 1024 * 1024 {
+                return false;
+            }
+        }
+        true
+    });
+
     let found = candidates
         .into_iter()
         .next()
-        .ok_or_else(|| "anticore.exe bulunamadı (motor ikili dosyası panel yanında olmalı)".to_string())?;
+        .ok_or_else(|| "anticore-cli.exe bulunamadı (CLI motor dosyası panel yanında olmalı)".to_string())?;
 
     if let Ok(canon) = found.canonicalize() {
         let s = canon.to_string_lossy().to_string();
@@ -204,8 +232,8 @@ fn is_detached_running(app: &AppHandle) -> bool {
                     .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
                     .output()
                     .map(|o| {
-                        let out = String::from_utf8_lossy(&o.stdout);
-                        out.contains("anticore.exe")
+                        let out = String::from_utf8_lossy(&o.stdout).to_lowercase();
+                        out.contains("anticore")
                     })
                     .unwrap_or(false)
             })
@@ -228,6 +256,10 @@ pub fn get_setup_status(app: AppHandle) -> SetupStatusDto {
 
 #[tauri::command]
 pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("Windows servisi kurmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+    }
+
     // Çalışan panel motoruyla çakışmayı önle
     app.state::<Engine>().stop().ok();
     let motor = find_motor_exe(&app)?;
@@ -282,6 +314,10 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
 
 #[tauri::command]
 pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("Servisi kaldırmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+    }
+
     let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
     std::thread::sleep(std::time::Duration::from_millis(1000));
     let out = silent_command("sc")
@@ -295,10 +331,13 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-
 #[tauri::command]
 pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> {
     use std::process::Stdio;
+
+    if !is_running_as_admin() {
+        return Err("Bağımsız motor çalıştırmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+    }
 
     if app.state::<Engine>().running.load(Ordering::SeqCst) {
         return Err("Panel motoru çalışıyor; önce onu durdurun".into());
@@ -310,14 +349,16 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
 
     let motor = find_motor_exe(&app)?;
     let data_dir = app_dir(&app);
+    let work_dir = motor.parent().unwrap_or(&data_dir);
 
-    let child = silent_command(&motor.to_string_lossy())
+    let mut cmd = silent_command(&motor.to_string_lossy());
+    cmd.current_dir(work_dir)
         .args(["run", "--profile", &profile_id, "--data-dir"])
         .arg(&data_dir)
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|e| format!("motor başlatılamadı: {e}"))?;
+        .stderr(Stdio::null());
+
+    let child = cmd.spawn().map_err(|e| format!("motor başlatılamadı: {e}"))?;
 
     std::fs::write(
         app_dir(&app).join("detached.pid"),
@@ -335,6 +376,10 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
 
 #[tauri::command]
 pub fn detached_stop(app: AppHandle) -> Result<(), String> {
+    if !is_running_as_admin() {
+        return Err("Bağımsız motoru durdurmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+    }
+
     let pid_file = app_dir(&app).join("detached.pid");
     let pid = std::fs::read_to_string(&pid_file)
         .ok()
