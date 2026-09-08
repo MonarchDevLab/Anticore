@@ -125,9 +125,7 @@ impl WinDivert {
 
         let handle = unsafe { open_fn(fbytes.as_ptr(), WINDIVERT_LAYER_NETWORK, 0, flags) };
         if handle == (-1isize) || handle == 0 {
-            return Err(format!(
-                "WinDivertOpen başarısız (filter={filter}). Yönetici hakları gerekiyor olabilir."
-            ));
+            return Err("WinDivert sürücüsü başlatılamadı: Yönetici hakları gerekiyor.".into());
         }
 
         Ok(Self {

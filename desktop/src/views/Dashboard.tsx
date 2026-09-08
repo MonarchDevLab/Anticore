@@ -17,6 +17,9 @@ import {
   Gauge,
   CheckCircle2,
   Lock,
+  ShieldAlert,
+  Shield,
+  X,
 } from "lucide-react";
 import { api, type Profile, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
@@ -156,14 +159,68 @@ export default function Dashboard({
       .join(" ");
   }, [waveform, maxWave]);
 
+  const isPrivilegeError = useMemo(() => {
+    if (!error) return false;
+    const lower = error.toLowerCase();
+    return (
+      lower.includes("yönetici") ||
+      lower.includes("admin") ||
+      lower.includes("windivert") ||
+      lower.includes("filter=") ||
+      lower.includes("hakları") ||
+      lower.includes("privilege") ||
+      lower.includes("access is denied") ||
+      lower.includes("yetki")
+    );
+  }, [error]);
+
   return (
     <div className="space-y-5 pb-6">
       {error && (
-        <div role="alert" className="p-3 rounded-xl bg-alert/15 border border-alert/30 text-xs font-semibold text-alert flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-alert underline cursor-pointer text-[11px]">
-            Kapat
-          </button>
+        <div
+          role="alert"
+          className="p-4 rounded-xl bg-alert/15 border border-alert/35 text-paper-bright flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg backdrop-blur-md"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-lg bg-alert/20 text-alert shrink-0 flex items-center justify-center">
+              <ShieldAlert size={20} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-alert tracking-wide uppercase">
+                {isPrivilegeError ? t("privilege_required_title") : t("dash_state_title")}
+              </div>
+              <div className="text-xs text-paper-muted mt-0.5 break-words">
+                {isPrivilegeError ? t("dash_admin_warn") : error}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            {isPrivilegeError && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await api.restartAsAdmin();
+                  } catch (err) {
+                    setError(String(err));
+                  }
+                }}
+                className="btn btn-primary px-3.5 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <Shield size={14} />
+                <span>{t("dash_admin_btn")}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="px-2.5 py-1.5 rounded-lg text-paper-muted hover:text-paper-bright hover:bg-white/[0.05] text-xs cursor-pointer transition-colors flex items-center gap-1"
+            >
+              <X size={13} />
+              <span>{t("btn_close")}</span>
+            </button>
+          </div>
         </div>
       )}
 

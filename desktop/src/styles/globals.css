@@ -669,3 +669,368 @@ html.theme-titanium {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   THEME MORPHING SYSTEM: 6 BESPOKE ARCHITECTURAL WORLDS
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. AMBER CRT: 1980s Retro VT220 Mainframe Terminal ── */
+[data-theme="amber"],
+html.theme-amber {
+  font-family: var(--font-mono) !important;
+}
+
+[data-theme="amber"] *,
+html.theme-amber * {
+  font-family: var(--font-mono) !important;
+}
+
+/* CRT Scanline Overlay */
+[data-theme="amber"] #root::after,
+html.theme-amber #root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  opacity: 0.85;
+}
+
+/* CRT Phosphor Atmosphere & Vignette */
+[data-theme="amber"] #root::before,
+html.theme-amber #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    radial-gradient(ellipse at center, rgba(255, 176, 32, 0.05) 0%, rgba(12, 10, 6, 0.95) 75%, #050402 100%);
+  pointer-events: none;
+}
+
+/* Phosphor Text Glow */
+[data-theme="amber"] h1,
+[data-theme="amber"] h2,
+[data-theme="amber"] h3,
+[data-theme="amber"] .text-live,
+[data-theme="amber"] [class*="text-paper-bright"] {
+  text-shadow: 0 0 8px rgba(255, 176, 32, 0.5) !important;
+}
+
+/* 2px Sharp Terminal Geometry */
+[data-theme="amber"] .card,
+[data-theme="amber"] .card-subtle,
+[data-theme="amber"] div[class*="rounded-"],
+html.theme-amber .card,
+html.theme-amber div[class*="rounded-"] {
+  border-radius: 2px !important;
+  border: 1px solid rgba(255, 176, 32, 0.35) !important;
+  box-shadow: 0 0 14px rgba(255, 176, 32, 0.06), inset 0 0 10px rgba(255, 176, 32, 0.03) !important;
+  background: rgba(18, 14, 8, 0.92) !important;
+}
+
+/* Terminal Key Buttons */
+[data-theme="amber"] .btn,
+[data-theme="amber"] button[class*="rounded-"],
+html.theme-amber .btn,
+html.theme-amber button[class*="rounded-"] {
+  border-radius: 2px !important;
+  border: 1px solid rgba(255, 176, 32, 0.55) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  box-shadow: inset 0 1px 0 rgba(255, 176, 32, 0.25), 0 2px 4px rgba(0,0,0,0.8) !important;
+}
+
+[data-theme="amber"] .btn-primary,
+html.theme-amber .btn-primary {
+  background: #FFB020 !important;
+  color: #0C0A06 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 18px rgba(255, 176, 32, 0.5) !important;
+}
+
+[data-theme="amber"] .status-pill,
+[data-theme="amber"] .badge,
+[data-theme="amber"] span[class*="rounded-"] {
+  border-radius: 2px !important;
+  text-transform: uppercase !important;
+}
+
+
+/* ── 2. CYBERPUNK VOLT: 0px Razor-Sharp Industrial Mecha ── */
+[data-theme="cyberpunk"] #root::before,
+html.theme-cyberpunk #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: 
+    linear-gradient(rgba(255, 230, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 230, 0, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-color: #08090D;
+  pointer-events: none;
+}
+
+/* 0px Jilet Keskin Çelik Geometri */
+[data-theme="cyberpunk"] .card,
+[data-theme="cyberpunk"] .card-subtle,
+[data-theme="cyberpunk"] div[class*="rounded-"],
+html.theme-cyberpunk .card,
+html.theme-cyberpunk div[class*="rounded-"] {
+  border-radius: 0px !important;
+  border: 1px solid rgba(255, 230, 0, 0.2) !important;
+  border-top: 2px solid #FFE600 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 230, 0, 0.12) !important;
+  background: rgba(14, 17, 24, 0.94) !important;
+}
+
+/* Endüstriyel Tetik Butonları */
+[data-theme="cyberpunk"] .btn,
+[data-theme="cyberpunk"] button[class*="rounded-"],
+html.theme-cyberpunk .btn,
+html.theme-cyberpunk button[class*="rounded-"] {
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  border: 1px solid rgba(255, 230, 0, 0.4) !important;
+}
+
+[data-theme="cyberpunk"] .btn-primary,
+html.theme-cyberpunk .btn-primary {
+  background: #FFE600 !important;
+  color: #08090D !important;
+  border-color: #FFE600 !important;
+  box-shadow: 0 0 24px rgba(255, 230, 0, 0.5) !important;
+}
+
+[data-theme="cyberpunk"] .status-pill,
+[data-theme="cyberpunk"] .badge,
+[data-theme="cyberpunk"] span[class*="rounded-"],
+[data-theme="cyberpunk"] input,
+[data-theme="cyberpunk"] select {
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+}
+
+
+/* ── 3. COBALT MATRIX: C2 Naval War-Room & Sonar Console ── */
+[data-theme="cobalt"] #root::before,
+html.theme-cobalt #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 50% 40%, rgba(0, 229, 255, 0.09) 0%, rgba(0, 229, 255, 0.02) 50%, transparent 75%),
+    linear-gradient(rgba(0, 229, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 34px 34px, 34px 34px;
+  background-color: #050B14;
+  pointer-events: none;
+}
+
+/* 6px Taktik Donanma Konsol Çerçeveleri & Sol Polar Çapa */
+[data-theme="cobalt"] .card,
+[data-theme="cobalt"] .card-subtle,
+[data-theme="cobalt"] div[class*="rounded-"],
+html.theme-cobalt .card,
+html.theme-cobalt div[class*="rounded-"] {
+  border-radius: 6px !important;
+  border: 1px solid rgba(0, 229, 255, 0.22) !important;
+  border-left: 3px solid #00E5FF !important;
+  box-shadow: 0 8px 32px rgba(2, 6, 15, 0.85), 0 0 20px rgba(0, 229, 255, 0.07) !important;
+  background: rgba(11, 21, 38, 0.92) !important;
+}
+
+[data-theme="cobalt"] .btn,
+[data-theme="cobalt"] button[class*="rounded-"],
+html.theme-cobalt .btn,
+html.theme-cobalt button[class*="rounded-"] {
+  border-radius: 5px !important;
+  border: 1px solid rgba(0, 229, 255, 0.35) !important;
+  letter-spacing: 0.03em !important;
+}
+
+[data-theme="cobalt"] .btn-primary,
+html.theme-cobalt .btn-primary {
+  background: #00E5FF !important;
+  color: #03121F !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.45) !important;
+}
+
+[data-theme="cobalt"] .status-pill,
+[data-theme="cobalt"] .badge,
+[data-theme="cobalt"] span[class*="rounded-"],
+[data-theme="cobalt"] input,
+[data-theme="cobalt"] select {
+  border-radius: 5px !important;
+}
+
+
+/* ── 4. AMETHYST NEBULA: 24px Ultra Organic Frosted Glass ── */
+[data-theme="amethyst"] #root::before,
+html.theme-amethyst #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    radial-gradient(ellipse at 15% 20%, rgba(179, 136, 255, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(232, 121, 249, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.09) 0%, transparent 65%);
+  background-color: #090611;
+  pointer-events: none;
+}
+
+/* 24px Ultra Yumuşak Organik Kavis & Ağır Buzlu Cam */
+[data-theme="amethyst"] .card,
+[data-theme="amethyst"] .card-subtle,
+[data-theme="amethyst"] div[class*="rounded-"]:not([class*="rounded-full"]),
+html.theme-amethyst .card,
+html.theme-amethyst div[class*="rounded-"]:not([class*="rounded-full"]) {
+  border-radius: 1.5rem !important; /* 24px */
+  background: linear-gradient(145deg, rgba(26, 18, 50, 0.72) 0%, rgba(15, 10, 32, 0.88) 100%) !important;
+  backdrop-filter: blur(36px) saturate(190%) !important;
+  border: 1px solid rgba(179, 136, 255, 0.22) !important;
+  border-top-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 16px 48px rgba(6, 2, 16, 0.8), 0 0 35px rgba(179, 136, 255, 0.12) !important;
+}
+
+/* Kapsül Hap Butonlar */
+[data-theme="amethyst"] .btn,
+[data-theme="amethyst"] button[class*="rounded-"],
+html.theme-amethyst .btn,
+html.theme-amethyst button[class*="rounded-"] {
+  border-radius: 9999px !important;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[data-theme="amethyst"] .btn-primary,
+html.theme-amethyst .btn-primary {
+  background: linear-gradient(135deg, #B388FF 0%, #E879F9 100%) !important;
+  color: #17042C !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 22px rgba(179, 136, 255, 0.5) !important;
+  border: none !important;
+}
+
+[data-theme="amethyst"] .status-pill,
+[data-theme="amethyst"] .badge,
+[data-theme="amethyst"] span[class*="rounded-"] {
+  border-radius: 9999px !important;
+}
+
+[data-theme="amethyst"] input,
+[data-theme="amethyst"] select {
+  border-radius: 1rem !important;
+}
+
+
+/* ── 5. TITANIUM LABORATORY: Cleanroom Surgical Light Mode ── */
+html.light #root::before,
+[data-theme="titanium"] #root::before,
+[data-theme="light"] #root::before,
+html.theme-titanium #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(#CBD5E1 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  background-color: #F8FAFC !important;
+  pointer-events: none;
+}
+
+/* 12px Hassas CNC İşlenmiş Beyaz Plakalar */
+html.light .card,
+[data-theme="titanium"] .card,
+[data-theme="light"] .card,
+html.theme-titanium .card,
+html.light div[class*="rounded-"]:not([class*="rounded-full"]),
+[data-theme="titanium"] div[class*="rounded-"]:not([class*="rounded-full"]),
+html.theme-titanium div[class*="rounded-"]:not([class*="rounded-full"]) {
+  border-radius: 0.75rem !important; /* 12px */
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+html.light .card-subtle,
+[data-theme="titanium"] .card-subtle,
+html.theme-titanium .card-subtle {
+  border-radius: 0.625rem !important;
+  background: #F1F5F9 !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+html.light .btn,
+[data-theme="titanium"] .btn,
+html.theme-titanium .btn,
+html.light button[class*="rounded-"],
+[data-theme="titanium"] button[class*="rounded-"],
+html.theme-titanium button[class*="rounded-"] {
+  border-radius: 0.5rem !important;
+}
+
+html.light .btn-primary,
+[data-theme="titanium"] .btn-primary,
+html.theme-titanium .btn-primary {
+  background: #059669 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 10px rgba(5, 150, 105, 0.28) !important;
+}
+
+html.light .topbar,
+[data-theme="titanium"] .topbar,
+html.theme-titanium .topbar {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+html.light input,
+[data-theme="titanium"] input,
+html.theme-titanium input,
+html.light select,
+[data-theme="titanium"] select,
+html.theme-titanium select {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+  border-radius: 0.5rem !important;
+}
+
+
+/* ── 6. OBSIDIAN EMERALD: 16px Aerospace CNC Chassis ── */
+[data-theme="obsidian"] #root::before,
+html.theme-obsidian #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 50% -10%, rgba(0, 245, 155, 0.06) 0%, transparent 60%),
+    radial-gradient(circle at 80% 90%, rgba(0, 210, 255, 0.03) 0%, transparent 45%);
+  background-color: #06080C;
+  pointer-events: none;
+}
+
+[data-theme="obsidian"] .card,
+html.theme-obsidian .card {
+  border-radius: 1rem !important; /* 16px */
+  background: linear-gradient(180deg, rgba(17, 24, 38, 0.75) 0%, rgba(12, 16, 26, 0.9) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-top-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}

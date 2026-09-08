@@ -2,17 +2,16 @@
 
 ## Aktif Oturum (Son Oturumun Detayları)
 - **Tarih:** 2026-09-04
-- **Gerçekleşenler (Faz 16 & Faz 17 - 2026 UI Trend Temaları & Sistem Doğrulaması):**
-  1. Arka Plan CMD Penceresi Yalıtımı: `CREATE_NO_WINDOW` (0x08000000) ve `silent_command` ile tüm Windows komutları (`sc`, `tasklist`, `schtasks`, `taskkill`) sessizleştirildi; GUI çalışırken veya servis açılırken hiçbir konsol penceresinin yanıp sönmemesi garanti altına alındı.
-  2. Windows Servis ve Başlangıç Güçlendirmesi: `find_motor_exe` mutlak yol ve canonicalize desteği aldı; `sc create` sözdizim hatası düzeltildi; `set_startup_enabled` Windows Task Scheduler (`schtasks /Create /TN "Anticore" /RL HIGHEST /SC ONLOGON /F`) ile UAC engelsiz yönetici başlangıcına yükseltildi. `--hidden` argümanı bağlandı.
-  3. 100+ TR Engelli Hedef & Topluluk Veritabanı: Varsayılan liste 100+ alan adına genişletildi, 6 kategoriye ayrıldı. Bol-van zapret `turkey_dns.txt` kaynağından tek tıkla yeni engelli siteleri çeken asenkron IPC ve şık UI kartı entegre edildi.
-  4. Pro Matrix Gelişmiş Telemetri & Donanım Kokpiti: L3 WinDivert Ring Buffer, Çekirdek gecikmesi (<0.05ms), 5 aşamalı cerrahi paket boru hattı ve anlık hedef sağlık matrisi dashboard'a eklendi.
-  5. 6 Yüksek Karakterli Donanım Teması: 2026 developer araçları trendleri (Raycast, Linear, Warp, Little Snitch 6) doğrultusunda Obsidian Emerald, Amber CRT, Cobalt Matrix, Cyberpunk Volt, Amethyst Nebula, Titanium Laboratory ve Sistem modu entegre edildi.
-  6. Eksiksiz Özellik & Sıfır Yer Tutucu: Tüm sahte/mock/TODO kodlar temizlendi; butonların tamamı gerçek arka uç Windows/Rust WinDivert API'lerine bağlandı.
-  7. Paketleme & Dağıtım: `Anticore.exe` (15.2 MB GUI), `anticore-cli.exe` (371 KB CLI), `Anticore_0.3.0_x64-setup.exe` (4.3 MB), `Anticore_0.3.0_x64_en-US.msi` (6.0 MB) ve `Anticore_0.3.0_x64-portable.zip` (6.1 MB) derlenip paketlendi.
-  8. Doğrulama: `cargo test --workspace` 46/46 yeşil, `npm run build` 0 hata (1537 modül), `cargo check` (desktop/src-tauri) 0 hata.
+- **Gerçekleşenler (Faz 21 - Sadeleştirilmiş Yönetici Bildirimi & 6 Tam Morfolojik Tema Dünyası):**
+  1. WinDivert Başlatma Uyarısı Sadeleştirildi: `divert.rs` içindeki ham filtre dizesi ve dahili sürücü detayları gizlendi; yerine "Yönetici İzni Gerekiyor" başlığı ve sade açıklama getirildi.
+  2. Yönetici Olarak Yeniden Başlat Eylemi: `Dashboard.tsx` ve `App.tsx` üst kontrol çubuğuna, yönetici yetkisi eksik olduğunda tek tıkla UAC yükseltmeli yeniden başlatan (`api.restartAsAdmin()`) buton şık bir şekilde entegre edildi.
+  3. 6 Tam Morfolojik & Atmosferik Bağımsız Tema Dünyası (`globals.css`, `theme.ts`): Temalar yüzeysel renk paleti olmaktan çıkarıldı; köşe geometrisi (0px jilet keskin, 2px CRT, 6px taktik, 24px organik hap, 12px lab), arka plan dokusu (CRT scanline katmanı, mecha HUD gridi, sonar radarı dairesel ızgarası, çift pembe-eflatun nebula, mühendislik nokta ızgarası), buton hissiyatı ve tipografi (Amber CRT için zorunlu `font-mono` ve kehribar fosfor ışıması) ile tamamen bağımsız 6 dünyaya dönüştürüldü.
+  4. Doğrulama: `npm run build` 0 hata, `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 8/8 yeşil; release binary (`Anticore.exe`), NSIS kurulumcu, MSI paketi ve taşınabilir zip paketi güncellendi.
 
 ## Mimari Kararlar
+- `[KARAR-018]` **Sadeleştirilmiş Hata Katmanı & Çok Boyutlu Morfolojik Tema Mimarisi:**
+  1. Ham paket filtreleri (`(filter=outbound and tcp and (tcp.DstPort == 443 or tcp.DstPort == 80))`) kullanıcı arayüzüne sızdırılmamalıdır. Hata mesajı çekirdek katmanında (`divert.rs`) sadeleştirildi ve arayüzde `isPrivilegeError` deseniyle yakalanarak UAC yeniden başlatma (`restartAsAdmin`) eylemiyle birleştirildi.
+  2. Temalar yalnızca renk tokenlarını (`--color-live`, `--color-void`) değiştirdiğinde kullanıcı için yüzeysel kalır. Tema sistemi; köşe yarıçapı (`border-radius`), kenarlık stili (üst sarı lazer, sol polar çapa, amber fosfor), zemin dokusu (CRT scanline, HUD grid, sonar radar, nebula, dot grid), tipografi (zorunlu monospace terminal vs. modern sans vs. mecha) ve derinlik modeliyle (buzlu cam vs. sert metal) donatılmış 6 eksiksiz morfolojik dünyaya dönüştürüldü.
 - `[KARAR-017]` **useSyncExternalStore ile Reaktif UI Senkronizasyonu & Doğrudan Rust Pencere Yönetimi:**
   1. Bileşen başına `useState` ile tutulan dil ve tema durumları, uygulamanın farklı pencerelerinde veya ayrık bileşenlerinde (Titlebar vs. Ayarlar) senkronizasyon kaybına yol açıyordu. React 18 `useSyncExternalStore` ile tekil hafıza deposu kurularak tüm bileşenlerin anlık yeniden çizilmesi (re-render) sağlandı.
   2. Tailwind CSS v4 `@theme` yapısında semantik renklerin (`--color-live`, `--color-sky`, `--color-paper` vb.) tüm donanım temalarında (`obsidian`, `cyberpunk`, `amber`, `cobalt`, `amethyst`, `titanium`) tam karşılıkları tanımlanarak CSS basamağı güvenceye alındı.

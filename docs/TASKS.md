@@ -11,7 +11,22 @@
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 21.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+- `[ ]` 22.0 Sahada canlı ISP testi ve kullanıcı kabulü.
+
+### Faz 21 — Sadeleştirilmiş Yönetici Uyarısı & "Yeniden Başlat" Butonu + 6 Tam Morfolojik Tema Sistemi (TAMAMLANDI)
+- `[x]` 21.1 (2026-09-04) **Sadeleştirilmiş Yönetici Uyarısı & Yeniden Başlat Butonu (`divert.rs`, `Dashboard.tsx`, `App.tsx`, `i18n.ts`):**
+  - `divert.rs` içerisindeki ham filtre dizesi (`filter=outbound and tcp and (tcp.DstPort == 443 or tcp.DstPort == 80)`) kaldırılarak iç teknik ayrıntılar gizlendi.
+  - `Dashboard.tsx` içindeki hata kutusu sadeleştirildi; yönetici hatası algılanarak "Yönetici İzni Gerekiyor" başlığı, açıklayıcı metin ve hemen yanına "Yönetici Olarak Yeniden Başlat" (`api.restartAsAdmin()`) eylem butonu eklendi.
+  - `App.tsx` üst hızlı başlatma (`quickToggle`) akışına da benzer `topError` bildirim ve yönetici yeniden başlatma mekanizması bağlandı.
+- `[x]` 21.2 (2026-09-04) **6 Tam Morfolojik & Atmosferik Bağımsız Tema Dünyası (`globals.css`, `theme.ts`):**
+  - Temalar sadece renk değiştiren yüzeysel yapıdan çıkarılarak geometri, doku, kenarlık, tipografi ve atmosferi kökten değiştiren tam sistem haline getirildi:
+    1. *Amber CRT:* Tam ekran CRT scanline overlay katmanı, CRT phosphor ışıması ve vignette, tüm arayüzde zorunlu `font-mono`, 2px keskin terminal kutuları ve retro mekanik kaset butonlar.
+    2. *Cyberpunk Volt:* 0px jilet keskin köşe geometrisi (`rounded-none`), endüstriyel HUD grid zemin matrisi, üst sarı yüksek gerilim lazer şeridi (`border-top: 2px solid #FFE600`), agresif mecha tetik butonları.
+    3. *Cobalt Matrix:* C2 Muharebe ve denizaltı komuta konsolu, 6px taktik çerçeveler, sonar radarı dairesel ızgarası, sol kutup mavisi dikey çapa şeridi (`border-left: 3px solid #00E5FF`).
+    4. *Amethyst Nebula:* 24px ultra yumuşak organik hap formları, gerçek buzlu cam derinliği (`backdrop-blur-36px`), çift pembe-eflatun kozmik nebula zeminleri ve parlak hap kapsül butonlar.
+    5. *Titanium Laboratory:* Açık mod klinik cerrahi lab, hassas 12px CNC pahlar, beyaz yükseltilmiş kartlar (`#FFFFFF`), açık gri nokta ızgarası ve yüksek kontrastlı grafit tipografi.
+    6. *Obsidian Emerald:* Havacılık sınıfı CNC obsidyen şasi, 16px kavisli cam paneller, zümrüt telemetri ve fısıldayan ambient donanım ışıması.
+- `[x]` 21.3 (2026-09-04) **Doğrulama & Dağıtım Paketleri:** `npm run build` 0 hata (2.58s), `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 8/8 yeşil; `dist/` ve `dist-portable/` altındaki release ikilileri güncellendi.
 
 ### Faz 20 — Tema, Dil Reaktivitesi ve Pencere Kapatma ("X") Onarımı (TAMAMLANDI)
 - `[x]` 20.1 (2026-09-04) **Tauri Yetki ve Pencere Kapatma Çözümü (`capabilities/default.json`, `commands.rs`, `Titlebar.tsx`):**

@@ -11,6 +11,9 @@ import {
   Wrench,
   LoaderCircle,
   Zap,
+  ShieldAlert,
+  Shield,
+  X,
 } from "lucide-react";
 import { api, onLog, onStatusChange, type Status } from "./lib/tauri";
 import { useI18n } from "./lib/i18n";
@@ -37,6 +40,7 @@ export default function App() {
   const [status, setStatus] = useState<Status | null>(null);
   const [toggling, setToggling] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [topError, setTopError] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -103,6 +107,7 @@ export default function App() {
 
   const quickToggle = async () => {
     setToggling(true);
+    setTopError(null);
     try {
       if (running) {
         await api.stopEngine();
@@ -110,7 +115,9 @@ export default function App() {
         await api.startEngine(selectedProfile);
       }
     } catch (e) {
-      pushLog(`[!] HATA: ${String(e)}`);
+      const msg = String(e);
+      pushLog(`[!] HATA: ${msg}`);
+      setTopError(msg);
     } finally {
       setToggling(false);
     }
@@ -188,6 +195,53 @@ export default function App() {
       </div>
 
       <CompatWarning />
+      {topError && (
+        <div className="mx-4 mt-3 p-3 rounded-xl bg-alert/15 border border-alert/30 text-paper-bright flex items-center justify-between gap-3 text-xs shadow-lg animate-fade-in z-30">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <ShieldAlert size={16} className="text-alert shrink-0" />
+            <span className="truncate">
+              {topError.toLowerCase().includes("yönetici") ||
+              topError.toLowerCase().includes("admin") ||
+              topError.toLowerCase().includes("windivert") ||
+              topError.toLowerCase().includes("filter=") ||
+              topError.toLowerCase().includes("hakları") ||
+              topError.toLowerCase().includes("privilege")
+                ? t("dash_admin_warn")
+                : topError}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {(topError.toLowerCase().includes("yönetici") ||
+              topError.toLowerCase().includes("admin") ||
+              topError.toLowerCase().includes("windivert") ||
+              topError.toLowerCase().includes("filter=") ||
+              topError.toLowerCase().includes("hakları") ||
+              topError.toLowerCase().includes("privilege")) && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await api.restartAsAdmin();
+                  } catch (err) {
+                    setTopError(String(err));
+                  }
+                }}
+                className="px-2.5 py-1 rounded-lg bg-alert text-white font-bold text-[11px] flex items-center gap-1 hover:bg-alert/90 cursor-pointer shadow"
+              >
+                <Shield size={12} />
+                <span>{t("dash_admin_btn")}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setTopError(null)}
+              className="text-paper-muted hover:text-paper-bright cursor-pointer p-1"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── 3. Tam Ekran Geniş Çalışma Alanı ── */}
       <main className="flex-1 overflow-y-auto p-5 lg:p-6 min-h-0 relative">

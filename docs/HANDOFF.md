@@ -15,7 +15,13 @@ Anticore v0.3.0, Ouroboros v6.0 disiplini ile derinlemesine restore edildi:
   - Tauri v2 yetki modelinde (`capabilities/default.json`) eksik olan `allow-close`, `allow-minimize`, `allow-maximize` izinleri eklendi; Rust IPC katmanına `window_close`, `window_minimize`, `window_toggle_maximize` doğrudan komutları bağlandı. Titlebar üzerindeki 'X' çarpı butonu ve pencere kontrolleri anında tepki verir hale getirildi.
   - Dil değiştirici (`i18n.ts`) ve Tema değiştirici (`theme.ts`), React 18 `useSyncExternalStore` ile tüm bileşenleri anlık ve senkronize güncelleyen tekil reaktif mağazaya dönüştürüldü.
   - `globals.css` içinde 5 donanım temasının (Obsidian, Amber CRT, Cobalt Matrix, Cyberpunk Volt, Amethyst Nebula, Titanium Laboratory) semantik renk ve şasi tokenları (`--color-live`, `--color-sky`, `--color-paper`, `--color-surface-*`, `--color-border-brutal`) eksiksiz tanımlandı; Titlebar ve Navbar dinamik tokenlara bağlandı.
-- **Doğrulama:** `npm run build` 0 hata (1537 modül), `cargo check` (desktop/src-tauri) 0 hata, `cargo test` (src-tauri) 8/8 yeşil, `cargo test --workspace` 46/46 yeşil.
+- **Sadeleştirilmiş Yönetici Uyarısı & "Yeniden Başlat" Butonu (Faz 21):**
+  - WinDivert başlatma hatasında kullanıcıya gösterilen uzun teknik filtre sorgusu (`filter=outbound and tcp...`) ve iç sürücü detayları gizlendi.
+  - Hata bildirimi yerine "Yönetici İzni Gerekiyor" başlığı ve sade açıklama yerleştirildi; uyarının hemen yanına `api.restartAsAdmin()` ile tek tıkla UAC yükseltmeli yeniden başlatan "Yönetici Olarak Yeniden Başlat" eylemi entegre edildi.
+  - `App.tsx` üst çubuk hızlı başlatma (`quickToggle`) akışına da benzer hata ve yönetici butonu bağlandı.
+- **6 Tam Morfolojik & Atmosferik Bağımsız Tema Dünyası (Faz 21):**
+  - Temalar yalnızca renk değişkenlerini değiştiren yüzeysel halden çıkarılıp; kart geometrisi (0px jilet keskin vs. 2px CRT vs. 6px taktik vs. 24px organik hap), tam ekran zemin atmosferi (CRT scanline katmanı, endüstriyel HUD grid matrisi, sonar radarı dairesel ızgarası, çift pembe-eflatun nebula, laboratuvar nokta ızgarası), buton hissiyatı ve tipografi (Amber CRT için zorunlu `font-mono` ve kehribar fosfor ışıması) ile tamamen bağımsız 6 dünyaya dönüştürüldü.
+- **Doğrulama:** `npm run build` 0 hata (1537 modül, 2.58s), `cargo check` (desktop/src-tauri) 0 hata, `cargo test` (src-tauri) 8/8 yeşil, `cargo test --workspace` 46/46 yeşil. Dağıtım ikilileri (`dist/`, `dist-portable/`, `Anticore.exe`) güncellendi.
 
 ## Kritik Komutlar
 - Frontend Derleme: `npm run build` (`antikor/desktop`)
