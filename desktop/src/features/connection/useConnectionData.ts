@@ -13,9 +13,9 @@ export function useConnectionData() {
     setLoading(true); setError(false);
     void Promise.allSettled([api.listProfiles(), api.getBlacklist(), api.checkDnsHealth()]).then(([p, h, d]) => {
       if (!alive) return;
-      if (p.status === "fulfilled") setProfiles(p.value);
-      if (h.status === "fulfilled") setHosts(h.value);
-      if (d.status === "fulfilled") setDns(d.value);
+      setProfiles(p.status === "fulfilled" ? p.value : []);
+      setHosts(h.status === "fulfilled" ? h.value : []);
+      setDns(d.status === "fulfilled" ? d.value : null);
       setError(p.status === "rejected" || h.status === "rejected" || d.status === "rejected");
       setLoading(false);
     });

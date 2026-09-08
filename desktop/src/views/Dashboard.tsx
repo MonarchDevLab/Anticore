@@ -26,7 +26,7 @@ export default function Dashboard({ status, running, logs, selectedProfile, onSe
   const data = useConnectionData();
   const profile = data.profiles.find((item) => item.id === selectedProfile);
   useEffect(() => {
-    if (status?.running) onSelectedProfileChange(status.profile_id);
+    if (status?.running && data.profiles.some((item) => item.id === status.profile_id)) onSelectedProfileChange(status.profile_id);
     else if (data.profiles.length && !data.profiles.some((item) => item.id === selectedProfile)) onSelectedProfileChange(data.profiles[0].id);
   }, [status?.running, status?.profile_id, data.profiles, selectedProfile, onSelectedProfileChange]);
   const known = status !== null;

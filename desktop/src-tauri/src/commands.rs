@@ -421,12 +421,12 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
         .args(["/PID", &pid.to_string(), "/F"])
         .output()
         .map_err(|e| format!("taskkill başarısız: {e}"))?;
-    let _ = std::fs::remove_file(&pid_file);
     if out.status.success() {
+        std::fs::remove_file(&pid_file).map_err(|e| format!("Motor durdu fakat PID kaydı temizlenemedi: {e}"))?;
         app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
         Ok(())
     } else {
-        Err("motor sonlandırılamadı (zaten kapalı olabilir)".into())
+        Err(format!("Motor sonlandırılamadı: {} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr)))
     }
 }
 
@@ -778,6 +778,10 @@ fn save_blacklist(app: &AppHandle, domains: &[String]) -> Result<(), String> {
 
 #[tauri::command]
 pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: String) -> Result<(), String> {
+    let modes = get_setup_status(app.clone())?;
+    if modes.detached_running || (modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED")) {
+        return Err("Servis veya bağımsız motor çalışıyor; panel motorunu başlatmadan önce durdurun.".into());
+    }
     let bl = load_blacklist(&app);
     let steps = resolve_steps(&app, &profile_id)?;
     let config = load_engine_config(&app);
@@ -806,26 +810,27 @@ pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: St
 
 #[tauri::command]
 pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
-    // 1. Panel motorunu durdur
-    let panel_res = engine.stop();
-
-    // 2. Bağımsız motor (detached.pid / anticore.exe) varsa durdur
-    let _ = detached_stop(app.clone());
-
-    // 3. AnticoreService arka plan servisi çalışıyorsa durdur
-    let q = sc_query(SERVICE_NAME);
-    if q.contains("RUNNING") {
-        let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
+    if let Err(error) = engine.stop() {
+        if error != "Motor zaten durdurulmuş" { return Err(error); }
+    }
+    let modes = get_setup_status(app.clone())?;
+    if modes.detached_running { detached_stop(app.clone())?; }
+    if modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED") {
+        let output = silent_command("sc").args(["stop", SERVICE_NAME]).output()
+            .map_err(|e| format!("Servis durdurma komutu çalıştırılamadı: {e}"))?;
+        if !output.status.success() {
+            return Err(format!("Servis durdurulamadı: {} {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr)));
+        }
+        let mut stopped = false;
+        for _ in 0..50 {
+            let current = get_setup_status(app.clone())?;
+            if !current.service_installed || sc_query(SERVICE_NAME).contains("STOPPED") { stopped = true; break; }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        if !stopped { return Err("Servisin durması 5 saniye içinde doğrulanamadı.".into()); }
         app.emit("log", "[*] Arka plan servisi durduruldu".to_string()).ok();
     }
-
     app.emit("status_changed", false).ok();
-
-    if let Err(ref e) = panel_res {
-        if e != "Motor zaten durdurulmuş" {
-            return panel_res;
-        }
-    }
     Ok(())
 }
 
