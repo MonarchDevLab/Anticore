@@ -1,11 +1,13 @@
 # HANDOFF
 
 ## Anlık Durum
+Kayıt eşitlemesi: 2026-09-08. Dal: `improvement/measured-network`; uygulama `251f083`, önceki kayıt commit'i `f227c3d`. Son masaüstü release derlemesi başarılı; çıktı `desktop/src-tauri/target/release/anticore-desktop.exe` (15.299.072 bayt). Bu kayıt turunda test veya paketleme yeniden çalıştırılmadı.
+
 2026-09-08 — `251f083`: arayüz ana ekranı ve uygulama kabuğu yeniden yazıldı. Yan gezinme, gerçek motor durumu, profil kilidi, paket örnekleri ve kullanıcı başlatmalı TLS testleri var. 5 frontend testi, üretim build ve Edge kabul senaryoları geçti. Ekran görüntüleri test IPC verisi kullanır. Diğer araç sayfaları işlevlerini korur; tüm alt sayfalar yeniden tasarlanmadı. Yayın paketleri güncellenmedi; saha hız doğrulaması bekliyor.
 
 2026-09-07 güncel düzeltme: `improvement/measured-network` dalında NETWORK_PLAN.md P0 kaynak uygulaması tamamlandı (`1110001`); diğer aşamalar bekliyor. Seçici ortak filtre, belgelenmiş DROP sabiti, kuyruğu boşaltarak durdurma, normal start/stop sırasında sistem TCP/DNS sıfırlamalarının kaldırılması ve ölçülmeyen göstergelerin düzeltilmesi uygulandı. 48 motor, 9 masaüstü, 5 frontend testi geçti; aktarım karşılaştırma aracı hazır. Gerçek ISS/hız ve canlı sürücü yaşam döngüsü doğrulanmadı. Aşağıdaki eski “sıfır hız kaybı”, “%100 başarı” ve gecikme ifadeleri ölçüm kanıtı değildir; güncel kabul kapıları NETWORK_PLAN.md içindedir.
 
-Anticore v0.3.0, Ouroboros v6.0 disiplini ve 3 bağımsız uzman ajan denetimi ile derinlemesine restore edildi:
+### Tarihsel kayıtlar (güncel doğrulama yerine geçmez)
 - **Faz 30 Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi (2026-09-07):**
   - `commands.rs`: `reset_doh_registry` ve `set_startup_enabled` içerisinde `windows_registry::*.open()` metodunun varsayılan olarak `KEY_READ` yetkisiyle açtığı ve çağrılan `remove_value` fonksiyonunun `ERROR_ACCESS_DENIED` (5) ile reddedildiği kök neden tespit edildi. `LOCAL_MACHINE.create()` ve `CURRENT_USER.create()` ile `KEY_READ | KEY_WRITE` erişimine geçirildi. DoH anahtarları (`EnableAutoDoh`, `AutoDohTemplate`) silindi; garanti olarak sıfırlama (`0`) koruması yazıldı.
   - `apply_doh_registry` ve `reset_doh_registry` içine `crate::net_teardown::flush_dns_cache()` eklenerek Windows DNS önbelleğinin anında temizlenmesi sağlandı.
@@ -83,6 +85,9 @@ Anticore v0.3.0, Ouroboros v6.0 disiplini ve 3 bağımsız uzman ajan denetimi i
 - **Doğrulama (Faz 7-10):** Vitest kurulumu tamamlandı (`npm run test`), testler başarıyla çalıştırıldı (2/2 yeşil). CI/CD hatları ve kalite denetimleri doğrulandı. `npm run build` 0 hata, `cargo test` 9/9 yeşil, `cargo test --workspace` 46/46 yeşil. `package.ps1` ile güncel release binary ve portable zip üretildi.
 
 ## Kritik Komutlar
+- Frontend Testleri: `npm test` (`antikor/desktop`)
+- Masaüstü Release: `cargo build --release` (`antikor/desktop/src-tauri`)
+- Tarayıcı kabulü: Vite `127.0.0.1:1420` üzerinde çalışırken `PLAYWRIGHT_MODULE` ve `UI_OUTPUT_DIR` ortam değişkenleriyle `node scripts/verify-workspace.cjs` (`antikor`). Test IPC verisi kullanır.
 - Frontend Derleme: `npm run build` (`antikor/desktop`)
 - Frontend Geliştirme: `npm run tauri dev` (`antikor/desktop`)
 - Rust Motor Testleri: `cargo test --workspace` (`antikor/engine`)
@@ -90,8 +95,12 @@ Anticore v0.3.0, Ouroboros v6.0 disiplini ve 3 bağımsız uzman ajan denetimi i
 - Rust Backend Testleri: `cargo test` (`antikor/desktop/src-tauri`)
 
 ## Commit Zinciri
-- Durum: Faz 19 tamamlandı; çöp dosyalar temizlendi; motor durdurma soket havuzu teardown garantisi eklendi; release ve portable paketler üretildi.
+- `1110001` — seçici paket yakalama ve güvenli motor yaşam döngüsü.
+- `e2cdef9` — ağ planı ve saha kabul kapıları.
+- `251f083` — bağlantı çalışma alanı ve uygulama kabuğu.
+- `f227c3d` — arayüz doğrulama kayıtları.
 
 ## Riskler ve Öncelikler
-- **Gizlilik:** Depo `PRIVATE` durumdadır. Dışarı açılmak istendiğinde `gh repo edit --visibility public` ile açılabilir.
-- **Sıfır Hız Kaybı:** Hedef listesi harici tüm trafik tünellenmeksizin doğrudan çekirdekten geçer (`PacketVerdict::Passthrough`).
+- **Yayın:** Uzak depo görünürlüğü bu oturumda doğrulanmadı. Kurulum/portable paketleri güncellenmedi; yayın yapılmadı.
+- **Performans:** Sıfır hız kaybı kanıtlanmadı. Gerçek indirme/yükleme çiftleri, canlı start/stop ve ISS uyumluluğu için `NETWORK_PLAN.md` kabul kapıları geçerlidir.
+- **Arayüz:** Tarayıcı fixture kontrolleri yerel sürücü veya kapsamlı Windows erişilebilirlik doğrulaması değildir; diğer araç sayfaları yeniden tasarlanmadı.

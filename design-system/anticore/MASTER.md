@@ -1,10 +1,11 @@
 # Design System Master File
 
-## Connection workspace — 2026-09-07
+## Connection workspace — 2026-09-08
 
 This section supersedes the historical dashboard specifications below for the application shell and connection workspace. Subject: a local Windows network utility for everyday users. Primary job: operate the engine and distinguish its state from measured reachability.
 
 - Direction: graphite instrument panel, calm slate-blue illumination, restrained green status. Signature: a split connection path between device and destination; an explanatory diagram, never a fabricated traffic map.
+- Workspace interaction tokens: `--workspace-accent` #a9c8f4 and `--workspace-on-accent` #101a29; light equivalents #075985 and #ffffff. Radius 16px; motion 200ms ease-out. These override the historical sky interaction token for the new workspace.
 - Tokens: existing theme surfaces `--color-void` (#06080C), `--color-surface-card` (#0E131F), text `--color-paper` (#F1F5F9), secondary `--color-paper-muted` (#94A3B8), interaction `--color-sky` (#00D2FF), state `--color-live` (#00F59B). Alternate themes inherit their existing equivalents. Raw colors belong only to token definitions.
 - Type: locally bundled Fira Sans for 28–36px headings and 14px body, Fira Code for measured values and technical labels. Minimum label size 12px.
 - Layout: 208px grouped side navigation; a spacious connection panel paired with configuration; measured activity and on-demand target checks below. Narrow windows collapse navigation; no horizontal page overflow.

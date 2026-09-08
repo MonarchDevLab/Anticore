@@ -1,8 +1,8 @@
 # TASKS
 
 > Tek gerçek kaynak. Kod/git ile çeliştiğinde git kazanır, bu dosya düzeltilir.
-> Son doğrulama: 2026-09-07 — `cargo test --workspace` 48/48, `cargo test` (desktop) 9/9,
-> `npm test` 5/5, frontend ve iki Rust release build başarılı; dağıtım paketleri bu görevde yenilenmedi. Saha hız testi yapılmadı.
+> Son arayüz doğrulaması: 2026-09-08 — `251f083`: `npm test` 5/5, TypeScript/Vite ve masaüstü Rust release build başarılı; Edge kabul kontrolleri geçti.
+> Motor testlerinin son çalıştırılması: 2026-09-07 — 48/48 motor, 9/9 masaüstü backend. Dağıtım paketleri yenilenmedi; saha hız testi yapılmadı.
 
 ## ŞİMDİ `[~]`
 - *(Yok)*
@@ -12,11 +12,15 @@
 
 ## SIRADAKİ `[ ]`
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
-- `[ ]` 32 NETWORK_PLAN.md P1/P2/P3: uyarlanabilir profil seçimi, arayüz kabulü ve açık kaynak yayın kapıları.
+- `[ ]` 33 NETWORK_PLAN.md P1: uyarlanabilir profil seçimi ve geri dönüş davranışı.
+- `[ ]` 34 NETWORK_PLAN.md P2 kalan kabul: diğer araç sayfaları ve yerel Windows erişilebilirlik denetimi. Ana ekran ve kabuk Faz 32 kapsamında tamamlandı.
+- `[ ]` 35 NETWORK_PLAN.md P3: açık kaynak yayın, imzalama ve saha kabul kapıları.
 
 ### Faz 32 — Arayüz yenilemesi (TAMAMLANDI)
+- `[x]` 2026-09-08 — `f227c3d` sonrası kayıt eşitlemesi: doğrulama tarihleri, tamamlanan arayüz kapsamı, kalan kabul işleri ve release çıktısı güncellendi. Bu kayıt turunda testler yeniden çalıştırılmadı.
 - `[x]` 2026-09-08 — `251f083`: yeni bağlantı ana ekranı, yan gezinme, açık/koyu tema, TR/EN, profil kilidi, gerçek paket grafiği ve isteğe bağlı TLS hedef testleri. Diğer sayfaların mevcut işlevleri korundu.
 - `[x]` 2026-09-08 — `251f083`: 5 mevcut test, TypeScript/Vite üretim derlemesi ve Edge IPC test senaryoları geçti. 390/768/1080 pikselde taşma kontrolü, klavye odağı ve örnek metinlerde 6.9:1–10.2:1 kontrast doğrulandı. Tarayıcı verileri test fixture; canlı sürücü/ISS kanıtı değildir.
+- `[x]` 2026-09-08 — `251f083`: son tema düzeltmesi sonrası `cargo build --release` geçti; çıktı `desktop/src-tauri/target/release/anticore-desktop.exe`. Kurulum/portable paketleri yenilenmedi ve yayın yapılmadı.
 
 ### Faz 31 — Ölçülebilir Ağ Kalitesi P0 (kaynak uygulaması tamamlandı)
 - `[x]` 2026-09-07 — `1110001`: ortak seçici filtre, doğru DROP sabiti, kuyruk boşaltarak durdurma, SCM recv uyandırma, DLL kaynak serbest bırakma, normal geçişlerde TCP/DNS sıfırlamalarını kaldırma, yeni ayarlarda RST baskılamayı kapatma.

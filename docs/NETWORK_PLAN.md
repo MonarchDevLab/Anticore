@@ -1,6 +1,7 @@
 # Anticore: Measured Network Quality Implementation Plan
 
 Date: 2026-09-07. Owner: Monolith Works. Distribution: MonarchDevLab.
+Record update: 2026-09-08. UI source: `251f083`; validation record: `f227c3d`. Final desktop release build passed after the last theme adjustment; installer/portable packages were not regenerated. No field measurements were added during this record update.
 
 ## Goal and scope
 
