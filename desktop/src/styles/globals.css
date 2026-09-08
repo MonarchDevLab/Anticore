@@ -258,7 +258,38 @@ html.theme-amethyst {
   --shadow-brutal-live: 0 0 25px rgba(179, 136, 255, 0.3);
 }
 
-/* ── 6. Titanium Laboratory (CNC Titanyum Açık Mod) ── */
+/* ── 6. Crimson Hazard (Taktik Askeri Kırmızı Lazer HUD) ── */
+[data-theme="crimson"],
+html.theme-crimson {
+  --color-void: #0B0406;
+  --color-surface-subtle: #14080B;
+  --color-surface-card: #1C0B0F;
+  --color-surface-elevated: #281016;
+  --color-surface-hover: #36161E;
+  --color-border-brutal: rgba(255, 42, 77, 0.20);
+  --color-border-brutal-subtle: rgba(255, 42, 77, 0.08);
+  --color-border-brutal-strong: rgba(255, 42, 77, 0.38);
+  --color-paper: #FFF1F2;
+  --color-paper-bright: #FFFFFF;
+  --color-paper-muted: #FDA4AF;
+  --color-paper-faint: #FB7185;
+  --color-neon-live: #FF2A4D;
+  --color-neon-live-dim: #BE123C;
+  --color-neon-cyan: #FF6B81;
+  --color-live: #FF2A4D;
+  --color-live-dim: #BE123C;
+  --color-live-bright: #FFE4E6;
+  --color-alert: #FF1744;
+  --color-alert-dim: #9F1239;
+  --color-warn: #FB923C;
+  --color-warn-dim: #C2410C;
+  --color-sky: #FF6B81;
+  --color-sky-dim: #E11D48;
+  --glow-live: 0 0 25px rgba(255, 42, 77, 0.35), 0 0 50px rgba(255, 42, 77, 0.15);
+  --shadow-brutal-live: 0 0 25px rgba(255, 42, 77, 0.35);
+}
+
+/* ── 7. Titanium Laboratory (CNC Titanyum Açık Mod) ── */
 html.light,
 [data-theme="titanium"],
 [data-theme="light"],
@@ -1122,6 +1153,27 @@ html.theme-titanium .btn-primary {
   box-shadow: 0 2px 10px rgba(5, 150, 105, 0.28) !important;
 }
 
+html.light .btn-secondary,
+[data-theme="titanium"] .btn-secondary,
+html.theme-titanium .btn-secondary {
+  background: #F1F5F9 !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #1E293B !important;
+}
+
+html.light .btn-secondary:hover,
+[data-theme="titanium"] .btn-secondary:hover,
+html.theme-titanium .btn-secondary:hover {
+  background: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+html.light .btn-reactor,
+[data-theme="titanium"] .btn-reactor,
+html.theme-titanium .btn-reactor {
+  color: #FFFFFF !important;
+}
+
 html.light .topbar,
 [data-theme="titanium"] .topbar,
 html.theme-titanium .topbar {
@@ -1165,3 +1217,92 @@ html.theme-obsidian .card {
   border-top-color: rgba(255, 255, 255, 0.16) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
+
+/* ── 8. CRIMSON HAZARD: Tactical Laser HUD & Emergency Command Chassis ── */
+[data-theme="crimson"] #root::before,
+html.theme-crimson #root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 50% -10%, rgba(255, 42, 77, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 80% 90%, rgba(225, 29, 72, 0.06) 0%, transparent 50%),
+    linear-gradient(rgba(255, 42, 77, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 42, 77, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+  background-color: #0B0406;
+  pointer-events: none;
+}
+
+[data-theme="crimson"] .card,
+[data-theme="crimson"] .card-subtle,
+html.theme-crimson .card,
+html.theme-crimson .card-subtle {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 42, 77, 0.28) !important;
+  border-top: 2px solid #FF2A4D !important;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 42, 77, 0.08) !important;
+  background: rgba(24, 11, 15, 0.94) !important;
+}
+
+[data-theme="crimson"] .btn,
+html.theme-crimson .btn {
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 42, 77, 0.45) !important;
+  letter-spacing: 0.04em !important;
+}
+
+[data-theme="crimson"] .btn-primary,
+html.theme-crimson .btn-primary {
+  background: #FF2A4D !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  border-color: #FF2A4D !important;
+  box-shadow: 0 0 24px rgba(255, 42, 77, 0.55) !important;
+}
+
+[data-theme="crimson"] h1,
+[data-theme="crimson"] h2,
+[data-theme="crimson"] h3,
+html.theme-crimson h1,
+html.theme-crimson h2,
+html.theme-crimson h3 {
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  text-shadow: 0 0 8px rgba(255, 42, 77, 0.35) !important;
+}
+
+[data-theme="crimson"] .status-pill,
+[data-theme="crimson"] .badge {
+  border-radius: 6px !important;
+}
+
+[data-theme="crimson"] input,
+[data-theme="crimson"] select {
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 42, 77, 0.35) !important;
+}
+
+[data-theme="crimson"] .topbar,
+html.theme-crimson .topbar {
+  border-bottom: 2px solid #FF2A4D !important;
+  background: #0B0406 !important;
+}
+
+
+/* Erişilebilirlik (A11y) & UX */
+*:focus-visible {
+  outline: 2px solid var(--color-neon-live) !important;
+  outline-offset: 2px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

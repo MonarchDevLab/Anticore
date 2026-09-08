@@ -64,7 +64,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8">
       <header className="pb-3 border-b border-white/[0.08]">
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("setup_title")}</h2>
         <p className="mt-0.5 text-xs text-paper-muted">{t("setup_desc")}</p>

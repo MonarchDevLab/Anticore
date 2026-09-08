@@ -174,7 +174,7 @@ impl Engine {
 
         // Ana handle: outbound 80/443 trafiğini userspace'e taşır
         let divert = Arc::new(WinDivert::open(
-            "outbound and tcp and (tcp.DstPort == 443 or tcp.DstPort == 80)",
+            "outbound and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80)",
             dll_dir.as_deref(),
         )?);
 
@@ -219,14 +219,21 @@ impl Engine {
                 blacklist.len()
             ));
             let mut buf = vec![0u8; 65_535];
+            let mut consecutive_recv_errors = 0u32;
             loop {
                 let Some((n, addr)) = divert.recv(&mut buf) else {
                     if stop.load(Ordering::SeqCst) {
                         break;
                     }
+                    consecutive_recv_errors += 1;
+                    if consecutive_recv_errors > 100 {
+                        on_log("[!] WinDivert sürücü bağlantısı kesildi (ardışık 100 recv hatası)".into());
+                        break;
+                    }
                     std::thread::sleep(std::time::Duration::from_millis(50));
                     continue;
                 };
+                consecutive_recv_errors = 0;
                 stats.packets_seen.fetch_add(1, Ordering::Relaxed);
 
                 let raw = &buf[..n];
@@ -241,13 +248,17 @@ impl Engine {
                     PacketDecision::Rewrite(segments) => {
                         let mut ok = true;
                         for seg in &segments {
-                            ok &= divert.send(seg, &addr);
+                            if !divert.send(seg, &addr) {
+                                ok = false;
+                                break;
+                            }
                         }
                         if ok {
                             stats.packets_touched.fetch_add(1, Ordering::Relaxed);
-                        } else {
-                            let _ = divert.send(raw, &addr);
                         }
+                        // ponytail: enjeksiyon yarıda kaldıysa orijinali yollama —
+                        // TCP state bozulur, DPI uyanır. Paket drop edilir; TCP
+                        // yeniden deneme mekanizması bağlantıyı kurtarır.
                     }
                 }
             }
@@ -281,7 +292,8 @@ impl Engine {
             return Err("Motor zaten durdurulmuş".into());
         }
         self.stop_flag.store(true, Ordering::SeqCst);
-        for h in self.active_handles.lock().unwrap().drain(..) {
+        let handles: Vec<_> = self.active_handles.lock().unwrap().drain(..).collect();
+        for h in handles {
             h.shutdown(); // recv anında false döner → thread çıkar
         }
         if let Some(h) = self.worker.lock().unwrap().take() {

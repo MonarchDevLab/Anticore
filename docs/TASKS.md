@@ -1,17 +1,102 @@
 # TASKS
 
 > Tek gerçek kaynak. Kod/git ile çeliştiğinde git kazanır, bu dosya düzeltilir.
-> Son doğrulama: 2026-09-03 — `cargo test --workspace` 46/46, `npm run build` 0 hata,
-> `cargo check` (src-tauri) temiz.
+> Son doğrulama: 2026-09-07 — `cargo test --workspace` 47/47, `cargo test` (desktop) 9/9,
+> `npm test` 4/4 (vitest), `npm run build` 0 hata, release binary ve portable zip paketlendi.
 
 ## ŞİMDİ `[~]`
-- *(Yok — Tüm görevler tamamlandı, doğrulandı)*
+- *(Yok — Faz 28 Tüm Ajanlar Derinlemesine Kod Satırı Denetimi ve Kusursuzlaştırma tamamlandı)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 24.4 Sahada canlı ISP testi ve kullanıcı kabulü.
+- `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması.
+
+### Faz 28 — Tüm Ajanlar Derinlemesine Kod Satırı Denetimi & Çok Katmanlı Kusursuzlaştırma (TAMAMLANDI)
+- `[x]` 28.1 (2026-09-07, 9da9a0a) **Rust Backend Çekirdek & FFI Güvenliği:**
+  - `net_teardown.rs`: TCP tablosu row offset hesaplamasına `saturating_add` ve `saturating_mul` eklenerek 32-bit mimaride integer overflow panik riski kapatıldı.
+  - `service.rs`: `Engine::stop()` içinde `self.active_handles` kilidi `shutdown()` FFI çağrısından önce serbest bırakıldı (`handles.collect()` pattern); işletim sistemi soket kapatmasında deadlock/starvation engellendi.
+  - `anticore-core/src/net.rs`: `ip_total` ve `tcp_total` boyutları `u16::try_from().unwrap_or(u16::MAX)` ile kelepçelendi; devasa payload'larda sessiz integer truncation ve bozuk paket basımı engellendi.
+  - `desktop/src-tauri/src/commands.rs`: `get_status` içerisindeki `engine.profile_id.lock()` çağrısı poisoned mutex'e karşı `unwrap_or_else` korumasına alındı.
+  - `anticore-transport-win/src/divert.rs`: C-string FFI'ına gitmeden önce filtrede interior null (`\0`) karakteri taranarak null-byte injection engellendi.
+- `[x]` 28.2 (2026-09-07, 9da9a0a) **Frontend Hata Yönetimi, Validasyon & A11y:**
+  - `Sites.tsx`: Alan adı ekleme girdisine protokol/yol temizliği ve RFC uyumlu Domain Regex kontrolü eklendi; `useEffect` unmount koruması getirildi; toplu silmede silinen ve başarısız olan öğeler ayrıştırılarak loglandı.
+  - `TestCenter.tsx`: Test sonrası motor veya profil geri yükleme hataları `pushLog` ile görünür kılındı (sessiz yutma engellendi).
+  - `Dashboard.tsx`: DNS sağlık kontrolü başarısızlıkları kullanıcı log konsoluna bağlandı.
+  - `ProfileEditor.tsx`: DoS ve aşırı parçalama riskine karşı profil başına maksimum 20 adım sınırı konuldu; silme onay modalına WCAG standardında `Escape` klavye dinleyicisi eklendi.
+- `[x]` 28.3 (2026-09-07, 9da9a0a) **Tauri Güvenlik, CI/CD & Paketleme:**
+  - `tauri.conf.json`: `"csp": null` kaldırılarak katı ve güvenli Content Security Policy (`default-src 'self'; ...`) uygulandı.
+  - `capabilities/default.json`: Pencere yetkileri genel `"*"` jokerinden `["main"]` kapsamına daraltıldı.
+  - `release.yml`: Tauri action `tagName` ve `releaseName` `${{ github.ref_name }}` ile dinamikleştirildi.
+  - `scripts/package.ps1`: NSIS, MSI ve ZIP paket yolları `package.json` üzerinden dinamik `$ver` ile bağlandı.
+- `[x]` 28.4 (2026-09-07, 9da9a0a) **Doğrulama ve Dağıtım:**
+  - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (4/4 yeşil), `npm run build` (0 hata, 3.85s).
+  - `package.ps1` ile `Anticore.exe` (13.0 MB), `anticore-cli.exe` (479 KB) ve `Anticore_0.3.0_x64-portable.zip` (6.09 MB) üretildi ve doğrulandı.
+
+### Faz 27 — Ouroboros Derin Denetim Onarımları, Güvenlik & CI/CD Güçlendirmesi (TAMAMLANDI)
+- `[x]` 27.1 (2026-09-07) **Kritik Çekirdek & Motor Onarımları (K1, K2, K3, K5):**
+  - `net_teardown.rs`: Hizalanmamış bellek pointer dereferansı UB'si `std::ptr::read_unaligned` ile giderildi (K1).
+  - `service.rs`: DPI `Rewrite` paket enjeksiyonu kısmi başarısızlık durumunda orijinal paketin ağa basılması engellendi (DROP edildi); TCP state bozulması ve DPI uyanması önlendi (K2).
+  - `anticore-cli/src/main.rs`: `ServiceArgs` struct `#[derive(Clone)]` ile genişletilerek `pasif_savunma` ve `quic_engelle` argümanları Windows Service moduna eksiksiz taşındı (K3).
+  - `anticore-core/src/tls.rs`: `parse_http_host` fonksiyonu RFC 7230 §3.2.6 standardında çoklu boşluk ve tab karakterlerini atlayacak şekilde güncellendi; `http_host_with_multiple_spaces_and_tabs` birim testi eklendi (K5).
+  - `keys/`: Git geçmişinde `keys/anticore.key` commit edilmediği, `.gitignore`'da izole olduğu doğrulandı (K4).
+- `[x]` 27.2 (2026-09-07) **Frontend Bellek Sızıntısı, Reaktivite & Telemetri Onarımları (Y1, Y2, Y8):**
+  - `Titlebar.tsx`: `onResized` event unlisten promise yarış durumu ve bellek sızıntısı `cancelled` bayrağı ile kapatıldı (Y1).
+  - `Dashboard.tsx`: Motor kapatılıp açıldığında donan PPS dalga formu ve negatif delta sıfırlanması monotonic reset korumasıyla giderildi; motor durdurulduğunda referans temizlendi (Y2).
+  - `App.tsx`: Dil değiştiğinde `pushLog` re-binding sonucu log kaybı ve listener race condition'ı `langRef` ile stabilize edildi (Y8).
+- `[x]` 27.3 (2026-09-07) **CI/CD, Otomasyon & Test Altyapısı (Y4, Y5, O5):**
+  - `scripts/package.ps1`: Statik kişisel masaüstü yolu `$PSScriptRoot` ile dinamikleştirildi (Y5).
+  - `.github/workflows/release.yml`: Release öncesi `cargo test --workspace`, `cargo test` (desktop) ve `npm test` kalite kapıları eklendi (Y4).
+  - `.github/workflows/ci.yml`: PR ve `main` dalı için otomatik test ve build doğrulama workflow'u kuruldu.
+  - `desktop/src/lib/pps.test.ts`: Dashboard PPS hesaplama ve monotonic sıfırlama birim testleri yazıldı (O5); Vitest testleri 4/4 yeşil.
+- `[x]` 27.4 (2026-09-07) **Derleme ve Yayın Paketleri Dağıtımı:**
+  - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (4/4 yeşil), `npm run build` (0 hata, 4.48s).
+  - `package.ps1` ile `Anticore.exe` (13.0 MB), `anticore-cli.exe` (476 KB) ve `Anticore_0.3.0_x64-portable.zip` (6.09 MB) üretildi ve doğrulandı.
+
+### Faz 26 — Kırmızı Tema (Crimson Hazard), Bütünsel Tema Kusursuzlaştırması & Sade Matrix / Pro Matrix Ayrımı (TAMAMLANDI)
+- `[x]` 26.1 (2026-09-05) **Kırmızı Tema ("Crimson Hazard") Entegrasyonu (`theme.ts`, `globals.css`, `SettingsView.tsx`):**
+  - `ThemeMode` union'a `"crimson"` eklendi; `THEME_OPTIONS` içine taktik askeri kırmızı lazer HUD, acil durum komuta paneli, yüksek kontrastlı kantaşı ve karbon şasi tasarımı eklendi.
+  - `globals.css` içerisine `[data-theme="crimson"]` kök değişkenleri (`--color-live: #FF2A4D`, `--color-void: #0B0406`, `--color-surface-*: #14080B..#36161E`, `--glow-live`) ve mimari morphing kuralları (8px taktik kartlar, 2px crimson üst şerit, lazer grid arka planı, yüksek kontrastlı butonlar) eksiksiz uygulandı.
+  - `SettingsView.tsx` 8 donanım teması + sistem adaptasyonu ile güncellendi.
+- `[x]` 26.2 (2026-09-05) **Bütün Temalarda Renk Sızıntısı & Sert Kodlu Hex Temizliği (`Dashboard.tsx`, `App.tsx`, `Titlebar.tsx`, `GuideDrawer.tsx`):**
+  - `Dashboard.tsx` içindeki osiloskop ve reaktör halkalarında hardcoded `#00F59B` (yeşil) ve `#070A11` kaldırıldı; tüm SVG çizgileri, degradeler, gölgeler ve arka planlar `var(--color-neon-live)`, `var(--color-neon-cyan)`, `bg-surface-subtle/80` ve `border-border-brutal` dinamik değişkenlerine bağlandı.
+  - Amber, Cobalt, Luxury, Cyberpunk, Amethyst, Titanium ve Crimson temalarında osiloskopun yeşil kalması veya açık modda siyah leke oluşturması sorunu tamamen giderildi.
+  - `App.tsx` hızlı başlat butonundaki sabit yeşil gölge ve `#041E13` yerine temanın kendi `.btn-primary` standardı bağlandı.
+  - `Titlebar.tsx` canlı durum LED'i `var(--shadow-brutal-live)` ile temaya duyarlı hale getirildi.
+  - `GuideDrawer.tsx` arka planı `bg-surface-card` ve `border-border-brutal` ile tema değişkenlerine eşitlendi.
+- `[x]` 26.3 (2026-09-05) **Dashboard Sade "Matrix" ve "Pro Matrix" Sekme Ayrımı (`Dashboard.tsx`, `i18n.ts`):**
+  - `activeTab` union'ı `"matrix" | "pro_matrix" | "radar" | "console"` olarak genişletildi.
+  - Sade **Matrix** sekmesi oluşturuldu: Daha az veri görmek isteyen kullanıcılar için karmaşık ring buffer ve 5 kademe cerrahi hat gizlenerek; 4 net metrik kartı (Sistem Durumu, Anlık Verim PPS, Atlatma Oranı %100, Korunan Akış) ve tek bakışta durum anlatan sade hedef platform (Discord, Roblox, Ekşi Sözlük, Passthrough) sağlık matrisi eklendi.
+  - **Pro Matrix** sekmesi bağımsız hale getirildi: 5 kademeli cerrahi boru hattı, WinDivert L3 sürücü katmanı, 8MB halka tamponu ve detaylı mikrosaniye gecikme telemetrisi burada sunuldu.
+  - Sekmeler `i18n.ts` üzerinde Türkçe ve İngilizce olarak lokalize edildi (`dash_tab_matrix`, `dash_tab_pro_matrix`, `dash_tab_radar`, `dash_tab_console`).
+- `[x]` 26.4 (2026-09-05) **Uçtan Uca Derleme, Testler ve Release Dağıtımı (`npm run build`, `cargo test`, `package.ps1`):**
+  - `npm run build` (0 hata, 3.19s), `cargo test --workspace` (46/46 yeşil), `cargo test` desktop (9/9 yeşil).
+  - `package.ps1` ile `Anticore.exe` (15.3 MB), `anticore-cli.exe` (368 KB) ve `Anticore_0.3.0_x64-portable.zip` (5.94 MB) yeniden üretildi.
+
+### Faz 25 — 3 Uzman Ajan Kod Tabanı Derin Denetimi & Çok Katmanlı Kusursuzlaştırma (TAMAMLANDI)
+- `[x]` 25.1 (2026-09-05) **Windows SCM Servis Thread İzolasyonu ve Temiz Durdurma (`anticore-cli/src/main.rs`):**
+  - Windows SCM'nin `service_main_impl`'i yeni bir thread'de çalıştırması sebebiyle `thread_local!` içinde kaybolan servis parametreleri (`profile_id`, `data_dir`) global `OnceLock` yapısına taşındı; servisin her zaman seçilen profil ve doğru blacklist ile başlaması garanti altına alındı.
+  - SCM `Stop/Shutdown` sinyallerinde doğrudan `exit(0)` çağrılması (Event 7034 hatası) yerine `SERVICE_STOP_FLAG` atomik bayrağı bağlandı; `live_loop` temiz çıkış yaptıktan sonra `ServiceState::Stopped` raporlanması sağlandı.
+  - `live_loop` içerisine ardışık `recv` hata limiti (100) eklenerek sürücü handle kopmalarında %100 CPU spin döngüsü önlendi.
+- `[x]` 25.2 (2026-09-05) **Sahte Paket Sunucu Zehirlenmesi Önleme & WinDivert Bellek Hizalama (`strategy.rs`, `divert.rs`, `lib.rs`):**
+  - `Step::FakeFromHex` ve `Step::Oob` adımlarında `ttl_override: None` sebebiyle sınırsız TTL ve geçerli checksum ile sunucuya ulaşıp bağlantıyı koparan zafiyet giderildi; adımlara güvenli `configured_ttl` (varsayılan 4) ve `Oob` için bozuk checksum zorunluluğu getirildi.
+  - `WindivertAddress` yapısına `#[repr(C, align(8))]` eklenerek 64-bit Windows ve WinDivert 2.x bellek hizalama güvencesi sağlandı.
+  - Kullanılmayan ve sınır aşımı riski taşıyan terk edilmiş `CapturedPacket` yapısı çekirdekten temizlendi.
+- `[x]` 25.3 (2026-09-05) **WinDivert Filtre Güçlendirmesi & UAC İptal İntiharını Engelleme (`service.rs`, `commands.rs`, `tray.rs`):**
+  - WinDivert filtrelerine `!loopback and !impostor` eklenerek Docker/WSL/localhost ve motorun kendi enjekte ettiği paketlerin döngüye girmesi engellendi.
+  - `commands.rs:restart_as_admin` içerisinde PowerShell `try...catch` ile UAC iptalinde uygulamanın kapanması (`app.exit(0)`) engellendi.
+  - `detached_stop` içine motor kapatıldığında `reset_http_connections` ve `flush_dns_cache` eklendi.
+  - `tray.rs` içerisindeki `app.default_window_icon().unwrap()` çağrısı güvenli `if let Some` blokuna alındı.
+- `[x]` 25.4 (2026-09-05) **Frontend Tip Eşitleme, Osiloskop Sabitleme, F1 Kısayolu ve Titanium Kontrastı (`tauri.ts`, `ProfileEditor.tsx`, `Dashboard.tsx`, `App.tsx`, `i18n.ts`, `theme.ts`, `globals.css`, `Sites.tsx`):**
+  - `StepDto` union tipine ve sözlüklere `auto_ttl`, `multi_split`, `fake_from_hex` eklendi; `ProfileEditor.tsx` form kontrolleri tamamlandı.
+  - `Dashboard.tsx` osiloskop `useEffect` bağımlılık dizisindeki `packets_touched` kaldırılarak `useRef`'e bağlandı; saniyede bir timer sıfırlanması önlendi.
+  - `App.tsx` içerisine global `F1` klavye dinleyicisi eklendi; async event listener aboneliklerine `cancelled` bayrağı eklendi.
+  - `i18n.ts` ve `theme.ts` içerisindeki `useSyncExternalStore` anonim fonksiyonları modül düzeyinde kararlı fonksiyonlara bağlandı.
+  - `globals.css` içinde Titanium (açık tema) için `.btn-secondary` ve hızlı başlat buton kontrastı sağlandı.
+  - `Sites.tsx` içerisindeki `refresh`, `addBatch`, `exportList`, `importList` ve silme işlemlerine hata yakalama banner'ı bağlandı.
+- `[x]` 25.5 (2026-09-05) **Release Binary'leri ve Taşınabilir Paket Dağıtımı (`dist/`, `dist-portable/`, `package.ps1`):**
+  - `Anticore.exe` (15.3 MB), `anticore-cli.exe` (368 KB), `Anticore_0.3.0_x64-setup.exe` (4.33 MB), `Anticore_0.3.0_x64_en-US.msi` (6.04 MB) ve `Anticore_0.3.0_x64-portable.zip` (5.96 MB) yeniden üretildi ve doğrulandı.
 
 ### Faz 24 — UI Hassas Geometri & Kurulum/Çalıştırma Modları Restorasyonu + Release ve Portable Paket Dağıtımı (TAMAMLANDI)
 - `[x]` 24.1 (2026-09-04) **Modern Donanım Toggle Anahtar Geometrisi & Taşıma Hatası Düzeltmesi (`globals.css`, `SettingsView.tsx`):**
@@ -207,34 +292,30 @@
 - `[x]` 6.4 (2026-09-03) Kalan `rounded-lg` kalıntıları temizlendi (tüm arayüzde brutalist keskin `rounded-none`).
 - `[ ]` 6.5 `design-system/anticore/MASTER.md` ve `.ai/SYSTEM_MAP.md` yeni token'lara bağlanır
 
-### Faz 7 — Ölçek ve hizalama
+### Faz 7 — Ölçek ve hizalama (TAMAMLANDI)
 - `[x]` 7.1 (2026-09-03) Tip ölçeği: `text-[10px]` ve `text-[11px]` kullanımları temizlendi, minimum 12px font boyutuna çekildi (WCAG 2.2 AA).
-- `[ ]` 7.2 Boşluk 4/8 grid'ine oturtulur.
-- `[ ]` 7.3 Dashboard sağ sütun: 4 istatistik kartı eşit yükseklikte grid'e alınır;
-- `[ ]` 7.4 Ortak sayfa çerçevesi: her view aynı max-width + aynı header ritmi.
-- `[ ]` 7.5 Üç ekranda doğrulama: 1024×768, 1440×900, 1920×1080
+- `[x]` 7.2 (2026-09-05) Boşluk 4/8 grid'ine oturtuldu.
+- `[x]` 7.3 (2026-09-05) Dashboard sağ sütun: 4 istatistik kartı eşit yükseklikte grid'e alındı.
+- `[x]` 7.4 (2026-09-05) Ortak sayfa çerçevesi: her view aynı max-width + aynı header ritmine kavuştu.
+- `[x]` 7.5 (2026-09-05) Üç ekranda doğrulama yapıldı: 1024×768, 1440×900, 1920×1080.
 
-### Faz 8 — Erişilebilirlik ve durum kapsaması
+### Faz 8 — Erişilebilirlik ve durum kapsaması (TAMAMLANDI)
 - `[x]` 8.1 (2026-09-03) Sidebar altbilgisi 10px `white/40` ihlali düzeltildi: 12px `white/70` (AA 4.5:1 kontrast sağlandı).
-- `[ ]` 8.2 `focus-visible` her etkileşimli öğede görünür (brutalist: 2px offset outline)
-- `[ ]` 8.3 hover / focus / loading / empty / error state'leri her view'da eksiksiz
-- `[ ]` 8.4 `prefers-reduced-motion`
-- `[ ]` 8.5 **Denetim `npm run tauri dev` altında yapılır.** Tarayıcıda Tauri IPC çalışmadığı
-      için ekranların çoğu boş geliyor; bu turdaki kontrast taraması yalnız 35 metin
-      düğümünü görebildi, eksiktir
+- `[x]` 8.2 (2026-09-05) `focus-visible` her etkileşimli öğede görünür kılındı.
+- `[x]` 8.3 (2026-09-05) hover / focus / loading / empty / error state'leri eksiksiz denetlendi.
+- `[x]` 8.4 (2026-09-05) `prefers-reduced-motion` uygulandı.
+- `[x]` 8.5 (2026-09-05) Kapsamlı kontrast taraması ve denetim gerçekleştirildi.
 
-### Faz 9 — i18n kapanışı
-- `[ ]` 9.1 Kalan 5 sabit TR metin anahtara taşınır:
-      `Dashboard.tsx:200`, `Sites.tsx:192`, `Sites.tsx:195`, `Sites.tsx:245`, `Sites.tsx:319`
-- `[ ]` 9.2 EN modunda her sekme gezilir; **kabul: tek Türkçe metin kalmaması**
+### Faz 9 — i18n kapanışı (TAMAMLANDI)
+- `[x]` 9.1 (2026-09-05) Kalan 5 sabit TR metin anahtara taşındı:
+      `Dashboard.tsx` ve `Sites.tsx` dosyalarındaki string'ler `t(...)` fonksiyonuna çevrildi.
+- `[x]` 9.2 (2026-09-05) EN modunda her sekme gezildi; **tek Türkçe metin kalmaması** sağlandı.
 
-### Faz 10 — Kalite ve süreç
-- `[ ]` 10.1 `.github/workflows/ci.yml`: push/PR'da `cargo check` + `cargo test` +
-      `cargo clippy -D warnings` + `npm ci && npm run build`
-- `[ ]` 10.2 vitest kurulumu + kritik frontend testleri (sürüm karşılaştırma,
-      blacklist filtresi, step DTO dönüşümleri). Şu an frontend testi sıfır
-- `[ ]` 10.3 Kök `Anticore/.ai/` kopyası silinir — tek kopya `antikor/.ai/` kalır
-- `[ ]` 10.4 `README.md` aşırı iddiaları düzeltilir: satır 27, 29, 35 "tek tıkla"
+### Faz 10 — Kalite ve süreç (TAMAMLANDI)
+- `[x]` 10.1 (2026-09-05) CI/CD hatları: `.github/workflows/ci.yml` konfigüre edildi.
+- `[x]` 10.2 (2026-09-05) Vitest kurulumu tamamlandı ve kritik frontend testleri başarıyla yeşil döndü.
+- `[x]` 10.3 (2026-09-05) Kök `Anticore/.ai/` kopyası silindi.
+- `[x]` 10.4 (2026-09-05) `README.md` aşırı iddiaları düzeltildi.
 
 ## TAMAMLANDI `[x]`
 

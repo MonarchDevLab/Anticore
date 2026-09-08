@@ -244,14 +244,16 @@ pub fn build_tcp_segment(
     out.extend_from_slice(&view.raw[..view.ip_hdr_len]);
     match view.version {
         IpVersion::V4 => {
-            out[2..4].copy_from_slice(&(ip_total as u16).to_be_bytes());
+            let ip_total_u16 = u16::try_from(ip_total).unwrap_or(u16::MAX);
+            out[2..4].copy_from_slice(&ip_total_u16.to_be_bytes());
             out[4..6].copy_from_slice(&fresh_ip_id().to_be_bytes());
             if let Some(ttl) = ttl_override {
                 out[8] = ttl;
             }
         }
         IpVersion::V6 => {
-            out[4..6].copy_from_slice(&(tcp_total as u16).to_be_bytes());
+            let tcp_total_u16 = u16::try_from(tcp_total).unwrap_or(u16::MAX);
+            out[4..6].copy_from_slice(&tcp_total_u16.to_be_bytes());
             if let Some(hop_limit) = ttl_override {
                 out[7] = hop_limit;
             }

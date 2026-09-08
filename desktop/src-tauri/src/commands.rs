@@ -391,6 +391,8 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
         .map_err(|e| format!("taskkill başarısız: {e}"))?;
     let _ = std::fs::remove_file(&pid_file);
     if out.status.success() {
+        crate::net_teardown::reset_http_connections();
+        crate::net_teardown::flush_dns_cache();
         app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
         Ok(())
     } else {
@@ -480,14 +482,20 @@ pub fn get_status(app: AppHandle, engine: tauri::State<Engine>) -> StatusDto {
     };
 
     let running = panel_running || service_running || detached_running;
+    let safe_profile = engine
+        .profile_id
+        .lock()
+        .map(|p| p.clone())
+        .unwrap_or_else(|_| "universal".into());
+
     let profile_id = if panel_running {
-        engine.profile_id.lock().unwrap().clone()
+        safe_profile
     } else if service_running {
         "service".into()
     } else if detached_running {
         "detached".into()
     } else {
-        engine.profile_id.lock().unwrap().clone()
+        safe_profile
     };
 
     StatusDto {
@@ -839,13 +847,16 @@ pub fn check_is_admin() -> bool {
 pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let exe_str = exe.to_string_lossy().replace('\'', "''");
-    let script = format!("Start-Process -FilePath '{}' -Verb RunAs", exe_str);
+    let script = format!(
+        "try {{ Start-Process -FilePath '{}' -Verb RunAs -ErrorAction Stop }} catch {{ exit 1 }}",
+        exe_str
+    );
     let status = silent_command("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", &script])
         .status()
         .map_err(|e| format!("yükseltme başlatılamadı: {e}"))?;
     if !status.success() {
-        return Err("Yükseltme onaylanmadı".into());
+        return Err("Yükseltme onaylanmadı veya iptal edildi".into());
     }
     // Yeni (yönetici) örnek açıldı; bu örneği kapat
     app.exit(0);

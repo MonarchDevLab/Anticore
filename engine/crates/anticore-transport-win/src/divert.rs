@@ -10,7 +10,7 @@ pub const WINDIVERT_LAYER_NETWORK: i32 = 0;
 pub const WINDIVERT_FLAG_NONE: u64 = 0;
 pub const WINDIVERT_FLAG_DROP: u64 = 1; // eşleşen paket çekirdekte düşürülür
 
-#[repr(C)]
+#[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct WindivertAddress {
     // 2.x'te union + timestamp; bizim için sadece alan boyutu önemli.
@@ -119,6 +119,10 @@ impl WinDivert {
         let close = unsafe {
             std::mem::transmute::<*mut c_void, DivertClose>(sym("WinDivertClose")?)
         };
+
+        if filter.as_bytes().contains(&0) {
+            return Err("Filtre null karakter (interior null) içeremez.".into());
+        }
 
         let mut fbytes = filter.as_bytes().to_vec();
         fbytes.push(0);

@@ -1,16 +1,40 @@
 # WORKLOG
 
 ## Aktif Oturum (Son Oturumun Detayları)
-- **Tarih:** 2026-09-04
-- **Gerçekleşenler (Faz 23 - Kod Tabanı Derin Denetimi, ECH/Kyber 2048B Yükseltmesi, Asenkron DNS & Güvenli Mimari Restorasyonu):**
-  1. ECH & Post-Quantum Kyber Büyük Paket Restorasyonu: Modern tarayıcıların (Chrome 124+, Firefox 128+) Encrypted Client Hello ve Kyber anahtar değişimi paketlerinin (1420-1460B) `TooLarge` filtresine takılarak sansürlenmesi engellendi; `MAX_INSPECT_PAYLOAD` 2048 bayta yükseltildi (`dispatch.rs`).
-  2. Asenkron & Çoklu IP DNS Zehirlenme Tespiti: `commands::check_dns_health` komutu `tokio::time::timeout(3000ms)` ile asenkron yapıldı; dönen tüm IP'ler taranarak BTK, Superonline, Vodafone, RFC1918, CGNAT ve IPv6 sahte engelleme adresleri (`is_poisoned_or_bogus_ip`) eksiksiz yakalandı (`commands.rs`).
-  3. Yönetici Hak Doğrulaması ve PowerShell Hata Yayılımı: Native `shell32::IsUserAnAdmin()` ile `is_running_as_admin()` ve `check_is_admin()` fonksiyonları eklendi. `apply_secure_dns`, `auto_fix_dns`, `reset_dns`, `apply_doh_registry`, `reset_doh_registry` komutlarına yönetici kontrolü bağlandı; PowerShell `-ErrorAction SilentlyContinue` kaldırılarak aktif Up bağdaştırıcıları korundu.
-  4. CSS Seçici ve Morfolojik Tema Temizliği: Zararlı joker seçiciler (`div[class*="rounded-"]`, `button[class*="rounded-"]`) silindi, kart ve butonlar doğrudan `.card`, `.card-subtle`, `.btn` sınıflarına bağlandı; Cobalt dairesel reaktör butonu korundu; Cyberpunk uppercase input zorlaması ve clip-path kaldırıldı; Quiet Luxury serif zorlaması sadece başlıklara çekilip monospace telemetri korundu; Amber CRT scanline katmanı z-35'e çekilerek modal pencerelerinin arkasına alındı (`globals.css`).
-  5. Soket Teardown & Dağıtım Paketleri: Windows API'de var olmayan `SetTcp6Entry` temizlenerek MSVC LNK2019 bağlama hatası giderildi, 5 denemeli IPv4 `SetTcpEntry` + `DnsFlushResolverCache` ile derleme sağlandı. `Anticore.exe` (15.3 MB), `anticore-cli.exe` (371 KB), `Anticore_0.3.0_x64-setup.exe` (4.32 MB), `Anticore_0.3.0_x64_en-US.msi` (6.03 MB) ve `Anticore_0.3.0_x64-portable.zip` (6.18 MB) üretildi.
-  6. Doğrulama: `cargo test --workspace` 46/46 yeşil, `cargo test` desktop 9/9 yeşil, `npm run build` 0 hata.
+- **Tarih:** 2026-09-07
+- **Gerçekleşenler (Faz 28 - Tüm Ajanlar Derinlemesine Kod Satırı Denetimi & Çok Katmanlı Kusursuzlaştırma):**
+  1. Rust Backend Çekirdek & FFI Güvenliği:
+     - `net_teardown.rs` içinde 32-bit TCP tablosu row offset hesaplamasına `saturating_add` ve `saturating_mul` eklenerek olası integer overflow panik riski kapatıldı.
+     - `service.rs` içinde `Engine::stop()` metodu, blocking FFI `shutdown()` çağrısı öncesinde `active_handles` MutexGuard kilidini serbest bırakacak şekilde ayrıştırıldı (`handles.collect()` pattern); işletim sistemi soket kapatmasında deadlock/starvation önlendi.
+     - `net.rs` içinde `ip_total` ve `tcp_total` boyutları `u16::try_from().unwrap_or(u16::MAX)` ile kelepçelendi; 65535 üzeri sahte payload'larda sessiz integer truncation engellendi.
+     - `commands.rs` içinde `get_status` metodunda `engine.profile_id.lock()` poisoned mutex'e karşı `unwrap_or_else` korumasına alındı.
+     - `divert.rs` içinde WinDivert sürücüsüne gitmeden önce filtre dizesinde interior null (`\0`) karakteri taranarak null-byte enjeksiyonu engellendi.
+  2. Frontend Hata Yönetimi, Validasyon & A11y:
+     - `Sites.tsx` alan adı ekleme formuna `https?://` ve yol temizleme ile RFC standardı Domain Regex kontrolü eklendi; `useEffect` unmount koruması getirildi; toplu silmede silinen/hatalı öğe ayrımı loglandı.
+     - `TestCenter.tsx` ve `Dashboard.tsx` içindeki sessiz `catch` blokları kullanıcı log konsoluna bağlandı.
+     - `ProfileEditor.tsx` içine profil başına maksimum 20 adım sınırı konuldu; silme modalına WCAG standardında `Escape` klavye dinleyicisi eklendi.
+  3. Tauri Güvenlik, CI/CD & Paketleme:
+     - `tauri.conf.json` içinde `"csp": null` kaldırılarak katı CSP uygulandı.
+     - `capabilities/default.json` pencere yetkileri genel `"*"` yerine `["main"]` ile sınırlandı.
+     - `.github/workflows/release.yml` tag adı `${{ github.ref_name }}` ile dinamikleştirildi.
+     - `scripts/package.ps1` paket versiyonlaması `package.json` üzerinden dinamik `$ver` ile bağlandı.
+  4. Doğrulama ve Dağıtım:
+     - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (4/4 yeşil), `npm run build` (0 hata, 3.85s).
+     - `package.ps1` ile `Anticore.exe` (13.0 MB), `anticore-cli.exe` (479 KB) ve `Anticore_0.3.0_x64-portable.zip` (6.09 MB) üretildi ve doğrulandı.
 
 ## Mimari Kararlar
+- `[KARAR-025]` **Derin Savunma (Defense-in-Depth) & Sıfır Sessiz Hata Prensibi:**
+  1. Çekirdek sürücü ve işletim sistemi çağrılarında (FFI, TCP TCB teardown, WinDivert open) hiçbir girdi varsayımsız kabul edilmemeli; integer taşmalarına karşı saturating tipler, C string dönüşümlerinde interior null koruması ve donanım bellek hizalamasında unaligned okuma zorunludur.
+  2. İşletim sistemi ağ sürücüsünü kapatan (WinDivertClose vb.) blocking FFI çağrıları yapılırken uygulama seviyesindeki Mutex kilitleri asla tutulmamalıdır; önce handle'lar yerel vektöre çekilip kilit düşürülmeli, ardından soket kapatma yürütülmelidir.
+  3. Frontend tarafında hiçbir RPC veya async işlem sessizce yutulmamalı (`catch(() => {})` yasak); tüm kurtarma veya telemetri hataları ya kullanıcı konsoluna loglanmalı ya da arayüzde hata durumu olarak yansıtılmalıdır.
+  4. Webview ortamında XSS ve enjeksiyon risklerini sıfırlamak için katı Content Security Policy (`default-src 'self'`) ve pencere bazlı yetki kısıtlaması (`capabilities`) tavizsiz uygulanmalıdır.
+- `[KARAR-024]` **Ouroboros Refleksli Çekirdek Güvenliği & Asenkron Telemetri Stabilizasyonu:**
+  1. WinDivert paket enjeksiyonunda kısmi segment başarısızlığı yaşandığında asla orijinal pakete geri dönülmemelidir (`fallback to raw packet` yasak). Çünkü ilk sahte paket ağa gitmişse, arkasından tam paketin gitmesi hedef sunucunun TCP state makinesini bozar ve DPI motorunu tetikler. Doğru davranış paketi sessizce düşürmektir (DROP); TCP akışı işletim sisteminin retransmit mekanizmasıyla doğal şekilde toparlanır.
+  2. Windows C API bellek okumalarında raw byte tamponu struct'a dökülürken donanım hizalama (alignment) garantisi olmadığından `read_unaligned` zorunludur.
+  3. UI katmanındaki event dinleyicileri dil veya görünüm state'lerine bağlanırken callback kimliğinin değişip listener'ın unbind-rebind döngüsüne girmesini önlemek için `langRef` deseni uygulanmalıdır.
+- `[KARAR-023]` **Crimson Hazard Askeri Lazer HUD Teması & Adaptif Telemetri Matrisi:**
+  1. Yüksek kontrastlı taktik kırmızı renk paleti (`--color-live: #FF2A4D`, `--color-void: #0B0406`) ve lazer ızgarası ile askeri acil durum komuta arayüzü inşa edildi. Bileşenlerdeki tüm sabit yeşil kalıntıları dinamik CSS değişkenlerine bağlanarak temanın 8 farklı atmosfer dünyasıyla tam eşleşmesi sağlandı.
+  2. Dashboard'da tek bir karmaşık ekran yerine, az ve öz veri görmek isteyen kullanıcılar için hafif, odaklı "Matrix" (temel 4 metrik kartı + hızlı hedef durumları) ve mühendislik seviyesi derin telemetri arayan kullanıcılar için "Pro Matrix" (5 kademe cerrahi hat, kernel latency, buffer doluluk oranı) ayrıştırılarak bilişsel yük optimize edildi.
 - `[KARAR-022]` **Asenkron DNS Sağlık Motoru & Native Windows Yönetici Doğrulaması:**
   DNS çözümleme istekleri işletim sistemi seviyesinde kilitlenmeye (15-30s) yol açmaması için `tokio::time::timeout(3000ms)` ile asenkron tokio iş parçacığına taşındı. `is_poisoned_or_bogus_ip` ile sadece ilk IP değil, gelen tüm adresler taranarak BTK/Superonline/Vodafone sahte engelleme IP'leri yakalandı. Ağ/DNS ayarları için native `shell32::IsUserAnAdmin()` ile Rust seviyesinde ön doğrulama yapıldı, PowerShell `-ErrorAction SilentlyContinue` kaldırılarak gerçek hata yayılımı sağlandı.
 - `[KARAR-021]` **Büyük El Sıkışma Paketleri (ECH & Post-Quantum Kyber) için 2048B Eşiği:**

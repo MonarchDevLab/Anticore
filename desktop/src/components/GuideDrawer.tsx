@@ -73,7 +73,7 @@ export default function GuideDrawer({ open, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-fade-in">
       <div
-        className="w-full max-w-md h-full bg-[#090D15] border-l border-white/[0.1] p-6 shadow-2xl flex flex-col justify-between overflow-y-auto"
+        className="w-full max-w-md h-full bg-surface-card border-l border-border-brutal p-6 shadow-2xl flex flex-col justify-between overflow-y-auto"
         role="dialog"
         aria-modal="true"
       >

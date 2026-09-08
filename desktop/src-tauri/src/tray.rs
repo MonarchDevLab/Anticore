@@ -89,11 +89,14 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     // Tray ikonu uygulama ikonu olarak ayarlandı; duruma göre tooltip ve menü metni güncellenir.
     // İleride renkli durum varyantı gerekirse icons/ altına tray-active.png / tray-inactive.png
     // eklenip TrayIconBuilder::icon() çağrısı duruma göre güncellenebilir.
-    let tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
+    let mut builder = TrayIconBuilder::new()
         .tooltip("Anticore — Pasif")
         .menu(&menu)
-        .show_menu_on_left_click(false)
+        .show_menu_on_left_click(false);
+    if let Some(icon) = app.default_window_icon() {
+        builder = builder.icon(icon.clone());
+    }
+    let tray = builder
         .on_tray_icon_event(|tray, event| {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,

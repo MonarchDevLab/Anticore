@@ -84,7 +84,19 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
       setSites(s);
       setLoaded(true);
     });
-  useEffect(refresh, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    void api.getBlacklist().then((s) => {
+      if (isMounted) {
+        setSites(s);
+        setLoaded(true);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const syncCommunityList = async () => {
     setFetchBusy(true);
@@ -118,8 +130,16 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
   };
 
   const add = async (domain: string) => {
-    const d = domain.trim().toLowerCase();
-    if (!d.includes(".")) return;
+    const d = domain
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "");
+    const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/;
+    if (!domainRegex.test(d)) {
+      setError("Geçersiz alan adı formatı (örn: discord.com)");
+      return;
+    }
     setError(null);
     setResolving(true);
     try {
@@ -182,11 +202,22 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
   const removeSelected = async () => {
     if (selected.size === 0) return;
     setBulkBusy(true);
+    let failCount = 0;
     try {
       for (const d of selected) {
-        await api.removeSite(d).catch(() => {});
+        try {
+          await api.removeSite(d);
+        } catch {
+          failCount += 1;
+        }
       }
-      pushLog(`[-] ${selected.size} hedef silindi`);
+      const successCount = selected.size - failCount;
+      if (successCount > 0) {
+        pushLog(`[-] ${successCount} hedef silindi`);
+      }
+      if (failCount > 0) {
+        pushLog(`[!] ${failCount} hedef silinirken hata oluştu`);
+      }
       setSelected(new Set());
       refresh();
     } finally {
@@ -251,11 +282,11 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-live animate-pulse" />
             <h3 className="text-xs font-bold text-paper-bright">
-              Türkiye Topluluk Kara Listesi (Bol-van Zapret / DNS Engelli Veritabanı)
+              {t("sites_community_list_title")}
             </h3>
           </div>
           <p className="text-[11px] text-paper-muted">
-            BTK ve mahkeme kararlarıyla engellenen güncel Türkiye alan adlarını doğrudan tek tıkla yerel hedeflerinize senkronize edin.
+            {t("sites_community_list_desc")}
           </p>
           {fetchMsg && (
             <p className="text-xs font-bold text-live flex items-center gap-1.5 pt-1">
@@ -274,7 +305,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           ) : (
             <CloudDownload size={14} />
           )}
-          <span>{fetchBusy ? "İndiriliyor..." : "Topluluk Listesini Çek"}</span>
+          <span>{fetchBusy ? t("sites_community_list_downloading") : t("sites_community_list_btn")}</span>
         </button>
       </div>
 
@@ -337,7 +368,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
       {missingPresets.length > 0 && (
         <section className="card p-5 border border-white/[0.08] space-y-4">
           <p className="text-sm font-bold text-paper-bright flex items-center gap-1.5">
-            <span>Hazır Mega Paketler</span>
+            <span>{t("sites_presets_title")}</span>
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {missingPresets.map((g) => (
@@ -351,7 +382,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                     onClick={() => void addBatch(g.domains)}
                     className="btn btn-secondary !py-1 !px-2.5 text-[11px] text-live border-live/25 hover:bg-live/10"
                   >
-                    <Plus size={12} /> Paketi Ekle ({g.domains.length})
+                    <Plus size={12} /> {t("sites_preset_pack_add")} ({g.domains.length})
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -366,7 +397,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                   ))}
                   {g.domains.length > 6 && (
                     <span className="text-[11px] text-paper-faint self-center">
-                      +{g.domains.length - 6} diğer
+                      +{g.domains.length - 6} {t("sites_preset_other")}
                     </span>
                   )}
                 </div>
@@ -383,8 +414,8 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Listede ara..."
-            aria-label="Listede ara"
+            placeholder={t("sites_search_placeholder")}
+            aria-label={t("sites_search_placeholder")}
             className="input pl-9 pr-9 text-xs"
           />
           {query && (
@@ -400,13 +431,13 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
         {/* Kategori Filtre Butonları */}
         <div className="flex flex-wrap gap-1.5">
           {[
-            { id: "all", label: "Tümü" },
-            { id: "tr-core", label: "TR Mega Paket" },
-            { id: "discord-roblox", label: "Discord & Roblox" },
-            { id: "vpn-privacy", label: "VPN & Gizlilik" },
-            { id: "sohbet", label: "Sohbet" },
-            { id: "oyun", label: "Oyun" },
-            { id: "ai", label: "Platform & AI" },
+            { id: "all", label: t("sites_filter_all") },
+            { id: "tr-core", label: t("sites_filter_tr_mega") },
+            { id: "discord-roblox", label: t("sites_filter_discord") },
+            { id: "vpn-privacy", label: t("sites_filter_vpn") },
+            { id: "sohbet", label: t("sites_filter_chat") },
+            { id: "oyun", label: t("sites_filter_game") },
+            { id: "ai", label: t("sites_filter_ai") },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -423,12 +454,12 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
         </div>
 
         {!loaded ? (
-          <div className="p-8 text-center text-paper-muted text-xs font-semibold">Yükleniyor...</div>
+          <div className="p-8 text-center text-paper-muted text-xs font-semibold">{t("loading")}</div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center rounded-xl border border-dashed border-white/[0.1] text-paper-muted">
             <Globe size={36} className="mx-auto mb-2 text-paper-faint" aria-hidden />
             <p className="text-xs font-semibold">
-              {query ? "Eşleşen domain bulunamadı" : "Hedef listesi boş"}
+              {query ? t("sites_no_match_query") : t("sites_empty_list")}
             </p>
           </div>
         ) : (
@@ -439,7 +470,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                 className="flex items-center gap-2 text-xs font-semibold text-paper-muted hover:text-paper transition-colors cursor-pointer"
               >
                 {allFilteredSelected ? <CheckSquare size={15} className="text-live" /> : <Square size={15} />}
-                <span>Tümünü Seç</span>
+                <span>{t("sites_select_all")}</span>
               </button>
               {selected.size > 0 && (
                 <button
@@ -448,7 +479,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                   className="btn btn-danger !py-1 text-xs flex items-center gap-1.5"
                 >
                   {bulkBusy ? <LoaderCircle size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                  <span>Sil ({selected.size})</span>
+                  <span>{t("sites_delete_count")} ({selected.size})</span>
                 </button>
               )}
             </div>
@@ -471,7 +502,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                   <button
                     onClick={() => void api.removeSite(d).then(refresh)}
                     className="text-paper-faint hover:text-alert p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors cursor-pointer"
-                    title="Sil"
+                    title={t("sites_delete_count")}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -490,11 +521,11 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           disabled={!sites.length}
         >
           <Download size={15} />
-          <span>Listeyi Dışa Aktar</span>
+          <span>{t("sites_export")}</span>
         </button>
         <label className="btn btn-secondary flex-1 text-xs cursor-pointer">
           <Upload size={15} />
-          <span>Liste İçe Aktar</span>
+          <span>{t("sites_import")}</span>
           <input
             type="file"
             accept=".txt"

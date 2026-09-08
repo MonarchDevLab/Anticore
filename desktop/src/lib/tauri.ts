@@ -18,6 +18,9 @@ export type StepDto =
   | { type: "fragment_tls"; mode: "sni_mid" | "sni_mid_reverse" | "fixed" | "reverse"; value: number | null }
   | { type: "fragment_http" }
   | { type: "fake_ttl"; ttl: number }
+  | { type: "auto_ttl"; base: number; tolerance: number }
+  | { type: "multi_split"; positions: number[] }
+  | { type: "fake_from_hex"; hex: string }
   | { type: "fake_wrong_seq" }
   | { type: "fake_wrong_checksum" }
   | { type: "host_case" }
@@ -66,6 +69,9 @@ export const STEP_LABELS: Record<StepDto["type"], string> = {
   fragment_tls: "TLS Parçalama",
   fragment_http: "HTTP Parçalama",
   fake_ttl: "Sahte Paket (TTL)",
+  auto_ttl: "Otomatik TTL Sahtesi",
+  multi_split: "Çoklu Sabit Parçalama",
+  fake_from_hex: "Özel Hex Sahte Paket",
   fake_wrong_seq: "Sahte Paket (Sıra)",
   fake_wrong_checksum: "Sahte Paket (Bozuk Checksum)",
   host_case: "Host Harf Karışımı",
@@ -86,6 +92,12 @@ export function stepDetail(s: StepDto): string {
       return `ilk ${s.value} baytı ayır, ters gönder`;
     case "fake_ttl":
       return `TTL=${s.ttl}, sahte kopya`;
+    case "auto_ttl":
+      return `Baz: ${s.base}, Tolerans: ±${s.tolerance}`;
+    case "multi_split":
+      return `Ofsetler: [${s.positions.join(", ")}]`;
+    case "fake_from_hex":
+      return `Hex: ${s.hex.length > 16 ? s.hex.slice(0, 16) + "..." : s.hex}`;
     case "fake_wrong_seq":
       return "geçmiş sıra numarası";
     case "fake_wrong_checksum":

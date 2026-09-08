@@ -221,7 +221,8 @@ pub fn parse_http_host(payload: &[u8]) -> Option<HttpHostInfo> {
     while i + needle.len() <= hay.len() {
         if hay[i..i + needle.len()].eq_ignore_ascii_case(needle) {
             let mut j = i + needle.len();
-            if j < hay.len() && hay[j] == b' ' {
+            // Tüm baştaki boşluk/tab karakterlerini tüket (RFC 7230 §3.2.6)
+            while j < hay.len() && (hay[j] == b' ' || hay[j] == b'\t') {
                 j += 1;
             }
             let start = j;
@@ -337,5 +338,12 @@ mod tests {
     #[test]
     fn non_http_rejected() {
         assert!(parse_http_host(b"NOTHTTP").is_none());
+    }
+
+    #[test]
+    fn http_host_with_multiple_spaces_and_tabs() {
+        let req = b"GET / HTTP/1.1\r\nHost:   \t  discord.com\r\n\r\n";
+        let info = parse_http_host(req).expect("host");
+        assert_eq!(&req[info.host_offset..info.host_offset + info.host_len], b"discord.com");
     }
 }

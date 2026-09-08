@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test and Validate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Rust kurulumu
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            engine
+            desktop/src-tauri
+
+      - name: Node bagimliliklari
+        run: npm ci
+        working-directory: desktop
+
+      - name: Motor testleri (engine workspace)
+        run: cargo test --workspace
+        working-directory: engine
+
+      - name: Masaustu backend testleri
+        run: cargo test
+        working-directory: desktop/src-tauri
+
+      - name: Frontend testleri
+        run: npm test
+        working-directory: desktop
+
+      - name: Frontend build kontrolu
+        run: npm run build
+        working-directory: desktop

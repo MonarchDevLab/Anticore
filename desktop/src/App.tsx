@@ -53,6 +53,8 @@ export default function App() {
   };
   const seq = useRef(0);
   const { lang, t } = useI18n();
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   useEffect(() => {
     setLogs([`[i] Anticore hazır — WinDivert çekirdeği bekleniyor`]);
@@ -71,11 +73,25 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F1") {
+        e.preventDefault();
+        setGuideOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     let alive = true;
     const tick = () =>
-      void api.getStatus().then((s) => {
-        if (alive) setStatus(s);
-      });
+      void api
+        .getStatus()
+        .then((s) => {
+          if (alive) setStatus(s);
+        })
+        .catch(() => {});
     tick();
     const id = setInterval(tick, 1000);
     return () => {
@@ -88,19 +104,32 @@ export default function App() {
 
   const pushLog = useCallback((line: string) => {
     seq.current += 1;
-    const locale = lang === "tr" ? "tr-TR" : "en-US";
+    const locale = langRef.current === "tr" ? "tr-TR" : "en-US";
     const stamped = `${new Date().toLocaleTimeString(locale)} ${line}`;
     setLogs((prev) => [...prev.slice(-299), stamped]);
-  }, [lang]);
+  }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const unbinds: Array<() => void> = [];
-    void onLog(pushLog).then((u) => unbinds.push(u));
+    void onLog(pushLog).then((u) => {
+      if (cancelled) u();
+      else unbinds.push(u);
+    });
     void onStatusChange((r) => {
-      void api.getStatus().then((s) => setStatus(s));
+      void api
+        .getStatus()
+        .then((s) => setStatus(s))
+        .catch(() => {});
       setRunningFallback(r);
-    }).then((u) => unbinds.push(u));
-    return () => unbinds.forEach((u) => u());
+    }).then((u) => {
+      if (cancelled) u();
+      else unbinds.push(u);
+    });
+    return () => {
+      cancelled = true;
+      unbinds.forEach((u) => u());
+    };
   }, [pushLog]);
 
   const setRunningFallback = useCallback((_r: boolean) => {}, []);
@@ -177,8 +206,8 @@ export default function App() {
             disabled={toggling}
             className={`btn-reactor flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-xs font-bold transition-all cursor-pointer ${
               running
-                ? "bg-alert/15 text-alert border border-alert/30 hover:bg-alert/25 shadow-[0_0_15px_rgba(255,59,48,0.25)]"
-                : "bg-live text-[#041E13] border border-live hover:bg-live/90 shadow-[0_0_15px_rgba(0,245,155,0.35)]"
+                ? "bg-alert/15 text-alert border border-alert/30 hover:bg-alert/25 shadow-[var(--shadow-brutal-alert)]"
+                : "btn-primary shadow-[var(--shadow-brutal-live)]"
             }`}
             aria-label={running ? t("btn_stop") : t("btn_start")}
           >

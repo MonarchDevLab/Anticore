@@ -97,7 +97,7 @@ Arka planda ne olup bittiğini görmek isteyenler için teknik bir gösterge pan
 - **Canlı Throughput (PPS) Grafiği:** Ağ kartınızdan geçen paket sıklığını anlık milisaniyelik sparkline grafiğiyle çizer.
 - **Aktif Strateji Zinciri:** Hangi paket bölme yönteminin devrede olduğunu adım adım gösterir (örneğin: `[TTL=3] -> [SPLIT=SNI+2]`).
 - **Dörtlü Sayaç:** Görülen hedef paketler, başarıyla atlatılan el sıkışmalar, doğrudan geçirilen normal trafik ve uygulamanın açık kalma süresi.
-- **Terminal Log Konsolu:** Hata, bilgi ve başarı mesajlarını filtreleyebileceğiniz, arama yapabileceğiniz ve tek tıkla kopyalayabileceğiniz canlı log alanı.
+- **Terminal Log Konsolu:** Hata, bilgi ve başarı mesajlarını filtreleyebileceğiniz, arama yapabileceğiniz ve panoya kopyalayabileceğiniz canlı log alanı.
 
 ---
 
@@ -141,7 +141,7 @@ Servis sağlayıcıların DPI (Derin Paket İnceleme) cihazları, kullanıcılar
 
 - **Discord Kurtarma Aracı:** Discord açılırken oluşan sonsuz "Checking for updates" döngüsünü, ses kanallarında (RTC) yaşanan bağlantı kopmalarını ve önbellek kilitlenmelerini çözer.
 - **Windows DoH (DNS-over-HTTPS) Entegrasyonu:** Servis sağlayıcıların DNS zehirleme yöntemlerini engellemek için Cloudflare, Google, Quad9 veya AdGuard DoH adreslerini doğrudan Windows kayıt defterine tanımlar.
-- **DNS Sızıntı Testi:** DNS sorgularınızın yerel operatörünüze açık metin olarak gidip gitmediğini tek tuşla test eder.
+- **DNS Sızıntı Testi:** DNS sorgularınızın yerel operatörünüze açık metin olarak gidip gitmediğini otomatik olarak test eder.
 
 ---
 

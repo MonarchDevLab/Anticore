@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowDown, ArrowUp, Plus, Save, Trash2, X } from "lucide-react";
 import { api, stepDetail, STEP_LABELS, type Profile, type StepDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
@@ -22,8 +22,20 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
   const [newOobOffset, setNewOobOffset] = useState(0);
   const [newOobPayload, setNewOobPayload] = useState(97); // 'a'
   const [newWindowSize, setNewWindowSize] = useState(10);
+  const [newAutoTtlBase, setNewAutoTtlBase] = useState(4);
+  const [newAutoTtlTol, setNewAutoTtlTol] = useState(1);
+  const [newMultiSplitPositions, setNewMultiSplitPositions] = useState("1, 2");
+  const [newFakeHex, setNewFakeHex] = useState("160301deadbeef");
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setConfirmDelete(false);
+    };
+    if (confirmDelete) window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [confirmDelete]);
 
   const readonly = profile.builtin;
 
@@ -36,9 +48,23 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
   };
 
   const addStep = () => {
+    if (steps.length >= 20) {
+      onError("Maksimum 20 adım eklenebilir.");
+      return;
+    }
     let s: StepDto;
     if (newType === "fake_ttl") {
       s = { type: "fake_ttl", ttl: Math.min(16, Math.max(2, newTtl)) };
+    } else if (newType === "auto_ttl") {
+      s = { type: "auto_ttl", base: newAutoTtlBase, tolerance: newAutoTtlTol };
+    } else if (newType === "multi_split") {
+      const positions = newMultiSplitPositions
+        .split(",")
+        .map((p) => Number(p.trim()))
+        .filter((n) => !isNaN(n) && n > 0);
+      s = { type: "multi_split", positions: positions.length ? positions : [1] };
+    } else if (newType === "fake_from_hex") {
+      s = { type: "fake_from_hex", hex: newFakeHex.trim() || "160301deadbeef" };
     } else if (newType === "fragment_tls") {
       s = {
         type: "fragment_tls",
@@ -200,6 +226,63 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
                     onChange={(e) => setNewTtl(Number(e.target.value))}
                     className="input !w-16 !py-1 text-xs text-center"
                     aria-label="TTL"
+                  />
+                </label>
+              )}
+
+              {newType === "auto_ttl" && (
+                <>
+                  <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                    <span>Baz:</span>
+                    <input
+                      type="number"
+                      min={2}
+                      max={16}
+                      value={newAutoTtlBase}
+                      onChange={(e) => setNewAutoTtlBase(Number(e.target.value))}
+                      className="input !w-16 !py-1 text-xs text-center"
+                      aria-label="Baz TTL"
+                    />
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                    <span>Tolerans:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={4}
+                      value={newAutoTtlTol}
+                      onChange={(e) => setNewAutoTtlTol(Number(e.target.value))}
+                      className="input !w-16 !py-1 text-xs text-center"
+                      aria-label="Tolerans"
+                    />
+                  </label>
+                </>
+              )}
+
+              {newType === "multi_split" && (
+                <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                  <span>Ofsetler:</span>
+                  <input
+                    type="text"
+                    placeholder="1, 2, 5"
+                    value={newMultiSplitPositions}
+                    onChange={(e) => setNewMultiSplitPositions(e.target.value)}
+                    className="input !w-28 !py-1 text-xs text-center"
+                    aria-label="Ofsetler"
+                  />
+                </label>
+              )}
+
+              {newType === "fake_from_hex" && (
+                <label className="flex items-center gap-1.5 text-xs text-paper-muted">
+                  <span>Hex:</span>
+                  <input
+                    type="text"
+                    placeholder="160301deadbeef"
+                    value={newFakeHex}
+                    onChange={(e) => setNewFakeHex(e.target.value)}
+                    className="input !w-36 !py-1 text-xs font-mono"
+                    aria-label="Hex Payload"
                   />
                 </label>
               )}

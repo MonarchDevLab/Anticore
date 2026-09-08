@@ -45,18 +45,34 @@ export default function Titlebar({
   const currentThemeObj = options.find((o) => o.id === theme) || options[0];
 
   useEffect(() => {
-    void api.isWindowMaximized().then(setIsMaximized).catch(() => {});
+    let cancelled = false;
     let unlisten: (() => void) | undefined;
+
+    void api.isWindowMaximized().then((max) => {
+      if (!cancelled) setIsMaximized(max);
+    }).catch(() => {});
+
     void getWindow().then((win) => {
-      if (!win) return;
-      void win.isMaximized().then(setIsMaximized).catch(() => {});
+      if (!win || cancelled) return;
+      void win.isMaximized().then((max) => {
+        if (!cancelled) setIsMaximized(max);
+      }).catch(() => {});
+
       void win.onResized(() => {
-        void win.isMaximized().then(setIsMaximized).catch(() => {});
+        if (!cancelled) {
+          void win.isMaximized().then(setIsMaximized).catch(() => {});
+        }
       }).then((u) => {
-        unlisten = u;
+        if (cancelled) {
+          u();
+        } else {
+          unlisten = u;
+        }
       }).catch(() => {});
     });
+
     return () => {
+      cancelled = true;
       if (unlisten) unlisten();
     };
   }, []);
@@ -121,7 +137,7 @@ export default function Titlebar({
       <div className="pointer-events-none hidden md:flex items-center gap-2 px-3 py-0.5 rounded-full border border-white/[0.06] bg-surface-subtle/80">
         <span
           className={`h-1.5 w-1.5 rounded-full transition-all ${
-            running ? "bg-live shadow-[0_0_8px_#00F59B] animate-pulse" : "bg-paper-faint"
+            running ? "bg-live shadow-[var(--shadow-brutal-live)] animate-pulse" : "bg-paper-faint"
           }`}
         />
         <span className="text-[10px] uppercase tracking-wider text-paper-muted">

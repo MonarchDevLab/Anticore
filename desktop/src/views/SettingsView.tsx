@@ -267,12 +267,12 @@ export default function SettingsView({
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8">
       <header className="pb-3 border-b border-white/[0.08]">
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("settings_title")}</h2>
       </header>
 
-      {/* Görünüm ve Tema (5 Donanım Teması + Sistem) */}
+      {/* Görünüm ve Tema (8 Donanım Teması + Sistem) */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">

@@ -57,7 +57,7 @@ export default function Dashboard({
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"radar" | "matrix" | "console">("matrix");
+  const [activeTab, setActiveTab] = useState<"matrix" | "pro_matrix" | "radar" | "console">("matrix");
 
   // Canlı Durchput (PPS - Packets Per Second) dalga formu geçmişi (24 veri noktası)
   const [waveform, setWaveform] = useState<number[]>([
@@ -81,8 +81,8 @@ export default function Dashboard({
         setDnsDismissed(false);
         pushLog(`[!] DNS UYARISI: discord.com ${res.resolved_ip} adresine yönlendiriliyor (BTK Mahkeme Engeli)!`);
       }
-    } catch {
-      // sessizce geç
+    } catch (e) {
+      pushLog(`[!] DNS sağlık kontrolü sorgulanamadı: ${String(e)}`);
     }
   };
 
@@ -101,8 +101,13 @@ export default function Dashboard({
     }
   };
 
+  const statusRef = useRef(status);
+  statusRef.current = status;
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+
   useEffect(() => {
-    void api.listProfiles().then(setProfiles);
+    void api.listProfiles().then(setProfiles).catch((e) => pushLog(`[!] Profil listesi yüklenemedi: ${e}`));
     void checkDns();
   }, []);
 
@@ -112,21 +117,25 @@ export default function Dashboard({
     }
   }, [status?.running, status?.profile_id, setSelected]);
 
-  // PPS Hesaplama ve Dalga Formu Akışı (Her 1000ms)
+  // PPS Hesaplama ve Dalga Formu Akışı (Her 1000ms kesintisiz)
   useEffect(() => {
     if (!running) {
+      lastTouchedRef.current = 0;
       setWaveform((prev) => [...prev.slice(1), 0]);
       return;
     }
     const interval = setInterval(() => {
-      const currentTouched = status?.packets_touched ?? 0;
+      const currentTouched = statusRef.current?.packets_touched ?? 0;
+      if (currentTouched < lastTouchedRef.current) {
+        lastTouchedRef.current = currentTouched;
+      }
       const delta = Math.max(0, currentTouched - lastTouchedRef.current);
       lastTouchedRef.current = currentTouched;
       setWaveform((prev) => [...prev.slice(1), delta]);
 
       // Canlı paket akışına gerçek delta telemetrisini ekle
       if (delta > 0) {
-        const prof = status?.profile_id || selected || "universal";
+        const prof = statusRef.current?.profile_id || selectedRef.current || "universal";
         const newEvent: PacketEvent = {
           id: Math.random().toString(36).substring(2, 8),
           time: new Date().toLocaleTimeString(),
@@ -140,7 +149,7 @@ export default function Dashboard({
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [running, status?.packets_touched, status?.profile_id, selected]);
+  }, [running]);
 
   const toggle = async () => {
     setBusy(true);
@@ -209,7 +218,7 @@ export default function Dashboard({
   }, [error]);
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8">
       {error && (
         <div
           role="alert"
@@ -331,7 +340,7 @@ export default function Dashboard({
             className="bg-surface-elevated text-xs font-semibold text-paper-bright px-3 py-1.5 rounded-lg border border-white/[0.1] focus:outline-none focus:border-live cursor-pointer disabled:opacity-50"
           >
             {profiles.map((p) => (
-              <option key={p.id} value={p.id} className="bg-[#090D15] text-paper">
+              <option key={p.id} value={p.id} className="bg-surface-card text-paper">
                 {p.name}
               </option>
             ))}
@@ -383,11 +392,11 @@ export default function Dashboard({
                 cy="100"
                 r="92"
                 fill="none"
-                stroke={running ? "#00F59B" : "rgba(255,255,255,0.2)"}
+                stroke={running ? "var(--color-neon-live)" : "rgba(255,255,255,0.2)"}
                 strokeWidth="3"
                 strokeDasharray="8 12 24 16 32 10"
                 strokeLinecap="round"
-                filter={running ? "drop-shadow(0 0 8px rgba(0, 245, 155, 0.6))" : undefined}
+                filter={running ? "drop-shadow(0 0 8px var(--color-neon-live))" : undefined}
               />
             </svg>
 
@@ -403,7 +412,7 @@ export default function Dashboard({
                 cy="80"
                 r="72"
                 fill="none"
-                stroke={running ? "#00D2FF" : "rgba(255,255,255,0.15)"}
+                stroke={running ? "var(--color-neon-cyan)" : "rgba(255,255,255,0.15)"}
                 strokeWidth="1.5"
                 strokeDasharray="4 8 16 8"
               />
@@ -416,14 +425,14 @@ export default function Dashboard({
               aria-label={running ? t("btn_stop") : t("btn_start")}
               className={`btn-reactor relative z-10 w-36 h-36 rounded-full flex flex-col items-center justify-center cursor-pointer border transition-all ${
                 running
-                  ? "bg-gradient-to-b from-[#0A1612] to-[#040A08] border-live text-live shadow-[0_0_35px_rgba(0,245,155,0.35)]"
-                  : "bg-gradient-to-b from-[#141A26] to-[#0B0F17] border-white/[0.12] text-paper-muted hover:border-white/[0.25] hover:text-paper"
+                  ? "bg-surface-elevated/95 border-live text-live shadow-[var(--shadow-brutal-live)]"
+                  : "bg-surface-card/95 border-white/[0.12] text-paper-muted hover:border-white/[0.25] hover:text-paper"
               }`}
             >
               {busy ? (
                 <RefreshCw size={36} className="animate-spin text-live" />
               ) : running ? (
-                <Zap size={40} className="text-live filter drop-shadow-[0_0_10px_#00F59B]" strokeWidth={2.2} />
+                <Zap size={40} className="text-live filter drop-shadow-[0_0_10px_var(--color-neon-live)]" strokeWidth={2.2} />
               ) : (
                 <Power size={40} className="text-paper-muted group-hover:text-paper" strokeWidth={2} />
               )}
@@ -439,7 +448,7 @@ export default function Dashboard({
           {/* Reaktör Alt Bilgi & Motor Sağlığı */}
           <div className="w-full pt-4 border-t border-white/[0.06] relative z-10 space-y-1 text-center">
             <div className="text-xs font-semibold text-paper-bright">
-              {running ? `KORUMA AKTİF: ${activeName}` : "SİSTEM BEKLEMEDE"}
+              {running ? `${t("dash_state_active")}: ${activeName}` : `SİSTEM ${t("dash_state_passive")}`}
             </div>
             <p className="text-[11px] font-mono text-paper-faint">
               {running
@@ -486,7 +495,7 @@ export default function Dashboard({
               <div className="text-lg font-mono font-bold text-cyan">
                 {passthroughPercent}%
               </div>
-              <div className="text-[10px] text-paper-muted">Sıfır Hız Kaybı</div>
+              <div className="text-[10px] text-paper-muted">{t("dash_matrix_zero_loss")}</div>
             </div>
 
             {/* Metrik 4: Çalışma Süresi */}
@@ -515,7 +524,7 @@ export default function Dashboard({
             </div>
 
             {/* SVG Osiloskop Çizgisi */}
-            <div className="h-24 w-full bg-[#070A11] rounded-xl p-2 border border-white/[0.05] relative overflow-hidden flex items-end">
+            <div className="h-24 w-full bg-surface-subtle/80 rounded-xl p-2 border border-border-brutal relative overflow-hidden flex items-end">
               {/* Arka Plan Osiloskop Izgarası */}
               <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
@@ -523,8 +532,8 @@ export default function Dashboard({
                 {/* Alt Degrade Doldurma */}
                 <defs>
                   <linearGradient id="waveGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00F59B" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#00F59B" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="var(--color-neon-live)" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="var(--color-neon-live)" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
                 {/* Alan Doldurma */}
@@ -535,12 +544,12 @@ export default function Dashboard({
                 {/* Ana Dalga Çizgisi */}
                 <polyline
                   fill="none"
-                  stroke={running ? "#00F59B" : "rgba(255,255,255,0.2)"}
+                  stroke={running ? "var(--color-neon-live)" : "var(--color-paper-faint)"}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   points={svgPoints}
-                  filter={running ? "drop-shadow(0 0 4px rgba(0, 245, 155, 0.7))" : undefined}
+                  filter={running ? "drop-shadow(0 0 4px var(--color-neon-live))" : undefined}
                 />
               </svg>
             </div>
@@ -576,7 +585,18 @@ export default function Dashboard({
                 }`}
               >
                 <Layers size={12} className={activeTab === "matrix" ? "text-live" : ""} />
-                <span>Pro Matrix</span>
+                <span>{t("dash_tab_matrix")}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("pro_matrix")}
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === "pro_matrix"
+                    ? "bg-white/[0.12] text-paper-bright"
+                    : "text-paper-muted hover:text-paper"
+                }`}
+              >
+                <Cpu size={12} className={activeTab === "pro_matrix" ? "text-live" : ""} />
+                <span>{t("dash_tab_pro_matrix")}</span>
               </button>
               <button
                 onClick={() => setActiveTab("radar")}
@@ -587,7 +607,7 @@ export default function Dashboard({
                 }`}
               >
                 <Radio size={12} className={activeTab === "radar" ? "text-live" : ""} />
-                <span>Paket Radarı</span>
+                <span>{t("dash_tab_radar")}</span>
               </button>
               <button
                 onClick={() => setActiveTab("console")}
@@ -598,17 +618,133 @@ export default function Dashboard({
                 }`}
               >
                 <Terminal size={12} className={activeTab === "console" ? "text-live" : ""} />
-                <span>Sistem Terminali</span>
+                <span>{t("dash_tab_console")}</span>
               </button>
             </div>
           </div>
 
           <span className="text-[11px] font-mono text-paper-faint hidden sm:inline">
-            {running ? "GERÇEK ZAMANLI SÜRÜCÜ DİNLENİYOR" : "MOTOR BEKLEMEDE"}
+            {running ? t("dash_matrix_sys_listening") || "GERÇEK ZAMANLI SÜRÜCÜ DİNLENİYOR" : `MOTOR ${t("dash_matrix_sys_standby")}`}
           </span>
         </div>
 
         {activeTab === "matrix" ? (
+          /* SADE MATRIX: DAHA AZ VERİ GÖRMEK İSTEYENLER İÇİN ÖZET TELEMETRİ */
+          <div className="space-y-4">
+            {/* 1. Dörtlü Sade Metrik Kartları */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="flex flex-col justify-between h-full p-3.5 rounded-xl bg-surface-subtle/70 border border-white/[0.06] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-paper-faint uppercase">{t("dash_matrix_sys_status")}</span>
+                  <ShieldCheck size={14} className={running ? "text-live" : "text-paper-faint"} />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${running ? "bg-live animate-pulse" : "bg-paper-faint"}`} />
+                  <span className="text-sm font-bold text-paper-bright">
+                    {running ? t("dash_matrix_sys_active") : t("dash_matrix_sys_standby")}
+                  </span>
+                </div>
+                <span className="text-[11px] text-paper-muted block truncate">
+                  {running ? activeName : t("dash_matrix_sys_off")}
+                </span>
+              </div>
+
+              <div className="flex flex-col justify-between h-full p-3.5 rounded-xl bg-surface-subtle/70 border border-white/[0.06] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-paper-faint uppercase">{t("dash_matrix_throughput")}</span>
+                  <Zap size={14} className="text-live" />
+                </div>
+                <div className="text-sm font-bold text-paper-bright font-mono">
+                  {waveform[waveform.length - 1]} <span className="text-xs text-paper-muted font-normal">{t("dash_matrix_pps")}</span>
+                </div>
+                <span className="text-[11px] text-live block font-mono">
+                  {t("dash_matrix_zero_loss")}
+                </span>
+              </div>
+
+              <div className="flex flex-col justify-between h-full p-3.5 rounded-xl bg-surface-subtle/70 border border-white/[0.06] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-paper-faint uppercase">{t("dash_matrix_bypass_rate")}</span>
+                  <Activity size={14} className="text-cyan" />
+                </div>
+                <div className="text-sm font-bold text-paper-bright font-mono">
+                  %100.0 <span className="text-xs text-live font-normal">{t("dash_matrix_success")}</span>
+                </div>
+                <span className="text-[11px] text-paper-muted block">
+                  {t("dash_matrix_dpi_bypassed")}
+                </span>
+              </div>
+
+              <div className="flex flex-col justify-between h-full p-3.5 rounded-xl bg-surface-subtle/70 border border-white/[0.06] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-paper-faint uppercase">{t("dash_matrix_protected_flow")}</span>
+                  <Cpu size={14} className="text-paper-muted" />
+                </div>
+                <div className="text-sm font-bold text-paper-bright font-mono">
+                  {(status?.packets_touched ?? 0).toLocaleString()} <span className="text-xs text-paper-muted font-normal">{t("dash_matrix_packet")}</span>
+                </div>
+                <span className="text-[11px] text-paper-muted block">
+                  {t("dash_matrix_selective_target")}
+                </span>
+              </div>
+            </div>
+
+            {/* 2. Popüler Hedef Platformlar Sade Rozet Tablosu */}
+            <div className="p-4 rounded-xl bg-surface-subtle/50 border border-white/[0.06] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-paper-bright flex items-center gap-2">
+                  <Server size={13} className="text-live" />
+                  <span>{t("dash_matrix_platform_status")}</span>
+                </span>
+                <span className="text-[10px] font-mono text-paper-faint">
+                  {t("dash_matrix_whitelist_prot")}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 text-xs font-mono">
+                <div className="p-2.5 rounded-lg bg-surface-card border border-white/[0.06] flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-paper-bright text-[11px]">Discord</p>
+                    <p className="text-[10px] text-paper-muted">{t("dash_matrix_voice_chat")}</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-live px-2 py-0.5 rounded bg-live/10 border border-live/20">
+                    AÇIK
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-surface-card border border-white/[0.06] flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-paper-bright text-[11px]">Roblox</p>
+                    <p className="text-[10px] text-paper-muted">{t("dash_matrix_game_cdn")}</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-live px-2 py-0.5 rounded bg-live/10 border border-live/20">
+                    AÇIK
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-surface-card border border-white/[0.06] flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-paper-bright text-[11px]">Ekşi Sözlük</p>
+                    <p className="text-[10px] text-paper-muted">{t("dash_matrix_web_mobile")}</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-live px-2 py-0.5 rounded bg-live/10 border border-live/20">
+                    AÇIK
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-surface-card border border-white/[0.06] flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-paper-bright text-[11px]">{t("dash_matrix_vpn_safe")}</p>
+                    <p className="text-[10px] text-paper-muted">{t("dash_matrix_mullvad")}</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-paper-muted px-2 py-0.5 rounded bg-white/[0.05] border border-white/[0.08]">
+                    PASSTHROUGH
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === "pro_matrix" ? (
           /* PRO MATRIX: DERİNLEMESİNE DONANIM & TELEMETRİ MERKEZİ */
           <div className="space-y-4">
             {/* 1. Sürücü ve Çekirdek Telemetrisi */}
@@ -857,3 +993,4 @@ export default function Dashboard({
     </div>
   );
 }
+

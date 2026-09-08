@@ -203,6 +203,12 @@ pub fn apply_steps(view: &PacketView, steps: &[Step]) -> StrategyPlan {
         .min_by_key(|v| v.seq());
 
     let mut fakes = Vec::new();
+    let configured_ttl = steps.iter().find_map(|s| match s {
+        Step::FakePacketBefore { ttl } => Some(*ttl),
+        Step::AutoTtl { base, tolerance } => Some((*base).saturating_add((*tolerance).min(3))),
+        _ => None,
+    }).unwrap_or(4);
+
     if let Some(v0) = source {
         for step in steps {
             match step {
@@ -211,12 +217,12 @@ pub fn apply_steps(view: &PacketView, steps: &[Step]) -> StrategyPlan {
                     fakes.push(fake);
                 }
                 Step::AutoTtl { base, tolerance } => {
-                    let effective_ttl = (*base).saturating_add((*tolerance).min(1));
+                    let effective_ttl = (*base).saturating_add((*tolerance).min(3));
                     let fake = build_tcp_segment(&v0, v0.seq(), v0.payload(), Some(effective_ttl), None, false, None, window_size);
                     fakes.push(fake);
                 }
                 Step::FakeFromHex { payload: fake_payload } => {
-                    let fake = build_tcp_segment(&v0, v0.seq(), fake_payload, None, None, false, None, window_size);
+                    let fake = build_tcp_segment(&v0, v0.seq(), fake_payload, Some(configured_ttl), None, false, None, window_size);
                     fakes.push(fake);
                 }
                 Step::FakeWrongSeq => {
@@ -232,7 +238,7 @@ pub fn apply_steps(view: &PacketView, steps: &[Step]) -> StrategyPlan {
                 Step::Oob { offset, payload: oob_payload } => {
                     let fake_data = vec![*oob_payload];
                     let seq = v0.seq().wrapping_add(*offset as u32);
-                    let fake = build_tcp_segment(&v0, seq, &fake_data, None, None, false, Some(1), window_size);
+                    let fake = build_tcp_segment(&v0, seq, &fake_data, Some(configured_ttl), None, true, Some(1), window_size);
                     fakes.push(fake);
                 }
                 _ => {}

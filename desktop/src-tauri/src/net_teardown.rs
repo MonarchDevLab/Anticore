@@ -70,12 +70,12 @@ pub fn reset_http_connections() -> usize {
             let num_entries = u32::from_ne_bytes(buffer[0..4].try_into().unwrap()) as usize;
             let row_size = std::mem::size_of::<MibTcpRow>();
             for i in 0..num_entries {
-                let offset = 4 + i * row_size;
-                if offset + row_size > buffer.len() {
+                let offset = 4usize.saturating_add(i.saturating_mul(row_size));
+                if offset.saturating_add(row_size) > buffer.len() {
                     break;
                 }
                 let row_ptr = buffer[offset..].as_ptr() as *const MibTcpRow;
-                let mut row = unsafe { *row_ptr };
+                let mut row = unsafe { std::ptr::read_unaligned(row_ptr) };
 
                 let remote_port = u16::from_be((row.dw_remote_port & 0xFFFF) as u16);
                 if matches!(remote_port, 80 | 443 | 8080 | 8443)

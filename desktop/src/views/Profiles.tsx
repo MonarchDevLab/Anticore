@@ -75,7 +75,7 @@ export default function Profiles() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-white/[0.08]">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("profiles_title")}</h2>

@@ -124,10 +124,14 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
         } else {
           const current = await api.getStatus().catch(() => null);
           if (!current?.running) {
-            await api.startEngine(restoreProfile || compareProfile).catch(() => {});
+            await api.startEngine(restoreProfile || compareProfile).catch((e) => {
+              pushLog(`[!] Test sonrası motor geri yüklenemedi: ${String(e)}`);
+            });
           } else if (restoreProfile && current.profile_id !== restoreProfile) {
             await api.stopEngine().catch(() => {});
-            await api.startEngine(restoreProfile).catch(() => {});
+            await api.startEngine(restoreProfile).catch((e) => {
+              pushLog(`[!] Test sonrası profil geri yüklenemedi: ${String(e)}`);
+            });
           }
         }
       }
@@ -155,7 +159,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8">
       <header className="pb-3 border-b border-white/[0.08]">
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("test_title")}</h2>
         <p className="mt-0.5 text-xs text-paper-muted">{t("test_desc")}</p>

@@ -104,7 +104,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 py-4">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8">
       {/* İlerleme Göstergesi */}
       <div className="flex items-center justify-between gap-3 px-1">
         {[1, 2, 3, 4].map((i) => {

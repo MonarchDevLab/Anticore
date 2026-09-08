@@ -15,6 +15,12 @@ use anticore_core::strategy::Step;
 pub const SERVICE_NAME: &str = "AnticoreService";
 
 fn main() {
+    std::panic::set_hook(Box::new(|info| {
+        let msg = format!("PANIC: {info}\n");
+        eprintln!("{msg}");
+        let _ = std::fs::write("anticore-cli-panic.log", &msg);
+    }));
+
     let args: Vec<String> = std::env::args().skip(1).collect();
 
     let Some(cmd) = args.first().cloned() else {
@@ -157,6 +163,7 @@ fn cmd_run(args: &[String]) -> Result<(), String> {
             dll_dir.as_deref(),
             opts.pasif_savunma,
             opts.quic_engelle,
+            None,
         )
     }
     #[cfg(not(windows))]
@@ -183,12 +190,13 @@ fn live_loop(
     dll_dir: Option<&Path>,
     pasif_savunma: bool,
     quic_engelle: bool,
+    stop_flag: Option<&std::sync::atomic::AtomicBool>,
 ) -> Result<(), String> {
     use anticore_transport_win::{WinDivert, WINDIVERT_FLAG_DROP};
 
     println!("[*] WinDivert yükleniyor... (yönetici hakları gerekir)");
     let wd = WinDivert::open(
-        "outbound and tcp and (tcp.DstPort == 443 or tcp.DstPort == 80)",
+        "outbound and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80)",
         dll_dir,
     )?;
 
@@ -217,13 +225,24 @@ fn live_loop(
     println!("[+] aktif. Ctrl+C ile durdurun.");
 
     let mut buf = vec![0u8; 65_535];
+    let mut consecutive_errors = 0u32;
     loop {
+        if let Some(stop) = stop_flag {
+            if stop.load(std::sync::atomic::Ordering::Relaxed) {
+                break;
+            }
+        }
         let Some((n, addr)) = wd.recv(&mut buf) else {
+            consecutive_errors += 1;
+            if consecutive_errors > 100 {
+                return Err("WinDivert sürücü bağlantısı koptu (ardışık 100 recv hatası)".into());
+            }
             // Sürücü/handle geçici hata verdi: 100% CPU spin yerine kısa
-            // bekle ve tekrar dene (masaüstü paneliyle aynı davranış).
+            // bekle ve tekrar dene.
             std::thread::sleep(std::time::Duration::from_millis(50));
             continue;
         };
+        consecutive_errors = 0;
         let raw = &buf[..n];
         match anticore_core::dispatch::decide_packet(raw, blacklist, steps) {
             anticore_core::dispatch::PacketDecision::Passthrough(_) => {
@@ -236,10 +255,26 @@ fn live_loop(
             }
         }
     }
+    Ok(())
 }
 
+#[cfg(windows)]
+#[derive(Clone)]
+struct ServiceArgs {
+    profile_id: String,
+    data_dir: PathBuf,
+    pasif_savunma: bool,
+    quic_engelle: bool,
+}
+
+#[cfg(windows)]
+static SERVICE_ARGS: std::sync::OnceLock<ServiceArgs> = std::sync::OnceLock::new();
+
+#[cfg(windows)]
+static SERVICE_STOP_FLAG: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// SCM servis gövdesi: dispatcher'a bağlan, Running bildir, motoru çalıştır.
-/// Stop/Shutdown sinyalinde anında çıkar (handle'lar OS'ta kapanır).
+/// Stop/Shutdown sinyalinde temiz çıkar.
 #[cfg(windows)]
 fn cmd_service_run(args: &[String]) -> Result<(), String> {
     use windows_service::{define_windows_service, service_dispatcher};
@@ -253,20 +288,17 @@ fn cmd_service_run(args: &[String]) -> Result<(), String> {
 
     define_windows_service!(ffi_service_main, service_main_impl);
 
-    // Argümanları dispatcher'a taşımak için statik depo
-    SERVICE_ARGS.with(|cell| {
-        cell.borrow_mut().replace((profile_id, data_dir));
+    // Argümanları dispatcher'a taşımak için statik thread-safe depo
+    let _ = SERVICE_ARGS.set(ServiceArgs {
+        profile_id,
+        data_dir,
+        pasif_savunma: opts.pasif_savunma,
+        quic_engelle: opts.quic_engelle,
     });
 
     service_dispatcher::start(SERVICE_NAME, ffi_service_main)
         .map_err(|e| format!("servis dispatcher başlatılamadı: {e}"))?;
     Ok(())
-}
-
-#[cfg(windows)]
-thread_local! {
-    static SERVICE_ARGS: std::cell::RefCell<Option<(String, PathBuf)>> =
-        const { std::cell::RefCell::new(None) };
 }
 
 #[cfg(windows)]
@@ -279,9 +311,7 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
 
     let status_handle = service_control_handler::register(SERVICE_NAME, move |control| match control {
         ServiceControl::Stop | ServiceControl::Shutdown => {
-            // Handle'lar process çıkışında OS tarafından kapatılır.
-            std::process::exit(0);
-            #[allow(unreachable_code)]
+            SERVICE_STOP_FLAG.store(true, std::sync::atomic::Ordering::SeqCst);
             ServiceControlHandlerResult::NoError
         }
         ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
@@ -299,9 +329,13 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
         process_id: None,
     });
 
-    let (profile_id, data_dir) = SERVICE_ARGS
-        .with(|cell| cell.borrow().clone())
-        .unwrap_or_else(|| ("universal".into(), std::env::temp_dir()));
+    let args = SERVICE_ARGS.get().cloned().unwrap_or_else(|| ServiceArgs {
+        profile_id: "universal".into(),
+        data_dir: std::env::temp_dir(),
+        pasif_savunma: false,
+        quic_engelle: false,
+    });
+    let (profile_id, data_dir) = (args.profile_id, args.data_dir);
 
     let steps = resolve_steps(&profile_id, Some(&data_dir)).unwrap_or_else(|e| {
         eprintln!("profil çözümlenemedi: {e}");
@@ -314,16 +348,21 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
         .ok()
         .and_then(|p| p.parent().map(|d| d.to_path_buf()));
 
-    if let Err(e) = live_loop(&steps, &bl, dll_dir.as_deref(), false, true) {
-        eprintln!("motor hatası: {e}");
-        let _ = status_handle.set_service_status(ServiceStatus {
-            service_type: ServiceType::OWN_PROCESS,
-            current_state: ServiceState::Stopped,
-            controls_accepted: ServiceControlAccept::empty(),
-            exit_code: ServiceExitCode::Win32(1),
-            checkpoint: 0,
-            wait_hint: std::time::Duration::default(),
-            process_id: None,
-        });
-    }
+    let exit_code = match live_loop(&steps, &bl, dll_dir.as_deref(), args.pasif_savunma, args.quic_engelle, Some(&SERVICE_STOP_FLAG)) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("motor hatası: {e}");
+            1
+        }
+    };
+
+    let _ = status_handle.set_service_status(ServiceStatus {
+        service_type: ServiceType::OWN_PROCESS,
+        current_state: ServiceState::Stopped,
+        controls_accepted: ServiceControlAccept::empty(),
+        exit_code: ServiceExitCode::Win32(exit_code),
+        checkpoint: 0,
+        wait_hint: std::time::Duration::default(),
+        process_id: None,
+    });
 }

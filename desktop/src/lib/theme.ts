@@ -8,6 +8,7 @@ export type ThemeMode =
   | "amber"
   | "cobalt"
   | "amethyst"
+  | "crimson"
   | "titanium";
 
 export interface ThemeOption {
@@ -25,6 +26,13 @@ export const THEME_OPTIONS: ThemeOption[] = [
     description: "45° kesik açılı poligon kartlar, endüstriyel HUD gridi, mecha tetik butonları ve sarı/siyan yüksek gerilim",
     accent: "#FFE600",
     bg: "#08090D",
+  },
+  {
+    id: "crimson",
+    name: "Crimson Hazard",
+    description: "Taktik askeri kırmızı lazer HUD, acil durum komuta paneli, yüksek kontrastlı kantaşı ve karbon şasi",
+    accent: "#FF2A4D",
+    bg: "#0B0406",
   },
   {
     id: "luxury",
@@ -92,6 +100,7 @@ export function getStoredTheme(): ThemeMode {
     saved === "cobalt" ||
     saved === "cyberpunk" ||
     saved === "amethyst" ||
+    saved === "crimson" ||
     saved === "titanium" ||
     saved === "system"
   ) {
@@ -132,6 +141,7 @@ export function applyTheme(mode: ThemeMode) {
     "theme-cobalt",
     "theme-cyberpunk",
     "theme-amethyst",
+    "theme-crimson",
     "theme-titanium"
   );
 
@@ -172,16 +182,26 @@ if (typeof window !== "undefined") {
   }
 }
 
+function subscribeTheme(onStoreChange: () => void) {
+  themeListeners.add(onStoreChange);
+  return () => {
+    themeListeners.delete(onStoreChange);
+  };
+}
+
+function getThemeSnapshot(): ThemeMode {
+  return currentTheme;
+}
+
+function getServerThemeSnapshot(): ThemeMode {
+  return "obsidian";
+}
+
 export function useTheme() {
   const theme: ThemeMode = useSyncExternalStore<ThemeMode>(
-    (onStoreChange) => {
-      themeListeners.add(onStoreChange);
-      return () => {
-        themeListeners.delete(onStoreChange);
-      };
-    },
-    () => currentTheme,
-    () => "obsidian" as ThemeMode
+    subscribeTheme,
+    getThemeSnapshot,
+    getServerThemeSnapshot
   );
 
   const effective = getEffectiveTheme(theme);
