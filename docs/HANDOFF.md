@@ -1,6 +1,8 @@
 # HANDOFF
 
 ## Anlık Durum
+2026-09-07 güncel düzeltme: `improvement/measured-network` dalında NETWORK_PLAN.md P0 kaynak uygulaması tamamlandı (`1110001`); diğer aşamalar bekliyor. Seçici ortak filtre, belgelenmiş DROP sabiti, kuyruğu boşaltarak durdurma, normal start/stop sırasında sistem TCP/DNS sıfırlamalarının kaldırılması ve ölçülmeyen göstergelerin düzeltilmesi uygulandı. 48 motor, 9 masaüstü, 5 frontend testi geçti; aktarım karşılaştırma aracı hazır. Gerçek ISS/hız ve canlı sürücü yaşam döngüsü doğrulanmadı. Aşağıdaki eski “sıfır hız kaybı”, “%100 başarı” ve gecikme ifadeleri ölçüm kanıtı değildir; güncel kabul kapıları NETWORK_PLAN.md içindedir.
+
 Anticore v0.3.0, Ouroboros v6.0 disiplini ve 3 bağımsız uzman ajan denetimi ile derinlemesine restore edildi:
 - **Faz 30 Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi (2026-09-07):**
   - `commands.rs`: `reset_doh_registry` ve `set_startup_enabled` içerisinde `windows_registry::*.open()` metodunun varsayılan olarak `KEY_READ` yetkisiyle açtığı ve çağrılan `remove_value` fonksiyonunun `ERROR_ACCESS_DENIED` (5) ile reddedildiği kök neden tespit edildi. `LOCAL_MACHINE.create()` ve `CURRENT_USER.create()` ile `KEY_READ | KEY_WRITE` erişimine geçirildi. DoH anahtarları (`EnableAutoDoh`, `AutoDohTemplate`) silindi; garanti olarak sıfırlama (`0`) koruması yazıldı.

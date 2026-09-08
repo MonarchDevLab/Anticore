@@ -1,17 +1,23 @@
 # TASKS
 
 > Tek gerçek kaynak. Kod/git ile çeliştiğinde git kazanır, bu dosya düzeltilir.
-> Son doğrulama: 2026-09-07 — `cargo test --workspace` 47/47, `cargo test` (desktop) 9/9,
-> `npm test` 5/5 (vitest), `npm run build` 0 hata, release binary ve portable zip paketlendi.
+> Son doğrulama: 2026-09-07 — `cargo test --workspace` 48/48, `cargo test` (desktop) 9/9,
+> `npm test` 5/5, frontend ve iki Rust release build başarılı; dağıtım paketleri bu görevde yenilenmedi. Saha hız testi yapılmadı.
 
 ## ŞİMDİ `[~]`
-- *(Yok — Faz 30 Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi tamamlandı)*
+- *(Yok — Faz 31 P0 kaynak uygulaması tamamlandı; saha kabulü bekliyor.)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
-- `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması.
+- `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması; NETWORK_PLAN.md ölçüm protokolü ile en az 5 eşleştirilmiş indirme/yükleme ölçümü ve aktif aktarımda start/stop.
+- `[ ]` 32 NETWORK_PLAN.md P1/P2/P3: uyarlanabilir profil seçimi, arayüz kabulü ve açık kaynak yayın kapıları.
+
+### Faz 31 — Ölçülebilir Ağ Kalitesi P0 (kaynak uygulaması tamamlandı)
+- `[x]` 2026-09-07 — `1110001`: ortak seçici filtre, doğru DROP sabiti, kuyruk boşaltarak durdurma, SCM recv uyandırma, DLL kaynak serbest bırakma, normal geçişlerde TCP/DNS sıfırlamalarını kaldırma, yeni ayarlarda RST baskılamayı kapatma.
+- `[x]` 2026-09-07 — `1110001`: ölçülmeyen telemetri/hız iddialarını düzeltme; gerçek curl aktarım raporu ve eşleştirilmiş karşılaştırma aracı.
+- `[x]` 2026-09-07 — `1110001`: 48 motor, 9 masaüstü, 5 frontend testi; 5 betik senaryosu ve gerçek curl hata yolu geçti. Frontend ve Rust release build başarılı. Clippy mevcut uyarılarla tamamlandı. Hız/ISS ve canlı yaşam döngüsü henüz doğrulanmadı.
 
 ### Faz 30 — Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi (TAMAMLANDI)
 - `[x]` 30.1 (2026-09-07) **Windows Registry Salt Okunur (KEY_READ) Kök Neden Çözümü:**

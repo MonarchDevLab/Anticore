@@ -1,5 +1,11 @@
 # SYSTEM MAP
 
+## Network contract — 2026-09-07
+- `anticore_core::dispatch::capture_filter` is the shared desktop/CLI capture policy. Default profiles capture bounded HTTP/TLS handshake candidates; WindowSize profiles retain bounded compatibility capture.
+- WinDivert DROP is 0x0002. Receive shutdown drains the queue before handle release. Desktop lifecycle is serialized; the SCM stop handler wakes blocked capture. DLL references are scoped to transport lifetimes.
+- Ordinary start/stop does not reset other applications' TCP connections or flush DNS. Explicit network repair remains separate. New configurations disable RST suppression; saved preferences remain effective.
+- Packet processing counters do not prove reachability. Unmeasured latency/success/loss are unavailable. `scripts/measure-transfer.ps1` records opt-in real transfers and compares paired reports. Field/release gates: NETWORK_PLAN.md.
+
 ## Design Tokens (Kalıcı Mimari Kararlar — 2026 Cyber-Hardware & 6 Donanım Teması)
 - **Tema & Felsefe:** 2026 Developer Araçları (Raycast, Linear, Warp, Little Snitch 6) Estetiği. Sub-pixel mikro-sınırlar (`rgba(255,255,255,0.08)`), subsurface radyal aura, `tabular-nums` veri sakinliği ve dokunsal geri bildirim.
 - **6 Yüksek Karakterli Donanım Teması (+ Sistem Modu):**
