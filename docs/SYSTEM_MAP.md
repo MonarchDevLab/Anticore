@@ -1,5 +1,10 @@
 # SYSTEM MAP
 
+## Operations console — 2026-09-09 (current)
+- `features/connection/ConnectionConsole.tsx` owns the visual engine state, circuit indicator and power/profile controls. Dashboard preserves profile synchronization and composes console, measured telemetry, TLS inspections and event/diagnostic panels. No IPC or engine changes.
+- `workspace.css`: 5px panels, 3px controls, 24px background grid, 174/154px navigation, 14px panel gaps, minimum 12px functional copy, local Fira Sans/Code. Installed theme colors retained; light action contrast 5.48:1. Replaces prior 20px geometry and large power control. Tool pages share these surfaces.
+- Native viewport acceptance: engine, telemetry and target section fit at 1080×720. Existing Edge locks, unknown state, TLS results/reset and 390/768/1080px overflow checks passed. Core indicator is decorative and reflects running/idle/unknown only; it does not measure connectivity.
+
 ## Compact connection console — 2026-09-08 (current visual revision)
 - `workspace.css`: horizontal status/action composition; 128px rounded-square power control, 104px at intermediate widths, full-width 56px below 430px. Shared radius 20px. Native theme accent retained; light actions use `--color-live-dim` on `--color-surface-card`. Fira Sans/Code remain local. A single inset counter strip and tinted navigation establish hierarchy. This supersedes prior geometry and light action tokens below.
 - Existing Edge acceptance now targets `.power-switch` for contrast; sample ratios 5.48–13.87:1. Start/profile locks, unknown state, target reset and 390/768/1080px overflow checks pass. No backend changes.

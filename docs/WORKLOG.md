@@ -1,5 +1,10 @@
 # WORKLOG
 
+## 2026-09-09 — Yoğun operasyon konsolu
+- Kullanıcı önceki tasarımı reddetti ve teknik/yoğun panel yönünü seçti. Dashboard yerleşimi yeniden kuruldu; motor kontrolü ConnectionConsole bileşenine ayrıldı. Gerçek durum göstergesi, bitişik telemetri, yatay TLS hedefleri ve kompakt olay/araç alanı uygulandı. Yerel fontlar ve tema renkleri korundu.
+- 14 frontend testi ve mevcut Edge kabul senaryoları geçti. 1080×720 pencerede motor/telemetri/hedef testlerinin görünürlüğü ayrıca doğrulandı; 390/768/1080px taşma yok. Örnek metin kontrastları 5.48–13.87:1. Ekran görüntüleri test verisi; native ağ etkileşimi kanıtı değildir.
+- [KARAR-UI-20260909] Son kullanıcı tasarım yönü: yoğun teknik konsol. 5px panel, 3px kontrol, 14px aralık, 24px zemin ızgarası. Önceki ferah/kavisli panel yönü geçersiz.
+
 ## 2026-09-08 kabul devamı — ef32270
 - Son paketleme: 17:15; EXE/NSIS/MSI/portable yeniden üretildi, GUI root/dist/portable/ZIP içeriği eşleşti. Yeni imza/yayın veya canlı ağ işlemi yapılmadı. Önceki dağıtım yedeklendi.
 - GUI SHA256: `02533DBEB03EFD9DC006F1E268587CC2A3C8AD82B57637018A7914A88C6F4C89`.

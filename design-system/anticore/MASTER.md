@@ -1,5 +1,13 @@
 # Design System Master File
 
+## Operations console — current revision 2026-09-09
+
+User selected a technical, dense control panel after rejecting the previous card dashboard. This section supersedes all earlier geometry and layout directions. The shell uses a 174px navigation rail (154px at native width), a subtle 24px engineering grid, 5px panel corners and 3px control corners. Use the installed theme palette; light action colors remain live-dim on white. Body and data text is at least 12px; compact brand/eyebrow marks may be smaller. Local Fira Sans supplies 26–40px engine state; Fira Code supplies uppercase panel labels, numerical telemetry and event rows.
+
+The signature is a circuit-style core indicator reflecting only known engine state, never traffic or reachability. The engine console owns state, power action and profile selection. Real counters and packet sampling occupy the adjacent telemetry console. Three TLS targets form a horizontal inspection row, with event history and diagnostic routes below. At 1080×720, engine, telemetry and target testing fit without scrolling. Below 700px modules stack; below 430px the start action spans the available width. All controls retain keyboard focus, unknown/busy/empty/error states and reduced-motion support. Shared tool pages adopt the same compact surfaces.
+
+Local network-monitoring design research supported the Fira pairing and high density. Marketing sections and glass effects were excluded. No font or runtime dependency was added. Existing behavior tests and Edge acceptance are the validation basis; preview data is a test fixture.
+
 ## Compact connection console — current revision 2026-09-08
 
 Supersedes prior power-console geometry. A horizontal connection card pairs left-aligned state and explanation with a filled, rounded-square power control. Profile selection remains adjacent; measured counters share a single inset strip. Shared panels use 20px radius, active navigation uses a restrained theme tint, and utility shortcuts use inset icon surfaces. Below 430px the power control becomes a full-width 56px action. Retain bundled Fira Sans / Fira Code and installed theme colors: void #06080C, card #0E131F, paper #F1F5F9, muted #94A3B8, accent #00F59B. Light actions use existing live-dim #047857 on white for 5.48:1 contrast. No new dependencies or data behavior changes. Reduced motion covers the connection workspace and navigation.

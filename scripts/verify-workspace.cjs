@@ -64,6 +64,7 @@ mockIPC(async (cmd, args) => {
   await page.getByRole('button',{name:'Hedefleri test et',exact:true}).click();
   await page.getByText('TLS yanıtı alındı',{exact:true}).first().waitFor();
   assert.equal(await page.evaluate(()=>window.fixture.probes),3);
+  await page.screenshot({path:path.join(process.env.UI_OUTPUT_DIR,'workspace-active.png')});
   await page.getByRole('button',{name:'Motoru durdur',exact:true}).click();
   await start.waitFor();
   assert.equal(await page.getByText('TLS yanıtı alındı',{exact:true}).count(),0);
@@ -73,6 +74,11 @@ mockIPC(async (cmd, args) => {
    assert.equal(await page.locator('.workspace-main').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true,'Horizontal overflow at '+width);
    await page.screenshot({path:path.join(process.env.UI_OUTPUT_DIR,'workspace-'+width+'.png')});
   }
+  await page.setViewportSize({width:1080,height:720});
+  await page.locator('.workspace-main').evaluate(el=>el.scrollTop=0);
+  const targetsBox=await page.locator('.target-panel').boundingBox();
+  assert.ok(targetsBox.y+targetsBox.height<=720,'Engine, telemetry and target tests must fit in the native viewport');
+  await page.screenshot({path:path.join(process.env.UI_OUTPUT_DIR,'workspace-native.png')});
   await page.setViewportSize({width:1440,height:1000});
   await page.evaluate(()=>{localStorage.setItem('anticore_theme_mode','titanium');});
   // Change the real theme using its control until the light theme is reached.
