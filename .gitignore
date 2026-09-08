@@ -20,6 +20,7 @@ node_modules/
 # Yerel çalışma dosyaları
 *.log
 *.tmp
+*.old
 
 # Yerel çalışma ve teşhis kayıtları
 .ai/

@@ -1434,7 +1434,7 @@ pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> 
             .output();
 
         // Registry Run değerini sil
-        if let Ok(run_key) = windows_registry::CURRENT_USER.open(run_key_path) {
+        if let Ok(run_key) = windows_registry::CURRENT_USER.create(run_key_path) {
             let _ = run_key.remove_value("Anticore");
         }
         app.emit("log", "[-] Windows başlangıcı devre dışı bırakıldı".to_string()).ok();
@@ -1500,6 +1500,7 @@ pub fn apply_doh_registry(app: AppHandle, template: Option<String>) -> Result<()
         }
     }
 
+    crate::net_teardown::flush_dns_cache();
     app.emit(
         "log",
         "[+] DoH (DNS over HTTPS) kayıt defterine eklendi (EnableAutoDoh=2, Native Registry)".to_string(),
@@ -1521,11 +1522,21 @@ pub fn reset_doh_registry(app: AppHandle) -> Result<(), String> {
         return Err("DoH kayıt defteri anahtarlarını silmek için Windows yönetici (Administrator) yetkisi gereklidir.".into());
     }
     let params_path = "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters";
-    if let Ok(key) = windows_registry::LOCAL_MACHINE.open(params_path) {
-        let _ = key.remove_value("EnableAutoDoh");
-        let _ = key.remove_value("AutoDohTemplate");
+    let key = windows_registry::LOCAL_MACHINE
+        .create(params_path)
+        .map_err(|e| format!("Dnscache kayıt defteri açılamadı (Yönetici yetkisi gerekli): {e}"))?;
+
+    let _ = key.remove_value("EnableAutoDoh");
+    let _ = key.remove_value("AutoDohTemplate");
+
+    if let Ok(val) = key.get_u32("EnableAutoDoh") {
+        if val != 0 {
+            let _ = key.set_u32("EnableAutoDoh", 0);
+        }
     }
-    app.emit("log", "[-] DoH kayıt defterinden silindi (Native Registry)".to_string()).ok();
+
+    crate::net_teardown::flush_dns_cache();
+    app.emit("log", "[-] DoH kayıt defterinden kaldırıldı ve DNS önbelleği temizlendi".to_string()).ok();
     Ok(())
 }
 

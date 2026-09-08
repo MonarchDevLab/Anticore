@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LoaderCircle, Network, RefreshCw, ShieldCheck, Wifi } from "lucide-react";
+import { CheckCircle2, LoaderCircle, Network, RefreshCw, ShieldAlert, ShieldCheck, Wifi } from "lucide-react";
 import { api, type AdapterDnsInfo, type DohStatusDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -21,6 +21,9 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
   const [provider, setProvider] = useState<(typeof DNS_PROVIDERS)[number]["id"]>("google");
   const [adapters, setAdapters] = useState<AdapterDnsInfo[] | null>(null);
   const [dohStatus, setDohStatus] = useState<DohStatusDto | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const refreshDns = () =>
     void api.getDnsServers().then((d) => setDns(d.servers));
@@ -32,28 +35,38 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
     refreshDns();
     refreshAdapters();
     refreshDoh();
+    void api.checkIsAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
   }, []);
 
   const run = async (kind: "apply" | "reset" | "discord-repair" | "discord-cache") => {
     setBusy(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
     try {
       if (kind === "apply") {
         await api.applySecureDns(provider);
-        pushLog(`[+] güvenli DNS uygulandı (${DNS_PROVIDERS.find((p) => p.id === provider)?.label})`);
+        const provLabel = DNS_PROVIDERS.find((p) => p.id === provider)?.label || provider;
+        pushLog(`[+] Güvenli DNS uygulandı (${provLabel})`);
+        setSuccessMessage(`Güvenli DNS başarıyla uygulandı (${provLabel})`);
       } else if (kind === "reset") {
         await api.resetDns();
         pushLog("[*] DNS sıfırlandı");
+        setSuccessMessage("DNS ayarları varsayılana (DHCP) sıfırlandı");
       } else if (kind === "discord-repair") {
         const res = await api.repairDiscordUpdates();
         pushLog(`[+] ${res}`);
+        setSuccessMessage(res);
       } else if (kind === "discord-cache") {
         const res = await api.clearDiscordCache();
         pushLog(`[+] ${res}`);
+        setSuccessMessage(res);
       }
       refreshDns();
       refreshAdapters();
     } catch (e) {
-      pushLog(`[!] İşlem başarısız: ${String(e)}`);
+      const err = String(e);
+      pushLog(`[!] İşlem başarısız: ${err}`);
+      setErrorMessage(err);
     } finally {
       setBusy(false);
       setDialog(null);
@@ -68,6 +81,56 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("net_title")}</h2>
         <p className="mt-0.5 text-xs text-paper-muted">{t("net_desc")}</p>
       </header>
+
+      {isAdmin === false && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+              <ShieldAlert size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <div>
+              <h3 className="font-bold text-amber-300">{t("net_admin_required_title")}</h3>
+              <p className="text-paper-muted mt-0.5">{t("net_admin_required_desc")}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => void api.restartAsAdmin()}
+            className="btn btn-primary text-xs shrink-0 whitespace-nowrap bg-amber-600 hover:bg-amber-500 border-amber-500/40 text-black font-semibold cursor-pointer"
+          >
+            {t("net_admin_restart_btn")}
+          </button>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs flex items-center justify-between gap-3 text-rose-300">
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert size={16} className="text-rose-400 shrink-0" aria-hidden />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="text-paper-muted hover:text-paper cursor-pointer font-bold px-2 py-0.5"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="rounded-2xl border border-live/30 bg-live/10 p-4 text-xs flex items-center justify-between gap-3 text-live">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 size={16} className="text-live shrink-0" aria-hidden />
+            <span>{successMessage}</span>
+          </div>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="text-paper-muted hover:text-paper cursor-pointer font-bold px-2 py-0.5"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <Guide
         title={lang === "tr" ? "DNS ve Güvenli Çözümleme" : "DNS and Secure Resolution"}
@@ -236,15 +299,20 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
 
         <div className="flex flex-wrap gap-2.5 pt-1">
           <button
-            className="btn btn-primary text-xs"
+            className="btn btn-primary text-xs cursor-pointer"
             onClick={async () => {
               setBusy(true);
+              setErrorMessage(null);
+              setSuccessMessage(null);
               try {
                 await api.applyDohRegistry();
                 pushLog("[+] DoH Registry anahtarı eklendi (EnableAutoDoh=2)");
+                setSuccessMessage(lang === "tr" ? "DoH kayıt defterine uygulandı (EnableAutoDoh=2) ve DNS önbelleği temizlendi" : "DoH applied to registry (EnableAutoDoh=2) and DNS cache flushed");
                 refreshDoh();
               } catch (e) {
-                pushLog(`[!] DoH Registry hatası: ${String(e)}`);
+                const err = String(e);
+                pushLog(`[!] DoH Registry hatası: ${err}`);
+                setErrorMessage(err);
               } finally {
                 setBusy(false);
               }
@@ -254,15 +322,20 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             {t("net_doh_apply_btn")}
           </button>
           <button
-            className="btn btn-secondary text-xs"
+            className="btn btn-secondary text-xs cursor-pointer"
             onClick={async () => {
               setBusy(true);
+              setErrorMessage(null);
+              setSuccessMessage(null);
               try {
                 await api.resetDohRegistry();
-                pushLog("[-] DoH Registry anahtarı kaldırıldı");
+                pushLog("[-] DoH Registry anahtarı kaldırıldı ve DNS önbelleği temizlendi");
+                setSuccessMessage(lang === "tr" ? "DoH kayıt defterinden başarıyla kaldırıldı ve DNS önbelleği temizlendi" : "DoH removed from registry and DNS cache flushed");
                 refreshDoh();
               } catch (e) {
-                pushLog(`[!] DoH sıfırlama hatası: ${String(e)}`);
+                const err = String(e);
+                pushLog(`[!] DoH sıfırlama hatası: ${err}`);
+                setErrorMessage(err);
               } finally {
                 setBusy(false);
               }

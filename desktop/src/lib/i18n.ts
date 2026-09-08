@@ -203,6 +203,9 @@ export const translations = {
     net_discord_desc: "Discord 'Checking for updates' sonsuz döngüsü ve ses bağlantı sorunlarını onarır.",
     net_discord_update_btn: "Güncelleme Döngüsünü Onar",
     net_discord_cache_btn: "Discord Önbelleğini Temizle",
+    net_admin_required_title: "Windows Yönetici İzni Gerekiyor",
+    net_admin_required_desc: "DNS ve DoH kayıt defteri değişiklikleri Windows sistem düzeyinde yapılandırma gerektirir. Lütfen yönetici olarak yeniden başlatın.",
+    net_admin_restart_btn: "Yönetici Olarak Yeniden Başlat",
 
     // Wizard
     wiz_title: "Anticore Kurulum Sihirbazı",
@@ -567,6 +570,9 @@ export const translations = {
     net_discord_desc: "Fixes Discord 'Checking for updates' infinite loops and voice RTC connection errors.",
     net_discord_update_btn: "Fix Update Loop",
     net_discord_cache_btn: "Clear Discord Cache",
+    net_admin_required_title: "Administrator Privileges Required",
+    net_admin_required_desc: "DNS and DoH registry operations require Windows system-level access. Please restart as administrator.",
+    net_admin_restart_btn: "Restart as Administrator",
 
     // Wizard
     wiz_title: "Anticore Setup Wizard",

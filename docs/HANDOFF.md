@@ -2,6 +2,12 @@
 
 ## Anlık Durum
 Anticore v0.3.0, Ouroboros v6.0 disiplini ve 3 bağımsız uzman ajan denetimi ile derinlemesine restore edildi:
+- **Faz 30 Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi (2026-09-07):**
+  - `commands.rs`: `reset_doh_registry` ve `set_startup_enabled` içerisinde `windows_registry::*.open()` metodunun varsayılan olarak `KEY_READ` yetkisiyle açtığı ve çağrılan `remove_value` fonksiyonunun `ERROR_ACCESS_DENIED` (5) ile reddedildiği kök neden tespit edildi. `LOCAL_MACHINE.create()` ve `CURRENT_USER.create()` ile `KEY_READ | KEY_WRITE` erişimine geçirildi. DoH anahtarları (`EnableAutoDoh`, `AutoDohTemplate`) silindi; garanti olarak sıfırlama (`0`) koruması yazıldı.
+  - `apply_doh_registry` ve `reset_doh_registry` içine `crate::net_teardown::flush_dns_cache()` eklenerek Windows DNS önbelleğinin anında temizlenmesi sağlandı.
+  - `NetworkRepair.tsx` içine `api.checkIsAdmin()` entegrasyonu yapıldı: Yönetici yetkisi olmadığında sarı uyarı şeridi ve tek tıkla `api.restartAsAdmin()` butonu gösterildi; DoH ve DNS işlemlerine anlık hata/başarı şeritleri ve anında `refreshDoh()` bağlandı.
+  - `scripts/package.ps1`: Çalışan süreç kilitlerine karşı `Safe-Replace-Exe` fonksiyonu yazıldı.
+  - Doğrulama: `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata), `package.ps1` başarılı.
 - **Faz 29 Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli (2026-09-07):**
   - Sistem tepsisindeki Anticore simgesine tek tıklandığında açılan ve Windows görev çubuğu üzerinde yüzen kompakt (340x460px) `quick-panel` inşa edildi. Çift tıklandığında ise tek tık iptal edilerek doğrudan 1080x720 ana pencere (`main`) öne getirilir (`TrayIconEvent::DoubleClick` + 220ms `AtomicU64` nesil gecikmesi ile sıfır flicker).
   - Rust katmanında `position_quick_panel` ile tepsi koordinatlarına (`rect`) ve ekran çalışma alanına (`work_area`) göre milimetrik sağ alt köşe konumlandırması sağlandı; `TrayIconEvent::Click` sol tık toggle mekanizması bağlandı.

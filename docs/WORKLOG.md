@@ -2,22 +2,27 @@
 
 ## Aktif Oturum (Son Oturumun Detayları)
 - **Tarih:** 2026-09-07
-- **Gerçekleşenler (Faz 29 - Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli):**
-  1. Tauri Çoklu Pencere & Yetki Mimarisi:
-     - `tauri.conf.json` içinde 340x460px boyutunda, frameless, gölgeli, her zaman üstte ve görev çubuğunda simge açmayan `quick-panel` penceresi tanımlandı.
-     - `capabilities/default.json` yetki kapsamına `"windows": ["main", "quick-panel"]` eklenerek pencerenin Tauri çekirdek komutlarına erişimi sağlandı.
-  2. Rust Sistem Tepsisi (Tray) & Akıllı Konumlandırma:
-     - `tray.rs` içinde `TrayIconEvent::Click` sol tık yakalayıcısı genişletildi; `position_quick_panel` algoritması ile tepsi ikonu (`rect`) ve birincil monitör çalışma alanı (`work_area`) üzerinden panel ekranın sağ alt köşesine, görev çubuğunun hemen üzerine milimetrik yerleştirildi ve görünürlüğü toggle edildi.
-     - `main.rs` içinde `WindowEvent::Focused(false)` olayı dinlenerek kullanıcının panel dışına tıkladığı anda (blur) panelin kendiliğinden pürüzsüzce kapanması (auto-dismiss) sağlandı.
-     - `commands.rs` içine `show_main_window` ve `hide_quick_panel` komutları eklendi.
-  3. Frontend Mini Kokpit & Reaktif Tasarım ($10K Standart):
-     - `desktop/src/views/TrayQuickPanel.tsx`: 8 donanım temasıyla tam senkron, Hero Dokunsal Güç Reaktörü, Hızlı Profil Seçici Dropdown, Canlı 3'lü Telemetri HUD (PPS, %100 Atlatma, <0.05ms gecikme), 1-Click DNS & Discord Tamiri, "Ana Kokpiti Aç" ve "Çıkış" kontrolleri inşa edildi. `Esc` klavye dinleyicisi eklendi.
-     - `desktop/src/main.tsx` içinde pencere etiketine göre (`getCurrentWindow().label === "quick-panel"`) anında hafif paneli yükleyen köprü kuruldu.
-     - `desktop/src/lib/tauri.ts` & `i18n.ts`: `api.showMainWindow`, `api.hideQuickPanel` IPC köprüsü ve TR/EN yerelleştirmeleri eklendi.
-  4. Doğrulama:
-     - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata, 3.96s).
+- **Gerçekleşenler (Faz 30 - Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi):**
+  1. Windows Registry Salt Okunur Erişim Kök Neden Tespiti & Onarımı:
+     - `commands.rs`: `reset_doh_registry` ve `set_startup_enabled` içerisinde `windows_registry::*.open()` metodunun varsayılan olarak `KEY_READ` yetkisiyle açtığı ve çağrılan `remove_value` fonksiyonunun `ERROR_ACCESS_DENIED` (5) ile reddedildiği tespit edildi.
+     - `LOCAL_MACHINE.create()` ve `CURRENT_USER.create()` kullanılarak `KEY_READ | KEY_WRITE` erişimi sağlandı. `EnableAutoDoh` ve `AutoDohTemplate` anahtarları fiziken silindi; okuma teyidinde sıfırlama (`0`) garantisi eklendi.
+     - `apply_doh_registry` ve `reset_doh_registry` içine `crate::net_teardown::flush_dns_cache()` eklenerek DNS önbelleğinin anında temizlenmesi sağlandı.
+  2. NetworkRepair Arayüzü & Yönetici (UAC) Geri Bildirimi:
+     - `NetworkRepair.tsx` içine `api.checkIsAdmin()` entegre edildi. Yönetici yetkisi olmadığında sayfanın üstünde dikkat çekici uyarı şeridi ve tek tıkla `api.restartAsAdmin()` butonu gösterildi.
+     - DoH ve DNS işlemlerine hata/başarı durum geri bildirim şeritleri ve anlık yeniden sorgulama (`refreshDoh()`) bağlandı.
+     - `desktop/src/lib/i18n.ts`: TR/EN yerelleştirme anahtarları (`net_admin_required_*`) tamamlandı.
+  3. Dağıtım & Paketleme Sağlamlaştırması:
+     - `scripts/package.ps1`: Çalışan uygulama açıkken dosyaların kilitlenmesini engellemek için `Safe-Replace-Exe` fonksiyonu yazıldı.
+     - `.gitignore`: Geçici `*.old` dosyaları eklendi.
+  4. Bütünsel Doğrulama:
+     - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata).
+     - `cargo build --release` ve `package.ps1` ile güncel ikililer paketlendi (`dist/Anticore.exe`, `Anticore_0.3.0_x64-portable.zip`).
 
 ## Mimari Kararlar
+- `[KARAR-028]` **Windows Kayıt Defteri Erişim İzni (KEY_READ vs KEY_WRITE) & DNS Flush Mimarisi:**
+  1. `windows_registry::Key::open()` varsayılan olarak yalnızca salt okunur (`KEY_READ`) erişim açar. Bu anahtar handle'ı üzerinde `remove_value` veya `set_*` çağrıldığında Windows işletim sistemi `ERROR_ACCESS_DENIED` (5) döndürür. Sessiz hata yutma (`let _ =`) uygulandığında DoH veya Başlangıç anahtarları silinmiş görünür fakat fiziken silinmez. Değer silme ve güncelleme işlemleri için `create()` (`KEY_READ | KEY_WRITE`) kullanılmalıdır.
+  2. Windows DNS Cache servisi (`Dnscache`), kayıt defterinde `EnableAutoDoh` değiştiğinde önbellek temizlenmediği sürece (`DnsFlushResolverCache` / `ipconfig /flushdns`) eski çözümleyici durumunu korur. DoH ekleme (`apply_doh_registry`) ve kaldırma (`reset_doh_registry`) sonrasında `flush_dns_cache()` zorunludur.
+  3. `NetworkRepair.tsx` üzerinde sistem seviyesinde yönetici izni eksikliği (`isAdmin === false`) kullanıcıya açık sarı uyarı şeridi ve tek tıkla UAC yükseltme butonu (`api.restartAsAdmin()`) olarak sunulmalıdır. İşlem başarısızlıkları ve başarıları anlık bildirim şeridiyle arayüzde gösterilmelidir.
 - `[KARAR-027]` **Sistem Tepsisi Çift Kademeli Etkileşim & Anti-Flicker Mimarisi:**
   1. Windows tepsi ikonlarında tek tık mini hızlı panele (`quick-panel`), çift tık ise ana tam ekran kokpite (`main`) ayrılmıştır.
   2. Windows'un çift tıkta önce `Click` sonra `DoubleClick` göndermesi nedeniyle arayüz titremesini (flicker) önlemek için `AtomicU64` nesil sayacı ile 220ms asenkron gecikme uygulanır. Çift tık geldiğinde sayaç artırılarak bekleyen tek tık iptal edilir; böylece mini panel parlamadan doğrudan ana pencere açılır.

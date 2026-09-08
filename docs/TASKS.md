@@ -2,16 +2,29 @@
 
 > Tek gerçek kaynak. Kod/git ile çeliştiğinde git kazanır, bu dosya düzeltilir.
 > Son doğrulama: 2026-09-07 — `cargo test --workspace` 47/47, `cargo test` (desktop) 9/9,
-> `npm test` 4/4 (vitest), `npm run build` 0 hata, release binary ve portable zip paketlendi.
+> `npm test` 5/5 (vitest), `npm run build` 0 hata, release binary ve portable zip paketlendi.
 
 ## ŞİMDİ `[~]`
-- *(Yok — Faz 29 Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli tamamlandı)*
+- *(Yok — Faz 30 Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi tamamlandı)*
 
 ## BLOKLU `[!]`
 - *(Yok)*
 
 ## SIRADAKİ `[ ]`
 - `[ ]` 28.5 Sahada canlı ISP testi ve telemetri doğrulaması.
+
+### Faz 30 — Windows DoH & Başlangıç Kayıt Defteri İzin/Silme Onarımı ve Ağ Denetimi (TAMAMLANDI)
+- `[x]` 30.1 (2026-09-07) **Windows Registry Salt Okunur (KEY_READ) Kök Neden Çözümü:**
+  - `desktop/src-tauri/src/commands.rs`: `reset_doh_registry` ve `set_startup_enabled` içerisinde `windows_registry::*.open()` metodunun varsayılan olarak salt okunur (`KEY_READ`) erişim açması sebebiyle `remove_value` çağrılarının Windows tarafından `ERROR_ACCESS_DENIED` ile reddedilmesi ve sessizce yutulması hatası tespit edildi. `LOCAL_MACHINE.create()` ve `CURRENT_USER.create()` (`KEY_READ | KEY_WRITE`) ile değiştirildi.
+  - `EnableAutoDoh` ve `AutoDohTemplate` değerleri silindi, garanti için değer okunabiliyorsa `0` (devre dışı) yazıldı.
+  - `apply_doh_registry` ve `reset_doh_registry` adımlarına anında işletim sistemi seviyesinde yansıması için `crate::net_teardown::flush_dns_cache()` bağlandı.
+- `[x]` 30.2 (2026-09-07) **Ağ Onarım Arayüzü & Yönetici (UAC) Geri Bildirimi:**
+  - `NetworkRepair.tsx`: Sayfa açılışında `api.checkIsAdmin()` sorgulanarak yönetici izni eksikse sarı uyarı şeridi ve tek tıkla `api.restartAsAdmin()` butonu gösterildi.
+  - DoH ve DNS işlemlerinde hata veya başarı durumlarında anlık görsel alert ve temizleme geri bildirimi eklendi.
+  - `desktop/src/lib/i18n.ts`: TR/EN yerelleştirme anahtarları (`net_admin_required_*`) tamamlandı.
+- `[x]` 30.3 (2026-09-07) **Bütünsel Doğrulama, Paketleme & Dağıtım:**
+  - `cargo test --workspace` (47/47 yeşil), `cargo test` desktop (9/9 yeşil), `npm test` (5/5 yeşil), `npm run build` (0 hata).
+  - `scripts/package.ps1`: Çalışan süreç kilitlerine karşı `Safe-Replace-Exe` fonksiyonuyla güçlendirildi; `cargo build --release` sonrası `dist/Anticore.exe` ve `Anticore_0.3.0_x64-portable.zip` başarıyla üretildi.
 
 ### Faz 29 — Sistem Tepsisi (Tray) Sol Tık Hızlı Erişim & Mini Kokpit Paneli (Tray Quick Panel / Flyout) (TAMAMLANDI)
 - `[x]` 29.1 (2026-09-07) **Tauri Çoklu Pencere & Yetki Mimarisi:**

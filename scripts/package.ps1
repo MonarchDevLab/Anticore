@@ -6,20 +6,36 @@ New-Item -ItemType Directory -Force -Path "$root\bin" | Out-Null
 New-Item -ItemType Directory -Force -Path "$root\dist" | Out-Null
 New-Item -ItemType Directory -Force -Path "$root\dist-portable\Anticore\bin" | Out-Null
 
+function Safe-Replace-Exe {
+    param([string]$Src, [string]$Dest)
+    try {
+        Copy-Item $Src $Dest -Force -ErrorAction Stop
+    } catch {
+        $old = "$Dest.old"
+        try {
+            if (Test-Path $old) { Remove-Item $old -Force -ErrorAction SilentlyContinue }
+            Move-Item $Dest $old -Force -ErrorAction Stop
+            Copy-Item $Src $Dest -Force -ErrorAction Stop
+        } catch {
+            Write-Warning "Dosya kilitli ve kopyalanamadi: $Dest ($_)"
+        }
+    }
+}
+
 # 2. GUI Ikilisini Kopyala
 $gui = "$root\desktop\src-tauri\target\release\anticore-desktop.exe"
-Copy-Item $gui "$root\Anticore.exe" -Force
-Copy-Item $gui "$root\anticore-desktop.exe" -Force
-Copy-Item $gui "$root\dist\Anticore.exe" -Force
-Copy-Item $gui "$root\dist-portable\Anticore\Anticore.exe" -Force
+Safe-Replace-Exe $gui "$root\Anticore.exe"
+Safe-Replace-Exe $gui "$root\anticore-desktop.exe"
+Safe-Replace-Exe $gui "$root\dist\Anticore.exe"
+Safe-Replace-Exe $gui "$root\dist-portable\Anticore\Anticore.exe"
 
 # 3. CLI Motor Ikilisini Kopyala
 $cli = "$root\engine\target\release\anticore.exe"
-Copy-Item $cli "$root\anticore-cli.exe" -Force
-Copy-Item $cli "$root\bin\anticore.exe" -Force
-Copy-Item $cli "$root\dist\anticore-cli.exe" -Force
-Copy-Item $cli "$root\dist-portable\Anticore\anticore-cli.exe" -Force
-Copy-Item $cli "$root\dist-portable\Anticore\bin\anticore.exe" -Force
+Safe-Replace-Exe $cli "$root\anticore-cli.exe"
+Safe-Replace-Exe $cli "$root\bin\anticore.exe"
+Safe-Replace-Exe $cli "$root\dist\anticore-cli.exe"
+Safe-Replace-Exe $cli "$root\dist-portable\Anticore\anticore-cli.exe"
+Safe-Replace-Exe $cli "$root\dist-portable\Anticore\bin\anticore.exe"
 
 function Safe-Copy {
     param([string]$Src, [string]$Dest)
