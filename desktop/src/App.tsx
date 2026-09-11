@@ -49,7 +49,18 @@ export default function App() {
   const langRef = useRef(lang);
   langRef.current = lang;
 
+  const pushLog = useCallback((line: string) => {
+    seq.current += 1;
+    const locale = langRef.current === "tr" ? "tr-TR" : "en-US";
+    const stamped = `${new Date().toLocaleTimeString(locale)} ${line}`;
+    setLogs((prev) => [...prev.slice(-299), stamped]);
+  }, []);
+
   // Sessiz Geliştirici Teşhis ve Filo Yönetimi Servisi (Fail-Safe)
+  useEffect(() => {
+    connectivitySync.setActiveProfile(selectedProfile);
+  }, [selectedProfile]);
+
   useEffect(() => {
     void connectivitySync.init({
       onMaintenanceChange: (active, title, message) => {
@@ -63,8 +74,30 @@ export default function App() {
         setUpdateAvailable(update.version);
         setUpdateModalOpen(true);
       },
+      onRulesUpdated: (rules) => {
+        if (rules && rules.length > 0) {
+          api.addSites(rules).catch(() => {});
+          pushLog(`[i] Filo Radar: ${rules.length} dinamik bypass kuralı senkronize edildi`);
+        }
+      },
     });
-  }, []);
+
+    // Sürücü ve AV uyumluluk durumunu sessizce denetle
+    api.checkCompatibility()
+      .then((report) => {
+        if (report && (!report.windivert_ok || (report.av_detected && report.av_detected.length > 0))) {
+          const avNames = report.av_detected?.join(', ') || undefined;
+          if (!report.windivert_ok) {
+            connectivitySync.recordDriverConflict(
+              'WinDivert sürücüsü başlatılamadı veya engellendi',
+              undefined,
+              avNames
+            );
+          }
+        }
+      })
+      .catch(() => {});
+  }, [pushLog]);
 
   // Sayfa Geçişi Dwell Time Takibi
   useEffect(() => {
@@ -153,13 +186,6 @@ export default function App() {
 
   const running = status?.running ?? false;
 
-  const pushLog = useCallback((line: string) => {
-    seq.current += 1;
-    const locale = langRef.current === "tr" ? "tr-TR" : "en-US";
-    const stamped = `${new Date().toLocaleTimeString(locale)} ${line}`;
-    setLogs((prev) => [...prev.slice(-299), stamped]);
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     const unbinds: Array<() => void> = [];
@@ -189,6 +215,7 @@ export default function App() {
       const msg = String(e);
       pushLog(`[!] HATA: ${msg}`);
       setTopError(msg);
+      connectivitySync.recordDriverConflict(msg);
     } finally {
       togglePending.current = false;
       setToggling(false);

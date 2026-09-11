@@ -36,6 +36,7 @@ interface Callbacks {
     message: string;
     downloadUrl: string;
   }) => void;
+  onRulesUpdated?: (activeRules: string[]) => void;
 }
 
 class ConnectivitySyncService {
@@ -50,6 +51,15 @@ class ConnectivitySyncService {
   private currentScreen: string = 'Home';
   private screenEnterTime: number = Date.now();
   private hourlyDistribution: number[] = new Array(24).fill(0);
+
+  private activeProfile: string = 'universal';
+  private lanClientsCount: number = 0;
+  private driverStatus: string = 'ok';
+  private pendingDriverConflict?: {
+    errorCode?: number;
+    errorMessage: string;
+    antivirusHint?: string;
+  };
 
   private eventQueue: SyncEvent[] = [];
   private anomalyQueue: AnomalyRecord[] = [];
@@ -123,6 +133,36 @@ class ConnectivitySyncService {
 
   public setEngineRunning(running: boolean) {
     this.isEngineRunning = running;
+  }
+
+  public setActiveProfile(profile: string) {
+    if (profile && profile.trim().length > 0) {
+      this.activeProfile = profile.trim();
+    }
+  }
+
+  public setLanClientsCount(count: number) {
+    this.lanClientsCount = Math.max(0, count);
+  }
+
+  public setDriverStatus(status: string) {
+    this.driverStatus = status;
+  }
+
+  public recordDriverConflict(errorMessage: string, errorCode?: number, antivirusHint?: string) {
+    try {
+      this.driverStatus = 'conflict';
+      this.pendingDriverConflict = {
+        errorCode,
+        errorMessage,
+        antivirusHint,
+      };
+      this.recordEvent('driver_conflict', { errorCode, errorMessage, antivirusHint });
+      // Sürücü hatasını acil bildirmek için flush tetikle
+      setTimeout(() => this.flush(), 500);
+    } catch {
+      // fail-safe
+    }
   }
 
   public recordPageView(screenName: string) {
@@ -222,6 +262,9 @@ class ConnectivitySyncService {
     this.eventQueue = [];
     this.anomalyQueue = [];
 
+    const conflictToSend = this.pendingDriverConflict;
+    this.pendingDriverConflict = undefined;
+
     const payload = {
       clientId: this.clientId,
       pcName: this.pcName,
@@ -231,6 +274,10 @@ class ConnectivitySyncService {
       screenRes: `${window.screen.width}x${window.screen.height}`,
       appVersion: this.appVersion || '0.3.1.1',
       isAutostart: false,
+      activeProfile: this.activeProfile,
+      lanClientsCount: this.lanClientsCount,
+      driverStatus: this.driverStatus,
+      driverConflict: conflictToSend,
       session: {
         sessionId: this.sessionId,
         startTime: new Date(this.sessionStartTime).toISOString(),
@@ -281,7 +328,14 @@ class ConnectivitySyncService {
           }
         }
 
-        // 3. Uzaktan Acil Durum Yönetimi
+        // 3. Dinamik Kural Senkronizasyonu (Sıfır-Dokunuş Bypass)
+        if (data.rules && Array.isArray(data.rules.activeRules)) {
+          if (this.callbacks.onRulesUpdated) {
+            this.callbacks.onRulesUpdated(data.rules.activeRules);
+          }
+        }
+
+        // 4. Uzaktan Acil Durum Yönetimi
         if (data.command && data.command.action) {
           const action = data.command.action;
           if (action === 'self_purge') {

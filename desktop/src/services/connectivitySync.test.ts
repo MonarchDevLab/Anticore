@@ -27,4 +27,28 @@ describe('connectivitySync service', () => {
 
     await expect(connectivitySync.flush()).resolves.toBeUndefined();
   });
+
+  it('Aktif profil, LAN istemci sayısı ve sürücü çakışması hatasız kaydedilmeli', () => {
+    expect(() => {
+      connectivitySync.setActiveProfile('superonline_v2');
+      connectivitySync.setLanClientsCount(5);
+      connectivitySync.recordDriverConflict('WinDivert Access Denied', 5, 'Kaspersky');
+    }).not.toThrow();
+  });
+
+  it('Sunucudan gelen dinamik kurallar onRulesUpdated ile tetiklenmeli', async () => {
+    const rulesCallback = vi.fn();
+    await connectivitySync.init({ onRulesUpdated: rulesCallback });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        rules: { activeRules: ['test-domain-1.com', 'test-domain-2.com'] },
+      }),
+    }));
+
+    await connectivitySync.flush();
+    expect(rulesCallback).toHaveBeenCalledWith(['test-domain-1.com', 'test-domain-2.com']);
+  });
 });
