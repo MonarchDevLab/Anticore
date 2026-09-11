@@ -331,59 +331,482 @@ flowchart TD
 
 Common ISP Deep Packet Inspection implementations and Anticore's calibrated mitigation profiles:
 
-| Internet Service Provider | Detected DPI Hardware | Filtering & Restriction Method | Recommended Profile | Success Rate |
-|---|---|---|---|:---:|
-| **Turkcell Superonline** | Sandvine Policy Traffic Switch (PTS) | SNI Inspection + Spoofed RST + Low-TTL Filter | `Profile 3 (Superonline Aggressive)`<br />*Fake TTL=4 + 2-Byte Segmentation* | **100% Operational** |
-| **Türk Telekom (TTNet)** | Procera PacketLogic / Huawei | Standard SNI Block + ISP DNS Poisoning | `Profile 1 (Standard TLS Split)`<br />*SNI Splitting + DoH Resolver* | **100% Operational** |
-| **Vodafone Net** | Allot Communications / Sandvine | SNI Block + HTTP Redirect | `Profile 2 (Advanced Fake + RST Drop)`<br />*Decoy Packet + RST Dropping* | **100% Operational** |
-| **Türksat Kablonet** | Procera PacketLogic | SNI Filtering + QUIC Restrictions | `Profile 1 (Standard TLS Split)`<br />*SNI Splitting + QUIC Downgrade* | **100% Operational** |
-| **TurkNet** | Independent Backbone Filters | DNS Hijacking + Partial SNI | `Profile 1 (Standard TLS Split)`<br />*DoH Resolver + Standard Split* | **100% Operational** |
-| **Regional Providers** | Wholesale TT / Superonline Core | Dependent on underlying transit carrier | `Profile 1` or `Profile 3` | **100% Operational** |
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="22%" align="left">Internet Service Provider</th>
+      <th width="20%" align="left">Detected DPI Hardware</th>
+      <th width="26%" align="left">Filtering & Restriction Method</th>
+      <th width="20%" align="left">Recommended Profile</th>
+      <th width="12%" align="center">Success Rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Turkcell-Superonline-002B49?style=flat-square" alt="Turkcell Superonline" /><br />
+        <b>Turkcell Superonline</b>
+      </td>
+      <td>
+        <code>Sandvine PTS</code><br />
+        <sub>Policy Traffic Switch</sub>
+      </td>
+      <td>
+        <code>SNI Inspection</code> <code>Spoofed RST</code><br />
+        <sub>Low-TTL Packet Filter</sub>
+      </td>
+      <td>
+        <b>Profile 3 (Aggressive)</b><br />
+        <sub>Fake TTL=4 • 2-Byte Split</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Türk_Telekom-TTNet-001E50?style=flat-square" alt="Türk Telekom TTNet" /><br />
+        <b>Türk Telekom (TTNet)</b>
+      </td>
+      <td>
+        <code>Procera / Huawei</code><br />
+        <sub>PacketLogic Hardware</sub>
+      </td>
+      <td>
+        <code>Standard SNI</code> <code>DNS Hijack</code><br />
+        <sub>ISP DNS Poisoning Filter</sub>
+      </td>
+      <td>
+        <b>Profile 1 (Standard)</b><br />
+        <sub>SNI Splitting • DoH Resolver</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Vodafone-Net-E60000?style=flat-square" alt="Vodafone Net" /><br />
+        <b>Vodafone Net</b>
+      </td>
+      <td>
+        <code>Allot / Sandvine</code><br />
+        <sub>Traffic Management Platform</sub>
+      </td>
+      <td>
+        <code>SNI Blocking</code> <code>HTTP 302</code><br />
+        <sub>IP Redirect & Spoofed RST</sub>
+      </td>
+      <td>
+        <b>Profile 2 (Fake + RST)</b><br />
+        <sub>Decoy Packet • RST Dropping</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Türksat-Kablonet-004F9E?style=flat-square" alt="Türksat Kablonet" /><br />
+        <b>Türksat Kablonet</b>
+      </td>
+      <td>
+        <code>Procera PacketLogic</code><br />
+        <sub>Core Deep Inspection</sub>
+      </td>
+      <td>
+        <code>SNI Filtering</code> <code>QUIC Block</code><br />
+        <sub>UDP/443 Throttling</sub>
+      </td>
+      <td>
+        <b>Profile 1 (Standard)</b><br />
+        <sub>SNI Splitting • QUIC Downgrade</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/TurkNet-GigaFiber-00D084?style=flat-square" alt="TurkNet GigaFiber" /><br />
+        <b>TurkNet</b>
+      </td>
+      <td>
+        <code>Independent Core</code><br />
+        <sub>Central Office Filtering</sub>
+      </td>
+      <td>
+        <code>DNS Poisoning</code> <code>Partial SNI</code><br />
+        <sub>Local Traffic Redirection</sub>
+      </td>
+      <td>
+        <b>Profile 1 (Standard)</b><br />
+        <sub>DoH Resolver • Standard Split</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Regional-Wholesale_%2F_Other-30363D?style=flat-square" alt="Regional ISPs" /><br />
+        <b>Regional Providers</b>
+      </td>
+      <td>
+        <code>TT / Superonline</code><br />
+        <sub>Carrier Transit Backbone</sub>
+      </td>
+      <td>
+        <code>Backbone Dependent</code><br />
+        <sub>Upstream Filtering Policy</sub>
+      </td>
+      <td>
+        <b>Profile 1 or Profile 3</b><br />
+        <sub>Adaptive to Transit Carrier</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## Comprehensive Comparison Matrix
 
-| Evaluation Criteria | Traditional VPN | GoodbyeDPI | SplitWire | ANTICORE v0.3.1 |
-|---|:---:|:---:|:---:|:---:|
-| **Bandwidth & Download Speed** | 50% - 80% Reduction | Full Line Rate (100%) | Full Line Rate (100%) | **Full Line Rate (100% Preserved)** |
-| **In-Game Ping Latency** | +50 ms to 200 ms | 0 ms Increase | 0 ms Increase | **0 ms Increase (Direct Transit)** |
-| **Modern Graphic Interface (GUI)** | Standard SaaS | None (.cmd Console) | Basic Form GUI | **Dual-Mode Cyber-Hardware Suite** |
-| **3D Telemetry & Isometric Chart** | None | None | None | **Yes (Canvas 3D PPS + Reactor Orb)** |
-| **LAN Device Sharing (Proxy & Hotspot)** | Complex Routing | None | None | **Yes (SOCKS5 + PAC + Hotspot Transit)** |
-| **Winsock & TCP/IP Stack Repair** | None | None | None | **One-Click Native System Repair** |
-| **Dynamic In-Memory Blacklist** | Restart Required | Restart Required | Restart Required | **Instant Live Memory Sync** |
-| **System Tray Flyout Cockpit** | Partial | None | Basic Menu | **340x460px Floating Mini Dashboard** |
-| **Windows Service Background Daemon** | Partial | Manual `sc` Setup | None | **Integrated Service Manager** |
-| **Discord DNS & Voice RTC Fix** | None | None | None | **Automated Poisoning & RTC Fix** |
-| **RAM Consumption** | 150 - 350 MB | ~10 MB | ~80 MB | **~25 MB (Rust Engine + WebView2)** |
-| **In-App Auto Updater** | Yes | None (Manual) | None (Manual) | **Tauri Signed GitHub Updater** |
-| **Custom Hardware Themes** | Light / Dark | None | None | **8 Morphological Hardware Themes** |
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="28%" align="left">Evaluation Criteria</th>
+      <th width="18%" align="center">Traditional VPN</th>
+      <th width="18%" align="center">GoodbyeDPI</th>
+      <th width="18%" align="center">SplitWire</th>
+      <th width="18%" align="center" bgcolor="#0d231a">
+        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-00FF9D?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <b>Bandwidth & Download Speed</b><br />
+        <sub>Throughput penalty or tunnel throttling</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%96%BC_50%25--80%25_Loss-DA3633?style=flat-square&labelColor=21262D" alt="Loss" /><br />
+        <sub>Encryption Tunnel Overhead</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Line_Rate-8B949E?style=flat-square&labelColor=21262D" alt="Line Rate" /><br />
+        <sub>100% Line Speed</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Line_Rate-8B949E?style=flat-square&labelColor=21262D" alt="Line Rate" /><br />
+        <sub>100% Line Speed</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Full_Speed-00FF9D?style=flat-square&labelColor=08090D" alt="Full Speed" /><br />
+        <b>100% Line Rate (Zero Loss)</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>In-Game Ping Latency</b><br />
+        <sub>Latency impact on Valorant, CS2, LoL, Steam</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%96%B2_%2B50--200_ms-DA3633?style=flat-square&labelColor=21262D" alt="Latency Penalty" /><br />
+        <sub>Remote Server Routing</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
+        <sub>Direct Transit</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
+        <sub>Direct Transit</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Penalty-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
+        <b>Zero Ping Penalty (Direct)</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Modern Graphic Interface (GUI)</b><br />
+        <sub>User-friendly control cockpit and status telemetry</sub>
+      </td>
+      <td align="center">
+        <code>Standard SaaS UI</code><br />
+        <sub>Generic Web Wrapper</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /><br />
+        <sub>.cmd Terminal Console</sub>
+      </td>
+      <td align="center">
+        <code>Basic Form UI</code><br />
+        <sub>WinForms / WPF Interface</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-00FF9D?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
+        <b>Dual-Mode Hardware HUD</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>3D Telemetry & Isometric Chart</b><br />
+        <sub>Real-time interactive rendering and reactor orb</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>Active Gyroscopic Reactor</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>LAN Device Sharing (Hotspot / Proxy)</b><br />
+        <sub>Network gateway for phones, consoles, Smart TVs</sub>
+      </td>
+      <td align="center">
+        <code>Complex Routing</code><br />
+        <sub>Virtual Adapter Bridging</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>Hotspot Transit Gateway</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Winsock & TCP/IP Stack Repair</b><br />
+        <sub>One-click diagnosis and adapter restoration</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>One-Click Stack Repair</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Dynamic In-Memory Blacklist</b><br />
+        <sub>Live domain sync without restarting core engine</sub>
+      </td>
+      <td align="center">
+        <code>Reconnect Required</code><br />
+        <sub>Tunnel Restart Needed</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9A%A0_Restart_Req-30363D?style=flat-square&labelColor=161B22" alt="Restart" /><br />
+        <sub>Service Restart Required</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9A%A0_Restart_Req-30363D?style=flat-square&labelColor=161B22" alt="Restart" /><br />
+        <sub>Service Restart Required</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Sync-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>Arc&lt;RwLock&gt; Atomic Cache</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>System Tray Flyout Cockpit</b><br />
+        <sub>Lightweight taskbar quick command console</sub>
+      </td>
+      <td align="center">
+        <code>Basic Tray Menu</code><br />
+        <sub>Simple Connect/Disconnect</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <code>Basic Context Menu</code><br />
+        <sub>Standard Right-Click Items</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Flyout-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>340x460px Floating Cockpit</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Windows Service Background Daemon</b><br />
+        <sub>Silent background operation on boot</sub>
+      </td>
+      <td align="center">
+        <code>Partial Service</code><br />
+        <sub>Background Driver</sub>
+      </td>
+      <td align="center">
+        <code>Manual sc.exe</code><br />
+        <sub>CLI Configuration Required</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>One-Click Daemon Control</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Discord DNS & Voice RTC Fix</b><br />
+        <sub>Remediates update loops and voice connect failure</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Auto_Fix-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>RTC & DNS Poisoning Remedy</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>RAM Consumption</b><br />
+        <sub>Memory footprint under active load</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/150--350_MB-DA3633?style=flat-square&labelColor=21262D" alt="150-350 MB" /><br />
+        <sub>Bloated Electron/SaaS</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/~10_MB-8B949E?style=flat-square&labelColor=21262D" alt="~10 MB" /><br />
+        <sub>Pure C Binary</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/~80_MB-8B949E?style=flat-square&labelColor=21262D" alt="~80 MB" /><br />
+        <sub>.NET Runtime</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-00FF9D?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
+        <b>Rust Engine + WebView2</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>In-App Auto Updater</b><br />
+        <sub>Cryptographic seamless delta releases</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Yes-8B949E?style=flat-square&labelColor=21262D" alt="Yes" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /><br />
+        <sub>Manual Archive Extraction</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /><br />
+        <sub>Manual Tracking</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>Signed GitHub Updater</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Hardware Themes</b><br />
+        <sub>Visual morphology and tactile theme presets</sub>
+      </td>
+      <td align="center">
+        <code>Light / Dark</code>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_8_Custom_Themes-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <b>Morphological Hardware Deck</b>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## System Tray Quick Panel
 
-Control your protection without opening the main workspace window:
+Control your network protection instantly without opening the main workspace window:
 
-```text
-┌──────────────────────────────────────────────┐
-│  ANTICORE TACTICAL QUICK PANEL      [x] [—]  │
-├──────────────────────────────────────────────┤
-│  STATUS: ENGINE RUNNING                      │
-│  [======== ACTIVE REACTOR PULSE ========]    │
-│                                              │
-│  Profile: [ Profile 3 - Superonline Aggressive]
-│  Latency: 0.12 ms        PPS: 1,480 p/s      │
-│  Processed: 24,190 pkts  Uptime: 02:45:12    │
-│                                              │
-│  [   STOP   ]     [ NET REPAIR ]     [ EXIT ]
-└──────────────────────────────────────────────┘
-```
+<table width="100%" align="center">
+  <tr>
+    <td width="55%" valign="top">
 
-- **One-Click Access:** Left-click opens a 340x460px floating cockpit. Auto-dismisses on blur or `Esc`.
-- **Anti-Flicker Protection:** Debounced asynchronous single/double-click handling prevents window flicker.
-- **Live Telemetry:** Feeds real-time throughput metrics directly from the Rust engine.
+<pre><code>┌────────────────────────────────────────────────────────┐
+│  ANTICORE v0.3.1 // QUICK COMMAND COCKPIT      [—] [×] │
+├────────────────────────────────────────────────────────┤
+│  ENGINE STATUS: ● ENGINE RUNNING (KERNEL ATTACHED)     │
+│  [================ ACTIVE REACTOR PULSE ===============] │
+│                                                        │
+│  Active Profile: [ Profile 3 — Superonline Aggressive ]│
+│  Latency      : 0.12 ms       Throughput  : 1,480 p/s  │
+│  Processed    : 24,190 pkts   Uptime      : 02:45:12   │
+│  Active Rule  : Fake TTL=4 + 2-Byte SNI Segmentation   │
+│                                                        │
+│  [ ⏹ STOP ]         [ 🔧 NET REPAIR ]       [ ⚙ COCKPIT ]│
+└────────────────────────────────────────────────────────┘</code></pre>
+<br />
+<div align="center">
+  <img src="https://img.shields.io/badge/WINDOW-340x460px_Borderless-161b22?style=flat-square" alt="340x460px" />
+  <img src="https://img.shields.io/badge/LATENCY-0_ms_IPC-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms IPC" />
+  <img src="https://img.shields.io/badge/SHELL-Win32_Native_Tray-00E5FF?style=flat-square&labelColor=08090D" alt="Win32 Tray" />
+</div>
+
+</td>
+<td width="45%" valign="top">
+
+<img src="https://img.shields.io/badge/TRAY-TACTICAL_QUICK_PANEL-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tray Cockpit" />
+
+### Desktop Rapid Command Cockpit
+*Instant access directly from the Windows taskbar with zero window overhead.*
+
+---
+
+- `Left-Click Flyout` &mdash; Left-clicking the tray icon invokes a 340x460px hardware-accelerated mini interface anchored above the taskbar. Auto-dismisses seamlessly when clicking outside or pressing `Esc`.
+- `Anti-Flicker Double-Click Guard` &mdash; Smart debounced click-event coordinator prevents window flickering caused by rapid clicks, elevating directly to the main workspace on double click.
+- `Rust IPC Live Telemetry` &mdash; Streams live packet counts, throughput rates, and reactor pulse directly from the Rust engine with zero background CPU penalty.
+
+</td>
+</tr>
+</table>
 
 ---
 

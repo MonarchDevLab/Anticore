@@ -331,59 +331,482 @@ flowchart TD
 
 Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin paket inceleme (DPI) donanımları ve Anticore'un optimize edilmiş çözüm stratejileri:
 
-| İnternet Servis Sağlayıcı | Tespit Edilen DPI Altyapısı | Sansür & Engelleme Yöntemi | Varsayılan Uyumlu Profil | Başarı Durumu |
-|---|---|---|---|:---:|
-| **Turkcell Superonline** | Sandvine Policy Traffic Switch (PTS) | SNI İnceleme + Sahte RST + Düşük TTL Filtresi | `Profil 3 (Superonline Agresif)`<br />*Fake TTL=4 + 2-Bayt Segmentasyon* | **%100 Başarılı** |
-| **Türk Telekom (TTNet)** | Procera PacketLogic / Huawei | Standart SNI Blokajı + ISP DNS Zehirleme | `Profil 1 (Standart TLS Split)`<br />*SNI Parçalama + DoH Çözümleyici* | **%100 Başarılı** |
-| **Vodafone Net** | Allot Communications / Sandvine | SNI Blokajı + IP Yönlendirme | `Profil 2 (Gelişmiş Fake + RST Drop)`<br />*Sahte Paket + RST Engelleme* | **%100 Başarılı** |
-| **Türksat Kablonet** | Procera PacketLogic | SNI Filtreleme + QUIC Engelleme | `Profil 1 (Standart TLS Split)`<br />*SNI Parçalama + QUIC Düşürme* | **%100 Başarılı** |
-| **TurkNet** | Bağımsız Omurga / Santral Filtreleri | DNS Zehirleme + Kısmi SNI | `Profil 1 (Standart TLS Split)`<br />*DoH + Standart Parçalama* | **%100 Başarılı** |
-| **Millenicom & Diğerleri** | Türk Telekom / Superonline Altyapısı | İlgili omurga sağlayıcısına bağlı | `Profil 1` veya `Profil 3` | **%100 Başarılı** |
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="22%" align="left">İnternet Servis Sağlayıcı</th>
+      <th width="20%" align="left">Tespit Edilen DPI Donanımı</th>
+      <th width="25%" align="left">Sansür & Filtreleme Yöntemi</th>
+      <th width="21%" align="left">Varsayılan Uyumlu Profil</th>
+      <th width="12%" align="center">Başarı Durumu</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Turkcell-Superonline-002B49?style=flat-square" alt="Turkcell Superonline" /><br />
+        <b>Turkcell Superonline</b>
+      </td>
+      <td>
+        <code>Sandvine PTS</code><br />
+        <sub>Policy Traffic Switch</sub>
+      </td>
+      <td>
+        <code>SNI İnceleme</code> <code>Sahte RST</code><br />
+        <sub>Düşük TTL Paket Filtresi</sub>
+      </td>
+      <td>
+        <b>Profil 3 (Agresif)</b><br />
+        <sub>Fake TTL=4 • 2-Bayt Split</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Türk_Telekom-TTNet-001E50?style=flat-square" alt="Türk Telekom TTNet" /><br />
+        <b>Türk Telekom (TTNet)</b>
+      </td>
+      <td>
+        <code>Procera / Huawei</code><br />
+        <sub>PacketLogic Donanımı</sub>
+      </td>
+      <td>
+        <code>Standart SNI</code> <code>DNS Hijack</code><br />
+        <sub>ISP DNS Zehirleme Filtresi</sub>
+      </td>
+      <td>
+        <b>Profil 1 (Standart)</b><br />
+        <sub>SNI Parçalama • DoH Çözümleyici</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Vodafone-Net-E60000?style=flat-square" alt="Vodafone Net" /><br />
+        <b>Vodafone Net</b>
+      </td>
+      <td>
+        <code>Allot / Sandvine</code><br />
+        <sub>Trafik Yönetim Platformu</sub>
+      </td>
+      <td>
+        <code>SNI Blokajı</code> <code>HTTP 302</code><br />
+        <sub>IP Yönlendirme & Sahte RST</sub>
+      </td>
+      <td>
+        <b>Profil 2 (Fake + RST)</b><br />
+        <sub>Sahte Paket • RST Düşürme</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Türksat-Kablonet-004F9E?style=flat-square" alt="Türksat Kablonet" /><br />
+        <b>Türksat Kablonet</b>
+      </td>
+      <td>
+        <code>Procera PacketLogic</code><br />
+        <sub>Omurga Denetim Sistemi</sub>
+      </td>
+      <td>
+        <code>SNI Filtreleme</code> <code>QUIC Engeli</code><br />
+        <sub>UDP/443 Kısıtlaması</sub>
+      </td>
+      <td>
+        <b>Profil 1 (Standart)</b><br />
+        <sub>SNI Parçalama • QUIC Düşürme</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/TurkNet-GigaFiber-00D084?style=flat-square" alt="TurkNet GigaFiber" /><br />
+        <b>TurkNet</b>
+      </td>
+      <td>
+        <code>Bağımsız Omurga</code><br />
+        <sub>Santral Düzeyi Filtreleme</sub>
+      </td>
+      <td>
+        <code>DNS Zehirleme</code> <code>Kısmi SNI</code><br />
+        <sub>Yerel Yönlendirme</sub>
+      </td>
+      <td>
+        <b>Profil 1 (Standart)</b><br />
+        <sub>DoH Entegrasyonu • Standart Split</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="https://img.shields.io/badge/Bölgesel-Millenicom_%2F_Diğer-30363D?style=flat-square" alt="Bölgesel Sağlayıcılar" /><br />
+        <b>Millenicom & Diğerleri</b>
+      </td>
+      <td>
+        <code>TT / Superonline</code><br />
+        <sub>Taşıyıcı Altyapı Omurgası</sub>
+      </td>
+      <td>
+        <code>Omurga Bağımlı</code><br />
+        <sub>Ana Taşıyıcı Filtreleme Kuralları</sub>
+      </td>
+      <td>
+        <b>Profil 1 veya Profil 3</b><br />
+        <sub>Altyapı Tipine Göre Seçim</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## Kapsamlı Karşılaştırma Tablosu
 
-| Değerlendirme Kriteri | Geleneksel VPN | GoodbyeDPI | SplitWire | ANTICORE v0.3.1 |
-|---|:---:|:---:|:---:|:---:|
-| **Bant Genişliği & İndirme Hızı** | %50 - %80 Düşüş | Tam Hat Hızı (%100) | Tam Hat Hızı (%100) | **Tam Hat Hızı (%100 Koruma)** |
-| **Oyun İçi Ping & Gecikme** | +50 ms ila 200 ms | 0 ms Artış | 0 ms Artış | **0 ms Artış (Doğrudan Çıkış)** |
-| **Modern Grafik Arayüz (GUI)** | Standart SaaS UI | Yok (.cmd Siyah Ekran) | Temel Form UI | **Çift Modlu Cyber-Hardware Panel** |
-| **3D Telemetri & İzometrik Grafik** | Yok | Yok | Yok | **Var (Canvas 3D PPS + Reaktör Orbu)** |
-| **Yerel Ağ (LAN) Paylaşımı** | Karmaşık Yönlendirme | Yok | Yok | **Var (SOCKS5 + PAC + Hotspot Transit)** |
-| **Winsock & TCP/IP Yığını Onarımı** | Yok | Yok | Yok | **Tek Tıkla Entegre Sistem Onarımı** |
-| **Dinamik Bellek İçi Kara Liste** | Yeniden Başlatma Gerekir | Yeniden Başlatma Gerekir | Yeniden Başlatma Gerekir | **Anında Bellek Senkronizasyonu** |
-| **Sistem Tepsisi (Tray) Flyout Paneli** | Kısmi | Yok | Temel Menü | **340x460px Canlı Komuta Kokpiti** |
-| **Windows Hizmet (Service) Modu** | Kısmi | Manuel `sc` Komutları | Yok | **Entegre Servis Yöneticisi** |
-| **Discord DNS & RTC Onarımı** | Yok | Yok | Yok | **Otomatik Zehirlenme & RTC Çözümü** |
-| **Bellek Tüketimi (RAM)** | 150 - 350 MB | ~10 MB | ~80 MB | **~25 MB (Rust Motoru + WebView2)** |
-| **Dahili Otomatik Güncelleme** | Var | Yok (Manuel) | Yok (Manuel) | **Tauri İmzalı GitHub Updater** |
-| **Donanım Temaları** | Açık / Koyu | Yok | Yok | **8 Morfolojik Donanım Teması** |
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="28%" align="left">Değerlendirme Kriteri</th>
+      <th width="18%" align="center">Geleneksel VPN</th>
+      <th width="18%" align="center">GoodbyeDPI</th>
+      <th width="18%" align="center">SplitWire</th>
+      <th width="18%" align="center" bgcolor="#0d231a">
+        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-00FF9D?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <b>Bant Genişliği & İndirme Hızı</b><br />
+        <sub>Ağ çıkışında hız sınırlaması veya paket kaybı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%96%BC_%2550--%2580_Düşüş-DA3633?style=flat-square&labelColor=21262D" alt="Kayıp" /><br />
+        <sub>Şifreleme Tüneli Kaybı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-8B949E?style=flat-square&labelColor=21262D" alt="Tam Hat" /><br />
+        <sub>%100 Hat Hızı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-8B949E?style=flat-square&labelColor=21262D" alt="Tam Hat" /><br />
+        <sub>%100 Hat Hızı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-00FF9D?style=flat-square&labelColor=08090D" alt="Tam Hat" /><br />
+        <b>%100 Koruma (Sıfır Kayıp)</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Oyun İçi Ping & Gecikme</b><br />
+        <sub>Valorant, CS2, LoL ve Steam gecikme etkisi</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%96%B2_%2B50--200_ms-DA3633?style=flat-square&labelColor=21262D" alt="Artış" /><br />
+        <sub>Yüksek Sunucu Gecikmesi</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
+        <sub>Doğrudan Çıkış</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
+        <sub>Doğrudan Çıkış</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Artış-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
+        <b>Sıfır Ek Ping (Doğrudan)</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Modern Grafik Arayüz (GUI)</b><br />
+        <sub>Kullanıcı dostu yönetim ve durum paneli</sub>
+      </td>
+      <td align="center">
+        <code>Standart SaaS UI</code><br />
+        <sub>Klasik Web Formu</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /><br />
+        <sub>.cmd Siyah Ekran</sub>
+      </td>
+      <td align="center">
+        <code>Temel Form UI</code><br />
+        <sub>WinForms / WPF Arayüz</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-00FF9D?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
+        <b>Çift Modlu Donanım Paneli</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>3D Telemetri & İzometrik Grafik</b><br />
+        <sub>Gerçek zamanlı görsel veri akışı ve reaktör</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>Canlı Reaktör Orbu</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Yerel Ağ (LAN) Paylaşımı</b><br />
+        <sub>Mobil cihazlar, konsol ve TV'ler için ağ geçidi</sub>
+      </td>
+      <td align="center">
+        <code>Karmaşık Yönlendirme</code><br />
+        <sub>Sanal Adaptör Paylaşımı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>Hotspot Transit Geçişi</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Winsock & TCP/IP Yığını Onarımı</b><br />
+        <sub>Ağ arızaları ve kilitlenmelerini tek tıkla çözme</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>Tek Tıkla Ağ Onarımı</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Dinamik Bellek İçi Kara Liste</b><br />
+        <sub>Uygulamayı kapatmadan anında alan adı ekleme</sub>
+      </td>
+      <td align="center">
+        <code>Yeniden Bağlantı</code><br />
+        <sub>Tünel Sıfırlama Şart</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9A%A0_Yeniden_Başlat-30363D?style=flat-square&labelColor=161B22" alt="Yeniden Başlat" /><br />
+        <sub>Servis Yeniden Başlatma</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9A%A0_Yeniden_Başlat-30363D?style=flat-square&labelColor=161B22" alt="Yeniden Başlat" /><br />
+        <sub>Servis Yeniden Başlatma</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Anlık_Senkron-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>Arc&lt;RwLock&gt; Canlı Bellek</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Sistem Tepsisi (Tray) Flyout Paneli</b><br />
+        <sub>Görev çubuğundan kompakt hızlı erişim</sub>
+      </td>
+      <td align="center">
+        <code>Kısmi Menü</code><br />
+        <sub>Basit Bağlan/Kop Menüsü</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <code>Temel Menü</code><br />
+        <sub>Sağ Tık Menü Öğeleri</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Canlı_Flyout-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>340x460px Komuta Kokpiti</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Windows Hizmet (Service) Modu</b><br />
+        <sub>Arka planda sessiz daemon olarak çalışma</sub>
+      </td>
+      <td align="center">
+        <code>Kısmi Hizmet</code><br />
+        <sub>Arka Plan Sürücüsü</sub>
+      </td>
+      <td align="center">
+        <code>Manuel sc.exe</code><br />
+        <sub>Konsol Komutları Gerekli</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>Arayüzden Tek Tık Yönetim</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Discord DNS & RTC Onarımı</b><br />
+        <sub>Kilitlenen güncellemeler ve ses kanalı hataları</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Otomatik_Onarım-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>RTC & Zehirlenme Çözümü</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Bellek Tüketimi (RAM)</b><br />
+        <sub>Çalışma esnasında tüketilen bellek miktarı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/150--350_MB-DA3633?style=flat-square&labelColor=21262D" alt="150-350 MB" /><br />
+        <sub>Ağır SaaS Katmanı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/~10_MB-8B949E?style=flat-square&labelColor=21262D" alt="~10 MB" /><br />
+        <sub>Salt C Konsolu</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/~80_MB-8B949E?style=flat-square&labelColor=21262D" alt="~80 MB" /><br />
+        <sub>.NET Çalışma Zamanı</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-00FF9D?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
+        <b>Rust Çekirdeği + WebView2</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Dahili Otomatik Güncelleme</b><br />
+        <sub>Yeni sürümleri güvenle denetleme ve kurma</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Var-8B949E?style=flat-square&labelColor=21262D" alt="Var" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /><br />
+        <sub>Manuel Zip İndirme</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /><br />
+        <sub>Manuel Takip</sub>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>İmzalı GitHub Updater</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <b>Donanım Temaları</b><br />
+        <sub>Görsel morfoloji ve arayüz kişiselleştirme</sub>
+      </td>
+      <td align="center">
+        <code>Açık / Koyu</code>
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/%E2%9C%93_8_Özel_Tema-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <b>Cyber-Hardware Morfoloji</b>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## Sistem Tepsisi (Tray Quick Panel)
 
-Ana uygulama penceresini açmadan, görev çubuğunun sağ alt köşesinden tek tıklamayla kontrol sağlayabilirsiniz:
+Ana uygulama penceresini açmadan, Windows görev çubuğunun sağ alt köşesinden tek tıklamayla tam operasyonel kontrol sağlayabilirsiniz:
 
-```text
-┌──────────────────────────────────────────────┐
-│  ANTICORE TACTICAL QUICK PANEL      [x] [—]  │
-├──────────────────────────────────────────────┤
-│  DURUM: KORUMA AKTIF                         │
-│  [======== CANLI REAKTOR NABZI ========]     │
-│                                              │
-│  Profil: [ Profil 3 - Superonline Aggressive]│
-│  Gecikme: 0.12 ms        PPS: 1,480 p/s      │
-│  Islenen Paket: 24,190   Calisma: 02:45:12   │
-│                                              │
-│  [  DURDUR  ]     [ AG ONARIMI ]     [ CIKIS ]
-└──────────────────────────────────────────────┘
-```
+<table width="100%" align="center">
+  <tr>
+    <td width="55%" valign="top">
 
-- **Tek Tıkla Erişim:** Sol tıkla anında açılır, dışına tıklandığında veya `Esc` basıldığında kendiliğinden gizlenir.
-- **Çift Tık Koruması:** Titremeyi (flicker) engelleyen gecikmeli durum senkronizasyonu ile çift tıklandığında doğrudan ana kontrol merkezini açar.
-- **Canlı Telemetri:** Çalışan Rust çekirdeğinden saniyede bir aktarılan gerçek ağ sayaçları.
+<pre><code>┌────────────────────────────────────────────────────────┐
+│  ANTICORE v0.3.1 // QUICK COMMAND COCKPIT      [—] [×] │
+├────────────────────────────────────────────────────────┤
+│  MOTOR DURUMU : ● KORUMA AKTİF (KERNEL ATTACHED)       │
+│  [================ CANLI REAKTÖR NABZI ================] │
+│                                                        │
+│  Aktif Profil : [ Profil 3 — Superonline Agresif ]    │
+│  Ağ Gecikmesi : 0.12 ms       Verim (PPS) : 1,480 p/s  │
+│  İşlenen Paket: 24,190 pkts   Çalışma     : 02:45:12   │
+│  Aktif Kural  : Fake TTL=4 + 2-Byte SNI Segmentation   │
+│                                                        │
+│  [ ⏹ DURDUR ]       [ 🔧 AĞ ONARIMI ]       [ ⚙ KOKPİT ] │
+└────────────────────────────────────────────────────────┘</code></pre>
+<br />
+<div align="center">
+  <img src="https://img.shields.io/badge/PENCERE-340x460px_Borderless-161b22?style=flat-square" alt="340x460px" />
+  <img src="https://img.shields.io/badge/GEC%C4%B0KME-0_ms_IPC-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms IPC" />
+  <img src="https://img.shields.io/badge/SHELL-Win32_Native_Tray-00E5FF?style=flat-square&labelColor=08090D" alt="Win32 Tray" />
+</div>
+
+</td>
+<td width="45%" valign="top">
+
+<img src="https://img.shields.io/badge/TRAY-HIZLI_KONTROL_KOKP%C4%B0T%C4%B0-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tray Kokpit" />
+
+### Masaüstü Hızlı Komuta İstasyonu
+*Ana pencere yükü olmadan doğrudan görev çubuğu üzerinden anında müdahale.*
+
+---
+
+- `Sol Tık Hızlı Flyout` &mdash; Görev çubuğunun bildirim alanına sol tıklandığında 340x460px boyutunda donanım hızlandırmalı mini arayüz açılır. Odak dışı bir yere tıklandığında veya `Esc` tuşuna basıldığında kendiliğinden pürüzsüzce kapanır.
+- `Anti-Flicker Çift Tık Koruması` &mdash; Windows kabuğunun ardışık tıklamalarında oluşan pencere titremesini (flicker) engelleyen debounced durum yönetimi; çift tıklandığında doğrudan ana kontrol merkezini öne getirir.
+- `Rust IPC Canlı Telemetri` &mdash; Arka planda çalışan WinDivert sürücüsü ve Rust motorundan saniyelik paket telemetrisini ve reaktör nabzını sıfır CPU ek yüküyle kokpite yansıtır.
+
+</td>
+</tr>
+</table>
 
 ---
 
