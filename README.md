@@ -211,96 +211,86 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 ## Öne Çıkan Yetenekler
 
 <table width="100%" align="center">
-<tr>
-<td width="500" valign="top">
+  <!-- ROW 1 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/01-ÇEKİRDEK_MOTOR-20ffa0?style=flat-square&labelColor=08090D" alt="01 Çekirdek Motor" /><br />
+      <h3>Cerrahi Paket Manipülasyonu</h3>
+      <sub>Kernel düzeyinde WinDivert sürücüsü ile ISS sansür donanımlarını atlatma.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/02-GÖRSEL_TELEMETRİ-20f2ff?style=flat-square&labelColor=08090D" alt="02 Görsel Telemetri" /><br />
+      <h3>3D İzometrik Telemetri &amp; Reaktör</h3>
+      <sub>Donanım hızlandırmalı Canvas mimarisiyle saniyede 60 FPS canlı ağ izleme.</sub>
+    </th>
+  </tr>
+  <!-- ROW 1 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>SNI Parçalama:</b> TLS ClientHello paketlerini mikroskobik TCP segmentlerine bölerek DPI kutularının paketleri birleştirmesini engeller.<br /><br />
+      &bull; <b>TTL=4 Sahte Paket:</b> Filtreleme donanımını doyuma ulaştırıp gerçek veri akışını gizleyen düşük ömürlü paket enjeksiyonu.<br /><br />
+      &bull; <b>RST Düşürme &amp; QUIC:</b> ISS kaynaklı sahte TCP RST bağlantı koparma paketlerini sessizce filtreler ve UDP akışını korur.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>ActivityChart3D:</b> Ağ verimi ve PPS (paket/sn) akışını donanım hızlandırmalı dinamik izometrik derinlikle çizer.<br /><br />
+      &bull; <b>Canlı Reaktör Küresi:</b> Çift uydulu, 140 derinlik parçacıklı jiroskopik küre ile çekirdek durumunu görselleştirir.<br /><br />
+      &bull; <b>Pro Matrix Konsolu:</b> Mikrosaniye hassasiyetinde hata telemetrisi, soket olayları ve canlı terminal teşhis logları.
+    </td>
+  </tr>
 
-<img src="https://img.shields.io/badge/01-ÇEKİRDEK_MOTOR-20ffa0?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Çekirdek Motor" />
+  <!-- ROW 2 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/03-AĞ_GEÇİDİ-FFE600?style=flat-square&labelColor=08090D" alt="03 Ağ Geçidi" /><br />
+      <h3>Yerel Ağ (LAN) Cihaz Paylaşımı</h3>
+      <sub>Bilgisayarınızı tüm ev ve ofis için merkezi sansür atlatma ağ geçidine çevirin.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/04-SİSTEM_ONARIMI-FF7733?style=flat-square&labelColor=08090D" alt="04 Sistem Onarımı" /><br />
+      <h3>Winsock &amp; Ağ Yığını Onarımı</h3>
+      <sub>Çöken ağ adaptörleri ve kilitlenen Discord güncellemeleri için cerrahi ilk yardım.</sub>
+    </th>
+  </tr>
+  <!-- ROW 2 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>SOCKS5 / HTTP Proxy:</b> Mobil cihazlar, tabletler ve akıllı TV'ler için yerel ağda <code>0.0.0.0:10808</code> vekil sunucu servisi.<br /><br />
+      &bull; <b>Şeffaf Hotspot Transit:</b> Windows Mobil Etkin Noktası üzerinden bağlı tüm cihazlara ek ayar gerektirmeden tam koruma.<br /><br />
+      &bull; <b>PAC Otomasyonu:</b> Yalnızca yasaklı hedefleri yönlendiren dinamik Proxy Auto-Config desteği ile optimum hat kullanımı.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>Tek Tıkla Sıfırlama:</b> Bozulan ağ yığınını <code>netsh winsock reset</code> ve <code>netsh int ip reset</code> ile anında onarma.<br /><br />
+      &bull; <b>DNS Önbellek Boşaltma:</b> <code>ipconfig /flushdns</code>, <code>/release</code> ve <code>/renew</code> komutlarıyla DNS zehirlenmesini temizleme.<br /><br />
+      &bull; <b>Güvenli DoH Aktivasyonu:</b> Cloudflare 1.1.1.1 veya Google 8.8.8.8 şifreli DNS motoruyla sansürsüz çözümleme.
+    </td>
+  </tr>
 
-### Cerrahi Paket Manipülasyonu
-*Kernel düzeyinde WinDivert sürücüsü ile ISS sansür donanımlarını atlatma.*
-
----
-
-- `SNI Parçalama` &mdash; TLS ClientHello paketlerini mikroskobik TCP segmentlerine bölerek DPI birleşimini engeller.
-- `TTL=4 Sahte Paket` &mdash; Filtreleme kutusunu doyuma ulaştırıp gerçek trafiği gizleyen düşük ömürlü enjeksiyon.
-- `RST Düşürme & QUIC` &mdash; ISS kaynaklı sahte TCP RST koparma paketlerini sessizce filtreler.
-
-</td>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/02-GÖRSEL_TELEMETRİ-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Görsel Telemetri" />
-
-### 3D İzometrik Telemetri & Reaktör
-*Donanım hızlandırmalı Canvas mimarisiyle saniyede 60 FPS canlı ağ izleme.*
-
----
-
-- `ActivityChart3D` &mdash; Ağ verimi ve PPS (paket/sn) akışını dinamik izometrik derinlikle çizer.
-- `Canlı Reaktör Küresi` &mdash; Çift uydulu, 140 derinlik parçacıklı jiroskopik durum reaktörü.
-- `Pro Matrix Konsolu` &mdash; Mikrosaniye hassasiyetinde hata telemetrisi ve canlı terminal logları.
-
-</td>
-</tr>
-<tr>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/03-AĞ_GEÇİDİ-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="03 Ağ Geçidi" />
-
-### Yerel Ağ (LAN) Cihaz Paylaşımı
-*Bilgisayarınızı tüm ev ve ofis için merkezi sansür atlatma ağ geçidine çevirin.*
-
----
-
-- `SOCKS5 / HTTP Proxy` &mdash; Mobil, tablet ve akıllı TV'ler için `0.0.0.0:10808` yerel proxy servisi.
-- `Şeffaf Hotspot Transit` &mdash; Windows Mobil Etkin Noktası üzerinden bağlı cihazlara sıfır ayarla doğrudan koruma.
-- `PAC Otomasyonu` &mdash; Yalnızca yasaklı hedefleri yönlendiren dinamik Proxy Auto-Config desteği.
-
-</td>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/04-SİSTEM_ONARIMI-FF7733?style=flat-square&logoColor=08090D&labelColor=08090D" alt="04 Sistem Onarımı" />
-
-### Winsock & Ağ Yığını Onarımı
-*Çöken ağ adaptörleri ve kilitlenen Discord güncellemeleri için cerrahi ilk yardım.*
-
----
-
-- `Tek Tıkla Sıfırlama` &mdash; `netsh winsock reset` ve `netsh int ip reset` komutlarını arayüzden çalıştırma.
-- `DNS Önbellek Boşaltma` &mdash; `ipconfig /flushdns`, `/release` ve `/renew` ile ağ çakışmalarını giderme.
-- `Güvenli DoH Aktivasyonu` &mdash; Cloudflare 1.1.1.1 veya Google 8.8.8.8 şifreli DNS motoru.
-
-</td>
-</tr>
-<tr>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/05-BELLEK_YÖNETİMİ-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Bellek Yönetimi" />
-
-### Dinamik Bellek Kara Listesi
-*Motoru yeniden başlatmadan anında güncellenen eşzamanlı bellek mimarisi.*
-
----
-
-- `Canlı Senkronizasyon` &mdash; `Arc<RwLock<Blacklist>>` yapısıyla sıfır kesintiyle anlık alan adı yönetimi.
-- `Kategori Filtre Hapları` &mdash; TR Mega, Oyun, Medya ve Sosyal kategorilerine göre anında filtreleme.
-- `Yedekli Topluluk Aynası` &mdash; Zapret Türkiye hostlist aynası ve yerleşik çevrimdışı yedek veritabanı.
-
-</td>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/06-GELECEK_UYUMU-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Gelecek Uyumu" />
-
-### Post-Quantum Kyber & Modern TLS
-*En yeni nesil şifreleme standartları ve devasa paket yapılarıyla tam uyumluluk.*
-
----
-
-- `Kyber / ML-KEM 768 & ECH` &mdash; Chrome/Firefox 1500+ baytlık kuantum sonrası el sıkışmalarını destekler.
-- `Sentetik Test Sondaları` &mdash; Modern tarayıcı uzantılarıyla birebir uyumlu testlerle sıfır sahte negatif.
-- `8 Özel Donanım Teması` &mdash; Obsidian Emerald'dan Cyberpunk Volt ve Amethyst Nebula'ya tam kişiselleştirme.
-
-</td>
-</tr>
+  <!-- ROW 3 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/05-BELLEK_YÖNETİMİ-20ffa0?style=flat-square&labelColor=08090D" alt="05 Bellek Yönetimi" /><br />
+      <h3>Dinamik Bellek Kara Listesi</h3>
+      <sub>Motoru yeniden başlatmadan anında güncellenen eşzamanlı bellek mimarisi.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/06-GELECEK_UYUMU-20f2ff?style=flat-square&labelColor=08090D" alt="06 Gelecek Uyumu" /><br />
+      <h3>Post-Quantum Kyber &amp; Modern TLS</h3>
+      <sub>En yeni nesil şifreleme standartları ve devasa paket yapılarıyla tam uyumluluk.</sub>
+    </th>
+  </tr>
+  <!-- ROW 3 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>Canlı Senkronizasyon:</b> <code>Arc&lt;RwLock&lt;Blacklist&gt;&gt;</code> mimarisiyle motor durdurulmadan sıfır kesintiyle alan adı yönetimi.<br /><br />
+      &bull; <b>Kategori Filtre Hapları:</b> TR Mega, Oyun, Medya ve Sosyal kategorilerine göre tek tıkla anında filtreleme.<br /><br />
+      &bull; <b>Yedekli Topluluk Aynası:</b> Zapret Türkiye hostlist aynası ve yerleşik çevrimdışı yedek veritabanı desteği.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>Kyber / ML-KEM 768 &amp; ECH:</b> Chrome/Firefox 1500+ baytlık kuantum sonrası el sıkışma paketlerini kusursuz işler.<br /><br />
+      &bull; <b>Sentetik Test Sondaları:</b> Modern tarayıcı uzantılarıyla birebir uyumlu testlerle sıfır sahte negatif sonuç garantisi.<br /><br />
+      &bull; <b>8 Özel Donanım Teması:</b> Obsidian Emerald'dan Cyberpunk Volt ve Amethyst Nebula'ya tam arayüz kişiselleştirme.
+    </td>
+  </tr>
 </table>
 
 ---

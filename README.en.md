@@ -211,96 +211,86 @@ When online services like Discord or gaming servers are blocked, users typically
 ## Key Features
 
 <table width="100%" align="center">
-<tr>
-<td width="500" valign="top">
+  <!-- ROW 1 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/01-CORE_ENGINE-20ffa0?style=flat-square&labelColor=08090D" alt="01 Core Engine" /><br />
+      <h3>Surgical Packet Manipulation</h3>
+      <sub>Kernel-level DPI bypass powered by the open-source WinDivert driver.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/02-VISUAL_TELEMETRY-20f2ff?style=flat-square&labelColor=08090D" alt="02 Visual Telemetry" /><br />
+      <h3>3D Isometric Telemetry &amp; Reactor</h3>
+      <sub>Hardware-accelerated 60 FPS live canvas visualization for network throughput.</sub>
+    </th>
+  </tr>
+  <!-- ROW 1 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>SNI Fragmentation:</b> Splits TLS ClientHello packets into micro TCP segments to defeat DPI reassembly mechanisms.<br /><br />
+      &bull; <b>TTL=4 Decoy Injection:</b> Sends low-TTL decoy packets that saturate inspection hardware without reaching destination.<br /><br />
+      &bull; <b>Passive RST Mitigation:</b> Silently drops spoofed TCP RST packets injected by ISPs to preserve active gaming and web sessions.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>ActivityChart3D:</b> Renders live network speed and PPS flow with hardware-accelerated dynamic isometric depth.<br /><br />
+      &bull; <b>Live Reactor Orb:</b> Dual orbital rings with 140 depth-sorted particles reflecting real-time engine processing state.<br /><br />
+      &bull; <b>Pro Matrix Console:</b> Microsecond-precision error telemetry, raw socket events, and live terminal diagnostic logs.
+    </td>
+  </tr>
 
-<img src="https://img.shields.io/badge/01-CORE_ENGINE-20ffa0?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Core Engine" />
+  <!-- ROW 2 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/03-LAN_GATEWAY-FFE600?style=flat-square&labelColor=08090D" alt="03 LAN Gateway" /><br />
+      <h3>Local Network (LAN) Device Sharing</h3>
+      <sub>Transform your workstation into a centralized censorship bypass gateway.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/04-SYSTEM_RECOVERY-FF7733?style=flat-square&labelColor=08090D" alt="04 System Recovery" /><br />
+      <h3>Winsock &amp; Network Stack Repair</h3>
+      <sub>First-aid diagnostics for corrupted network adapters and Discord update loops.</sub>
+    </th>
+  </tr>
+  <!-- ROW 2 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>SOCKS5 / HTTP Proxy:</b> High-throughput local proxy listener on <code>0.0.0.0:10808</code> for mobile devices and consoles.<br /><br />
+      &bull; <b>Transparent Hotspot Transit:</b> Direct zero-configuration protection for devices connected to Windows Mobile Hotspot.<br /><br />
+      &bull; <b>PAC Automation:</b> Dynamic Proxy Auto-Config routing that selectively forwards only censored targets for maximum speed.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>One-Click Reset:</b> Execute <code>netsh winsock reset</code> and <code>netsh int ip reset</code> directly to recover corrupt adapters.<br /><br />
+      &bull; <b>DNS Cache Purge:</b> Flush and renew resolver state with <code>ipconfig /flushdns</code>, <code>/release</code>, and <code>/renew</code>.<br /><br />
+      &bull; <b>Secure DoH Templates:</b> Instant integration with Cloudflare 1.1.1.1 or Google 8.8.8.8 encrypted DNS resolvers.
+    </td>
+  </tr>
 
-### Surgical Packet Manipulation
-*Kernel-level DPI bypass powered by the open-source WinDivert driver.*
-
----
-
-- `SNI Fragmentation` &mdash; Splits TLS ClientHello packets into micro TCP segments to defeat DPI reassembly.
-- `TTL=4 Decoy Injection` &mdash; Sends expired decoy packets that saturate inspection state machines.
-- `Passive RST Mitigation` &mdash; Silently drops spoofed TCP RST packets injected by ISPs to preserve sessions.
-
-</td>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/02-VISUAL_TELEMETRY-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Visual Telemetry" />
-
-### 3D Isometric Telemetry & Reactor
-*Hardware-accelerated 60 FPS live canvas visualization for network throughput.*
-
----
-
-- `ActivityChart3D` &mdash; Renders live network speed and PPS flow with dynamic depth shading.
-- `Live Reactor Orb` &mdash; Gyroscopic orbital rings with 140 depth-sorted particles showing reactor pulse.
-- `Pro Matrix Console` &mdash; Microsecond-precision timing telemetry and raw live terminal log streaming.
-
-</td>
-</tr>
-<tr>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/03-LAN_GATEWAY-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="03 LAN Gateway" />
-
-### Local Network (LAN) Device Sharing
-*Transform your workstation into a centralized censorship bypass gateway.*
-
----
-
-- `SOCKS5 / HTTP Proxy` &mdash; Local proxy listener on `0.0.0.0:10808` for phones, consoles, and Smart TVs.
-- `Transparent Hotspot Transit` &mdash; Direct zero-config protection for devices connected to Mobile Hotspot.
-- `PAC Automation` &mdash; Proxy Auto-Config routing that directs only censored domains through the engine.
-
-</td>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/04-SYSTEM_RECOVERY-FF7733?style=flat-square&logoColor=08090D&labelColor=08090D" alt="04 System Recovery" />
-
-### Winsock & Network Stack Repair
-*First-aid diagnostics for corrupted network adapters and Discord update loops.*
-
----
-
-- `One-Click Reset` &mdash; Run `netsh winsock reset` and `netsh int ip reset` directly from the interface.
-- `DNS Cache Purge` &mdash; Clear IP conflicts instantly with `ipconfig /flushdns`, `/release`, and `/renew`.
-- `Secure DoH Templates` &mdash; Cloudflare 1.1.1.1 or Google 8.8.8.8 encrypted DNS integration.
-
-</td>
-</tr>
-<tr>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/05-MEMORY_MANAGEMENT-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Memory Management" />
-
-### Dynamic In-Memory Blacklist
-*Zero-downtime concurrent blacklist synchronization without engine restarts.*
-
----
-
-- `Live Synchronization` &mdash; Seamless domain additions and removals via `Arc<RwLock<Blacklist>>`.
-- `Category Filter Pills` &mdash; Instant target grouping across Mega, Gaming, Media, and Social tiers.
-- `Dual-Layered Mirrors` &mdash; Community hostlist sync backed by an offline embedded fallback database.
-
-</td>
-<td width="500" valign="top">
-
-<img src="https://img.shields.io/badge/06-NEXT_GEN_TLS-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Next Gen TLS" />
-
-### Post-Quantum Kyber & Modern TLS
-*Full compatibility with cutting-edge cipher suites and massive packet handshakes.*
-
----
-
-- `Kyber / ML-KEM 768 & ECH` &mdash; Reassembles 1500+ byte quantum-resistant ClientHello frames across TCP MSS.
-- `Synthetic TLS Probes` &mdash; Browser-calibrated handshake tests ensuring zero false negative ISP checks.
-- `8 Cyber-Hardware Themes` &mdash; From Obsidian Emerald to Cyberpunk Volt, Amethyst Nebula, and Titanium Lab.
-
-</td>
-</tr>
+  <!-- ROW 3 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/05-MEMORY_MANAGEMENT-20ffa0?style=flat-square&labelColor=08090D" alt="05 Memory Management" /><br />
+      <h3>Dynamic In-Memory Blacklist</h3>
+      <sub>Zero-downtime concurrent blacklist synchronization without engine restarts.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/06-NEXT_GEN_TLS-20f2ff?style=flat-square&labelColor=08090D" alt="06 Next Gen TLS" /><br />
+      <h3>Post-Quantum Kyber &amp; Modern TLS</h3>
+      <sub>Full compatibility with cutting-edge cipher suites and massive packet handshakes.</sub>
+    </th>
+  </tr>
+  <!-- ROW 3 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>Live Synchronization:</b> Seamless domain rule modifications via lock-free <code>Arc&lt;RwLock&lt;Blacklist&gt;&gt;</code> architecture.<br /><br />
+      &bull; <b>Category Filter Pills:</b> Instant target filtering across TR Mega, Gaming, Media, and Social categories with one click.<br /><br />
+      &bull; <b>Dual-Layered Mirrors:</b> Zapret Turkey hostlist community sync backed by an offline embedded fallback database.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>Kyber / ML-KEM 768 &amp; ECH:</b> Reassembles 1500+ byte quantum-resistant ClientHello frames across TCP MSS without loss.<br /><br />
+      &bull; <b>Synthetic TLS Probes:</b> Browser-calibrated handshake tests guaranteeing zero false-negative bypass verification.<br /><br />
+      &bull; <b>8 Cyber-Hardware Themes:</b> Full UI morphology customization from Obsidian Emerald to Cyberpunk Volt and Amethyst Nebula.
+    </td>
+  </tr>
 </table>
 
 ---
