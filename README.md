@@ -86,15 +86,23 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
   <tbody>
     <tr>
       <td align="center" valign="top">
-        Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kalıntı bırakmaz.<br /><br />
+        Kurulum gerektirmez. Arşivi yerel klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kayıt bırakmaz.
+      </td>
+      <td align="center" valign="top">
+        Masaüstü kısayolu, Başlat menüsü entegrasyonu ve arka planda çalışan dahili otomatik güncelleme desteği sunar.
+      </td>
+      <td align="center" valign="top">
+        Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurumsal kurulum paketi.
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
         <code>✓ Sıfır Kayıt Defteri İzi</code>
       </td>
-      <td align="center" valign="top">
-        Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili arka plan otomatik güncelleme desteği sunar.<br /><br />
+      <td align="center" valign="middle">
         <code>✓ İmzalı GitHub OTA Motoru</code>
       </td>
-      <td align="center" valign="top">
-        Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurulum paketi.<br /><br />
+      <td align="center" valign="middle">
         <code>✓ Sessiz /qn Kurulum Desteği</code>
       </td>
     </tr>
@@ -120,18 +128,18 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
         <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-x64_%E2%80%A2_GPO_INTUNE-FFE600?style=flat-square&labelColor=08090D" alt="x64 GPO Intune" />
       </td>
     </tr>
+    <tr>
+      <td align="center" bgcolor="#161b22">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+      </td>
+      <td align="center" bgcolor="#161b22">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTOR-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
+      </td>
+      <td align="center" bgcolor="#161b22">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/AR%C5%9E%C4%B0V-GitHub_T%C3%BCm_S%C3%BCr%C3%BCmler-FFFFFF?style=flat-square&labelColor=08090D" alt="Tüm Sürümler" /></a>
+      </td>
+    </tr>
   </tbody>
-</table>
-
-<table width="100%" align="center">
-  <tr>
-    <td align="center" bgcolor="#161b22">
-      <b>Bağımsız Çekirdek İkilileri:</b> &nbsp;
-      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE_GUI-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a> &nbsp;
-      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTOR-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a> &nbsp;
-      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/G%C4%B0THUB_RELEASES-T%C3%9CM_AR%C5%9E%C4%B0V-FFFFFF?style=flat-square&labelColor=08090D" alt="Arşiv" /></a>
-    </td>
-  </tr>
 </table>
 
 <details>

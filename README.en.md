@@ -69,33 +69,41 @@ All distribution binaries are built cleanly, stripped of developer workstation p
       <th width="33.3%" align="center">
         <img src="https://img.shields.io/badge/01-PORTABLE_ZIP-20ffa0?style=for-the-badge&labelColor=08090D" alt="Portable" /><br /><br />
         <b>Portable Edition</b><br />
-        <sub>Most Popular • Zero Traces</sub>
+        <sub>Most Popular • Zero Footprint</sub>
       </th>
       <th width="33.3%" align="center">
         <img src="https://img.shields.io/badge/02-SETUP_EXE-20f2ff?style=for-the-badge&labelColor=08090D" alt="Setup" /><br /><br />
         <b>Setup Installer</b><br />
-        <sub>Standard Desktop • Automatic OTA</sub>
+        <sub>Standard Users • Automated OTA</sub>
       </th>
       <th width="33.3%" align="center">
         <img src="https://img.shields.io/badge/03-ENTERPRISE_MSI-FFE600?style=for-the-badge&labelColor=08090D" alt="MSI" /><br /><br />
-        <b>Enterprise MSI</b><br />
-        <sub>System Admins • GPO &amp; Intune</sub>
+        <b>Enterprise Deployment</b><br />
+        <sub>SysAdmins • GPO &amp; Intune</sub>
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td align="center" valign="top">
-        No installation required. Extract to any folder or USB drive and run directly. Leaves zero residue on the system.<br /><br />
-        <code>✓ Zero Registry Footprint</code>
+        Zero installation required. Extract the archive to any local folder or USB drive and run directly. Leaves zero registry footprints.
       </td>
       <td align="center" valign="top">
-        Desktop shortcut, Start Menu integration, and silent in-app automatic background update engine support.<br /><br />
-        <code>✓ Cryptographically Signed OTA</code>
+        Includes desktop shortcut, Start Menu integration, and built-in background automatic updates directly via signed releases.
       </td>
       <td align="center" valign="top">
-        Windows Installer MSI package for silent, centralized deployment across fleet machines via Active Directory, Intune, or GPO.<br /><br />
-        <code>✓ Silent /qn Unattended Deploy</code>
+        Dedicated enterprise deployment package designed for Active Directory, Microsoft Intune, and GPO silent bulk installation.
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <code>✓ Zero Registry Footprints</code>
+      </td>
+      <td align="center" valign="middle">
+        <code>✓ Signed GitHub OTA Engine</code>
+      </td>
+      <td align="center" valign="middle">
+        <code>✓ Silent /qn Deployment Support</code>
       </td>
     </tr>
     <tr>
@@ -111,27 +119,27 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <img src="https://img.shields.io/badge/ARCH-x64_%E2%80%A2_ZERO_TRACES-20ffa0?style=flat-square&labelColor=08090D" alt="x64 Zero Traces" />
+        <img src="https://img.shields.io/badge/ARCHITECTURE-x64_%E2%80%A2_ZERO_TRACE-20ffa0?style=flat-square&labelColor=08090D" alt="x64 Zero Trace" />
       </td>
       <td align="center" valign="middle">
-        <img src="https://img.shields.io/badge/ARCH-x64_%E2%80%A2_AUTOMATIC_OTA-20f2ff?style=flat-square&labelColor=08090D" alt="x64 Automatic OTA" />
+        <img src="https://img.shields.io/badge/ARCHITECTURE-x64_%E2%80%A2_AUTOMATED_OTA-20f2ff?style=flat-square&labelColor=08090D" alt="x64 Automated OTA" />
       </td>
       <td align="center" valign="middle">
-        <img src="https://img.shields.io/badge/ARCH-x64_%E2%80%A2_GPO_INTUNE-FFE600?style=flat-square&labelColor=08090D" alt="x64 GPO Intune" />
+        <img src="https://img.shields.io/badge/ARCHITECTURE-x64_%E2%80%A2_GPO_INTUNE-FFE600?style=flat-square&labelColor=08090D" alt="x64 GPO Intune" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center" bgcolor="#161b22">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+      </td>
+      <td align="center" bgcolor="#161b22">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_ENGINE-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
+      </td>
+      <td align="center" bgcolor="#161b22">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/ARCHIVE-GitHub_All_Releases-FFFFFF?style=flat-square&labelColor=08090D" alt="All Releases" /></a>
       </td>
     </tr>
   </tbody>
-</table>
-
-<table width="100%" align="center">
-  <tr>
-    <td align="center" bgcolor="#161b22">
-      <b>Standalone Core Binaries:</b> &nbsp;
-      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE_GUI-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a> &nbsp;
-      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_CORE-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a> &nbsp;
-      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/GITHUB_RELEASES-ALL_PACKAGES-FFFFFF?style=flat-square&labelColor=08090D" alt="Release Archive" /></a>
-    </td>
-  </tr>
 </table>
 
 <details>
