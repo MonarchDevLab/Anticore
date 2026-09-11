@@ -64,64 +64,75 @@
 Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arındırılmış (Zero Leakage) ve Minisign ile doğrulanmıştır.
 
 <table width="100%" align="center">
-<tr>
-  <th width="340" align="center">
-    <h3>Taşınabilir (Portable)</h3>
-    <em>(En Çok Tercih Edilen)</em>
-  </th>
-  <th width="340" align="center">
-    <h3>Kurulumlu (Setup EXE)</h3>
-    <em>(Standart Kullanıcı)</em>
-  </th>
-  <th width="340" align="center">
-    <h3>Kurumsal (MSI)</h3>
-    <em>(Sistem Yöneticileri)</em>
-  </th>
-</tr>
-<tr>
-  <td align="center" valign="top">
-    Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kayıt bırakmaz.
-  </td>
-  <td align="center" valign="top">
-    Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili otomatik arka plan güncelleme desteği sunar.
-  </td>
-  <td align="center" valign="top">
-    Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurulum paketi.
-  </td>
-</tr>
-<tr>
-  <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/İNDİR_.ZIP-6.3_MB-20ffa0?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
-  </td>
-  <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/İNDİR_.EXE-4.4_MB-20f2ff?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
-  </td>
-  <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/İNDİR_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir MSI" /></a>
-  </td>
-</tr>
-<tr>
-  <td align="center" valign="middle">
-    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
-    <code>Sıfır Kalıntı</code>
-  </td>
-  <td align="center" valign="middle">
-    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
-    <code>Otomatik Güncelleme</code>
-  </td>
-  <td align="center" valign="middle">
-    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
-    <code>GPO & Intune Uyumlu</code>
-  </td>
-</tr>
+  <thead>
+    <tr>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/01-PORTABLE_ZIP-20ffa0?style=for-the-badge&labelColor=08090D" alt="Portable" /><br /><br />
+        <b>Taşınabilir Sürüm</b><br />
+        <sub>En Çok Tercih Edilen • Kayıtsız</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/02-SETUP_EXE-20f2ff?style=for-the-badge&labelColor=08090D" alt="Setup" /><br /><br />
+        <b>Kurulum Paketi</b><br />
+        <sub>Standart Kullanıcı • Otomatik OTA</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/03-ENTERPRISE_MSI-FFE600?style=for-the-badge&labelColor=08090D" alt="MSI" /><br /><br />
+        <b>Kurumsal Dağıtım</b><br />
+        <sub>Sistem Yöneticileri • GPO &amp; Intune</sub>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center" valign="top">
+        Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kalıntı bırakmaz.<br /><br />
+        <code>✓ Sıfır Kayıt Defteri İzi</code>
+      </td>
+      <td align="center" valign="top">
+        Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili arka plan otomatik güncelleme desteği sunar.<br /><br />
+        <code>✓ İmzalı GitHub OTA Motoru</code>
+      </td>
+      <td align="center" valign="top">
+        Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurulum paketi.<br /><br />
+        <code>✓ Sessiz /qn Kurulum Desteği</code>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/INDIR_.ZIP-6.3_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir ZIP" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir EXE" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-6.1_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-x64_%E2%80%A2_SIFIR_KALINTI-20ffa0?style=flat-square&labelColor=08090D" alt="x64 Sıfır Kalıntı" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-x64_%E2%80%A2_OTOMAT%C4%B0K_OTA-20f2ff?style=flat-square&labelColor=08090D" alt="x64 Otomatik OTA" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-x64_%E2%80%A2_GPO_INTUNE-FFE600?style=flat-square&labelColor=08090D" alt="x64 GPO Intune" />
+      </td>
+    </tr>
+  </tbody>
 </table>
 
-<p align="center">
-  <b>Bağımsız İkililer:</b> &nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI, 15.6 MB)</code></a> &nbsp;•&nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (CLI, 384 KB)</code></a> &nbsp;•&nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><code>Tüm Dağıtım Arşivi</code></a>
-</p>
+<table width="100%" align="center">
+  <tr>
+    <td align="center" bgcolor="#161b22">
+      <b>Bağımsız Çekirdek İkilileri:</b> &nbsp;
+      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE_GUI-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a> &nbsp;
+      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTOR-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a> &nbsp;
+      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/G%C4%B0THUB_RELEASES-T%C3%9CM_AR%C5%9E%C4%B0V-FFFFFF?style=flat-square&labelColor=08090D" alt="Arşiv" /></a>
+    </td>
+  </tr>
+</table>
 
 <details>
 <summary><b>SHA-256 Paket Bütünlük Özetleri (Tıklayıp Genişletin)</b></summary>

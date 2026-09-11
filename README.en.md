@@ -64,64 +64,75 @@
 All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
 <table width="100%" align="center">
-<tr>
-  <th width="340" align="center">
-    <h3>Portable Edition</h3>
-    <em>(Most Popular)</em>
-  </th>
-  <th width="340" align="center">
-    <h3>Installer (Setup EXE)</h3>
-    <em>(Standard User)</em>
-  </th>
-  <th width="340" align="center">
-    <h3>Enterprise (MSI)</h3>
-    <em>(System Admins)</em>
-  </th>
-</tr>
-<tr>
-  <td align="center" valign="top">
-    No installation required. Extract to any folder or USB drive and run directly. Leaves zero residue on the system.
-  </td>
-  <td align="center" valign="top">
-    Desktop shortcut, Start Menu integration, and silent in-app automatic background update engine support.
-  </td>
-  <td align="center" valign="top">
-    Windows Installer MSI package for silent, centralized deployment across fleet machines via Active Directory, Intune, or GPO.
-  </td>
-</tr>
-<tr>
-  <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-20ffa0?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
-  </td>
-  <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
-  </td>
-  <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir MSI" /></a>
-  </td>
-</tr>
-<tr>
-  <td align="center" valign="middle">
-    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
-    <code>Zero Residue</code>
-  </td>
-  <td align="center" valign="middle">
-    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
-    <code>Auto Updates</code>
-  </td>
-  <td align="center" valign="middle">
-    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
-    <code>GPO & Intune Ready</code>
-  </td>
-</tr>
+  <thead>
+    <tr>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/01-PORTABLE_ZIP-20ffa0?style=for-the-badge&labelColor=08090D" alt="Portable" /><br /><br />
+        <b>Portable Edition</b><br />
+        <sub>Most Popular • Zero Traces</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/02-SETUP_EXE-20f2ff?style=for-the-badge&labelColor=08090D" alt="Setup" /><br /><br />
+        <b>Setup Installer</b><br />
+        <sub>Standard Desktop • Automatic OTA</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/03-ENTERPRISE_MSI-FFE600?style=for-the-badge&labelColor=08090D" alt="MSI" /><br /><br />
+        <b>Enterprise MSI</b><br />
+        <sub>System Admins • GPO &amp; Intune</sub>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center" valign="top">
+        No installation required. Extract to any folder or USB drive and run directly. Leaves zero residue on the system.<br /><br />
+        <code>✓ Zero Registry Footprint</code>
+      </td>
+      <td align="center" valign="top">
+        Desktop shortcut, Start Menu integration, and silent in-app automatic background update engine support.<br /><br />
+        <code>✓ Cryptographically Signed OTA</code>
+      </td>
+      <td align="center" valign="top">
+        Windows Installer MSI package for silent, centralized deployment across fleet machines via Active Directory, Intune, or GPO.<br /><br />
+        <code>✓ Silent /qn Unattended Deploy</code>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/ARCH-x64_%E2%80%A2_ZERO_TRACES-20ffa0?style=flat-square&labelColor=08090D" alt="x64 Zero Traces" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/ARCH-x64_%E2%80%A2_AUTOMATIC_OTA-20f2ff?style=flat-square&labelColor=08090D" alt="x64 Automatic OTA" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/ARCH-x64_%E2%80%A2_GPO_INTUNE-FFE600?style=flat-square&labelColor=08090D" alt="x64 GPO Intune" />
+      </td>
+    </tr>
+  </tbody>
 </table>
 
-<p align="center">
-  <b>Standalone Binaries:</b> &nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI, 15.6 MB)</code></a> &nbsp;•&nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (CLI, 384 KB)</code></a> &nbsp;•&nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><code>Release Archive</code></a>
-</p>
+<table width="100%" align="center">
+  <tr>
+    <td align="center" bgcolor="#161b22">
+      <b>Standalone Core Binaries:</b> &nbsp;
+      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE_GUI-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a> &nbsp;
+      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_CORE-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a> &nbsp;
+      <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/GITHUB_RELEASES-ALL_PACKAGES-FFFFFF?style=flat-square&labelColor=08090D" alt="Release Archive" /></a>
+    </td>
+  </tr>
+</table>
 
 <details>
 <summary><b>SHA-256 Checksums & Package Integrity (Click to Expand)</b></summary>
