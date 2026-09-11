@@ -793,45 +793,92 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
 Ana uygulama penceresini açmadan, Windows görev çubuğunun sağ alt köşesinden tek tıklamayla tam operasyonel kontrol sağlayabilirsiniz:
 
 <table width="100%" align="center">
-  <tr>
-    <td width="55%" valign="top">
+  <thead>
+    <tr>
+      <th width="60%" align="left">
+        <img src="https://img.shields.io/badge/TRAY_KOKPİT-ANTICORE_v0.3.1_CANLI_KOMUTA-161b22?style=flat-square" alt="Tray Cockpit" />
+      </th>
+      <th width="40%" align="right">
+        <img src="https://img.shields.io/badge/MOTOR_DURUMU-●_KORUMA_AKTİF-20ffa0?style=flat-square&labelColor=08090D" alt="Durum Aktif" />
+        <img src="https://img.shields.io/badge/SÜRÜCÜ-WinDivert_Attached-20f2ff?style=flat-square&labelColor=08090D" alt="Sürücü" />
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td width="50%" valign="top">
+        <b>Aktif Bypass Profili:</b><br />
+        <img src="https://img.shields.io/badge/PROFİL_3-Superonline_Agresif-20f2ff?style=flat-square&labelColor=08090D" alt="Profil 3" />
+        <br /><br />
+        <b>Aktif Cerrahi Kural:</b><br />
+        <code>Fake TTL=4 + 2-Byte SNI Segmentation</code>
+        <br /><br />
+        <b>Hızlı Eylemler:</b><br />
+        <kbd>⏹ Motoru Durdur</kbd> &nbsp;
+        <kbd>⚡ Ağ Onarımı</kbd> &nbsp;
+        <kbd>⚙ Ana Kokpit</kbd>
+      </td>
+      <td width="50%" valign="top">
+        <b>Canlı Ağ Verimi (PPS):</b><br />
+        <img src="https://img.shields.io/badge/1,480_p/s-Canlı_Reaktör_Nabzı-20ffa0?style=flat-square&labelColor=08090D" alt="1480 PPS" />
+        <br /><br />
+        <b>IPC Gecikmesi &amp; Çalışma:</b><br />
+        <code>0.12 ms IPC</code> &bull; <code>02:45:12 Kesintisiz Süre</code>
+        <br /><br />
+        <b>Oturum Paket Sayacı:</b><br />
+        <code>24,190 paket işlendi</code> &bull; <code>%100 Doğruluk</code>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" align="center">
+        <img src="https://img.shields.io/badge/PENCERE-340x460px_Kenarlıksız-161b22?style=flat-square" alt="340x460" />
+        <img src="https://img.shields.io/badge/IPC_GECİKMESİ-0_ms_Sıfır_Ek_Yük-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" />
+        <img src="https://img.shields.io/badge/SHELL_API-Win32_Shell_NotifyIconW-20f2ff?style=flat-square&labelColor=08090D" alt="Win32" />
+        <img src="https://img.shields.io/badge/KORUMA-Anti--Flicker_Debounced-FFE600?style=flat-square&labelColor=08090D" alt="Anti-Flicker" />
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-<pre><code>┌────────────────────────────────────────────────────────┐
-│  ANTICORE v0.3.1 // QUICK COMMAND COCKPIT      [—] [×] │
-├────────────────────────────────────────────────────────┤
-│  MOTOR DURUMU : ● KORUMA AKTİF (KERNEL ATTACHED)       │
-│  [================ CANLI REAKTÖR NABZI ================] │
-│                                                        │
-│  Aktif Profil : [ Profil 3 — Superonline Agresif ]    │
-│  Ağ Gecikmesi : 0.12 ms       Verim (PPS) : 1,480 p/s  │
-│  İşlenen Paket: 24,190 pkts   Çalışma     : 02:45:12   │
-│  Aktif Kural  : Fake TTL=4 + 2-Byte SNI Segmentation   │
-│                                                        │
-│  [ ⏹ DURDUR ]       [ 🔧 AĞ ONARIMI ]       [ ⚙ KOKPİT ] │
-└────────────────────────────────────────────────────────┘</code></pre>
-<br />
-<div align="center">
-  <img src="https://img.shields.io/badge/PENCERE-340x460px_Borderless-161b22?style=flat-square" alt="340x460px" />
-  <img src="https://img.shields.io/badge/GEC%C4%B0KME-0_ms_IPC-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms IPC" />
-  <img src="https://img.shields.io/badge/SHELL-Win32_Native_Tray-20f2ff?style=flat-square&labelColor=08090D" alt="Win32 Tray" />
-</div>
-
-</td>
-<td width="45%" valign="top">
-
-<img src="https://img.shields.io/badge/TRAY-HIZLI_KONTROL_KOKP%C4%B0T%C4%B0-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tray Kokpit" />
-
-### Masaüstü Hızlı Komuta İstasyonu
-*Ana pencere yükü olmadan doğrudan görev çubuğu üzerinden anında müdahale.*
-
----
-
-- `Sol Tık Hızlı Flyout` &mdash; Görev çubuğunun bildirim alanına sol tıklandığında 340x460px boyutunda donanım hızlandırmalı mini arayüz açılır. Odak dışı bir yere tıklandığında veya `Esc` tuşuna basıldığında kendiliğinden pürüzsüzce kapanır.
-- `Anti-Flicker Çift Tık Koruması` &mdash; Windows kabuğunun ardışık tıklamalarında oluşan pencere titremesini (flicker) engelleyen debounced durum yönetimi; çift tıklandığında doğrudan ana kontrol merkezini öne getirir.
-- `Rust IPC Canlı Telemetri` &mdash; Arka planda çalışan WinDivert sürücüsü ve Rust motorundan saniyelik paket telemetrisini ve reaktör nabzını sıfır CPU ek yüküyle kokpite yansıtır.
-
-</td>
-</tr>
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="33.3%" align="left">
+        <img src="https://img.shields.io/badge/01-HIZLI_FLYOUT-20ffa0?style=flat-square&labelColor=08090D" alt="01 Hızlı Flyout" /><br />
+        <h3>Tek Tıkla Komuta Paneli</h3>
+        <sub>340x460px Kenarlıksız Donanım Arayüzü</sub>
+      </th>
+      <th width="33.3%" align="left">
+        <img src="https://img.shields.io/badge/02-CANLI_TELEMETRİ-20f2ff?style=flat-square&labelColor=08090D" alt="02 Canlı Telemetri" /><br />
+        <h3>0 ms IPC &amp; Reaktör Nabzı</h3>
+        <sub>Rust Motoru &bull; WinDivert Çekirdek Köprüsü</sub>
+      </th>
+      <th width="33.3%" align="left">
+        <img src="https://img.shields.io/badge/03-KABUK_KORUMASI-FFE600?style=flat-square&labelColor=08090D" alt="03 Kabuk Koruması" /><br />
+        <h3>Anti-Flicker &amp; Hızlı Eylem</h3>
+        <sub>Debounced Win32 Durum Yönetimi</sub>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td valign="top">
+        &bull; <b>Tek Tıkla Açılış:</b> Görev çubuğundan anında yükselen donanım hızlandırmalı kompakt flyout penceresi.<br /><br />
+        &bull; <b>Pürüzsüz Odak:</b> Başka bir yere tıklandığında veya <kbd>Esc</kbd> tuşuna basıldığında kendiliğinden pürüzsüzce kapanır.<br /><br />
+        &bull; <b>Sıfır RAM Tüketimi:</b> Arka planda uyku modunda 0 MB ek CPU harcar; tıklandığı anda mikrosaniyede uyanır.
+      </td>
+      <td valign="top">
+        &bull; <b>Gerçek Zamanlı Verim:</b> Saniyelik PPS (paket/sn) akışı ve <code>0.12 ms</code> ağ gecikme telemetrisi.<br /><br />
+        &bull; <b>Profil &amp; Kural Göstergesi:</b> Hangi bypass profilinin ve SNI kuralının devrede olduğunu doğrudan yansıtır.<br /><br />
+        &bull; <b>Sıfır Ek Yük:</b> Çekirdek sürücüsüyle paylaşımlı bellek kanalı üzerinden sıfır gecikmeli veri transferi.
+      </td>
+      <td valign="top">
+        &bull; <b>Anti-Flicker Debounce:</b> Windows kabuğunun seri tıklamalarında oluşan pencere titremesini tamamen engeller.<br /><br />
+        &bull; <b>Çift Tıkla Büyüt:</b> Görev çubuğu simgesine çift tıklandığında doğrudan ana kontrol merkezini öne getirir.<br /><br />
+        &bull; <b>Tek Dokunuşla Müdahale:</b> Paneli açar açmaz tek tıkla korumayı durdurma veya <i>Ağ Onarımı</i> çalıştırma.
+      </td>
+    </tr>
+  </tbody>
 </table>
 
 ---
