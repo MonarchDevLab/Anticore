@@ -14,6 +14,7 @@ import {
   Check,
   Radio,
   Download,
+  RefreshCw,
 } from "lucide-react";
 import { api, onStatusChange, type Profile, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
@@ -195,6 +196,32 @@ export default function TrayQuickPanel() {
       setTopError(String(e));
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+
+  const handleCheckUpdate = async () => {
+    if (checkingUpdate) return;
+    setCheckingUpdate(true);
+    setTopError(null);
+    try {
+      const repo = localStorage.getItem("anticore_github_repo") || undefined;
+      const token = localStorage.getItem("anticore_gh_token") || undefined;
+      const info = await api.checkUpdate(repo, token);
+      if (info.has_update) {
+        setUpdateAvailable(true);
+        setUpdateInfo({ version: info.latest_version, downloadUrl: info.download_url });
+        setFeedback(lang === "tr" ? `Yeni sürüm hazır: ${info.latest_version}` : `New update: ${info.latest_version}`);
+      } else {
+        setUpdateAvailable(false);
+        setFeedback(lang === "tr" ? `Anticore güncel (v${info.current_version})` : `Up to date (v${info.current_version})`);
+      }
+      setTimeout(() => setFeedback(null), 3500);
+    } catch (err) {
+      setTopError(String(err));
+    } finally {
+      setCheckingUpdate(false);
     }
   };
 
@@ -486,6 +513,20 @@ export default function TrayQuickPanel() {
         >
           <Maximize2 size={13} className="text-paper-bright" />
           <span>{t("qp_open_main")}</span>
+        </button>
+
+        <button
+          onClick={() => void handleCheckUpdate()}
+          disabled={checkingUpdate}
+          className="flex items-center gap-1.5 text-paper-muted hover:text-paper-bright font-semibold transition-colors cursor-pointer py-1 px-1.5 rounded hover:bg-surface-hover disabled:opacity-50"
+          title={lang === "tr" ? "Güncellemeleri Denetle" : "Check for Updates"}
+        >
+          {checkingUpdate ? (
+            <LoaderCircle size={13} className="animate-spin text-live" />
+          ) : (
+            <RefreshCw size={13} />
+          )}
+          <span>{lang === "tr" ? "Güncelleme" : "Updates"}</span>
         </button>
 
         <button

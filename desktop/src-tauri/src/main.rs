@@ -149,6 +149,7 @@ fn main() {
             commands::window_is_maximized,
             commands::show_main_window,
             commands::hide_quick_panel,
+            commands::prepare_for_update,
             commands::exit_app,
             tray::get_tray_minimize,
             tray::set_tray_minimize,

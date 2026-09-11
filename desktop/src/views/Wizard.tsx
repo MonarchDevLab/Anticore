@@ -85,8 +85,18 @@ export default function Wizard({ onComplete, pushLog }: Props) {
 
       // 2) DNS uygula
       if (applyDns) {
-        await api.applySecureDns();
-        await api.applyDohRegistry();
+        try {
+          await api.applySecureDns();
+          pushLog("[+] Güvenli DNS başarıyla uygulandı.");
+        } catch (dnsErr) {
+          pushLog(`[!] Güvenli DNS uyarısı: ${String(dnsErr)}`);
+        }
+        try {
+          await api.applyDohRegistry();
+          pushLog("[+] DoH kaydı uygulandı.");
+        } catch (dohErr) {
+          pushLog(`[!] DoH kaydı uyarısı: ${String(dohErr)}`);
+        }
       }
 
       // 3) Çekirdeği başlat

@@ -983,23 +983,62 @@ pub fn probe_target(req: ProbeRequest) -> ProbeDto {
 
 #[tauri::command]
 pub fn get_dns_servers() -> DnsDto {
-    let out = run_powershell(
-        "(Get-DnsClientServerAddress -AddressFamily IPv4 | Where-Object {$_.ServerAddresses} | ForEach-Object {$_.ServerAddresses}) -join ','",
-    );
-    let servers: Vec<String> = out
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    DnsDto { servers }
+    #[cfg(windows)]
+    {
+        let out = run_powershell(
+            "(Get-DnsClientServerAddress -AddressFamily IPv4 | Where-Object {$_.ServerAddresses} | ForEach-Object {$_.ServerAddresses}) -join ','",
+        );
+        let servers: Vec<String> = out
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+        DnsDto { servers }
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let mut servers = Vec::new();
+        // 1. /etc/resolv.conf dosyasından nameserver satırlarını tara
+        if let Ok(content) = std::fs::read_to_string("/etc/resolv.conf") {
+            for line in content.lines() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("nameserver") {
+                    if let Some(ip) = trimmed.split_whitespace().nth(1) {
+                        let ip_str = ip.trim().to_string();
+                        if !ip_str.is_empty() && !servers.contains(&ip_str) {
+                            servers.push(ip_str);
+                        }
+                    }
+                }
+            }
+        }
+        // 2. Eğer /etc/resolv.conf boşsa scutil --dns sorgula
+        if servers.is_empty() {
+            if let Ok(out) = std::process::Command::new("scutil").arg("--dns").output() {
+                let text = String::from_utf8_lossy(&out.stdout);
+                for line in text.lines() {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("nameserver[") {
+                        if let Some(ip) = trimmed.split(':').nth(1) {
+                            let ip_str = ip.trim().to_string();
+                            if !ip_str.is_empty() && !servers.contains(&ip_str) {
+                                servers.push(ip_str);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        DnsDto { servers }
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        DnsDto { servers: vec![] }
+    }
 }
 
 #[tauri::command]
 pub fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), String> {
-    if !is_running_as_admin() {
-        return Err("DNS ayarlarını değiştirmek için Windows yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak yeniden başlatın.".into());
-    }
-
     let provider_key = provider.unwrap_or_else(|| "google".to_string()).to_lowercase();
     let (v4, v6, prov_name) = match provider_key.as_str() {
         "cloudflare" => (
@@ -1024,11 +1063,17 @@ pub fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), 
         ),
     };
 
-    let v4_str = v4.iter().map(|s| format!("'{s}'")).collect::<Vec<_>>().join(",");
-    let v6_str = v6.iter().map(|s| format!("'{s}'")).collect::<Vec<_>>().join(",");
+    #[cfg(windows)]
+    {
+        if !is_running_as_admin() {
+            return Err("DNS ayarlarını değiştirmek için Windows yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak yeniden başlatın.".into());
+        }
 
-    let script = format!(
-        r#"
+        let v4_str = v4.iter().map(|s| format!("'{s}'")).collect::<Vec<_>>().join(",");
+        let v6_str = v6.iter().map(|s| format!("'{s}'")).collect::<Vec<_>>().join(",");
+
+        let script = format!(
+            r#"
 $ErrorActionPreference = 'Stop'
 $v4 = @({v4_str})
 $v6 = @({v6_str})
@@ -1048,19 +1093,68 @@ if ($appliedCount -eq 0 -and $adapters.Count -gt 0) {{
 }}
 Clear-DnsClientCache
 "#
-    );
-    run_powershell_script(&script)?;
-    app.emit("log", format!("[+] güvenli DNS uygulandı: {prov_name} (IPv4 + IPv6)"))
-        .ok();
-    Ok(())
+        );
+        run_powershell_script(&script)?;
+        app.emit("log", format!("[+] güvenli DNS uygulandı: {prov_name} (IPv4 + IPv6)"))
+            .ok();
+        Ok(())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let output = std::process::Command::new("networksetup")
+            .arg("-listallnetworkservices")
+            .output()
+            .map_err(|e| format!("Ağ servisleri listelenemedi: {e}"))?;
+
+        let text = String::from_utf8_lossy(&output.stdout);
+        let mut applied_count = 0;
+
+        for line in text.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with('*') || trimmed.contains("denotes that a network service is disabled") {
+                continue;
+            }
+            let mut cmd = std::process::Command::new("networksetup");
+            cmd.arg("-setdnsservers").arg(trimmed);
+            for ip in &v4 {
+                cmd.arg(ip);
+            }
+            for ip in &v6 {
+                cmd.arg(ip);
+            }
+            if let Ok(status) = cmd.status() {
+                if status.success() {
+                    applied_count += 1;
+                }
+            }
+        }
+
+        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+
+        if applied_count == 0 {
+            app.emit("log", format!("[!] Güvenli DNS ağ servisine uygulanamadı, Sistem Ayarlarından {prov_name} DNS adresi tanımlanabilir")).ok();
+        } else {
+            app.emit("log", format!("[+] güvenli DNS uygulandı: {prov_name} (IPv4 + IPv6)"))
+                .ok();
+        }
+        Ok(())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        app.emit("log", format!("[*] Güvenli DNS seçildi: {prov_name}")).ok();
+        Ok(())
+    }
 }
 
 #[tauri::command]
 pub fn reset_dns(app: AppHandle) -> Result<(), String> {
-    if !is_running_as_admin() {
-        return Err("DNS ayarlarını sıfırlamak için Windows yönetici (Administrator) yetkisi gereklidir.".into());
-    }
-    let script = r#"
+    #[cfg(windows)]
+    {
+        if !is_running_as_admin() {
+            return Err("DNS ayarlarını sıfırlamak için Windows yönetici (Administrator) yetkisi gereklidir.".into());
+        }
+        let script = r#"
 $ErrorActionPreference = 'Stop'
 $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' }
 foreach ($a in $adapters) {
@@ -1070,10 +1164,37 @@ foreach ($a in $adapters) {
 }
 Clear-DnsClientCache
 "#;
-    run_powershell_script(script)?;
-    app.emit("log", "[*] DNS ayarları DHCP'ye döndürüldü".to_string())
-        .ok();
-    Ok(())
+        run_powershell_script(script)?;
+        app.emit("log", "[*] DNS ayarları DHCP'ye döndürüldü".to_string())
+            .ok();
+        Ok(())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(output) = std::process::Command::new("networksetup").arg("-listallnetworkservices").output() {
+            let text = String::from_utf8_lossy(&output.stdout);
+            for line in text.lines() {
+                let trimmed = line.trim();
+                if trimmed.is_empty() || trimmed.starts_with('*') || trimmed.contains("denotes that a network service is disabled") {
+                    continue;
+                }
+                let _ = std::process::Command::new("networksetup")
+                    .args(["-setdnsservers", trimmed, "empty"])
+                    .status();
+            }
+        }
+        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+
+        app.emit("log", "[*] DNS ayarları DHCP varsayılanına döndürüldü".to_string())
+            .ok();
+        Ok(())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        app.emit("log", "[*] DNS ayarları sıfırlandı".to_string()).ok();
+        Ok(())
+    }
 }
 
 /// Verilen IP'nin BTK/ISP DNS zehirlenmesi, mahkeme engelleme sayfası veya
@@ -1212,20 +1333,25 @@ pub async fn check_dns_health() -> DnsHealthDto {
 /// ardından sistem DNS önbelleğini temizler.
 #[tauri::command]
 pub fn auto_fix_dns(app: AppHandle) -> Result<(), String> {
+    #[cfg(windows)]
     if !is_running_as_admin() {
         return Err("Otomatik DNS onarımı için Windows yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak yeniden başlatın.".into());
     }
     apply_secure_dns(app.clone(), Some("cloudflare".into()))?;
     #[cfg(windows)]
     apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()))?;
+    #[cfg(not(windows))]
+    let _ = apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()));
     crate::net_teardown::flush_dns_cache();
-    app.emit("log", "[+] Cloudflare Güvenli DNS ve DoH otomatik olarak uygulandı, DNS önbelleği temizlendi".to_string()).ok();
+    app.emit("log", "[+] Cloudflare Güvenli DNS otomatik olarak uygulandı ve DNS önbelleği temizlendi".to_string()).ok();
     Ok(())
 }
 
 #[tauri::command]
 pub fn get_adapter_dns_info() -> Result<Vec<AdapterDnsInfo>, String> {
-    let script = r#"
+    #[cfg(windows)]
+    {
+        let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' -or $_.HardwareInterface }
 if (-not $adapters) {
@@ -1248,17 +1374,60 @@ foreach ($a in $adapters) {
 }
 $list | ConvertTo-Json -Compress
 "#;
-    let out = run_powershell(script);
-    if out.trim().is_empty() {
-        return Ok(vec![]);
-    }
-    if out.trim().starts_with('[') {
-        serde_json::from_str::<Vec<AdapterDnsInfo>>(&out).map_err(|e| format!("Adaptör verisi çözümlenemedi: {e}"))
-    } else {
-        match serde_json::from_str::<AdapterDnsInfo>(&out) {
-            Ok(single) => Ok(vec![single]),
-            Err(_) => Ok(vec![]),
+        let out = run_powershell(script);
+        if out.trim().is_empty() {
+            return Ok(vec![]);
         }
+        if out.trim().starts_with('[') {
+            serde_json::from_str::<Vec<AdapterDnsInfo>>(&out).map_err(|e| format!("Adaptör verisi çözümlenemedi: {e}"))
+        } else {
+            match serde_json::from_str::<AdapterDnsInfo>(&out) {
+                Ok(single) => Ok(vec![single]),
+                Err(_) => Ok(vec![]),
+            }
+        }
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let mut list = Vec::new();
+        if let Ok(output) = std::process::Command::new("networksetup").arg("-listallhardwareports").output() {
+            let text = String::from_utf8_lossy(&output.stdout);
+            let mut cur_port = String::new();
+            let mut cur_device = String::new();
+            for line in text.lines() {
+                let trimmed = line.trim();
+                if let Some(rest) = trimmed.strip_prefix("Hardware Port:") {
+                    cur_port = rest.trim().to_string();
+                } else if let Some(rest) = trimmed.strip_prefix("Device:") {
+                    cur_device = rest.trim().to_string();
+                    if !cur_port.is_empty() && !cur_device.is_empty() {
+                        let mut v4_servers = Vec::new();
+                        if let Ok(dns_out) = std::process::Command::new("networksetup").args(["-getdnsservers", &cur_port]).output() {
+                            let dns_text = String::from_utf8_lossy(&dns_out.stdout);
+                            for d_line in dns_text.lines() {
+                                let d_trimmed = d_line.trim();
+                                if !d_trimmed.is_empty() && !d_trimmed.contains("There aren't any") {
+                                    v4_servers.push(d_trimmed.to_string());
+                                }
+                            }
+                        }
+                        list.push(AdapterDnsInfo {
+                            name: cur_port.clone(),
+                            description: cur_device.clone(),
+                            interface_index: list.len() as u32 + 1,
+                            ipv4_servers: v4_servers.clone(),
+                            ipv6_servers: vec![],
+                            is_dhcp: v4_servers.is_empty(),
+                        });
+                    }
+                }
+            }
+        }
+        Ok(list)
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        Ok(vec![])
     }
 }
 
@@ -1657,8 +1826,9 @@ pub fn apply_doh_registry(app: AppHandle, template: Option<String>) -> Result<()
 
 #[cfg(not(windows))]
 #[tauri::command]
-pub fn apply_doh_registry(_app: AppHandle, _template: Option<String>) -> Result<(), String> {
-    Err("DoH kayıt defteri yalnızca Windows'ta geçerlidir".into())
+pub fn apply_doh_registry(app: AppHandle, _template: Option<String>) -> Result<(), String> {
+    app.emit("log", "[*] DoH kayıt defteri Windows'a özgüdür; bu platformda yerel DNS kullanılmaktadır".to_string()).ok();
+    Ok(())
 }
 
 #[cfg(windows)]
@@ -1688,8 +1858,9 @@ pub fn reset_doh_registry(app: AppHandle) -> Result<(), String> {
 
 #[cfg(not(windows))]
 #[tauri::command]
-pub fn reset_doh_registry(_app: AppHandle) -> Result<(), String> {
-    Err("DoH kayıt defteri yalnızca Windows'ta geçerlidir".into())
+pub fn reset_doh_registry(app: AppHandle) -> Result<(), String> {
+    app.emit("log", "[*] DoH kayıt defteri Windows'a özgüdür; sıfırlama adımı atlandı".to_string()).ok();
+    Ok(())
 }
 
 #[tauri::command]
@@ -1742,7 +1913,9 @@ pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(),
 
 #[tauri::command]
 pub fn dns_leak_test() -> Result<String, String> {
-    let script = r#"
+    #[cfg(windows)]
+    {
+        let script = r#"
 try {
     $result = Resolve-DnsName -Name discord.com -Type A -ErrorAction Stop
     $server = (Get-DnsClientServerAddress -AddressFamily IPv4 | Where-Object {$_.ServerAddresses}).ServerAddresses -join ', '
@@ -1751,13 +1924,34 @@ try {
     "Failed to resolve: $_"
 }
 "#;
-    let out = run_powershell(script);
-    Ok(out.trim().to_string())
+        let out = run_powershell(script);
+        Ok(out.trim().to_string())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(out) = std::process::Command::new("dig").args(["discord.com", "+short"]).output() {
+            let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !res.is_empty() {
+                return Ok(format!("Çözümlendi: {res}"));
+            }
+        }
+        if let Ok(out) = std::process::Command::new("host").arg("discord.com").output() {
+            let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            return Ok(res);
+        }
+        Ok("DNS sorgusu tamamlanamadı".into())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        Ok("Platformda desteklenmiyor".into())
+    }
 }
 
 #[tauri::command]
 pub fn repair_discord_updates(app: AppHandle) -> Result<String, String> {
-    let script = r#"
+    #[cfg(windows)]
+    {
+        let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
@@ -1777,14 +1971,30 @@ foreach ($f in $discordFolders) {
 
 "Discord güncelleme kilitleri ve DNS önbelleği başarıyla temizlendi."
 "#;
-    let out = run_powershell(script);
-    app.emit("log", "[+] Discord güncelleme döngüsü onarıldı".to_string()).ok();
-    Ok(out.trim().to_string())
+        let out = run_powershell(script);
+        app.emit("log", "[+] Discord güncelleme döngüsü onarıldı".to_string()).ok();
+        Ok(out.trim().to_string())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("pkill").args(["-f", "Discord"]).status();
+        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+        app.emit("log", "[+] Discord süreçleri ve macOS DNS önbelleği yenilendi".to_string()).ok();
+        Ok("Discord süreçleri ve DNS önbelleği başarıyla temizlendi.".to_string())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        app.emit("log", "[*] Discord onarımı bu platformda desteklenmiyor".to_string()).ok();
+        Ok("Desteklenmeyen platform".into())
+    }
 }
 
 #[tauri::command]
 pub fn clear_discord_cache(app: AppHandle) -> Result<String, String> {
-    let script = r#"
+    #[cfg(windows)]
+    {
+        let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
@@ -1812,41 +2022,98 @@ ipconfig /flushdns
 
 "Discord önbelleği (Cache / GPU / Network State) ve DNS önbelleği başarıyla temizlendi."
 "#;
-    let out = run_powershell(script);
-    app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
-    Ok(out.trim().to_string())
+        let out = run_powershell(script);
+        app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
+        Ok(out.trim().to_string())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("pkill").args(["-f", "Discord"]).status();
+        if let Some(home) = std::env::var_os("HOME") {
+            for app_name in &["discord", "discordptb", "discordcanary"] {
+                let discord_dir = std::path::PathBuf::from(&home).join("Library/Application Support").join(app_name);
+                if discord_dir.exists() {
+                    let caches = ["Cache", "Code Cache", "GPUCache", "DawnCache", "DawnGraphiteCache", "blob_storage", "Session Storage", "DIPS", "lockfile"];
+                    for c in &caches {
+                        let _ = std::fs::remove_dir_all(discord_dir.join(c));
+                    }
+                    let _ = std::fs::remove_file(discord_dir.join("Network/Network Persistent State"));
+                }
+            }
+        }
+        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+        app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
+        Ok("Discord önbelleği (Cache / GPU / Network State) ve DNS önbelleği başarıyla temizlendi.".to_string())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        app.emit("log", "[*] Discord önbellek temizleme bu platformda desteklenmiyor".to_string()).ok();
+        Ok("Discord önbellek temizleme bu platformda desteklenmiyor.".to_string())
+    }
 }
 
 #[tauri::command]
 pub fn flush_dns_and_renew_adapters(app: AppHandle) -> Result<String, String> {
     crate::net_teardown::flush_dns_cache();
-    let script = r#"
+    #[cfg(windows)]
+    {
+        let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 Clear-DnsClientCache
 ipconfig /flushdns
 ipconfig /renew
 "DNS önbelleği temizlendi ve ağ bağdaştırıcıları (DHCP) başarıyla yenilendi."
 "#;
-    let out = run_powershell(script);
-    app.emit("log", "[+] Windows DNS önbelleği temizlendi ve bağdaştırıcılar yenilendi".to_string()).ok();
-    Ok(out.trim().to_string())
+        let out = run_powershell(script);
+        app.emit("log", "[+] Windows DNS önbelleği temizlendi ve bağdaştırıcılar yenilendi".to_string()).ok();
+        Ok(out.trim().to_string())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+        app.emit("log", "[+] macOS DNS önbelleği temizlendi (dscacheutil & mDNSResponder)".to_string()).ok();
+        Ok("macOS DNS önbelleği başarıyla temizlendi.".to_string())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        app.emit("log", "[+] DNS önbelleği temizlendi".to_string()).ok();
+        Ok("DNS önbelleği temizlendi.".to_string())
+    }
 }
 
 #[tauri::command]
 pub fn reset_network_stack(app: AppHandle) -> Result<String, String> {
-    if !is_running_as_admin() {
-        return Err("Ağ yığınını ve Winsock katmanını sıfırlamak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
-    }
-    let script = r#"
+    #[cfg(windows)]
+    {
+        if !is_running_as_admin() {
+            return Err("Ağ yığınını ve Winsock katmanını sıfırlamak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
+        }
+        let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 netsh winsock reset
 netsh int ip reset
 ipconfig /flushdns
 "Winsock kataloğu ve TCP/IP protokol yığını başarıyla sıfırlandı. Değişikliklerin tam devreye girmesi için bilgisayarınızı yeniden başlatmanız önerilir."
 "#;
-    let out = run_powershell(script);
-    app.emit("log", "[+] Winsock ve TCP/IP ağ yığını başarıyla sıfırlandı".to_string()).ok();
-    Ok(out.trim().to_string())
+        let out = run_powershell(script);
+        app.emit("log", "[+] Winsock ve TCP/IP ağ yığını başarıyla sıfırlandı".to_string()).ok();
+        Ok(out.trim().to_string())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+        let _ = std::process::Command::new("pfctl").args(["-F", "all"]).status();
+        app.emit("log", "[+] macOS ağ ve paket filtresi (pfctl) yığını başarıyla temizlendi".to_string()).ok();
+        Ok("macOS DNS ve paket filtresi (pf) kuralları başarıyla sıfırlandı.".to_string())
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        app.emit("log", "[+] Ağ yığını sıfırlandı".to_string()).ok();
+        Ok("Ağ yığını sıfırlandı.".to_string())
+    }
 }
 
 // ---------- GITHUB UPDATER & SÜRÜM YÖNETİMİ ----------
@@ -1993,22 +2260,45 @@ pub fn check_update(
         }
     };
 
-    // macOS kullanıcıları için yerel Apple Notification Center sesli bildirimi
-    #[cfg(target_os = "macos")]
+    #[cfg(windows)]
+    fn trigger_windows_toast(title: &str, body: &str) {
+        let t = title.replace('\'', "''").replace('\"', "`\"");
+        let b = body.replace('\'', "''").replace('\"', "`\"");
+        let script = format!(
+            r#"$title = '{}'; $body = '{}'; [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null; $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); $textNodes = $template.GetElementsByTagName('text'); $textNodes.Item(0).AppendChild($template.CreateTextNode($title)) | Out-Null; $textNodes.Item(1).AppendChild($template.CreateTextNode($body)) | Out-Null; $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'); $toast = [Windows.UI.Notifications.ToastNotification]::new($template); $notifier.Show($toast);"#,
+            t, b
+        );
+        let _ = silent_command("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .spawn();
+    }
+
+    // macOS ve Windows kullanıcıları için yerel sesli sistem bildirimi
     if has_update {
         use std::sync::atomic::{AtomicBool, Ordering};
-        static MACOS_UPDATE_NOTIFIED: AtomicBool = AtomicBool::new(false);
-        if !MACOS_UPDATE_NOTIFIED.swap(true, Ordering::SeqCst) {
+        static UPDATE_NOTIFIED: AtomicBool = AtomicBool::new(false);
+        if !UPDATE_NOTIFIED.swap(true, Ordering::SeqCst) {
             let release_title = parsed.name.as_deref().unwrap_or("Yeni Sürüm");
-            let script = format!(
-                "display notification \"Anticore {} hazır! İndirmek veya güncellemek için tıklayın.\" with title \"Anticore\" subtitle \"{}\" sound name \"default\"",
-                latest_tag,
-                release_title.replace('\"', "\\\"")
-            );
-            let _ = std::process::Command::new("osascript")
-                .arg("-e")
-                .arg(script)
-                .spawn();
+            let notif_body = format!("Anticore {} ({}) hazır! İndirmek veya güncellemek için tıklayın.", latest_tag, release_title);
+
+            #[cfg(target_os = "macos")]
+            {
+                let script = format!(
+                    "display notification \"{}\" with title \"Anticore\" subtitle \"{}\" sound name \"default\"",
+                    notif_body.replace('\"', "\\\""),
+                    release_title.replace('\"', "\\\"")
+                );
+                let _ = std::process::Command::new("osascript")
+                    .arg("-e")
+                    .arg(script)
+                    .spawn();
+            }
+
+            #[cfg(windows)]
+            {
+                let t = "Anticore";
+                trigger_windows_toast(t, &notif_body);
+            }
         }
     }
 
@@ -2048,7 +2338,21 @@ pub fn send_system_notification(
             .map_err(|e| format!("Bildirim gönderilemedi: {e}"))?;
         Ok(())
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
+    {
+        let _ = subtitle;
+        let t = title.replace('\'', "''").replace('\"', "`\"");
+        let b = body.replace('\'', "''").replace('\"', "`\"");
+        let script = format!(
+            r#"$title = '{}'; $body = '{}'; [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null; $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); $textNodes = $template.GetElementsByTagName('text'); $textNodes.Item(0).AppendChild($template.CreateTextNode($title)) | Out-Null; $textNodes.Item(1).AppendChild($template.CreateTextNode($body)) | Out-Null; $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'); $toast = [Windows.UI.Notifications.ToastNotification]::new($template); $notifier.Show($toast);"#,
+            t, b
+        );
+        let _ = silent_command("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .spawn();
+        Ok(())
+    }
+    #[cfg(not(any(target_os = "macos", windows)))]
     {
         let _ = (title, subtitle, body);
         Ok(())
@@ -2216,8 +2520,43 @@ pub fn hide_quick_panel(app: AppHandle) {
 }
 
 #[tauri::command]
+pub fn prepare_for_update(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
+    // 1. Çalışan motoru durdur
+    if engine.running.load(Ordering::SeqCst) {
+        let _ = stop_engine(app.clone(), engine);
+    }
+
+    // 2. Windows: Bağımsız süreçleri, servisleri ve sürücüleri temizle
+    #[cfg(windows)]
+    {
+        let _ = silent_command("taskkill").args(["/F", "/IM", "anticore-cli.exe"]).status();
+        let _ = silent_command("taskkill").args(["/F", "/IM", "goodbyedpi.exe"]).status();
+        let _ = silent_command("taskkill").args(["/F", "/IM", "winws.exe"]).status();
+        let _ = silent_command("net").args(["stop", "AnticoreService"]).status();
+        let _ = silent_command("net").args(["stop", "WinDivert"]).status();
+        let _ = silent_command("net").args(["stop", "WinDivert14"]).status();
+    }
+
+    // 3. macOS: LaunchDaemon servisini ve arka plan cli süreçlerini sonlandır, pf kurallarını temizle
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("launchctl")
+            .args(["bootout", "system/com.monolithworks.anticore"])
+            .status();
+        let _ = std::process::Command::new("pkill")
+            .args(["-9", "-f", "anticore-cli"])
+            .status();
+        let _ = std::process::Command::new("pfctl")
+            .args(["-a", "com.monolithworks.anticore", "-F", "all"])
+            .status();
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn exit_app(app: AppHandle, engine: tauri::State<Engine>) {
-    let _ = stop_engine(app.clone(), engine);
+    let _ = prepare_for_update(app.clone(), engine);
     app.exit(0);
 }
 

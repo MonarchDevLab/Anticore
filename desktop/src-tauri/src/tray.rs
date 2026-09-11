@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Listener, Manager,
+    AppHandle, Emitter, Listener, Manager,
 };
 
 use crate::service::Engine;
@@ -136,14 +136,24 @@ fn position_quick_panel(panel: &tauri::WebviewWindow, tray_rect: &tauri::Rect) {
 }
 
 pub fn setup(app: &tauri::App) -> tauri::Result<()> {
+    let engine = app.state::<Engine>();
+    let is_running = engine.running.load(Ordering::SeqCst);
+
     let show_i = MenuItem::with_id(app, "show", "Aç", true, None::<&str>)?;
-    let toggle_i = MenuItem::with_id(app, "toggle", "Başlat", true, None::<&str>)?;
-    let quit_i = MenuItem::with_id(app, "quit", "Çıkış", true, None::<&str>)?;
+    let start_i = MenuItem::with_id(app, "start", "Başlat", !is_running, None::<&str>)?;
+    let stop_i = MenuItem::with_id(app, "stop", "Durdur", is_running, None::<&str>)?;
+    let update_i = MenuItem::with_id(app, "check_update", "Güncellemeleri Kontrol Et", true, None::<&str>)?;
+    let quit_i = MenuItem::with_id(app, "quit", "Kapat", true, None::<&str>)?;
+
     let menu = Menu::with_items(
         app,
         &[
             &show_i,
-            &toggle_i,
+            &PredefinedMenuItem::separator(app)?,
+            &start_i,
+            &stop_i,
+            &PredefinedMenuItem::separator(app)?,
+            &update_i,
             &PredefinedMenuItem::separator(app)?,
             &quit_i,
         ],
@@ -153,10 +163,10 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     let icon_inactive = Some(tauri::include_image!("icons/32x32-inactive.png"));
 
     let mut builder = TrayIconBuilder::new()
-        .tooltip("Anticore — Pasif")
+        .tooltip(if is_running { "Anticore — Aktif" } else { "Anticore — Pasif" })
         .menu(&menu)
         .show_menu_on_left_click(false);
-    if let Some(icon) = icon_inactive.as_ref().or(icon_active.as_ref()) {
+    if let Some(icon) = if is_running { icon_active.as_ref() } else { icon_inactive.as_ref() } {
         builder = builder.icon(icon.clone());
     }
     let click_count = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
@@ -223,25 +233,42 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
+                if let Some(panel) = app.get_webview_window("quick-panel") {
+                    let _ = panel.hide();
+                }
                 if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.unminimize();
                     let _ = window.show();
                     let _ = window.set_focus();
                 }
             }
-            "toggle" => {
+            "start" => {
                 let engine = app.state::<Engine>();
-                if engine.running.load(Ordering::SeqCst) {
-                    let _ = crate::commands::stop_engine(app.clone(), engine);
-                } else {
+                if !engine.running.load(Ordering::SeqCst) {
                     let profile_id = engine.profile_id.lock().unwrap().clone();
                     let _ = crate::commands::start_engine(app.clone(), engine, profile_id);
                 }
             }
-            "quit" => {
+            "stop" => {
                 let engine = app.state::<Engine>();
                 if engine.running.load(Ordering::SeqCst) {
-                    let _ = engine.stop();
+                    let _ = crate::commands::stop_engine(app.clone(), engine);
                 }
+            }
+            "check_update" => {
+                if let Some(panel) = app.get_webview_window("quick-panel") {
+                    let _ = panel.hide();
+                }
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.unminimize();
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+                let _ = app.emit("open_update_modal", ());
+            }
+            "quit" => {
+                let engine = app.state::<Engine>();
+                let _ = crate::commands::prepare_for_update(app.clone(), engine);
                 app.exit(0);
             }
             _ => {}
@@ -250,7 +277,8 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
 
     app.manage(TrayHandles {
         tray: Mutex::new(tray),
-        toggle_item: toggle_i,
+        start_item: start_i,
+        stop_item: stop_i,
     });
 
     let app_handle = app.handle().clone();
@@ -260,9 +288,8 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     app_handle_for_listen.listen("status_changed", move |event| {
         let running: bool = serde_json::from_str(event.payload()).unwrap_or(false);
         if let Some(handles) = app_handle.try_state::<TrayHandles>() {
-            let _ = handles
-                .toggle_item
-                .set_text(if running { "Durdur" } else { "Başlat" });
+            let _ = handles.start_item.set_enabled(!running);
+            let _ = handles.stop_item.set_enabled(running);
             if let Ok(tray) = handles.tray.lock() {
                 let _ = tray.set_tooltip(Some(if running {
                     "Anticore — Aktif"
@@ -286,7 +313,8 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
 
 struct TrayHandles {
     tray: Mutex<TrayIcon>,
-    toggle_item: MenuItem<tauri::Wry>,
+    start_item: MenuItem<tauri::Wry>,
+    stop_item: MenuItem<tauri::Wry>,
 }
 
 /// Pencere `X` ile kapatılmak istendiğinde çağrılır. "Tray'e küçült" açıksa

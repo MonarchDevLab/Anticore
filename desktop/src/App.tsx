@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ShieldAlert, Shield, X } from "lucide-react";
-import { api, onLog, type Status } from "./lib/tauri";
+import { api, onLog, onOpenUpdateModal, type Status } from "./lib/tauri";
 import { useI18n } from "./lib/i18n";
 import Dashboard from "./views/Dashboard";
 import Sites from "./views/Sites";
@@ -68,6 +68,18 @@ export default function App() {
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    void onOpenUpdateModal(() => {
+      setUpdateModalOpen(true);
+    }).then((fn) => {
+      unlisten = fn;
+    });
+    return () => {
+      unlisten?.();
     };
   }, []);
 

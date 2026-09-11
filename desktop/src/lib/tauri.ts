@@ -247,8 +247,9 @@ export const api = {
   minimizeWindow: () => invoke<void>("window_minimize"),
   toggleMaximizeWindow: () => invoke<boolean>("window_toggle_maximize"),
   isWindowMaximized: () => invoke<boolean>("window_is_maximized"),
-   showMainWindow: () => invoke<void>("show_main_window"),
+  showMainWindow: () => invoke<void>("show_main_window"),
   hideQuickPanel: () => invoke<void>("hide_quick_panel"),
+  prepareForUpdate: () => invoke<void>("prepare_for_update"),
   exitApp: () => invoke<void>("exit_app"),
   getLanInfo: () => invoke<LanInfoDto>("get_lan_info"),
   startLanProxy: (port?: number) => invoke<LanInfoDto>("start_lan_proxy", { port }),
@@ -268,6 +269,10 @@ export function onStatusChange(cb: (running: boolean) => void): Promise<() => vo
 
 export function onBlockcheckProgress(cb: (prog: BlockcheckProgress) => void): Promise<() => void> {
   return listen<BlockcheckProgress>("blockcheck_progress", (e) => cb(e.payload));
+}
+
+export function onOpenUpdateModal(cb: () => void): Promise<() => void> {
+  return listen("open_update_modal", () => cb());
 }
 
 /**
@@ -293,5 +298,13 @@ export async function downloadAndInstallUpdate(
       onProgress?.(downloaded, total);
     }
   });
+
+  // Kurulum ve yeniden başlatma öncesinde kilitli motor ve alt süreçleri sonlandır
+  try {
+    await api.prepareForUpdate();
+  } catch {
+    // prepareForUpdate başarısız olsa dahi yeniden başlatmayı engelleme
+  }
+
   await relaunch();
 }

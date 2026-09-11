@@ -39,3 +39,30 @@ it("does not start the engine after the site list fails", async () => {
   expect((await screen.findByRole("alert")).textContent).toContain("Cannot save sites");
   expect(api.startEngine).not.toHaveBeenCalled();
 });
+
+it("applies DNS when checked and finishes onboarding", async () => {
+  const complete = vi.fn();
+  render(<Wizard onComplete={complete} pushLog={vi.fn()} />);
+  for (let step = 0; step < 3; step++) fireEvent.click(screen.getByText("wiz_next"));
+  const dnsCheckbox = screen.getByRole("checkbox");
+  fireEvent.click(dnsCheckbox);
+  fireEvent.click(screen.getByText("wiz_finish"));
+  await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+  expect(api.applySecureDns).toHaveBeenCalledOnce();
+  expect(api.applyDohRegistry).toHaveBeenCalledOnce();
+  expect(api.startEngine).toHaveBeenCalledOnce();
+});
+
+it("continues engine startup even if optional DNS step fails with warning", async () => {
+  vi.mocked(api.applySecureDns).mockRejectedValue(new Error("Permission denied"));
+  const complete = vi.fn();
+  render(<Wizard onComplete={complete} pushLog={vi.fn()} />);
+  for (let step = 0; step < 3; step++) fireEvent.click(screen.getByText("wiz_next"));
+  const dnsCheckbox = screen.getByRole("checkbox");
+  fireEvent.click(dnsCheckbox);
+  fireEvent.click(screen.getByText("wiz_finish"));
+  await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+  expect(api.startEngine).toHaveBeenCalledOnce();
+  expect(localStorage.getItem("anticore_onboarded")).toBe("true");
+});
+

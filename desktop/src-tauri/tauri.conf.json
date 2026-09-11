@@ -58,6 +58,11 @@
       "frameworks": [],
       "minimumSystemVersion": "11.0"
     },
+    "windows": {
+      "nsis": {
+        "installerHooks": "installer-hooks.nsi"
+      }
+    },
     "resources": {
       "../../vendor/windows/WinDivert.dll": "WinDivert.dll",
       "../../vendor/windows/WinDivert64.sys": "WinDivert64.sys",
