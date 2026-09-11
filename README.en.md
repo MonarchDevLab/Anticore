@@ -131,15 +131,54 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 
 When online services like Discord or gaming servers are blocked, users typically resort to VPNs. However, conventional VPN routing severely degrades daily performance:
 
-```
-STANDARD VPN ARCHITECTURE (SLOW & COMPROMISED):
-[Your Device] ──(Encrypted Tunnel)──> [Remote VPN Server] ──> [Target Website]
-* Bandwidth reduced by 50%-80%. * Latency spikes by 100+ ms.  * Private data crosses foreign servers.
-
-ANTICORE LOCAL ARCHITECTURE (DIRECT & FULL LINE RATE):
-[Your Device] ──(Handshake Segmented / DPI Bypassed)──> [Target Website]
-* 0% Bandwidth Loss (Full Line). * 0 ms Ping Increase.         * No tunnel; all payload stays direct.
-```
+<table>
+<tr>
+  <th width="50%" align="center">
+    <h3>Traditional VPN Tunneling</h3>
+    <sub>(Indirect, Slow &amp; Privacy Risks)</sub>
+  </th>
+  <th width="50%" align="center">
+    <h3>Anticore Surgical DPI Bypass</h3>
+    <sub>(Direct, Full Line Speed &amp; Zero Latency)</sub>
+  </th>
+</tr>
+<tr>
+  <td align="center" valign="top">
+    <br />
+    <code>[Client Workstation]</code><br />
+    &darr; <i>(Encrypted Tunnel Encapsulation)</i><br />
+    <code>[Remote Overseas VPN Server]</code><br />
+    &darr; <i>(Bottleneck &amp; Relayed Egress)</i><br />
+    <code>[Target Service / Game Server]</code>
+    <br /><br />
+  </td>
+  <td align="center" valign="top">
+    <br />
+    <code>[Client Workstation]</code><br />
+    &darr; <i>(Only Initial TLS ClientHello Fragmented)</i><br />
+    <code>[ISP DPI Filter Bypassed]</code><br />
+    &darr; <i>(Direct Line via Local ISP Gateway)</i><br />
+    <code>[Target Service / Game Server]</code>
+    <br /><br />
+  </td>
+</tr>
+<tr>
+  <td align="left" valign="top">
+    &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-50%25--80%25_Drop-ff4444?style=flat-square" alt="Speed Drop" align="right" /><br /><br />
+    &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Increase" align="right" /><br /><br />
+    &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Foreign_Relay-red?style=flat-square" alt="Foreign Relay" align="right" /><br /><br />
+    &bull; <b>Banking / Local Services:</b> <img src="https://img.shields.io/badge/IP-Overseas_Blocked-grey?style=flat-square" alt="Blocked" align="right" /><br /><br />
+    &bull; <b>Cost Model:</b> <img src="https://img.shields.io/badge/Model-Monthly_Subscription-lightgrey?style=flat-square" alt="Subscription" align="right" />
+  </td>
+  <td align="left" valign="top">
+    &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-100%25_Full_Wire-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Full Wire" align="right" /><br /><br />
+    &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Added-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Zero Ping" align="right" /><br /><br />
+    &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Direct_Local_Gateway-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Direct" align="right" /><br /><br />
+    &bull; <b>Banking / Local Services:</b> <img src="https://img.shields.io/badge/IP-Native_Local_IP-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Local IP" align="right" /><br /><br />
+    &bull; <b>Cost Model:</b> <img src="https://img.shields.io/badge/License-Free_&_Open_Source-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="FOSS" align="right" />
+  </td>
+</tr>
+</table>
 
 ### Key Differences
 - **No Remote Tunnels:** Your internet traffic is never redirected through proxy servers or foreign IP nodes.

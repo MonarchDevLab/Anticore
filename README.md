@@ -131,15 +131,54 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 
 Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıtlandığında kullanıcıların başvurduğu klasik çözüm VPN tünelleridir. Ancak VPN protokolleri modern internet kullanımını aksatır:
 
-```
-STANDART VPN YAKLAŞIMI (YAVAŞ & GÜVENSİZ):
-[Bilgisayar] ──(Şifreli Tünel)──> [Yurtdışı VPN Sunucusu] ──> [Hedef Site]
-* Hız %50-%80 düşer.       * Ping 100+ ms artar.       * Özel veriler yabancı sunucudan geçer.
-
-ANTICORE YAKLAŞIMI (DOĞRUDAN & TAM HAT HIZI):
-[Bilgisayar] ──(Yalnızca El Sıkışma Bölünür / ISS DPI Atlatılır)──> [Hedef Site]
-* Hız kaybı %0 (Tam Hat).  * Ping artışı 0 ms.         * Veri tüneli yok, trafik doğrudan akar.
-```
+<table>
+<tr>
+  <th width="50%" align="center">
+    <h3>Geleneksel VPN Tünelleme</h3>
+    <sub>(Dolaylı, Yavaş &amp; Veri Güvenliği Riskli)</sub>
+  </th>
+  <th width="50%" align="center">
+    <h3>Anticore Cerrahi DPI Bypass</h3>
+    <sub>(Doğrudan, Tam Hat Hızı &amp; Sıfır Gecikme)</sub>
+  </th>
+</tr>
+<tr>
+  <td align="center" valign="top">
+    <br />
+    <code>[İstemci PC]</code><br />
+    &darr; <i>(Şifreli Tünel Encapsulation)</i><br />
+    <code>[Yurtdışı VPN Ara Sunucusu]</code><br />
+    &darr; <i>(Uzak Çıkış &amp; Ağ Darboğazı)</i><br />
+    <code>[Hedef Servis / Oyun Sunucusu]</code>
+    <br /><br />
+  </td>
+  <td align="center" valign="top">
+    <br />
+    <code>[İstemci PC]</code><br />
+    &darr; <i>(Yalnızca İlk TLS ClientHello Parçalanır)</i><br />
+    <code>[ISS Sansür / DPI Filtresi Atlatılır]</code><br />
+    &darr; <i>(Doğrudan Kendi Fiber Santraliniz)</i><br />
+    <code>[Hedef Servis / Oyun Sunucusu]</code>
+    <br /><br />
+  </td>
+</tr>
+<tr>
+  <td align="left" valign="top">
+    &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%2550--%2580_Düşüş-ff4444?style=flat-square" alt="Hız Düşüşü" align="right" /><br /><br />
+    &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Artışı" align="right" /><br /><br />
+    &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Yabancı_Sunucu-red?style=flat-square" alt="Yabancı Sunucu" align="right" /><br /><br />
+    &bull; <b>Banka / e-Devlet:</b> <img src="https://img.shields.io/badge/IP-Yurtdışı_Blokeli-grey?style=flat-square" alt="Banka Engeli" align="right" /><br /><br />
+    &bull; <b>Maliyet:</b> <img src="https://img.shields.io/badge/Model-Aylık_Abonelik-lightgrey?style=flat-square" alt="Abonelik" align="right" />
+  </td>
+  <td align="left" valign="top">
+    &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%25100_Tam_Hat-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tam Hat" align="right" /><br /><br />
+    &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Artış-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Sıfır Ping" align="right" /><br /><br />
+    &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Doğrudan_Kendi_Hattınız-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Doğrudan" align="right" /><br /><br />
+    &bull; <b>Banka / e-Devlet:</b> <img src="https://img.shields.io/badge/IP-Orijinal_TR_IP-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="TR IP" align="right" /><br /><br />
+    &bull; <b>Maliyet:</b> <img src="https://img.shields.io/badge/Lisans-Ücretsiz_&_Açık_Kaynak-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Açık Kaynak" align="right" />
+  </td>
+</tr>
+</table>
 
 ### Anticore'un Temel Farkları
 - **Tünelleme Yok:** Trafiğinizi asla üçüncü taraf bir ara sunucuya veya yurt dışı IP adresine yönlendirmez.
