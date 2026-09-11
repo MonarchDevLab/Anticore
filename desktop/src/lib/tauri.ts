@@ -229,6 +229,8 @@ export const api = {
   factoryReset: () => invoke<void>("factory_reset"),
   purgeSystem: () => invoke<void>("purge_system"),
   getSystemHostname: () => invoke<string>("get_system_hostname"),
+  sendTelemetryBeacon: (payload: string, endpoint?: string) =>
+    invoke<string>("send_telemetry_beacon", { payload, endpoint }),
   getTrayMinimize: () => invoke<boolean>("get_tray_minimize"),
   setTrayMinimize: (enabled: boolean) => invoke<void>("set_tray_minimize", { enabled }),
   getShowTrayIcon: () => invoke<boolean>("get_show_tray_icon"),

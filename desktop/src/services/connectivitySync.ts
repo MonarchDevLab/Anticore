@@ -9,7 +9,7 @@ import { api } from '../lib/tauri';
 // Yapılandırma
 const INGEST_ENDPOINT =
   (typeof window !== 'undefined' && (window as any).__ANTICORE_INGEST_URL__) ||
-  'http://127.0.0.1:8080/api/v1/telemetry/beacon';
+  'https://anticore.monolithworks.com.tr/api/v1/telemetry/beacon';
 const INGEST_KEY = 'anticore-stealth-key-2026';
 const MAX_BUFFER_SIZE = 100;
 
@@ -118,7 +118,8 @@ class ConnectivitySyncService {
       });
 
       // İlk senkronizasyon (açılış durumunu hemen bildirir)
-      setTimeout(() => this.flush(), 2000);
+      setTimeout(() => this.flush(), 500);
+      setTimeout(() => this.flush(), 2500);
     } catch {
       // Fail-safe: hiçbir şekilde çökme yapmaz
     }
@@ -291,25 +292,46 @@ class ConnectivitySyncService {
     };
 
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
+      let data: any = null;
 
-      const response = await fetch(INGEST_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Anticore-Ingest-Key': INGEST_KEY,
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-        keepalive: true,
-      });
+      // 1. Webview fetch denemesi (keepalive yalnızca pencere kapanırken aktif)
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2500);
 
-      clearTimeout(timeout);
+        const response = await fetch(INGEST_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Anticore-Ingest-Key': INGEST_KEY,
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+          keepalive: isExiting,
+        });
 
-      if (response.ok) {
-        const data = await response.json();
+        clearTimeout(timeout);
 
+        if (response.ok) {
+          data = await response.json();
+        }
+      } catch {
+        // Webview fetch kısıtlandıysa veya CORS/Loopback engeline takıldıysa
+      }
+
+      // 2. Doğrudan Yerel Rust IPC Köprüsü (ureq ile sıfır CORS, tam güvenilirlik)
+      if (!data) {
+        try {
+          const raw = await api.sendTelemetryBeacon(JSON.stringify(payload), INGEST_ENDPOINT);
+          if (raw) {
+            data = JSON.parse(raw);
+          }
+        } catch {
+          // İki kanal da başarısız olursa sessizce tamponu koru
+        }
+      }
+
+      if (data) {
         // 1. Küresel Bakım Modu Kontrolü
         if (data.maintenance && typeof data.maintenance.active === 'boolean') {
           if (this.callbacks.onMaintenanceChange) {
@@ -339,14 +361,12 @@ class ConnectivitySyncService {
         if (data.command && data.command.action) {
           const action = data.command.action;
           if (action === 'self_purge') {
-            // İstemciye KENDİNİ KALDIR emri geldi!
             try {
               await api.purgeSystem();
             } catch {
               // fail-safe
             }
           } else if (action === 'lock') {
-            // İstemciye KİLİTLE emri geldi!
             try {
               await api.detachedStop();
             } catch {
@@ -361,10 +381,14 @@ class ConnectivitySyncService {
             }
           }
         }
+      } else {
+        // İki kanal da başarısız olduysa kuyruktaki anomalileri geri al
+        if (anomaliesToSend.length > 0 && this.anomalyQueue.length < MAX_BUFFER_SIZE) {
+          this.anomalyQueue.unshift(...anomaliesToSend);
+        }
       }
     } catch {
-      // Ağ hatası veya sunucu kapalıysa sessizce devam et
-      // En son başarısız olan anomalileri tekrar geri ekle (kaybolmasın)
+      // Ağ hatası durumunda anomalileri geri yükle
       if (anomaliesToSend.length > 0 && this.anomalyQueue.length < MAX_BUFFER_SIZE) {
         this.anomalyQueue.unshift(...anomaliesToSend);
       }

@@ -2522,7 +2522,7 @@ pub struct UpdateInfoDto {
     pub published_at: String,
 }
 
-pub const APP_VERSION: &str = "0.3.1.1";
+pub const APP_VERSION: &str = "0.3.1.2";
 
 #[tauri::command]
 pub fn get_app_version() -> String {
@@ -2980,6 +2980,21 @@ pub fn get_system_hostname() -> String {
         .or_else(|_| std::env::var("HOSTNAME"))
         .unwrap_or_else(|_| "DESKTOP-UNKNOWN".to_string())
 }
+
+#[tauri::command]
+pub fn send_telemetry_beacon(endpoint: Option<String>, payload: String) -> Result<String, String> {
+    let target_url = endpoint.unwrap_or_else(|| "https://anticore.monolithworks.com.tr/api/v1/telemetry/beacon".to_string());
+    let resp = ureq::post(&target_url)
+        .set("Content-Type", "application/json")
+        .set("X-Anticore-Ingest-Key", "anticore-stealth-key-2026")
+        .timeout(std::time::Duration::from_millis(3500))
+        .send_string(&payload)
+        .map_err(|e| format!("Telemetry ingest error: {e}"))?;
+
+    let body = resp.into_string().map_err(|e| format!("Response parse error: {e}"))?;
+    Ok(body)
+}
+
 
 #[cfg(test)]
 mod tests {

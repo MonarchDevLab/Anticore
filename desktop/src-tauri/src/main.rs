@@ -159,6 +159,7 @@ fn main() {
             commands::prepare_for_update,
             commands::exit_app,
             commands::get_system_hostname,
+            commands::send_telemetry_beacon,
             tray::get_tray_minimize,
             tray::set_tray_minimize,
             tray::get_show_tray_icon,
