@@ -153,31 +153,61 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
     if let Some(ref exe) = current_exe {
         if let Some(dir) = exe.parent() {
             candidates.push(dir.join("anticore-cli.exe"));
+            candidates.push(dir.join("anticore-cli"));
             candidates.push(dir.join("bin").join("anticore.exe"));
+            candidates.push(dir.join("bin").join("anticore"));
             candidates.push(dir.join("engine").join("target").join("release").join("anticore.exe"));
+            candidates.push(dir.join("engine").join("target").join("release").join("anticore"));
             candidates.push(dir.join("dist").join("anticore-cli.exe"));
+            candidates.push(dir.join("dist").join("anticore-cli"));
             candidates.push(dir.join("anticore.exe"));
+            candidates.push(dir.join("anticore"));
+            if let Some(bundle_dir) = dir.parent() {
+                candidates.push(bundle_dir.join("Resources").join("anticore-cli"));
+                candidates.push(bundle_dir.join("Resources").join("anticore"));
+            }
             if let Some(parent) = dir.parent() {
                 candidates.push(parent.join("anticore-cli.exe"));
+                candidates.push(parent.join("anticore-cli"));
                 candidates.push(parent.join("bin").join("anticore.exe"));
+                candidates.push(parent.join("bin").join("anticore"));
                 candidates.push(parent.join("engine").join("target").join("release").join("anticore.exe"));
+                candidates.push(parent.join("engine").join("target").join("release").join("anticore"));
                 candidates.push(parent.join("dist").join("anticore-cli.exe"));
+                candidates.push(parent.join("dist").join("anticore-cli"));
             }
         }
     }
     if let Ok(cwd) = std::env::current_dir() {
         candidates.push(cwd.join("anticore-cli.exe"));
+        candidates.push(cwd.join("anticore-cli"));
         candidates.push(cwd.join("bin").join("anticore.exe"));
+        candidates.push(cwd.join("bin").join("anticore"));
         candidates.push(cwd.join("antikor").join("anticore-cli.exe"));
+        candidates.push(cwd.join("antikor").join("anticore-cli"));
         candidates.push(cwd.join("antikor").join("bin").join("anticore.exe"));
+        candidates.push(cwd.join("antikor").join("bin").join("anticore"));
+    }
+    // macOS standart sistem yolları
+    #[cfg(target_os = "macos")]
+    {
+        candidates.push(PathBuf::from("/usr/local/bin/anticore"));
+        candidates.push(PathBuf::from("/opt/homebrew/bin/anticore"));
+        candidates.push(PathBuf::from("/Applications/Anticore.app/Contents/MacOS/anticore-cli"));
     }
     for rel in [
         "anticore-cli.exe",
+        "anticore-cli",
         "bin/anticore.exe",
+        "bin/anticore",
         "engine/target/release/anticore.exe",
+        "engine/target/release/anticore",
         "dist/anticore-cli.exe",
+        "dist/anticore-cli",
         "../../engine/target/release/anticore.exe",
+        "../../engine/target/release/anticore",
         "../../../engine/target/release/anticore.exe",
+        "../../../engine/target/release/anticore",
     ] {
         if let Some(ref exe) = current_exe {
             if let Some(dir) = exe.parent() {
