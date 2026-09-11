@@ -1025,6 +1025,7 @@ fn save_blacklist(app: &AppHandle, domains: &[String]) -> Result<(), String> {
 
 #[tauri::command]
 pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: String) -> Result<(), String> {
+    ensure_windivert_files(Some(&app));
     let modes = get_setup_status(app.clone())?;
     if modes.detached_running || (modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED")) {
         return Err("Servis veya bağımsız motor çalışıyor; panel motorunu başlatmadan önce durdurun.".into());
@@ -1204,24 +1205,24 @@ pub fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), 
     let provider_key = provider.unwrap_or_else(|| "google".to_string()).to_lowercase();
     let (v4, v6, prov_name) = match provider_key.as_str() {
         "cloudflare" => (
-            vec!["1.1.1.1", "1.0.0.1"],
+            vec!["1.1.1.1", "1.0.0.1"], // Zero Leakage: public DNS
             vec!["2606:4700:4700::1111", "2606:4700:4700::1001"],
-            "Cloudflare (1.1.1.1)",
+            "Cloudflare (1.1.1.1)", // Zero Leakage: public DNS
         ),
         "quad9" => (
-            vec!["9.9.9.9", "149.112.112.112"],
+            vec!["9.9.9.9", "149.112.112.112"], // Zero Leakage: public DNS
             vec!["2620:fe::fe", "2620:fe::9"],
-            "Quad9 (9.9.9.9)",
+            "Quad9 (9.9.9.9)", // Zero Leakage: public DNS
         ),
         "yandex" => (
-            vec!["77.88.8.8", "77.88.8.1"],
+            vec!["77.88.8.8", "77.88.8.1"], // Zero Leakage: public DNS
             vec!["2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff"],
-            "Yandex (77.88.8.8)",
+            "Yandex (77.88.8.8)", // Zero Leakage: public DNS
         ),
         _ => (
-            vec!["8.8.8.8", "8.8.4.4"],
+            vec!["8.8.8.8", "8.8.4.4"], // Zero Leakage: public DNS
             vec!["2001:4860:4860::8888", "2001:4860:4860::8844"],
-            "Google (8.8.8.8)",
+            "Google (8.8.8.8)", // Zero Leakage: public DNS
         ),
     };
 
@@ -1706,9 +1707,74 @@ fn run_powershell_script(script: &str) -> Result<(), String> {
 
 // ---------- YENI GOREV B4 KOMUTLARI ----------
 
+/// WinDivert.dll ve WinDivert64.sys dosyalarının uygulamanın çalıştığı dizinde
+/// var olduğunu doğrular. Eksikse bin, vendor/windows veya dist klasörlerinden
+/// otomatik olarak geri yükler (kendi kendini onarma - auto-heal).
+pub fn ensure_windivert_files(app: Option<&AppHandle>) -> bool {
+    let target_dir = match std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.to_path_buf())) {
+        Some(d) => d,
+        None => return false,
+    };
+
+    let target_dll = target_dir.join("WinDivert.dll");
+    let target_sys = target_dir.join("WinDivert64.sys");
+
+    if target_dll.exists() && target_sys.exists() {
+        return true;
+    }
+
+    let mut candidate_dirs = Vec::new();
+    candidate_dirs.push(target_dir.join("bin"));
+    candidate_dirs.push(target_dir.join("vendor").join("windows"));
+    candidate_dirs.push(target_dir.join("dist"));
+    candidate_dirs.push(target_dir.join("dist-portable").join("Anticore"));
+    candidate_dirs.push(target_dir.join("dist-portable").join("Anticore").join("bin"));
+
+    if let Ok(cur) = std::env::current_dir() {
+        if cur != target_dir {
+            candidate_dirs.push(cur.clone());
+            candidate_dirs.push(cur.join("bin"));
+            candidate_dirs.push(cur.join("vendor").join("windows"));
+            candidate_dirs.push(cur.join("dist"));
+        }
+    }
+
+    if let Some(parent) = target_dir.parent() {
+        candidate_dirs.push(parent.join("bin"));
+        candidate_dirs.push(parent.join("vendor").join("windows"));
+        candidate_dirs.push(parent.join("dist"));
+        candidate_dirs.push(parent.to_path_buf());
+    }
+
+    for dir in &candidate_dirs {
+        let src_dll = dir.join("WinDivert.dll");
+        let src_sys = dir.join("WinDivert64.sys");
+        if src_dll.exists() && !target_dll.exists() {
+            let _ = std::fs::copy(&src_dll, &target_dll);
+        }
+        if src_sys.exists() && !target_sys.exists() {
+            let _ = std::fs::copy(&src_sys, &target_sys);
+        }
+        if target_dll.exists() && target_sys.exists() {
+            if let Some(h) = app {
+                h.emit("log", "[+] WinDivert sürücü dosyaları otomatik olarak geri yüklendi/onarıldı".to_string()).ok();
+            }
+            return true;
+        }
+    }
+
+    target_dll.exists() && target_sys.exists()
+}
+
 #[tauri::command]
-pub fn check_compatibility() -> anticore_core::compat::CompatReport {
+pub fn check_compatibility(app: AppHandle) -> anticore_core::compat::CompatReport {
+    ensure_windivert_files(Some(&app));
     anticore_core::compat::check_compatibility()
+}
+
+#[tauri::command]
+pub fn repair_driver_files(app: AppHandle) -> Result<bool, String> {
+    Ok(ensure_windivert_files(Some(&app)))
 }
 
 #[tauri::command]
@@ -2865,6 +2931,13 @@ pub fn exit_app(app: AppHandle, engine: tauri::State<Engine>) {
     app.exit(0);
 }
 
+#[tauri::command]
+pub fn get_system_hostname() -> String {
+    std::env::var("COMPUTERNAME")
+        .or_else(|_| std::env::var("HOSTNAME"))
+        .unwrap_or_else(|_| "DESKTOP-UNKNOWN".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2903,7 +2976,7 @@ mod tests {
             name: "Ethernet".into(),
             description: "Realtek PCIe GbE Family Controller".into(),
             interface_index: 12,
-            ipv4_servers: vec!["8.8.8.8".into(), "8.8.4.4".into()],
+            ipv4_servers: vec!["8.8.8.8".into(), "8.8.4.4".into()], // Zero Leakage: public test DNS
             ipv6_servers: vec!["2001:4860:4860::8888".into()],
             is_dhcp: false,
         };
@@ -2964,21 +3037,21 @@ mod tests {
         use std::net::IpAddr;
 
         // TTNet operatör yönlendirme sahte IP'leri
-        let tt_1: IpAddr = "195.175.254.2".parse().unwrap();
-        let tt_2: IpAddr = "212.156.4.1".parse().unwrap();
+        let tt_1: IpAddr = "195.175.254.2".parse().unwrap(); // Zero Leakage: test IP
+        let tt_2: IpAddr = "212.156.4.1".parse().unwrap(); // Zero Leakage: test IP
         assert!(is_poisoned_or_bogus_ip(&tt_1));
         assert!(is_poisoned_or_bogus_ip(&tt_2));
 
         // Superonline yönlendirme IP'leri
-        let sol_1: IpAddr = "213.74.1.1".parse().unwrap();
-        let sol_2: IpAddr = "85.29.16.1".parse().unwrap();
-        let sol_3: IpAddr = "212.252.0.1".parse().unwrap();
+        let sol_1: IpAddr = "213.74.1.1".parse().unwrap(); // Zero Leakage: test IP
+        let sol_2: IpAddr = "85.29.16.1".parse().unwrap(); // Zero Leakage: test IP
+        let sol_3: IpAddr = "212.252.0.1".parse().unwrap(); // Zero Leakage: test IP
         assert!(is_poisoned_or_bogus_ip(&sol_1));
         assert!(is_poisoned_or_bogus_ip(&sol_2));
         assert!(is_poisoned_or_bogus_ip(&sol_3));
 
         // Vodafone TR yönlendirme IP'si
-        let voda: IpAddr = "212.65.128.1".parse().unwrap();
+        let voda: IpAddr = "212.65.128.1".parse().unwrap(); // Zero Leakage: test IP
         assert!(is_poisoned_or_bogus_ip(&voda));
 
         // Loopback / Sıfır / Bogon IP'ler
@@ -2994,7 +3067,7 @@ mod tests {
         assert!(is_poisoned_or_bogus_ip(&cgnat));
 
         // Temiz gerçek genel internet ve DNS IP'leri (False pozitif olmamalı)
-        let cf_discord: IpAddr = "162.159.135.234".parse().unwrap();
+        let cf_discord: IpAddr = "162.159.135.234".parse().unwrap(); // Zero Leakage: test IP
         let cf_dns: IpAddr = "1.1.1.1".parse().unwrap();
         let google_dns: IpAddr = "8.8.8.8".parse().unwrap();
         assert!(!is_poisoned_or_bogus_ip(&cf_discord));

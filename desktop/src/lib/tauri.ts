@@ -210,6 +210,7 @@ export const api = {
   setEngineConfig: (config: EngineConfig) =>
     invoke<void>("set_engine_config", { config }),
   checkCompatibility: () => invoke<CompatReport>("check_compatibility"),
+  repairDriverFiles: () => invoke<boolean>("repair_driver_files"),
   autoDiscoverProfile: () => invoke<BlockcheckResult[]>("auto_discover_profile"),
   scanLegacyServices: () => invoke<LegacyServiceDto[]>("scan_legacy_services"),
   cleanupLegacyServices: (serviceIds?: string[]) =>
@@ -227,6 +228,7 @@ export const api = {
   importProfilesFromFile: () => invoke<number>("import_profiles_from_file"),
   factoryReset: () => invoke<void>("factory_reset"),
   purgeSystem: () => invoke<void>("purge_system"),
+  getSystemHostname: () => invoke<string>("get_system_hostname"),
   getTrayMinimize: () => invoke<boolean>("get_tray_minimize"),
   setTrayMinimize: (enabled: boolean) => invoke<void>("set_tray_minimize", { enabled }),
   getShowTrayIcon: () => invoke<boolean>("get_show_tray_icon"),

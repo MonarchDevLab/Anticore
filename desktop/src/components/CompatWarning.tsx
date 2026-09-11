@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, ShieldAlert, X, Trash2, Loader2, Check } from "lucide-react";
+import { AlertTriangle, ShieldAlert, X, Trash2, Loader2, Check, Wrench } from "lucide-react";
 import { api, type CompatReport } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 
@@ -120,18 +120,21 @@ export default function CompatWarning() {
         </button>
       )}
 
-      {/* Aksiyon: WinDivert için Yönetici Olarak Yeniden Başlat */}
+      {/* Aksiyon: Sürücü Dosyalarını Onar */}
       {!report.windivert_ok && (
         <button
           onClick={async () => {
             try {
-              await api.restartAsAdmin();
-            } catch {}
+              await api.repairDriverFiles();
+              await refreshReport();
+            } catch {
+              await refreshReport();
+            }
           }}
           className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded bg-alert/20 hover:bg-alert/30 text-alert border border-alert/30 font-bold text-[11px] transition-colors cursor-pointer"
         >
-          <ShieldAlert size={12} />
-          <span>{lang === "tr" ? "Yönetici Olarak Başlat" : "Restart as Admin"}</span>
+          <Wrench size={12} />
+          <span>{lang === "tr" ? "Dosyaları Onar" : "Repair Files"}</span>
         </button>
       )}
 

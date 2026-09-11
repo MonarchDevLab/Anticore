@@ -24,6 +24,7 @@ export default function Titlebar({
   const { theme, setTheme, options } = useTheme();
   const { lang, setLang, t } = useI18n();
   const [isMaximized, setIsMaximized] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>("0.3.1.1");
 
   // Tauri window instance lazy-loader (fallback)
   const getWindow = async () => {
@@ -47,6 +48,10 @@ export default function Titlebar({
   useEffect(() => {
     let cancelled = false;
     let unlisten: (() => void) | undefined;
+
+    void api.getAppVersion().then((v) => {
+      if (v) setAppVersion(v);
+    }).catch(() => {});
 
     void api.isWindowMaximized().then((max) => {
       if (!cancelled) setIsMaximized(max);
@@ -123,9 +128,12 @@ export default function Titlebar({
         }`}>
           {running ? <ShieldCheck size={13} strokeWidth={2.5} /> : <ShieldAlert size={13} strokeWidth={2.5} />}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className="font-bold tracking-widest text-paper-bright text-xs">
             ANTICORE
+          </span>
+          <span className="text-[10px] font-mono text-paper-muted font-semibold bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08]">
+            v{appVersion}
           </span>
         </div>
       </div>

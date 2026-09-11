@@ -152,7 +152,17 @@ impl WinDivert {
 
         let handle = unsafe { open_fn(fbytes.as_ptr(), WINDIVERT_LAYER_NETWORK, 0, flags) };
         if handle == (-1isize) || handle == 0 {
-            return Err("WinDivert sürücüsü başlatılamadı: Yönetici hakları gerekiyor.".into());
+            let os_err = std::io::Error::last_os_error();
+            let code = os_err.raw_os_error().unwrap_or(0);
+            let detail = match code {
+                5 => "Yönetici (Administrator) oturumu gereklidir.".to_string(),
+                2 | 3 => "WinDivert64.sys sürücü dosyası bulunamadı. Sürücü dosyalarının uygulama dizininde olduğunu doğrulayın.".to_string(),
+                577 => "WinDivert sürücüsü dijital imzası doğrulanamadı (Windows Sürücü İmza Zorlaması / Secure Boot).".to_string(),
+                1058 => "WinDivert sürücü servisi devre dışı bırakılmış.".to_string(),
+                1275 => "WinDivert sürücüsü güvenlik yazılımı veya Windows tarafından engellendi.".to_string(),
+                _ => format!("WinDivert sürücüsü başlatılamadı (Sistem Hata Kodu: {code}, {os_err})."),
+            };
+            return Err(detail);
         }
 
         Ok(Self {

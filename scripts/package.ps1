@@ -58,6 +58,9 @@ $winDivertDll = if (Test-Path "$vendorWin\WinDivert.dll") { "$vendorWin\WinDiver
 $winDivertSys = if (Test-Path "$vendorWin\WinDivert64.sys") { "$vendorWin\WinDivert64.sys" } else { "$root\WinDivert64.sys" }
 $webView2Dll  = if (Test-Path "$vendorWin\WebView2Loader.dll") { "$vendorWin\WebView2Loader.dll" } else { "$root\WebView2Loader.dll" }
 
+Safe-Copy $winDivertDll "$root\WinDivert.dll"
+Safe-Copy $winDivertSys "$root\WinDivert64.sys"
+Safe-Copy $webView2Dll  "$root\WebView2Loader.dll"
 Safe-Copy $winDivertDll "$root\bin\WinDivert.dll"
 Safe-Copy $winDivertSys "$root\bin\WinDivert64.sys"
 Safe-Copy $winDivertDll "$root\dist\WinDivert.dll"

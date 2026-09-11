@@ -174,11 +174,20 @@ pub fn check_compatibility() -> CompatReport {
     // 3. WinDivert Files Check
     let mut search_paths = Vec::new();
     if let Ok(cur) = std::env::current_dir() {
-        search_paths.push(cur);
+        search_paths.push(cur.join("bin"));
+        search_paths.push(cur.join("vendor").join("windows"));
+        search_paths.push(cur.clone());
     }
     if let Ok(exe) = std::env::current_exe() {
         if let Some(parent) = exe.parent() {
+            search_paths.push(parent.join("bin"));
+            search_paths.push(parent.join("vendor").join("windows"));
             search_paths.push(parent.to_path_buf());
+            if let Some(pp) = parent.parent() {
+                search_paths.push(pp.join("bin"));
+                search_paths.push(pp.join("vendor").join("windows"));
+                search_paths.push(pp.to_path_buf());
+            }
         }
     }
     let paths_ref: Vec<&Path> = search_paths.iter().map(|p| p.as_path()).collect();

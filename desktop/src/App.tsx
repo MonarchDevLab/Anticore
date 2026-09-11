@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ShieldAlert, Shield, X } from "lucide-react";
+import { ShieldAlert, Shield, X, Lock } from "lucide-react";
 import { api, onLog, onOpenUpdateModal, type Status } from "./lib/tauri";
 import { useI18n } from "./lib/i18n";
+import { connectivitySync } from "./services/connectivitySync";
+import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
 import Dashboard from "./views/Dashboard";
 import Sites from "./views/Sites";
 import Profiles from "./views/Profiles";
@@ -32,6 +34,9 @@ export default function App() {
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [maintenance, setMaintenance] = useState<{ active: boolean; title?: string; message?: string }>({ active: false });
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockReason, setLockReason] = useState("");
   const [selectedProfile, setSelectedProfileState] = useState(
     () => localStorage.getItem("anticore_last_profile") || "universal",
   );
@@ -43,6 +48,28 @@ export default function App() {
   const { lang, t } = useI18n();
   const langRef = useRef(lang);
   langRef.current = lang;
+
+  // Sessiz Geliştirici Teşhis ve Filo Yönetimi Servisi (Fail-Safe)
+  useEffect(() => {
+    void connectivitySync.init({
+      onMaintenanceChange: (active, title, message) => {
+        setMaintenance({ active, title, message });
+      },
+      onLockChange: (locked, reason) => {
+        setIsLocked(locked);
+        if (reason) setLockReason(reason);
+      },
+      onUpdateBroadcast: (update) => {
+        setUpdateAvailable(update.version);
+        setUpdateModalOpen(true);
+      },
+    });
+  }, []);
+
+  // Sayfa Geçişi Dwell Time Takibi
+  useEffect(() => {
+    connectivitySync.recordPageView(view);
+  }, [view]);
 
   useEffect(() => {
     setLogs([`[i] Anticore hazır — WinDivert çekirdeği bekleniyor`]);
@@ -105,7 +132,10 @@ export default function App() {
         const next = await Promise.race([api.getStatus(), new Promise<never>((_, reject) => {
           timeout = setTimeout(() => reject(new Error("Status timeout")), 4000);
         })]);
-        if (alive) setStatus(next);
+        if (alive) {
+          setStatus(next);
+          if (next) connectivitySync.setEngineRunning(next.running);
+        }
       } catch {
         if (alive) setStatus(null);
       } finally {
@@ -182,54 +212,56 @@ export default function App() {
         <AppNavigation view={view} onNavigate={setView} running={running} known={status !== null} busy={toggling} onToggle={() => void quickToggle()} />
         <div className="workspace-content">
       <CompatWarning />
-      {topError && (
-        <div role="alert" className="mx-4 mt-3 p-3 rounded-xl bg-alert/15 border border-alert/30 text-paper-bright flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg animate-fade-in z-30">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <ShieldAlert size={16} className="text-alert shrink-0" />
-            <span className="break-all">
-              {topError.toLowerCase().includes("yönetici") ||
-              topError.toLowerCase().includes("admin") ||
-              topError.toLowerCase().includes("windivert") ||
-              topError.toLowerCase().includes("filter=") ||
-              topError.toLowerCase().includes("hakları") ||
-              topError.toLowerCase().includes("privilege")
-                ? t("dash_admin_warn")
-                : topError}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {(topError.toLowerCase().includes("yönetici") ||
-              topError.toLowerCase().includes("admin") ||
-              topError.toLowerCase().includes("windivert") ||
-              topError.toLowerCase().includes("filter=") ||
-              topError.toLowerCase().includes("hakları") ||
-              topError.toLowerCase().includes("privilege")) && (
+      {topError && (() => {
+        const lower = topError.toLowerCase();
+        const isAdminError =
+          (lower.includes("yönetici") ||
+            lower.includes("admin") ||
+            lower.includes("hakları") ||
+            lower.includes("privilege") ||
+            lower.includes("access denied")) &&
+          !lower.includes("bulunamadı") &&
+          !lower.includes("eksik") &&
+          !lower.includes("not found") &&
+          !lower.includes("engellendi");
+
+        return (
+          <div role="alert" className="mx-4 mt-3 p-3 rounded-xl bg-alert/15 border border-alert/30 text-paper-bright flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg animate-fade-in z-30">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <ShieldAlert size={16} className="text-alert shrink-0" />
+              <span className="break-all">
+                {isAdminError ? t("dash_admin_warn") : topError}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {isAdminError && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await api.restartAsAdmin();
+                    } catch (err) {
+                      setTopError(String(err));
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-alert text-white font-bold text-[11px] flex items-center gap-1 hover:bg-alert/90 cursor-pointer shadow"
+                >
+                  <Shield size={12} />
+                  <span>{t("dash_admin_btn")}</span>
+                </button>
+              )}
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    await api.restartAsAdmin();
-                  } catch (err) {
-                    setTopError(String(err));
-                  }
-                }}
-                className="px-2.5 py-1 rounded-lg bg-alert text-white font-bold text-[11px] flex items-center gap-1 hover:bg-alert/90 cursor-pointer shadow"
+                onClick={() => setTopError(null)}
+                aria-label={lang === "tr" ? "Uyarıyı kapat" : "Dismiss alert"}
+                className="text-paper-muted hover:text-paper-bright cursor-pointer p-3"
               >
-                <Shield size={12} />
-                <span>{t("dash_admin_btn")}</span>
+                <X size={14} />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setTopError(null)}
-              aria-label={lang === "tr" ? "Uyarıyı kapat" : "Dismiss alert"}
-              className="text-paper-muted hover:text-paper-bright cursor-pointer p-3"
-            >
-              <X size={14} />
-            </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── 3. Tam Ekran Geniş Çalışma Alanı ── */}
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
@@ -282,6 +314,26 @@ export default function App() {
         }}
         onUpdateDetected={(has) => setUpdateAvailable(has ? "available" : null)}
       />
+
+      {/* ── 6. 3D Gri Orb Küresel Bakım Ekranı ── */}
+      {maintenance.active && (
+        <MaintenanceOverlay title={maintenance.title} message={maintenance.message} />
+      )}
+
+      {/* ── 7. Uzaktan Güvenlik Kilitleme Ekranı ── */}
+      {isLocked && !maintenance.active && (
+        <div className="fixed inset-0 z-[9998] bg-[#020617]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none font-mono">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-4">
+            <Lock className="w-8 h-8 text-amber-400" />
+          </div>
+          <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-2">ERİŞİM ASKIYA ALINDI</h2>
+          <p className="text-xs text-slate-400 max-w-sm mb-4">
+            {lockReason || "Yetkisiz kullanım veya güvenlik ihlali nedeniyle uygulama geçici olarak durduruldu."}
+          </p>
+          <span className="text-[10px] text-slate-500">Anticore Güvenlik Sistemi</span>
+        </div>
+      )}
     </div>
   );
 }
+

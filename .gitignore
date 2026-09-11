@@ -16,6 +16,9 @@ node_modules/
 /anticore-desktop.exe
 /Anticore_Baslat.cmd
 /bin/
+/WinDivert.dll
+/WinDivert64.sys
+/WebView2Loader.dll
 
 # Yerel çalışma dosyaları
 *.log
@@ -90,4 +93,10 @@ docs/TASKS.md
 docs/WORKLOG.md
 docs/SYSTEM_MAP.md
 design-system/
+
+# Özel Geliştirici Telemetri Paneli ve Veritabanı (ASLA GITHUB'A YÜKLENMEZ)
+anticore-dashboard/
+/anticore-dashboard/
+../anticore-dashboard/
+
 
