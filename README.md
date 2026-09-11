@@ -146,76 +146,74 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
 
 ### macOS Dağıtım İstasyonu (v0.3.1)
 
-macOS (11.0 Big Sur ve üzeri • Apple Silicon M1/M2/M3/M4 & Intel x86_64) için yerel `utun` + `pfctl` motoru ve üst menü çubuğu Hızlı Panel (`quick-panel`) paketleri:
+macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve üst menü çubuğu Hızlı Panel (`quick-panel`) paketleri mimarilerine göre ayrıştırılmıştır:
+
+> [!TIP]
+> **Hangi Paketi İndirmeliyim? (Apple Silicon mu, Intel mi?)**
+> 1. Sol üst köşedeki **Apple () Menüsü** > **Bu Mac Hakkında (About This Mac)** seçeneğine tıklayın.
+> 2. Açılan pencerede:
+>    - **Çip (Chip):** `Apple M1`, `M2`, `M3`, `M4` veya daha yenisi yazıyorsa &rarr; **Apple Silicon (ARM64)** paketini indirin.
+>    - **İşlemci (Processor):** `Intel Core i5`, `i7`, `i9` veya `Intel Xeon` yazıyorsa &rarr; **Intel (x64)** paketini indirin.
 
 <table width="100%" align="center">
   <thead>
     <tr>
-      <th width="33.3%" align="center">
-        <img src="https://img.shields.io/badge/01-MACOS_DMG-20ffa0?style=for-the-badge&labelColor=08090D" alt="macOS DMG" /><br /><br />
-        <b>Disk Kalıbı Yükleyici</b><br />
-        <sub>Sürükle-Bırak • Uygulamalar Klasörü</sub>
+      <th width="50%" align="center">
+        <img src="https://img.shields.io/badge/YEN%C4%B0_MAC-APPLE_SILICON_(ARM64)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Apple Silicon ARM64" /><br /><br />
+        <b>Apple Silicon M-Serisi</b><br />
+        <sub>M1 • M2 • M3 • M4 • M5 | macOS 11.0+</sub>
       </th>
-      <th width="33.3%" align="center">
-        <img src="https://img.shields.io/badge/02-MEN%C3%9C_%C3%87UBU%C4%9EU_APP-20f2ff?style=for-the-badge&labelColor=08090D" alt="Menu Bar App" /><br /><br />
-        <b>Hızlı Panel Masaüstü</b><br />
-        <sub>Üst Menü Çubuğu • Hafif UI</sub>
-      </th>
-      <th width="33.3%" align="center">
-        <img src="https://img.shields.io/badge/03-CLI_&_DAEMON-FFE600?style=for-the-badge&labelColor=08090D" alt="CLI Daemon" /><br /><br />
-        <b>Terminal &amp; Servis</b><br />
-        <sub>LaunchDaemon • Arka Plan Motoru</sub>
+      <th width="50%" align="center">
+        <img src="https://img.shields.io/badge/ESK%C4%B0_MAC-INTEL_(X86__64)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Intel x86_64" /><br /><br />
+        <b>Intel Tabanlı Mac</b><br />
+        <sub>Core i5 • Core i7 • Core i9 • Xeon | macOS 11.0+</sub>
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td align="center" valign="top">
-        Standart Apple disk kalıbı (.dmg). Açıp <code>Anticore.app</code> dosyasını Uygulamalar (Applications) klasörüne bırakın.
+        Apple Silicon M-serisi çipler için yerel ARM64 derlemesi. Maksimum enerji verimliliği, sıfır emülasyon gecikmesi, anında tepki.
       </td>
       <td align="center" valign="top">
-        macOS üst menü çubuğuna yerleşen, tek tıkla açılan 340x460px hafif taktik komuta paneli.
-      </td>
-      <td align="center" valign="top">
-        Arayüzsüz çalışan bağımsız CLI ikilisi ve sistem başlangıcında otomatik çalışan LaunchDaemon servisi.
+        Eski nesil Intel Mac modelleri için doğrudan x86_64 derlemesi. Rosetta 2 çevirisi olmadan doğal x64 donanım performansı.
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <code>✓ Universal Binary (ARM64/x64)</code>
+        <code>✓ Native ARM64 (Rosetta Gerektirmez)</code>
       </td>
       <td align="center" valign="middle">
-        <code>✓ Menü Çubuğu Otomatik Hizalama</code>
-      </td>
-      <td align="center" valign="middle">
-        <code>✓ LaunchDaemon launchctl Desteği</code>
+        <code>✓ Native x86_64 (Tüm Intel Mac'ler)</code>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/INDIR_.DMG-Universal-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir DMG" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_0.3.1_aarch64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-ARM64_(Apple_Silicon)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir DMG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/INDIR_.APP-Universal-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir APP" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/INDIR_CLI-Tarball-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir CLI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_0.3.1_x64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-x64_(Intel)-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-macOS_11.0%2B_%E2%80%A2_M1%2FM2%2FM3%2FM4-20ffa0?style=flat-square&labelColor=08090D" alt="macOS 11+" />
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-MENU_BAR_%E2%80%A2_UTUN_%2B_PF-20f2ff?style=flat-square&labelColor=08090D" alt="Menu Bar" />
-      </td>
-      <td align="center" valign="middle">
-        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-CLI_%E2%80%A2_ROOT_LAUNCHD-FFE600?style=flat-square&labelColor=08090D" alt="LaunchDaemon" />
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
       </td>
     </tr>
     <tr>
-      <td align="center" bgcolor="#161b22" colspan="3">
-        <code>sudo ./scripts/macos-install-daemon.sh</code> &nbsp;|&nbsp; <code>./scripts/macos-package.sh</code>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/anticore-cli-macos-arm64-0.3.1.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/anticore-cli-macos-x64-0.3.1.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" bgcolor="#161b22" colspan="2">
+        <code>sudo ./scripts/macos-install-daemon.sh</code> &nbsp;|&nbsp; <code>./scripts/macos-package.sh [arm64|x64|all]</code>
       </td>
     </tr>
   </tbody>

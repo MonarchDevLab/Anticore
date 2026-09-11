@@ -41,6 +41,14 @@ jobs:
         run: cargo test --workspace
         working-directory: engine
 
+      - name: Rust Intel Mac mimarisi derleme kontrolü (x86_64-apple-darwin)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo check --target x86_64-apple-darwin --workspace
+        working-directory: engine
+
       - name: Motor derle (Tauri kaynak bagimliligi)
         shell: bash
         run: |

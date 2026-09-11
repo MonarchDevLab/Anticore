@@ -18,7 +18,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest, macos-latest]
+        include:
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            arch: x64
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            arch: arm64
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            arch: x64
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +51,8 @@ jobs:
 
       - name: Rust kurulumu
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -55,16 +66,23 @@ jobs:
         working-directory: desktop
 
       - name: Motor testleri (engine workspace)
+        if: matrix.target != 'x86_64-apple-darwin'
         run: cargo test --workspace
         working-directory: engine
 
       - name: Motor derle (release)
         shell: bash
         run: |
-          cargo build --release --workspace
-          # macOS üzerinde tauri.conf.json resource uyumu için kopyala
-          if [ -f "target/release/anticore" ] && [ ! -f "target/release/anticore.exe" ]; then
+          cargo build --release --target ${{ matrix.target }} --workspace
+          mkdir -p target/release
+          if [ -f "target/${{ matrix.target }}/release/anticore" ]; then
+            cp "target/${{ matrix.target }}/release/anticore" target/release/anticore
+            cp "target/${{ matrix.target }}/release/anticore" target/release/anticore.exe
+          elif [ -f "target/release/anticore" ]; then
             cp target/release/anticore target/release/anticore.exe
+          fi
+          if [ -f "target/${{ matrix.target }}/release/anticore.exe" ]; then
+            cp "target/${{ matrix.target }}/release/anticore.exe" target/release/anticore.exe
           fi
         working-directory: engine
 
@@ -77,6 +95,7 @@ jobs:
         working-directory: desktop
 
       - name: Masaüstü backend testleri
+        if: matrix.target != 'x86_64-apple-darwin'
         run: cargo test
         working-directory: desktop/src-tauri
 
@@ -88,9 +107,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: desktop
+          args: --target ${{ matrix.target }}
           tagName: ${{ env.RELEASE_TAG }}
           releaseName: "Anticore ${{ env.RELEASE_TAG }}"
-          releaseBody: "Sürümlü dağıtım — Windows ve macOS kurulum paketleri."
+          releaseBody: "Sürümlü dağıtım — Windows ve macOS (Apple Silicon & Intel) kurulum paketleri."
           releaseDraft: false
           prerelease: false
 
@@ -128,10 +148,27 @@ jobs:
         run: |
           ref="${{ env.RELEASE_TAG }}"
           ver="${ref#v}"
-          mkdir -p dist-macos
-          cp engine/target/release/anticore dist-macos/anticore-cli
-          cp scripts/macos-install-daemon.sh dist-macos/
-          tar -czf "dist-macos/anticore-cli-macos-${ver}.tar.gz" -C dist-macos anticore-cli macos-install-daemon.sh
-          gh release upload "$ref" "dist-macos/anticore-cli-macos-${ver}.tar.gz" --clobber
+          arch="${{ matrix.arch }}"
+          target="${{ matrix.target }}"
+          pDir="dist-macos-${arch}"
+          mkdir -p "$pDir"
+
+          bin_path="engine/target/${target}/release/anticore"
+          if [ ! -f "$bin_path" ]; then
+            bin_path="engine/target/release/anticore"
+          fi
+
+          cp "$bin_path" "$pDir/anticore-cli"
+          cp scripts/macos-install-daemon.sh "$pDir/"
+          chmod +x "$pDir/anticore-cli" "$pDir/macos-install-daemon.sh"
+
+          tar_name="anticore-cli-macos-${arch}-${ver}.tar.gz"
+          tar -czf "$tar_name" -C "$pDir" anticore-cli macos-install-daemon.sh
+          gh release upload "$ref" "$tar_name" --clobber
+
+          if [ "$arch" == "arm64" ]; then
+            cp "$tar_name" "anticore-cli-macos-${ver}.tar.gz"
+            gh release upload "$ref" "anticore-cli-macos-${ver}.tar.gz" --clobber
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
