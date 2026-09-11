@@ -72,6 +72,38 @@ pub fn set_tray_minimize(app: AppHandle, enabled: bool) -> Result<(), String> {
 /// Tray simgesi + menü + olay dinleyicileri kurar. `app.manage()` ile
 /// saklanan `TrayHandles`, motor durumu değiştikçe (status_changed olayı)
 /// tepsi ipucu (tooltip) metnini ve menü öğesi etiketini günceller.
+#[cfg(target_os = "macos")]
+fn position_quick_panel(panel: &tauri::WebviewWindow, tray_rect: &tauri::Rect) {
+    if let Ok(Some(monitor)) = panel.current_monitor() {
+        let scale = monitor.scale_factor();
+        let work_area = monitor.work_area();
+        let panel_width = (340.0 * scale) as i32;
+
+        let tray_pos = tray_rect.position.to_physical::<i32>(scale);
+        let tray_size = tray_rect.size.to_physical::<u32>(scale);
+
+        let target_x = if tray_size.width > 0 {
+            tray_pos.x + (tray_size.width as i32 / 2) - (panel_width / 2)
+        } else {
+            work_area.position.x + work_area.size.width as i32 - panel_width - 12
+        };
+
+        let clamped_x = target_x.clamp(
+            work_area.position.x + 8,
+            work_area.position.x + work_area.size.width as i32 - panel_width - 8,
+        );
+
+        // macOS: Menü çubuğu ekranın en üstündedir; panel simgenin dikey altından (6px boşlukla) açılır
+        let target_y = tray_pos.y + tray_size.height as i32 + (6.0 * scale) as i32;
+
+        let _ = panel.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: clamped_x,
+            y: target_y,
+        }));
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
 fn position_quick_panel(panel: &tauri::WebviewWindow, tray_rect: &tauri::Rect) {
     if let Ok(Some(monitor)) = panel.current_monitor() {
         let scale = monitor.scale_factor();
