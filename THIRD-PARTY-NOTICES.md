@@ -7,7 +7,7 @@ ve kaynaklarını belgeler.
 
 ---
 
-## WinDivert (`WinDivert.dll`, `WinDivert64.sys`)
+## WinDivert (`vendor/windows/WinDivert.dll`, `vendor/windows/WinDivert64.sys`)
 
 - **Ne için kullanılır:** Windows çekirdek katmanında paket yakalama/yeniden
   enjeksiyon sürücüsü — Anticore'un DPI bypass motorunun temel bağımlılığı.
@@ -18,13 +18,13 @@ ve kaynaklarını belgeler.
   - [GNU Lesser General Public License (LGPL) v3](https://www.gnu.org/licenses/lgpl-3.0.txt), veya
   - [GNU General Public License (GPL) v2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt)
 - **Değişiklik:** Anticore, resmi WinDivert dağıtımından derlenmiş
-  `WinDivert.dll`/`WinDivert64.sys` ikili dosyalarını **hiçbir kaynak
+  `WinDivert.dll`/`WinDivert64.sys` ikili dosyalarını (`vendor/windows/`) **hiçbir kaynak
   değişikliği yapmadan** kullanır; bu dosyalar çalışma zamanında dinamik
   olarak yüklenir (`LoadLibrary`), Anticore'un kendi koduna statik olarak
   bağlanmaz. Kaynak kodu yukarıdaki depoda herkese açıktır.
 - Tam lisans metni için yukarıdaki bağlantılara bakınız.
 
-## WebView2 Runtime (`WebView2Loader.dll`)
+## WebView2 Runtime (`vendor/windows/WebView2Loader.dll`)
 
 - **Ne için kullanılır:** Tauri masaüstü kabuğunun arayüzü render ettiği
   Microsoft Edge WebView2 çalışma zamanına bağlanan yükleyici kütüphanesi.

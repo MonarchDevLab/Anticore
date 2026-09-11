@@ -1,20 +1,20 @@
 # Derleme çıktıları
+/dist/
+dist-portable/
 engine/target/
 desktop/src-tauri/target/
 desktop/src-tauri/gen/
 desktop/dist/
-dist-portable/
 target/
 node_modules/
+*.pdb
 
-# Kök dizindeki derlenmiş ikili dosyalar (bu repo kaynağından üretilir;
-# regenerable, dağıtım Releases'ten gelir — git'te tutulmaz).
-# NOT: WinDivert.dll/WinDivert64.sys/WebView2Loader.dll BURADA DEĞİL —
-# bunlar tauri.conf.json bundle.resources'un derleme-zamanı girdisidir;
-# untrack etmeden önce CI'da vendor-fetch adımı gerekir (henüz yok).
+# Kök dizindeki derlenmiş ikili ve geçici dosyalar (Releases üzerinden dağıtılır)
 /anticore.exe
+/Anticore.exe
 /anticore-cli.exe
 /anticore-desktop.exe
+/Anticore_Baslat.cmd
 /bin/
 
 # Yerel çalışma dosyaları
@@ -25,7 +25,7 @@ node_modules/
 # Yerel çalışma ve teşhis kayıtları
 .ai/
 
-# Sürücü ve satıcı ikili dosyaları (dağıtımda ayrı sağlanır)
+# Sürücü ve satıcı ikili dosyaları (vendor/windows altında versiyonlanır, kök dizinde tutulmaz)
 engine/vendor/
 
 # Çevre ve Ortam Değişkenleri — ASLA repoya girmez (.env koruması)

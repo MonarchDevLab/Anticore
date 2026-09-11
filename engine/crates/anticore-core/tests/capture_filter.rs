@@ -43,7 +43,13 @@ fn packet(payload: &[u8], ipv6: bool) -> Vec<u8> {
 
 #[test]
 fn real_windivert_evaluator_preserves_candidates_and_excludes_bulk() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../WinDivert.dll");
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
+    let vendor_path = root.join("vendor/windows/WinDivert.dll");
+    let path = if vendor_path.exists() {
+        vendor_path
+    } else {
+        root.join("WinDivert.dll")
+    };
     let wide: Vec<_> = path.as_os_str().encode_wide().chain(Some(0)).collect();
     let lib = Library(unsafe { LoadLibraryW(wide.as_ptr()) });
     assert!(!lib.0.is_null(), "WinDivert.dll required: {}", path.display());

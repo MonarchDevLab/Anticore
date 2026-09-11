@@ -81,11 +81,11 @@ jobs:
           Copy-Item "desktop/src-tauri/target/release/anticore-desktop.exe" "$pDir/Anticore.exe" -Force
           Copy-Item "engine/target/release/anticore.exe" "$pDir/anticore-cli.exe" -Force
           Copy-Item "engine/target/release/anticore.exe" "$pDir/bin/anticore.exe" -Force
-          Copy-Item "WinDivert.dll" "$pDir/WinDivert.dll" -Force
-          Copy-Item "WinDivert64.sys" "$pDir/WinDivert64.sys" -Force
-          Copy-Item "WinDivert.dll" "$pDir/bin/WinDivert.dll" -Force
-          Copy-Item "WinDivert64.sys" "$pDir/bin/WinDivert64.sys" -Force
-          Copy-Item "WebView2Loader.dll" "$pDir/WebView2Loader.dll" -Force
+          Copy-Item "vendor/windows/WinDivert.dll" "$pDir/WinDivert.dll" -Force
+          Copy-Item "vendor/windows/WinDivert64.sys" "$pDir/WinDivert64.sys" -Force
+          Copy-Item "vendor/windows/WinDivert.dll" "$pDir/bin/WinDivert.dll" -Force
+          Copy-Item "vendor/windows/WinDivert64.sys" "$pDir/bin/WinDivert64.sys" -Force
+          Copy-Item "vendor/windows/WebView2Loader.dll" "$pDir/WebView2Loader.dll" -Force
 
           $readme = @"
           =====================================================

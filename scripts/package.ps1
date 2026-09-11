@@ -53,16 +53,21 @@ function Safe-Copy {
 }
 
 # 4. Surucu ve DLL Dosyalarini Esitle
-Safe-Copy "$root\WinDivert.dll" "$root\bin\WinDivert.dll"
-Safe-Copy "$root\WinDivert64.sys" "$root\bin\WinDivert64.sys"
-Safe-Copy "$root\WinDivert.dll" "$root\dist\WinDivert.dll"
-Safe-Copy "$root\WinDivert64.sys" "$root\dist\WinDivert64.sys"
-Safe-Copy "$root\WebView2Loader.dll" "$root\dist\WebView2Loader.dll"
-Safe-Copy "$root\WinDivert.dll" "$root\dist-portable\Anticore\WinDivert.dll"
-Safe-Copy "$root\WinDivert64.sys" "$root\dist-portable\Anticore\WinDivert64.sys"
-Safe-Copy "$root\WebView2Loader.dll" "$root\dist-portable\Anticore\WebView2Loader.dll"
-Safe-Copy "$root\WinDivert.dll" "$root\dist-portable\Anticore\bin\WinDivert.dll"
-Safe-Copy "$root\WinDivert64.sys" "$root\dist-portable\Anticore\bin\WinDivert64.sys"
+$vendorWin = "$root\vendor\windows"
+$winDivertDll = if (Test-Path "$vendorWin\WinDivert.dll") { "$vendorWin\WinDivert.dll" } else { "$root\WinDivert.dll" }
+$winDivertSys = if (Test-Path "$vendorWin\WinDivert64.sys") { "$vendorWin\WinDivert64.sys" } else { "$root\WinDivert64.sys" }
+$webView2Dll  = if (Test-Path "$vendorWin\WebView2Loader.dll") { "$vendorWin\WebView2Loader.dll" } else { "$root\WebView2Loader.dll" }
+
+Safe-Copy $winDivertDll "$root\bin\WinDivert.dll"
+Safe-Copy $winDivertSys "$root\bin\WinDivert64.sys"
+Safe-Copy $winDivertDll "$root\dist\WinDivert.dll"
+Safe-Copy $winDivertSys "$root\dist\WinDivert64.sys"
+Safe-Copy $webView2Dll  "$root\dist\WebView2Loader.dll"
+Safe-Copy $winDivertDll "$root\dist-portable\Anticore\WinDivert.dll"
+Safe-Copy $winDivertSys "$root\dist-portable\Anticore\WinDivert64.sys"
+Safe-Copy $webView2Dll  "$root\dist-portable\Anticore\WebView2Loader.dll"
+Safe-Copy $winDivertDll "$root\dist-portable\Anticore\bin\WinDivert.dll"
+Safe-Copy $winDivertSys "$root\dist-portable\Anticore\bin\WinDivert64.sys"
 
 $packageJson = Get-Content "$root\desktop\package.json" -Raw | ConvertFrom-Json
 $ver = $packageJson.version

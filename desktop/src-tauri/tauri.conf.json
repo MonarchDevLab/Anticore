@@ -54,9 +54,9 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../../WinDivert.dll": "WinDivert.dll",
-      "../../WinDivert64.sys": "WinDivert64.sys",
-      "../../WebView2Loader.dll": "WebView2Loader.dll",
+      "../../vendor/windows/WinDivert.dll": "WinDivert.dll",
+      "../../vendor/windows/WinDivert64.sys": "WinDivert64.sys",
+      "../../vendor/windows/WebView2Loader.dll": "WebView2Loader.dll",
       "../../engine/target/release/anticore.exe": "anticore-cli.exe"
     }
   },
