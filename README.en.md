@@ -194,54 +194,90 @@ When online services like Discord or gaming servers are blocked, users typically
 <tr>
 <td width="50%" valign="top">
 
-### 01 // Surgical Packet Manipulation
-- **TLS ClientHello SNI Splitting:** Splits the domain tag across TCP boundaries so DPI middleboxes cannot inspect the hostname.
-- **Low-TTL Fake Decoys (TTL=4):** Generates expired decoy packets that confuse inspection state machines without reaching destination servers.
-- **Passive Defense (RST Drops):** Silently drops spoofed TCP RST packets injected by ISPs to prematurely sever sessions.
+<img src="https://img.shields.io/badge/01-CORE_ENGINE-00FF9D?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Core Engine" />
+
+### Surgical Packet Manipulation
+*Kernel-level DPI bypass powered by the open-source WinDivert driver.*
+
+---
+
+- `SNI Fragmentation` &mdash; Splits TLS ClientHello packets into micro TCP segments to defeat DPI reassembly.
+- `TTL=4 Decoy Injection` &mdash; Sends expired decoy packets that saturate inspection state machines.
+- `Passive RST Mitigation` &mdash; Silently drops spoofed TCP RST packets injected by ISPs to preserve sessions.
 
 </td>
 <td width="50%" valign="top">
 
-### 02 // 3D Isometric Telemetry & Reactor
-- **3D Canvas Isometric Chart:** Real-time throughput and PPS (packets per second) rendered via isometric columns (`ActivityChart3D`) with dynamic depth shading.
-- **Live Status Reactor Orb:** 140 depth-sorted particles, gyroscopic orbital rings, and live pulsing aura when active.
-- **Pro Matrix Console:** Microsecond-precision timing telemetry and raw live terminal log streaming.
+<img src="https://img.shields.io/badge/02-VISUAL_TELEMETRY-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Visual Telemetry" />
 
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
+### 3D Isometric Telemetry & Reactor
+*Hardware-accelerated 60 FPS live canvas visualization for network throughput.*
 
-### 03 // Local Area Network (LAN) Sharing
-- **Protect Mobile Devices:** Turn your Windows PC into a local anti-censorship gateway for phones, consoles, and smart TVs.
-- **SOCKS5 & HTTP PAC Proxy:** Local proxy listener on `0.0.0.0:10808` accessible by all devices on your Wi-Fi network.
-- **Transparent Hotspot Transit:** Routes Windows Mobile Hotspot client packets directly through WinDivert (`outbound or forward`) with zero mobile app setup.
+---
 
-</td>
-<td width="50%" valign="top">
-
-### 04 // Winsock & Network Stack Repair
-- **One-Click System Recovery:** Built-in repair utility addressing corrupted network adapters, broken TCP/IP stacks, and Discord "Starting..." loops.
-- **Netsh & IP Reset:** Execute `netsh winsock reset`, `netsh int ip reset`, and `ipconfig /flushdns`, `/release`, `/renew` in one click.
-- **Automated DoH Integration:** Instantly configure encrypted Cloudflare 1.1.1.1 or Google 8.8.8.8 DoH templates.
+- `ActivityChart3D` &mdash; Renders live network speed and PPS flow with dynamic depth shading.
+- `Live Reactor Orb` &mdash; Gyroscopic orbital rings with 140 depth-sorted particles showing reactor pulse.
+- `Pro Matrix Console` &mdash; Microsecond-precision timing telemetry and raw live terminal log streaming.
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 05 // Dynamic In-Memory Blacklist
-- **Zero Engine Restarts:** Adding or removing domains updates active engine memory immediately via `Arc<RwLock<Blacklist>>`.
-- **2-Column Responsive Grid:** Domain badges, globe icons, quick-delete triggers, and filter pills (All, Gaming, Media, Social).
-- **Dual-Layered Hostlists:** Upstream Zapret community mirror with an offline embedded fallback database.
+<img src="https://img.shields.io/badge/03-LAN_GATEWAY-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="03 LAN Gateway" />
+
+### Local Network (LAN) Device Sharing
+*Transform your workstation into a centralized censorship bypass gateway.*
+
+---
+
+- `SOCKS5 / HTTP Proxy` &mdash; Local proxy listener on `0.0.0.0:10808` for phones, consoles, and Smart TVs.
+- `Transparent Hotspot Transit` &mdash; Direct zero-config protection for devices connected to Mobile Hotspot.
+- `PAC Automation` &mdash; Proxy Auto-Config routing that directs only censored domains through the engine.
 
 </td>
 <td width="50%" valign="top">
 
-### 06 // Post-Quantum Kyber & Modern TLS
-- **Kyber / ML-KEM 768 & ECH Support:** Seamlessly reassembles large (1500+ bytes) fragmented ClientHello frames split across TCP MSS boundaries (Chrome 124+, Firefox 128+).
-- **Synthetic Handshake Testing:** Synthetic TLS probe calibrated with modern browser extensions prevents false negatives during ISP testing.
-- **8 Cyber-Hardware Themes:** Obsidian Emerald, Amber CRT, Cobalt Matrix, Cyberpunk Volt, Quiet Luxury, Crimson Hazard, Amethyst Nebula, Titanium Lab.
+<img src="https://img.shields.io/badge/04-SYSTEM_RECOVERY-FF7733?style=flat-square&logoColor=08090D&labelColor=08090D" alt="04 System Recovery" />
+
+### Winsock & Network Stack Repair
+*First-aid diagnostics for corrupted network adapters and Discord update loops.*
+
+---
+
+- `One-Click Reset` &mdash; Run `netsh winsock reset` and `netsh int ip reset` directly from the interface.
+- `DNS Cache Purge` &mdash; Clear IP conflicts instantly with `ipconfig /flushdns`, `/release`, and `/renew`.
+- `Secure DoH Templates` &mdash; Cloudflare 1.1.1.1 or Google 8.8.8.8 encrypted DNS integration.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+<img src="https://img.shields.io/badge/05-MEMORY_MANAGEMENT-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Memory Management" />
+
+### Dynamic In-Memory Blacklist
+*Zero-downtime concurrent blacklist synchronization without engine restarts.*
+
+---
+
+- `Live Synchronization` &mdash; Seamless domain additions and removals via `Arc<RwLock<Blacklist>>`.
+- `Category Filter Pills` &mdash; Instant target grouping across Mega, Gaming, Media, and Social tiers.
+- `Dual-Layered Mirrors` &mdash; Community hostlist sync backed by an offline embedded fallback database.
+
+</td>
+<td width="50%" valign="top">
+
+<img src="https://img.shields.io/badge/06-NEXT_GEN_TLS-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Next Gen TLS" />
+
+### Post-Quantum Kyber & Modern TLS
+*Full compatibility with cutting-edge cipher suites and massive packet handshakes.*
+
+---
+
+- `Kyber / ML-KEM 768 & ECH` &mdash; Reassembles 1500+ byte quantum-resistant ClientHello frames across TCP MSS.
+- `Synthetic TLS Probes` &mdash; Browser-calibrated handshake tests ensuring zero false negative ISP checks.
+- `8 Cyber-Hardware Themes` &mdash; From Obsidian Emerald to Cyberpunk Volt, Amethyst Nebula, and Titanium Lab.
 
 </td>
 </tr>
