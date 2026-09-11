@@ -185,9 +185,18 @@ fn cmd_run(args: &[String]) -> Result<(), String> {
             None,
         )
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
     {
-        Err("canlı mod yalnızca Windows'ta desteklenir".into())
+        live_loop_macos(
+            &steps,
+            &bl,
+            opts.pasif_savunma,
+            opts.quic_engelle,
+        )
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
+    {
+        Err("canlı mod yalnızca Windows ve macOS'ta desteklenir".into())
     }
 }
 
@@ -398,4 +407,55 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
         wait_hint: std::time::Duration::default(),
         process_id: None,
     });
+}
+
+// ---------- macOS: canlı utun/pf döngüsü ----------
+
+#[cfg(target_os = "macos")]
+fn live_loop_macos(
+    steps: &[Step],
+    blacklist: &Blacklist,
+    pasif_savunma: bool,
+    quic_engelle: bool,
+) -> Result<(), String> {
+    use anticore_core::dispatch::{decide_packet, PacketDecision};
+    use anticore_core::transport::PacketTransport;
+    use anticore_transport_macos::UtunTransport;
+
+    println!("[*] macOS utun ve pfctl motoru yükleniyor (root yetkisi gerekir)...");
+    let transport = UtunTransport::open(pasif_savunma, quic_engelle)?;
+
+    if pasif_savunma {
+        println!("[+] Pasif savunma (sahte RST düşürme) pfctl ile devrede");
+    }
+    if quic_engelle {
+        println!("[+] QUIC (UDP 443) engelleme pfctl ile devrede");
+    }
+
+    println!("[+] aktif. Ctrl+C ile durdurun.");
+
+    let mut buf = vec![0u8; 65_535];
+    let mut consecutive_errors = 0u32;
+    loop {
+        let Some((n, meta)) = transport.recv(&mut buf) else {
+            consecutive_errors += 1;
+            if consecutive_errors > 100 {
+                return Err("utun arabirim bağlantısı koptu (ardışık 100 recv hatası)".into());
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+            continue;
+        };
+        consecutive_errors = 0;
+        let raw = &buf[..n];
+        match decide_packet(raw, blacklist, steps) {
+            PacketDecision::Passthrough(_) => {
+                let _ = transport.send(raw, &meta);
+            }
+            PacketDecision::Rewrite(segments) => {
+                for seg in &segments {
+                    let _ = transport.send(seg, &meta);
+                }
+            }
+        }
+    }
 }
