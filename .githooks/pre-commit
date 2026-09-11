@@ -1,0 +1,14 @@
+#!/bin/sh
+# ANTICORE — Zero Leakage Pre-Commit Hook
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+HOOK_SCRIPT="$SCRIPT_DIR/verify-staged.mjs"
+
+if [ -f "$HOOK_SCRIPT" ] && command -v node >/dev/null 2>&1; then
+    node "$HOOK_SCRIPT"
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -ne 0 ]; then
+        exit $EXIT_CODE
+    fi
+fi
+exit 0
