@@ -45,19 +45,19 @@ jobs:
         shell: bash
         run: |
           cargo build --release --workspace
-          if [ -f "target/release/anticore" ]; then
+          if [ -f "target/release/anticore" ] && [ ! -f "target/release/anticore.exe" ]; then
             cp target/release/anticore target/release/anticore.exe
           fi
         working-directory: engine
-
-      - name: Masaustu backend testleri
-        run: cargo test
-        working-directory: desktop/src-tauri
 
       - name: Frontend testleri
         run: npm test
         working-directory: desktop
 
-      - name: Frontend build kontrolu
+      - name: Frontend derleme (Tauri frontendDist)
         run: npm run build
         working-directory: desktop
+
+      - name: Masaustu backend testleri
+        run: cargo test
+        working-directory: desktop/src-tauri

@@ -5,6 +5,8 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use std::path::Path;
+#[cfg(target_os = "macos")]
+use anticore_core::transport::PacketTransport;
 
 const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024; // 5 MB
 

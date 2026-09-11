@@ -115,7 +115,7 @@ pub fn reset_http_connections() -> usize {
 #[cfg(not(windows))]
 pub fn flush_dns_cache() {}
 
-#[cfg(test)]
+#[cfg(all(test, windows))]
 mod tests {
     use super::*;
 

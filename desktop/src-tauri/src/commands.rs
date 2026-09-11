@@ -136,6 +136,7 @@ pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 /// Windows konsol pencerelerinin ekranda patlamasını önleyen sessiz komut oluşturucu.
 pub fn silent_command(program: &str) -> std::process::Command {
+    #[allow(unused_mut)]
     let mut cmd = std::process::Command::new(program);
     #[cfg(windows)]
     {

@@ -63,18 +63,22 @@ jobs:
         run: |
           cargo build --release --workspace
           # macOS üzerinde tauri.conf.json resource uyumu için kopyala
-          if [ -f "target/release/anticore" ]; then
+          if [ -f "target/release/anticore" ] && [ ! -f "target/release/anticore.exe" ]; then
             cp target/release/anticore target/release/anticore.exe
           fi
         working-directory: engine
 
-      - name: Masaüstü backend testleri
-        run: cargo test
-        working-directory: desktop/src-tauri
-
       - name: Frontend testleri
         run: npm test
         working-directory: desktop
+
+      - name: Frontend derleme (Tauri frontendDist)
+        run: npm run build
+        working-directory: desktop
+
+      - name: Masaüstü backend testleri
+        run: cargo test
+        working-directory: desktop/src-tauri
 
       - name: Derle ve yayınla
         uses: tauri-apps/tauri-action@v0
