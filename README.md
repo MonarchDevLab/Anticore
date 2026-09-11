@@ -41,15 +41,85 @@
 
 ## İndirme Seçenekleri (v0.3.1)
 
-Tüm ikili dosyalar derleme aşamasında yerel geliştirici yollarından arındırılmış (Zero Leakage) olup Minisign ile dijital olarak doğrulanabilir şekilde yayınlanmıştır.
+Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arındırılmış (Zero Leakage) ve Minisign ile doğrulanmıştır.
 
-| Dağıtım Türü | Dosya Adı | Boyut | İndirme Bağlantısı | SHA-256 Doğrulama Özeti | Kullanım Amacı |
-|---|---|:---:|:---:|:---:|---|
-| **Taşınabilir Sürüm**<br />*(Portable)* | `Anticore_0.3.1_x64-portable.zip` | ~6.3 MB | [İndir (.zip)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip) | `40E92F9135E92586FD518AE4581E48D10A5FB365AC9593D02E396868354EF935` | **Kurulumsuz.** Arşivi klasöre veya USB diske çıkartıp doğrudan `Anticore.exe` dosyasını yönetici olarak başlatın. Sistemde hiçbir kayıt bırakmaz. |
-| **Kurulumlu Paket**<br />*(Setup EXE)* | `Anticore_0.3.1_x64-setup.exe` | ~4.4 MB | [İndir (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe) | `FB4F4C31E3B5B5F1FEA7D88F62ECE3267486DDDD75FEDEB0329980D40299631D` | Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili arka plan otomatik güncelleme desteği isteyen son kullanıcılar içindir. |
-| **Kurumsal Dağıtım**<br />*(MSI Installer)* | `Anticore_0.3.1_x64_en-US.msi` | ~6.1 MB | [İndir (.msi)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi) | `7614447CF05BF3E8D7C312EC99D388999E5887CA0C2CEA7EAC42A63556335B85` | Active Directory, Microsoft Intune veya GPO üzerinden çoklu istemciye merkezi ve sessiz kurulum yapacak sistem yöneticileri içindir. |
-| **Bağımsız GUI**<br />*(Direct Binary)* | `Anticore.exe` | ~15.6 MB | [İndir (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe) | `057C65D8C6CD6A878C5472767D8A7CC6539386A1DD52B7D58F0DC229994817A6` | Tek dosya arayüz ikilisi. |
-| **Bağımsız CLI**<br />*(Headless Engine)* | `anticore-cli.exe` | ~384 KB | [İndir (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe) | `16F6313E63250869267FC2BEF58AA99AACD6AAF56D52CE5AB1177DA8C9255E9D` | Sunucu, terminal veya otomasyon ortamları için grafik arayüzsüz hafif motor ikilisi. |
+<table>
+<tr>
+<td width="33%" align="center" valign="top">
+
+### Taşınabilir (Portable)
+*(En Çok Tercih Edilen)*
+
+Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kayıt bırakmaz.
+
+<br />
+
+[![İndir ZIP](https://img.shields.io/badge/İNDİR_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip)
+
+<br />
+
+`v0.3.1` • `Windows x64` • `Sıfır Kalıntı`
+
+</td>
+<td width="33%" align="center" valign="top">
+
+### Kurulumlu (Setup EXE)
+*(Standart Kullanıcı)*
+
+Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili otomatik arka plan güncelleme desteği.
+
+<br />
+
+[![İndir EXE](https://img.shields.io/badge/İNDİR_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe)
+
+<br />
+
+`v0.3.1` • `Windows x64` • `Otomatik Güncelleme`
+
+</td>
+<td width="33%" align="center" valign="top">
+
+### Kurumsal (MSI)
+*(Sistem Yöneticileri)*
+
+Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurulum paketi.
+
+<br />
+
+[![İndir MSI](https://img.shields.io/badge/İNDİR_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi)
+
+<br />
+
+`v0.3.1` • `Windows x64` • `GPO & Intune Uyumlu`
+
+</td>
+</tr>
+</table>
+
+<p align="center">
+  <b>Bağımsız İkililer:</b> &nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI Arayüzü, 15.6 MB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (Terminal Motoru, 384 KB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><code>Tüm Dağıtım Arşivi</code></a>
+</p>
+
+<details>
+<summary><b>SHA-256 Paket Bütünlük Özetleri (Tıklayıp Genişletin)</b></summary>
+<br />
+
+| Paket Dosyası | Boyut | SHA-256 Kriptografik Özeti |
+|---|:---:|---|
+| `Anticore_0.3.1_x64-portable.zip` | 6.3 MB | `40E92F9135E92586FD518AE4581E48D10A5FB365AC9593D02E396868354EF935` |
+| `Anticore_0.3.1_x64-setup.exe` | 4.4 MB | `FB4F4C31E3B5B5F1FEA7D88F62ECE3267486DDDD75FEDEB0329980D40299631D` |
+| `Anticore_0.3.1_x64_en-US.msi` | 6.1 MB | `7614447CF05BF3E8D7C312EC99D388999E5887CA0C2CEA7EAC42A63556335B85` |
+| `Anticore.exe` | 15.6 MB | `057C65D8C6CD6A878C5472767D8A7CC6539386A1DD52B7D58F0DC229994817A6` |
+| `anticore-cli.exe` | 384 KB | `16F6313E63250869267FC2BEF58AA99AACD6AAF56D52CE5AB1177DA8C9255E9D` |
+
+```powershell
+# İndirdiğiniz paketi PowerShell ile doğrulamak için:
+Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
+```
+</details>
 
 > [!IMPORTANT]
 > **Teknik Zorunluluk — Yönetici İzni (Administrator Privilege):**

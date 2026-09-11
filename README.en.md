@@ -41,15 +41,85 @@
 
 ## Download Options (v0.3.1)
 
-All distribution binaries are stripped of developer workstation paths during compilation (Zero Leakage) and digitally signed with Minisign.
+All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
-| Package Type | Filename | Size | Download Link | SHA-256 Checksum | Intended Use |
-|---|---|:---:|:---:|:---:|---|
-| **Portable Edition**<br />*(Zero Residue)* | `Anticore_0.3.1_x64-portable.zip` | ~6.3 MB | [Download (.zip)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip) | `40E92F9135E92586FD518AE4581E48D10A5FB365AC9593D02E396868354EF935` | **No installation.** Extract to any folder or USB drive and run `Anticore.exe` as Administrator. Leaves zero registry or AppData residue. |
-| **Installer**<br />*(Setup EXE)* | `Anticore_0.3.1_x64-setup.exe` | ~4.4 MB | [Download (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe) | `FB4F4C31E3B5B5F1FEA7D88F62ECE3267486DDDD75FEDEB0329980D40299631D` | Standard desktop package with Start Menu integration, desktop shortcuts, and silent background automatic updates. |
-| **Enterprise**<br />*(MSI Installer)* | `Anticore_0.3.1_x64_en-US.msi` | ~6.1 MB | [Download (.msi)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi) | `7614447CF05BF3E8D7C312EC99D388999E5887CA0C2CEA7EAC42A63556335B85` | Windows Installer MSI for automated enterprise deployments via Active Directory, Microsoft Intune, or GPO. |
-| **Standalone GUI**<br />*(Direct Binary)* | `Anticore.exe` | ~15.6 MB | [Download (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe) | `057C65D8C6CD6A878C5472767D8A7CC6539386A1DD52B7D58F0DC229994817A6` | Standalone UI binary. |
-| **Standalone CLI**<br />*(Headless Engine)* | `anticore-cli.exe` | ~384 KB | [Download (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe) | `16F6313E63250869267FC2BEF58AA99AACD6AAF56D52CE5AB1177DA8C9255E9D` | Headless lightweight engine for server environments, automation, or custom service setups. |
+<table>
+<tr>
+<td width="33%" align="center" valign="top">
+
+### Portable Edition
+*(Most Popular)*
+
+No installation required. Extract to any directory or USB flash drive and launch immediately. Leaves zero residue.
+
+<br />
+
+[![Download ZIP](https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip)
+
+<br />
+
+`v0.3.1` • `Windows x64` • `Zero Residue`
+
+</td>
+<td width="33%" align="center" valign="top">
+
+### Installer (Setup EXE)
+*(Standard User)*
+
+Desktop shortcut, Start Menu integration, and silent in-app background automatic update support.
+
+<br />
+
+[![Download EXE](https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe)
+
+<br />
+
+`v0.3.1` • `Windows x64` • `Auto Updates`
+
+</td>
+<td width="33%" align="center" valign="top">
+
+### Enterprise (MSI)
+*(System Admins)*
+
+Windows Installer MSI package for centralized, silent deployment across fleet workstations via Active Directory, Intune, or GPO.
+
+<br />
+
+[![Download MSI](https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi)
+
+<br />
+
+`v0.3.1` • `Windows x64` • `GPO & Intune`
+
+</td>
+</tr>
+</table>
+
+<p align="center">
+  <b>Standalone Binaries:</b> &nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI Binary, 15.6 MB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (Headless Engine, 384 KB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><code>Release Archive</code></a>
+</p>
+
+<details>
+<summary><b>SHA-256 Checksums & Package Integrity (Click to Expand)</b></summary>
+<br />
+
+| Package File | Size | SHA-256 Checksum |
+|---|:---:|---|
+| `Anticore_0.3.1_x64-portable.zip` | 6.3 MB | `40E92F9135E92586FD518AE4581E48D10A5FB365AC9593D02E396868354EF935` |
+| `Anticore_0.3.1_x64-setup.exe` | 4.4 MB | `FB4F4C31E3B5B5F1FEA7D88F62ECE3267486DDDD75FEDEB0329980D40299631D` |
+| `Anticore_0.3.1_x64_en-US.msi` | 6.1 MB | `7614447CF05BF3E8D7C312EC99D388999E5887CA0C2CEA7EAC42A63556335B85` |
+| `Anticore.exe` | 15.6 MB | `057C65D8C6CD6A878C5472767D8A7CC6539386A1DD52B7D58F0DC229994817A6` |
+| `anticore-cli.exe` | 384 KB | `16F6313E63250869267FC2BEF58AA99AACD6AAF56D52CE5AB1177DA8C9255E9D` |
+
+```powershell
+# Verify downloaded package via PowerShell:
+Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
+```
+</details>
 
 > [!IMPORTANT]
 > **Technical Requirement — Administrator Privileges:**
