@@ -45,54 +45,54 @@ All distribution binaries are built cleanly, stripped of developer workstation p
 
 <table>
 <tr>
-<td width="33%" align="center" valign="top">
-
-### Portable Edition
-*(Most Popular)*
-
-No installation required. Extract to any<br />folder or USB drive and run directly.<br />Leaves zero residue on the system.
-
-<br />
-
-[![Download ZIP](https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip)
-
-<br />
-
-`v0.3.1` • `Windows x64`<br />`Zero Residue`
-
-</td>
-<td width="33%" align="center" valign="top">
-
-### Installer (Setup EXE)
-*(Standard User)*
-
-Desktop shortcut, Start Menu integration,<br />and silent in-app automatic background<br />update engine support.
-
-<br />
-
-[![Download EXE](https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe)
-
-<br />
-
-`v0.3.1` • `Windows x64`<br />`Auto Updates`
-
-</td>
-<td width="33%" align="center" valign="top">
-
-### Enterprise (MSI)
-*(System Admins)*
-
-Windows Installer MSI package for silent,<br />centralized deployment across fleet machines<br />via Active Directory, Intune, or GPO.
-
-<br />
-
-[![Download MSI](https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi)
-
-<br />
-
-`v0.3.1` • `Windows x64`<br />`GPO & Intune Ready`
-
-</td>
+  <th width="33%" align="center">
+    <h3>Portable Edition</h3>
+    <em>(Most Popular)</em>
+  </th>
+  <th width="33%" align="center">
+    <h3>Installer (Setup EXE)</h3>
+    <em>(Standard User)</em>
+  </th>
+  <th width="33%" align="center">
+    <h3>Enterprise (MSI)</h3>
+    <em>(System Admins)</em>
+  </th>
+</tr>
+<tr>
+  <td align="center" valign="top">
+    No installation required. Extract to any folder or USB drive and run directly. Leaves zero residue on the system.
+  </td>
+  <td align="center" valign="top">
+    Desktop shortcut, Start Menu integration, and silent in-app automatic background update engine support.
+  </td>
+  <td align="center" valign="top">
+    Windows Installer MSI package for silent, centralized deployment across fleet machines via Active Directory, Intune, or GPO.
+  </td>
+</tr>
+<tr>
+  <td align="center" valign="middle">
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
+  </td>
+  <td align="center" valign="middle">
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
+  </td>
+  <td align="center" valign="middle">
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir MSI" /></a>
+  </td>
+</tr>
+<tr>
+  <td align="center" valign="middle">
+    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
+    <code>Zero Residue</code>
+  </td>
+  <td align="center" valign="middle">
+    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
+    <code>Auto Updates</code>
+  </td>
+  <td align="center" valign="middle">
+    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
+    <code>GPO & Intune Ready</code>
+  </td>
 </tr>
 </table>
 

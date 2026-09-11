@@ -45,54 +45,54 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
 
 <table>
 <tr>
-<td width="33%" align="center" valign="top">
-
-### Taşınabilir (Portable)
-*(En Çok Tercih Edilen)*
-
-Kurulum gerektirmez. Arşivi klasöre veya<br />USB diske çıkartıp doğrudan çalıştırın.<br />Sistemde hiçbir kayıt bırakmaz.
-
-<br />
-
-[![İndir ZIP](https://img.shields.io/badge/İNDİR_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip)
-
-<br />
-
-`v0.3.1` • `Windows x64`<br />`Sıfır Kalıntı`
-
-</td>
-<td width="33%" align="center" valign="top">
-
-### Kurulumlu (Setup EXE)
-*(Standart Kullanıcı)*
-
-Masaüstü kısayolu, Başlat menüsü<br />entegrasyonu ve dahili otomatik arka<br />plan güncelleme desteği sunar.
-
-<br />
-
-[![İndir EXE](https://img.shields.io/badge/İNDİR_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe)
-
-<br />
-
-`v0.3.1` • `Windows x64`<br />`Otomatik Güncelleme`
-
-</td>
-<td width="33%" align="center" valign="top">
-
-### Kurumsal (MSI)
-*(Sistem Yöneticileri)*
-
-Active Directory, Microsoft Intune veya<br />GPO üzerinden çoklu bilgisayara sessiz<br />ve merkezi kurulum paketi.
-
-<br />
-
-[![İndir MSI](https://img.shields.io/badge/İNDİR_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi)
-
-<br />
-
-`v0.3.1` • `Windows x64`<br />`GPO & Intune Uyumlu`
-
-</td>
+  <th width="33%" align="center">
+    <h3>Taşınabilir (Portable)</h3>
+    <em>(En Çok Tercih Edilen)</em>
+  </th>
+  <th width="33%" align="center">
+    <h3>Kurulumlu (Setup EXE)</h3>
+    <em>(Standart Kullanıcı)</em>
+  </th>
+  <th width="33%" align="center">
+    <h3>Kurumsal (MSI)</h3>
+    <em>(Sistem Yöneticileri)</em>
+  </th>
+</tr>
+<tr>
+  <td align="center" valign="top">
+    Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kayıt bırakmaz.
+  </td>
+  <td align="center" valign="top">
+    Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili otomatik arka plan güncelleme desteği sunar.
+  </td>
+  <td align="center" valign="top">
+    Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurulum paketi.
+  </td>
+</tr>
+<tr>
+  <td align="center" valign="middle">
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/İNDİR_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
+  </td>
+  <td align="center" valign="middle">
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/İNDİR_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
+  </td>
+  <td align="center" valign="middle">
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/İNDİR_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir MSI" /></a>
+  </td>
+</tr>
+<tr>
+  <td align="center" valign="middle">
+    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
+    <code>Sıfır Kalıntı</code>
+  </td>
+  <td align="center" valign="middle">
+    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
+    <code>Otomatik Güncelleme</code>
+  </td>
+  <td align="center" valign="middle">
+    <code>v0.3.1</code> • <code>Windows x64</code><br /><br />
+    <code>GPO & Intune Uyumlu</code>
+  </td>
 </tr>
 </table>
 
