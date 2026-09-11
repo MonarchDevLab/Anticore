@@ -8,14 +8,14 @@
 
 ### Zero-Loss, High-Performance Open Source DPI Circumvention Suite for Windows
 
-[![Version](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=00FF9D&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=00E5FF&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-00E5FF?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Version](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=20ffa0&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=20f2ff&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Core](https://img.shields.io/badge/Core-Rust%20%2B%20WinDivert-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![UI](https://img.shields.io/badge/UI-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Tests](https://img.shields.io/badge/Tests-52%20Passed-00FF9D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Zero Leakage](https://img.shields.io/badge/Guard-Zero%20Leakage%20PASS-00E5FF?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Verification](https://img.shields.io/badge/Signed-Minisign%20Verified-00FF9D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Tests](https://img.shields.io/badge/Tests-52%20Passed-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Zero Leakage](https://img.shields.io/badge/Guard-Zero%20Leakage%20PASS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Verification](https://img.shields.io/badge/Signed-Minisign%20Verified-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![License](https://img.shields.io/badge/License-MIT-FFFFFF?style=for-the-badge&labelColor=08090D)](LICENSE)
 
 <br />
@@ -91,10 +91,10 @@ All distribution binaries are built cleanly, stripped of developer workstation p
 </tr>
 <tr>
   <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-20ffa0?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
   </td>
   <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
   </td>
   <td align="center" valign="middle">
     <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir MSI" /></a>
@@ -191,10 +191,10 @@ When online services like Discord or gaming servers are blocked, users typically
     &bull; <b>Cost Model:</b> <img src="https://img.shields.io/badge/Model-Monthly_Subscription-lightgrey?style=flat-square" alt="Subscription" align="right" />
   </td>
   <td width="500" align="left" valign="top">
-    &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-100%25_Full_Wire-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Full Wire" align="right" /><br /><br />
-    &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Added-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Zero Ping" align="right" /><br /><br />
-    &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Direct_Local_Gateway-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Direct" align="right" /><br /><br />
-    &bull; <b>Banking / Local Services:</b> <img src="https://img.shields.io/badge/IP-Native_Local_IP-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Local IP" align="right" /><br /><br />
+    &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-100%25_Full_Wire-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Full Wire" align="right" /><br /><br />
+    &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Added-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Zero Ping" align="right" /><br /><br />
+    &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Direct_Local_Gateway-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Direct" align="right" /><br /><br />
+    &bull; <b>Banking / Local Services:</b> <img src="https://img.shields.io/badge/IP-Native_Local_IP-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Local IP" align="right" /><br /><br />
     &bull; <b>Cost Model:</b> <img src="https://img.shields.io/badge/License-Free_&_Open_Source-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="FOSS" align="right" />
   </td>
 </tr>
@@ -214,7 +214,7 @@ When online services like Discord or gaming servers are blocked, users typically
 <tr>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/01-CORE_ENGINE-00FF9D?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Core Engine" />
+<img src="https://img.shields.io/badge/01-CORE_ENGINE-20ffa0?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Core Engine" />
 
 ### Surgical Packet Manipulation
 *Kernel-level DPI bypass powered by the open-source WinDivert driver.*
@@ -228,7 +228,7 @@ When online services like Discord or gaming servers are blocked, users typically
 </td>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/02-VISUAL_TELEMETRY-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Visual Telemetry" />
+<img src="https://img.shields.io/badge/02-VISUAL_TELEMETRY-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Visual Telemetry" />
 
 ### 3D Isometric Telemetry & Reactor
 *Hardware-accelerated 60 FPS live canvas visualization for network throughput.*
@@ -274,7 +274,7 @@ When online services like Discord or gaming servers are blocked, users typically
 <tr>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/05-MEMORY_MANAGEMENT-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Memory Management" />
+<img src="https://img.shields.io/badge/05-MEMORY_MANAGEMENT-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Memory Management" />
 
 ### Dynamic In-Memory Blacklist
 *Zero-downtime concurrent blacklist synchronization without engine restarts.*
@@ -288,7 +288,7 @@ When online services like Discord or gaming servers are blocked, users typically
 </td>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/06-NEXT_GEN_TLS-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Next Gen TLS" />
+<img src="https://img.shields.io/badge/06-NEXT_GEN_TLS-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Next Gen TLS" />
 
 ### Post-Quantum Kyber & Modern TLS
 *Full compatibility with cutting-edge cipher suites and massive packet handshakes.*
@@ -380,7 +380,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Fake TTL=4 • 2-Byte Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
       </td>
     </tr>
     <tr>
@@ -401,7 +401,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>SNI Splitting • DoH Resolver</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
       </td>
     </tr>
     <tr>
@@ -422,7 +422,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Decoy Packet • RST Dropping</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
       </td>
     </tr>
     <tr>
@@ -443,7 +443,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>SNI Splitting • QUIC Downgrade</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
       </td>
     </tr>
     <tr>
@@ -464,7 +464,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>DoH Resolver • Standard Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
       </td>
     </tr>
     <tr>
@@ -485,7 +485,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Adaptive to Transit Carrier</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
       </td>
     </tr>
   </tbody>
@@ -503,7 +503,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
       <th width="18%" align="center">GoodbyeDPI</th>
       <th width="18%" align="center">SplitWire</th>
       <th width="18%" align="center" bgcolor="#0d231a">
-        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-00FF9D?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
+        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-20ffa0?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
       </th>
     </tr>
   </thead>
@@ -526,7 +526,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>100% Line Speed</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Full_Speed-00FF9D?style=flat-square&labelColor=08090D" alt="Full Speed" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Full_Speed-20ffa0?style=flat-square&labelColor=08090D" alt="Full Speed" /><br />
         <b>100% Line Rate (Zero Loss)</b>
       </td>
     </tr>
@@ -548,7 +548,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Direct Transit</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Penalty-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Penalty-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
         <b>Zero Ping Penalty (Direct)</b>
       </td>
     </tr>
@@ -570,7 +570,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>WinForms / WPF Interface</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-00FF9D?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-20ffa0?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
         <b>Dual-Mode Hardware HUD</b>
       </td>
     </tr>
@@ -589,7 +589,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>Active Gyroscopic Reactor</b>
       </td>
     </tr>
@@ -609,7 +609,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>Hotspot Transit Gateway</b>
       </td>
     </tr>
@@ -628,7 +628,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>One-Click Stack Repair</b>
       </td>
     </tr>
@@ -650,7 +650,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Service Restart Required</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Sync-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Sync-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>Arc&lt;RwLock&gt; Atomic Cache</b>
       </td>
     </tr>
@@ -671,7 +671,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Standard Right-Click Items</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Flyout-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Flyout-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>340x460px Floating Cockpit</b>
       </td>
     </tr>
@@ -692,7 +692,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>One-Click Daemon Control</b>
       </td>
     </tr>
@@ -711,7 +711,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Auto_Fix-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Auto_Fix-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>RTC & DNS Poisoning Remedy</b>
       </td>
     </tr>
@@ -733,7 +733,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>.NET Runtime</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-00FF9D?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-20ffa0?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
         <b>Rust Engine + WebView2</b>
       </td>
     </tr>
@@ -754,7 +754,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Manual Tracking</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>Signed GitHub Updater</b>
       </td>
     </tr>
@@ -773,7 +773,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_8_Custom_Themes-00FF9D?style=flat-square&labelColor=08090D" alt="Active" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_8_Custom_Themes-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
         <b>Morphological Hardware Deck</b>
       </td>
     </tr>
@@ -806,14 +806,14 @@ Control your network protection instantly without opening the main workspace win
 <br />
 <div align="center">
   <img src="https://img.shields.io/badge/WINDOW-340x460px_Borderless-161b22?style=flat-square" alt="340x460px" />
-  <img src="https://img.shields.io/badge/LATENCY-0_ms_IPC-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms IPC" />
-  <img src="https://img.shields.io/badge/SHELL-Win32_Native_Tray-00E5FF?style=flat-square&labelColor=08090D" alt="Win32 Tray" />
+  <img src="https://img.shields.io/badge/LATENCY-0_ms_IPC-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms IPC" />
+  <img src="https://img.shields.io/badge/SHELL-Win32_Native_Tray-20f2ff?style=flat-square&labelColor=08090D" alt="Win32 Tray" />
 </div>
 
 </td>
 <td width="45%" valign="top">
 
-<img src="https://img.shields.io/badge/TRAY-TACTICAL_QUICK_PANEL-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tray Cockpit" />
+<img src="https://img.shields.io/badge/TRAY-TACTICAL_QUICK_PANEL-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tray Cockpit" />
 
 ### Desktop Rapid Command Cockpit
 *Instant access directly from the Windows taskbar with zero window overhead.*

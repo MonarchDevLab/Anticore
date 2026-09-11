@@ -8,14 +8,14 @@
 
 ### Windows İçin Sıfır Hız Kayıplı Açık Kaynak DPI Aşma ve Ağ Özgürlüğü Motoru
 
-[![Sürüm](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=00FF9D&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![İndirmeler](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=00E5FF&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-00E5FF?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Sürüm](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=20ffa0&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![İndirmeler](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=20f2ff&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Çekirdek](https://img.shields.io/badge/Çekirdek-Rust%20%2B%20WinDivert-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Arayüz](https://img.shields.io/badge/Arayüz-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Testler](https://img.shields.io/badge/Testler-52%20Geçti-00FF9D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Sıfır Sızıntı](https://img.shields.io/badge/Muhafız-Sıfır%20Sızıntı%20PASS-00E5FF?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Doğrulama](https://img.shields.io/badge/İmza-Minisign%20Doğrulamalı-00FF9D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Testler](https://img.shields.io/badge/Testler-52%20Geçti-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Sıfır Sızıntı](https://img.shields.io/badge/Muhafız-Sıfır%20Sızıntı%20PASS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Doğrulama](https://img.shields.io/badge/İmza-Minisign%20Doğrulamalı-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Lisans](https://img.shields.io/badge/Lisans-MIT-FFFFFF?style=for-the-badge&labelColor=08090D)](LICENSE)
 
 <br />
@@ -91,10 +91,10 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
 </tr>
 <tr>
   <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/İNDİR_.ZIP-6.3_MB-00FF9D?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/İNDİR_.ZIP-6.3_MB-20ffa0?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir ZIP" /></a>
   </td>
   <td align="center" valign="middle">
-    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/İNDİR_.EXE-4.4_MB-00E5FF?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
+    <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/İNDİR_.EXE-4.4_MB-20f2ff?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir EXE" /></a>
   </td>
   <td align="center" valign="middle">
     <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/İNDİR_.MSI-6.1_MB-FFE600?style=for-the-badge&logo=windows&logoColor=08090D&labelColor=08090D" alt="İndir MSI" /></a>
@@ -191,10 +191,10 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
     &bull; <b>Maliyet:</b> <img src="https://img.shields.io/badge/Model-Aylık_Abonelik-lightgrey?style=flat-square" alt="Abonelik" align="right" />
   </td>
   <td width="500" align="left" valign="top">
-    &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%25100_Tam_Hat-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tam Hat" align="right" /><br /><br />
-    &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Artış-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Sıfır Ping" align="right" /><br /><br />
-    &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Doğrudan_Kendi_Hattınız-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Doğrudan" align="right" /><br /><br />
-    &bull; <b>Banka / e-Devlet:</b> <img src="https://img.shields.io/badge/IP-Orijinal_TR_IP-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="TR IP" align="right" /><br /><br />
+    &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%25100_Tam_Hat-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tam Hat" align="right" /><br /><br />
+    &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Artış-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Sıfır Ping" align="right" /><br /><br />
+    &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Doğrudan_Kendi_Hattınız-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Doğrudan" align="right" /><br /><br />
+    &bull; <b>Banka / e-Devlet:</b> <img src="https://img.shields.io/badge/IP-Orijinal_TR_IP-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="TR IP" align="right" /><br /><br />
     &bull; <b>Maliyet:</b> <img src="https://img.shields.io/badge/Lisans-Ücretsiz_&_Açık_Kaynak-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Açık Kaynak" align="right" />
   </td>
 </tr>
@@ -214,7 +214,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 <tr>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/01-ÇEKİRDEK_MOTOR-00FF9D?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Çekirdek Motor" />
+<img src="https://img.shields.io/badge/01-ÇEKİRDEK_MOTOR-20ffa0?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Çekirdek Motor" />
 
 ### Cerrahi Paket Manipülasyonu
 *Kernel düzeyinde WinDivert sürücüsü ile ISS sansür donanımlarını atlatma.*
@@ -228,7 +228,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 </td>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/02-GÖRSEL_TELEMETRİ-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Görsel Telemetri" />
+<img src="https://img.shields.io/badge/02-GÖRSEL_TELEMETRİ-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Görsel Telemetri" />
 
 ### 3D İzometrik Telemetri & Reaktör
 *Donanım hızlandırmalı Canvas mimarisiyle saniyede 60 FPS canlı ağ izleme.*
@@ -274,7 +274,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 <tr>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/05-BELLEK_YÖNETİMİ-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Bellek Yönetimi" />
+<img src="https://img.shields.io/badge/05-BELLEK_YÖNETİMİ-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Bellek Yönetimi" />
 
 ### Dinamik Bellek Kara Listesi
 *Motoru yeniden başlatmadan anında güncellenen eşzamanlı bellek mimarisi.*
@@ -288,7 +288,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 </td>
 <td width="500" valign="top">
 
-<img src="https://img.shields.io/badge/06-GELECEK_UYUMU-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Gelecek Uyumu" />
+<img src="https://img.shields.io/badge/06-GELECEK_UYUMU-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Gelecek Uyumu" />
 
 ### Post-Quantum Kyber & Modern TLS
 *En yeni nesil şifreleme standartları ve devasa paket yapılarıyla tam uyumluluk.*
@@ -380,7 +380,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Fake TTL=4 • 2-Bayt Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
       </td>
     </tr>
     <tr>
@@ -401,7 +401,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>SNI Parçalama • DoH Çözümleyici</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
       </td>
     </tr>
     <tr>
@@ -422,7 +422,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Sahte Paket • RST Düşürme</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
       </td>
     </tr>
     <tr>
@@ -443,7 +443,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>SNI Parçalama • QUIC Düşürme</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
       </td>
     </tr>
     <tr>
@@ -464,7 +464,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>DoH Entegrasyonu • Standart Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
       </td>
     </tr>
     <tr>
@@ -485,7 +485,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Altyapı Tipine Göre Seçim</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-00FF9D?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-%25100_Aktif-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Aktif" />
       </td>
     </tr>
   </tbody>
@@ -503,7 +503,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
       <th width="18%" align="center">GoodbyeDPI</th>
       <th width="18%" align="center">SplitWire</th>
       <th width="18%" align="center" bgcolor="#0d231a">
-        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-00FF9D?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
+        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-20ffa0?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
       </th>
     </tr>
   </thead>
@@ -526,7 +526,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>%100 Hat Hızı</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-00FF9D?style=flat-square&labelColor=08090D" alt="Tam Hat" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-20ffa0?style=flat-square&labelColor=08090D" alt="Tam Hat" /><br />
         <b>%100 Koruma (Sıfır Kayıp)</b>
       </td>
     </tr>
@@ -548,7 +548,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Doğrudan Çıkış</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Artış-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Artış-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
         <b>Sıfır Ek Ping (Doğrudan)</b>
       </td>
     </tr>
@@ -570,7 +570,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>WinForms / WPF Arayüz</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-00FF9D?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-20ffa0?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
         <b>Çift Modlu Donanım Paneli</b>
       </td>
     </tr>
@@ -589,7 +589,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>Canlı Reaktör Orbu</b>
       </td>
     </tr>
@@ -609,7 +609,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>Hotspot Transit Geçişi</b>
       </td>
     </tr>
@@ -628,7 +628,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>Tek Tıkla Ağ Onarımı</b>
       </td>
     </tr>
@@ -650,7 +650,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Servis Yeniden Başlatma</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Anlık_Senkron-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Anlık_Senkron-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>Arc&lt;RwLock&gt; Canlı Bellek</b>
       </td>
     </tr>
@@ -671,7 +671,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Sağ Tık Menü Öğeleri</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Canlı_Flyout-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Canlı_Flyout-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>340x460px Komuta Kokpiti</b>
       </td>
     </tr>
@@ -692,7 +692,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>Arayüzden Tek Tık Yönetim</b>
       </td>
     </tr>
@@ -711,7 +711,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Otomatik_Onarım-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Otomatik_Onarım-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>RTC & Zehirlenme Çözümü</b>
       </td>
     </tr>
@@ -733,7 +733,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>.NET Çalışma Zamanı</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-00FF9D?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-20ffa0?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
         <b>Rust Çekirdeği + WebView2</b>
       </td>
     </tr>
@@ -754,7 +754,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Manuel Takip</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>İmzalı GitHub Updater</b>
       </td>
     </tr>
@@ -773,7 +773,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_8_Özel_Tema-00FF9D?style=flat-square&labelColor=08090D" alt="Var" /><br />
+        <img src="https://img.shields.io/badge/%E2%9C%93_8_Özel_Tema-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
         <b>Cyber-Hardware Morfoloji</b>
       </td>
     </tr>
@@ -806,14 +806,14 @@ Ana uygulama penceresini açmadan, Windows görev çubuğunun sağ alt köşesin
 <br />
 <div align="center">
   <img src="https://img.shields.io/badge/PENCERE-340x460px_Borderless-161b22?style=flat-square" alt="340x460px" />
-  <img src="https://img.shields.io/badge/GEC%C4%B0KME-0_ms_IPC-00FF9D?style=flat-square&labelColor=08090D" alt="0 ms IPC" />
-  <img src="https://img.shields.io/badge/SHELL-Win32_Native_Tray-00E5FF?style=flat-square&labelColor=08090D" alt="Win32 Tray" />
+  <img src="https://img.shields.io/badge/GEC%C4%B0KME-0_ms_IPC-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms IPC" />
+  <img src="https://img.shields.io/badge/SHELL-Win32_Native_Tray-20f2ff?style=flat-square&labelColor=08090D" alt="Win32 Tray" />
 </div>
 
 </td>
 <td width="45%" valign="top">
 
-<img src="https://img.shields.io/badge/TRAY-HIZLI_KONTROL_KOKP%C4%B0T%C4%B0-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tray Kokpit" />
+<img src="https://img.shields.io/badge/TRAY-HIZLI_KONTROL_KOKP%C4%B0T%C4%B0-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tray Kokpit" />
 
 ### Masaüstü Hızlı Komuta İstasyonu
 *Ana pencere yükü olmadan doğrudan görev çubuğu üzerinden anında müdahale.*
