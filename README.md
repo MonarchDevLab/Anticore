@@ -171,52 +171,92 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıtlandığında kullanıcıların başvurduğu klasik çözüm VPN tünelleridir. Ancak VPN protokolleri modern internet kullanımını aksatır:
 
 <table width="100%" align="center">
-<tr>
-  <th width="500" align="center">
-    <h3>Geleneksel VPN Tünelleme</h3>
-    <sub>(Dolaylı, Yavaş &amp; Veri Güvenliği Riskli)</sub>
-  </th>
-  <th width="500" align="center">
-    <h3>Anticore Cerrahi DPI Bypass</h3>
-    <sub>(Doğrudan, Tam Hat Hızı &amp; Sıfır Gecikme)</sub>
-  </th>
-</tr>
-<tr>
-  <td width="500" align="center" valign="top">
-    <br />
-    <code>[İstemci PC]</code><br />
-    &darr; <i>(Şifreli Tünel Encapsulation)</i><br />
-    <code>[Yurtdışı VPN Ara Sunucusu]</code><br />
-    &darr; <i>(Uzak Çıkış &amp; Ağ Darboğazı)</i><br />
-    <code>[Hedef Servis / Oyun Sunucusu]</code>
-    <br /><br />
-  </td>
-  <td width="500" align="center" valign="top">
-    <br />
-    <code>[İstemci PC]</code><br />
-    &darr; <i>(Yalnızca İlk TLS ClientHello Parçalanır)</i><br />
-    <code>[ISS Sansür / DPI Filtresi Atlatılır]</code><br />
-    &darr; <i>(Doğrudan Kendi Fiber Santraliniz)</i><br />
-    <code>[Hedef Servis / Oyun Sunucusu]</code>
-    <br /><br />
-  </td>
-</tr>
-<tr>
-  <td width="500" align="left" valign="top">
-    &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%2550--%2580_Düşüş-ff4444?style=flat-square" alt="Hız Düşüşü" align="right" /><br /><br />
-    &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Artışı" align="right" /><br /><br />
-    &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Yabancı_Sunucu-red?style=flat-square" alt="Yabancı Sunucu" align="right" /><br /><br />
-    &bull; <b>Banka / e-Devlet:</b> <img src="https://img.shields.io/badge/IP-Yurtdışı_Blokeli-grey?style=flat-square" alt="Banka Engeli" align="right" /><br /><br />
-    &bull; <b>Maliyet:</b> <img src="https://img.shields.io/badge/Model-Aylık_Abonelik-lightgrey?style=flat-square" alt="Abonelik" align="right" />
-  </td>
-  <td width="500" align="left" valign="top">
-    &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%25100_Tam_Hat-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tam Hat" align="right" /><br /><br />
-    &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Artış-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Sıfır Ping" align="right" /><br /><br />
-    &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Doğrudan_Kendi_Hattınız-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Doğrudan" align="right" /><br /><br />
-    &bull; <b>Banka / e-Devlet:</b> <img src="https://img.shields.io/badge/IP-Orijinal_TR_IP-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="TR IP" align="right" /><br /><br />
-    &bull; <b>Maliyet:</b> <img src="https://img.shields.io/badge/Lisans-Ücretsiz_&_Açık_Kaynak-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Açık Kaynak" align="right" />
-  </td>
-</tr>
+  <thead>
+    <tr>
+      <th width="50%" align="center">
+        <img src="https://img.shields.io/badge/GELENEKSEL-VPN_T%C3%9CNELLEME-ff4444?style=for-the-badge&labelColor=08090D" alt="VPN" /><br /><br />
+        <b>Geleneksel VPN Tünelleme</b><br />
+        <sub>Dolaylı &bull; Yavaş &bull; Veri Güvenliği Riskli</sub>
+      </th>
+      <th width="50%" align="center">
+        <img src="https://img.shields.io/badge/ANTICORE-CERRAH%C4%B0_DPI_BYPASS-20ffa0?style=for-the-badge&labelColor=08090D" alt="Anticore" /><br /><br />
+        <b>Anticore Cerrahi DPI Bypass</b><br />
+        <sub>Doğrudan &bull; Tam Hat Hızı &bull; Sıfır Gecikme</sub>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td width="50%" align="center" bgcolor="#0b0e14">
+        <br />
+        <img src="https://img.shields.io/badge/01_%C4%B0STEMC%C4%B0-Yerel_PC_(Windows)-161b22?style=flat-square" alt="PC" /><br />
+        &darr; <sub><i>Şifreli Tünel Kapsülleme (Tüm Trafik)</i></sub><br />
+        <img src="https://img.shields.io/badge/02_ARA_SUNUCU-Yurtd%C4%B1%C5%9F%C4%B1_VPN_D%C3%BC%C4%9F%C3%BCm%C3%BC-ff4444?style=flat-square&labelColor=08090D" alt="VPN Node" /><br />
+        &darr; <sub><i>Uzak Çıkış & Ağ Darboğazı (+150ms)</i></sub><br />
+        <img src="https://img.shields.io/badge/03_VARI%C5%9E-Hedef_Servis_/_Oyun-30363D?style=flat-square" alt="Hedef" />
+        <br /><br />
+      </td>
+      <td width="50%" align="center" bgcolor="#0b0e14">
+        <br />
+        <img src="https://img.shields.io/badge/01_%C4%B0STEMC%C4%B0-Yerel_PC_(Windows)-161b22?style=flat-square" alt="PC" /><br />
+        &darr; <sub><i>Yalnızca İlk TLS ClientHello Parçalanır</i></sub><br />
+        <img src="https://img.shields.io/badge/02_DPI_ATLATMA-%C4%B0SS_Sans%C3%BCr%C3%BC_Etkisiz-20ffa0?style=flat-square&labelColor=08090D" alt="Bypass" /><br />
+        &darr; <sub><i>Doğrudan Kendi Fiber Santraliniz (0ms)</i></sub><br />
+        <img src="https://img.shields.io/badge/03_VARI%C5%9E-Hedef_Servis_/_Oyun-20f2ff?style=flat-square&labelColor=08090D" alt="Hedef" />
+        <br /><br />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Hat Hızı:</b>
+        <img src="https://img.shields.io/badge/H%C4%B1z-%2550--%2580_D%C3%BC%C5%9F%C3%BC%C5%9F-ff4444?style=flat-square" alt="Hız Düşüşü" align="right" />
+      </td>
+      <td>
+        &bull; <b>Hat Hızı:</b>
+        <img src="https://img.shields.io/badge/H%C4%B1z-%25100_Tam_Hat-20ffa0?style=flat-square&labelColor=08090D" alt="Tam Hat" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Oyun Gecikmesi:</b>
+        <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Artışı" align="right" />
+      </td>
+      <td>
+        &bull; <b>Oyun Gecikmesi:</b>
+        <img src="https://img.shields.io/badge/Ping-0_ms_Art%C4%B1%C5%9F-20f2ff?style=flat-square&labelColor=08090D" alt="Sıfır Ping" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Veri Rotası:</b>
+        <img src="https://img.shields.io/badge/Trafik-Yabanc%C4%B1_Sunucu-red?style=flat-square" alt="Yabancı Sunucu" align="right" />
+      </td>
+      <td>
+        &bull; <b>Veri Rotası:</b>
+        <img src="https://img.shields.io/badge/Trafik-Do%C4%9Frudan_Kendi_Hatt%C4%B1n%C4%B1z-20ffa0?style=flat-square&labelColor=08090D" alt="Doğrudan" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Banka / e-Devlet:</b>
+        <img src="https://img.shields.io/badge/IP-Yurtd%C4%B1%C5%9F%C4%B1_Blokeli-grey?style=flat-square" alt="Banka Engeli" align="right" />
+      </td>
+      <td>
+        &bull; <b>Banka / e-Devlet:</b>
+        <img src="https://img.shields.io/badge/IP-Orijinal_TR_IP-20f2ff?style=flat-square&labelColor=08090D" alt="TR IP" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Maliyet:</b>
+        <img src="https://img.shields.io/badge/Model-Ayl%C4%B1k_Abonelik-lightgrey?style=flat-square" alt="Abonelik" align="right" />
+      </td>
+      <td>
+        &bull; <b>Maliyet:</b>
+        <img src="https://img.shields.io/badge/Lisans-%C3%9Ccretsiz_&_A%C3%A7%C4%B1k_Kaynak-FFE600?style=flat-square&labelColor=08090D" alt="Açık Kaynak" align="right" />
+      </td>
+    </tr>
+  </tbody>
 </table>
 
 ### Anticore'un Temel Farkları
@@ -770,27 +810,61 @@ Servis sağlayıcınızın Discord CDN alan adlarını yanlış IP'ye (BTK uyar�
 
 Resmi GitHub Releases sayfasından indirdiğiniz kurulum ve taşınabilir paketleri aşağıdaki açık anahtar ile Minisign kullanarak doğrulayabilirsiniz:
 
-```text
-dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE1QTRFREEwMDFGNDFFNTMKUldSVEh2UUJvTzJrRmE3UGFDdG81YWtnYUdYSkhFdWQxVGJ0V2VVdHFKNDJvaGZRWS90TWx3ejMK
-```
-
-Doğrulama komutu:
-```powershell
-minisign -Vm Anticore_0.3.1_x64-setup.exe -p anticore.key.pub
-```
-
-Güvenlik politikamız ve açık bildirim süreçlerimiz için [SECURITY.md](SECURITY.md) belgesini inceleyebilirsiniz.
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="70%" align="left">
+        <img src="https://img.shields.io/badge/G%C3%9CVENL%C4%B0K-MINISIGN_ED25519_DO%C4%9ERULAMA-161b22?style=flat-square" alt="Minisign" /> &nbsp;
+        <img src="https://img.shields.io/badge/%C4%B0MZA-%C5%9E%C4%B0FRELENM%C4%B0%C5%9E_B%C3%9CT%C3%9CNL%C3%9CK-20ffa0?style=flat-square&labelColor=08090D" alt="Bütünlük" />
+      </th>
+      <th width="30%" align="right">
+        <a href="SECURITY.md"><img src="https://img.shields.io/badge/POL%C4%B0T%C4%B0KA-SECURITY.md-20f2ff?style=flat-square&labelColor=08090D" alt="Security Policy" /></a>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan="2">
+        <b>Resmi Minisign Açık Anahtarı (Public Key):</b><br />
+        <code>dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE1QTRFREEwMDFGNDFFNTMKUldSVEh2UUJvTzJrRmE3UGFDdG81YWtnYUdYSkhFdWQxVGJ0V2VVdHFKNDJvaGZRWS90TWx3ejMK</code>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <b>Doğrulama Komutu (PowerShell / Bash):</b><br />
+        <code>minisign -Vm Anticore_0.3.1_x64-setup.exe -p anticore.key.pub</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## Kaynak Koddan Derleme
 
-Kendi ikili dosyalarınızı temiz bir ortamda derlemek isterseniz:
+Kendi ikili dosyalarınızı temiz bir ortamda derlemek isterseniz aşağıdaki derleme altyapısını kurabilirsiniz:
 
-### Önkoşullar
-- Rust 1.80+ (`rustup toolchain install stable`)
-- Node.js 20+ LTS (`npm`)
-- Visual Studio 2022 C++ Derleme Araçları (MSVC x64)
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/01_DERLEY%C4%B0C%C4%B0-RUST_1.80+-20ffa0?style=for-the-badge&labelColor=08090D" alt="Rust" /><br /><br />
+        <b>Rust Toolchain</b><br />
+        <code>rustup toolchain install stable</code>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/02_ARAY%C3%9CZ-NODE.JS_20+_LTS-20f2ff?style=for-the-badge&labelColor=08090D" alt="Node" /><br /><br />
+        <b>Masaüstü UI Motoru</b><br />
+        <code>Node.js 20+ &bull; npm &bull; Vite</code>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/03_%C3%87EK%C4%B0RDEK-MSVC_C++_2022-FFE600?style=for-the-badge&labelColor=08090D" alt="MSVC" /><br /><br />
+        <b>C++ Derleme Araçları</b><br />
+        <code>Visual Studio 2022 (MSVC x64)</code>
+      </th>
+    </tr>
+  </thead>
+</table>
 
 ```powershell
 # 1. Depoyu klonlayın

@@ -171,52 +171,92 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 When online services like Discord or gaming servers are blocked, users typically resort to VPNs. However, conventional VPN routing severely degrades daily performance:
 
 <table width="100%" align="center">
-<tr>
-  <th width="500" align="center">
-    <h3>Traditional VPN Tunneling</h3>
-    <sub>(Indirect, Slow &amp; Privacy Risks)</sub>
-  </th>
-  <th width="500" align="center">
-    <h3>Anticore Surgical DPI Bypass</h3>
-    <sub>(Direct, Full Line Speed &amp; Zero Latency)</sub>
-  </th>
-</tr>
-<tr>
-  <td width="500" align="center" valign="top">
-    <br />
-    <code>[Client Workstation]</code><br />
-    &darr; <i>(Encrypted Tunnel Encapsulation)</i><br />
-    <code>[Remote Overseas VPN Server]</code><br />
-    &darr; <i>(Bottleneck &amp; Relayed Egress)</i><br />
-    <code>[Target Service / Game Server]</code>
-    <br /><br />
-  </td>
-  <td width="500" align="center" valign="top">
-    <br />
-    <code>[Client Workstation]</code><br />
-    &darr; <i>(Only Initial TLS ClientHello Fragmented)</i><br />
-    <code>[ISP DPI Filter Bypassed]</code><br />
-    &darr; <i>(Direct Line via Local ISP Gateway)</i><br />
-    <code>[Target Service / Game Server]</code>
-    <br /><br />
-  </td>
-</tr>
-<tr>
-  <td width="500" align="left" valign="top">
-    &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-50%25--80%25_Drop-ff4444?style=flat-square" alt="Speed Drop" align="right" /><br /><br />
-    &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Increase" align="right" /><br /><br />
-    &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Foreign_Relay-red?style=flat-square" alt="Foreign Relay" align="right" /><br /><br />
-    &bull; <b>Banking / Local Services:</b> <img src="https://img.shields.io/badge/IP-Overseas_Blocked-grey?style=flat-square" alt="Blocked" align="right" /><br /><br />
-    &bull; <b>Cost Model:</b> <img src="https://img.shields.io/badge/Model-Monthly_Subscription-lightgrey?style=flat-square" alt="Subscription" align="right" />
-  </td>
-  <td width="500" align="left" valign="top">
-    &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-100%25_Full_Wire-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Full Wire" align="right" /><br /><br />
-    &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Added-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Zero Ping" align="right" /><br /><br />
-    &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Direct_Local_Gateway-20ffa0?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Direct" align="right" /><br /><br />
-    &bull; <b>Banking / Local Services:</b> <img src="https://img.shields.io/badge/IP-Native_Local_IP-20f2ff?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Local IP" align="right" /><br /><br />
-    &bull; <b>Cost Model:</b> <img src="https://img.shields.io/badge/License-Free_&_Open_Source-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="FOSS" align="right" />
-  </td>
-</tr>
+  <thead>
+    <tr>
+      <th width="50%" align="center">
+        <img src="https://img.shields.io/badge/TRADITIONAL-VPN_TUNNELING-ff4444?style=for-the-badge&labelColor=08090D" alt="VPN" /><br /><br />
+        <b>Traditional VPN Tunneling</b><br />
+        <sub>Indirect &bull; Bottlenecked &bull; Privacy Risks</sub>
+      </th>
+      <th width="50%" align="center">
+        <img src="https://img.shields.io/badge/ANTICORE-SURGICAL_DPI_BYPASS-20ffa0?style=for-the-badge&labelColor=08090D" alt="Anticore" /><br /><br />
+        <b>Anticore Surgical DPI Bypass</b><br />
+        <sub>Direct &bull; Full Line Speed &bull; Zero Latency</sub>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td width="50%" align="center" bgcolor="#0b0e14">
+        <br />
+        <img src="https://img.shields.io/badge/01_SOURCE-Local_PC_(Windows)-161b22?style=flat-square" alt="PC" /><br />
+        &darr; <sub><i>Encrypted Tunnel Encapsulation (All Traffic)</i></sub><br />
+        <img src="https://img.shields.io/badge/02_RELAY-Remote_Overseas_VPN_Node-ff4444?style=flat-square&labelColor=08090D" alt="VPN Node" /><br />
+        &darr; <sub><i>Remote Egress & Bottleneck (+150ms)</i></sub><br />
+        <img src="https://img.shields.io/badge/03_DESTINATION-Target_Service_/_Game-30363D?style=flat-square" alt="Target" />
+        <br /><br />
+      </td>
+      <td width="50%" align="center" bgcolor="#0b0e14">
+        <br />
+        <img src="https://img.shields.io/badge/01_SOURCE-Local_PC_(Windows)-161b22?style=flat-square" alt="PC" /><br />
+        &darr; <sub><i>Only Initial TLS ClientHello Fragmented</i></sub><br />
+        <img src="https://img.shields.io/badge/02_DPI_BYPASS-ISP_Censorship_Defeated-20ffa0?style=flat-square&labelColor=08090D" alt="Bypass" /><br />
+        &darr; <sub><i>Direct Local Fiber Gateway (0ms Lag)</i></sub><br />
+        <img src="https://img.shields.io/badge/03_DESTINATION-Target_Service_/_Game-20f2ff?style=flat-square&labelColor=08090D" alt="Target" />
+        <br /><br />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Bandwidth:</b>
+        <img src="https://img.shields.io/badge/Speed-50%25--80%25_Drop-ff4444?style=flat-square" alt="Speed Drop" align="right" />
+      </td>
+      <td>
+        &bull; <b>Bandwidth:</b>
+        <img src="https://img.shields.io/badge/Speed-100%25_Full_Wire-20ffa0?style=flat-square&labelColor=08090D" alt="Full Wire" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Gaming Latency:</b>
+        <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Increase" align="right" />
+      </td>
+      <td>
+        &bull; <b>Gaming Latency:</b>
+        <img src="https://img.shields.io/badge/Ping-0_ms_Added-20f2ff?style=flat-square&labelColor=08090D" alt="Zero Ping" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Data Route:</b>
+        <img src="https://img.shields.io/badge/Traffic-Foreign_Relay-red?style=flat-square" alt="Foreign Relay" align="right" />
+      </td>
+      <td>
+        &bull; <b>Data Route:</b>
+        <img src="https://img.shields.io/badge/Traffic-Direct_Local_Gateway-20ffa0?style=flat-square&labelColor=08090D" alt="Direct" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Banking / Local Services:</b>
+        <img src="https://img.shields.io/badge/IP-Overseas_Blocked-grey?style=flat-square" alt="Blocked" align="right" />
+      </td>
+      <td>
+        &bull; <b>Banking / Local Services:</b>
+        <img src="https://img.shields.io/badge/IP-Native_Local_IP-20f2ff?style=flat-square&labelColor=08090D" alt="Local IP" align="right" />
+      </td>
+    </tr>
+    <tr>
+      <td>
+        &bull; <b>Cost Model:</b>
+        <img src="https://img.shields.io/badge/Model-Monthly_Subscription-lightgrey?style=flat-square" alt="Subscription" align="right" />
+      </td>
+      <td>
+        &bull; <b>Cost Model:</b>
+        <img src="https://img.shields.io/badge/License-Free_&_Open_Source-FFE600?style=flat-square&labelColor=08090D" alt="FOSS" align="right" />
+      </td>
+    </tr>
+  </tbody>
 </table>
 
 ### Key Differences
@@ -770,27 +810,61 @@ This issue is caused by ISP DNS poisoning directing Discord CDN domains to warni
 
 Official distribution binaries can be verified using Minisign and the project public key:
 
-```text
-dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE1QTRFREEwMDFGNDFFNTMKUldSVEh2UUJvTzJrRmE3UGFDdG81YWtnYUdYSkhFdWQxVGJ0V2VVdHFKNDJvaGZRWS90TWx3ejMK
-```
-
-Verification command:
-```powershell
-minisign -Vm Anticore_0.3.1_x64-setup.exe -p anticore.key.pub
-```
-
-Read our [SECURITY.md](SECURITY.md) for vulnerability disclosure procedures and guidelines.
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="70%" align="left">
+        <img src="https://img.shields.io/badge/SECURITY-MINISIGN_ED25519_VERIFICATION-161b22?style=flat-square" alt="Minisign" /> &nbsp;
+        <img src="https://img.shields.io/badge/SIGNATURE-CRYPTOGRAPHIC_INTEGRITY-20ffa0?style=flat-square&labelColor=08090D" alt="Integrity" />
+      </th>
+      <th width="30%" align="right">
+        <a href="SECURITY.md"><img src="https://img.shields.io/badge/POLICY-SECURITY.md-20f2ff?style=flat-square&labelColor=08090D" alt="Security Policy" /></a>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan="2">
+        <b>Official Minisign Public Key:</b><br />
+        <code>dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE1QTRFREEwMDFGNDFFNTMKUldSVEh2UUJvTzJrRmE3UGFDdG81YWtnYUdYSkhFdWQxVGJ0V2VVdHFKNDJvaGZRWS90TWx3ejMK</code>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <b>Verification Procedure (PowerShell / Bash):</b><br />
+        <code>minisign -Vm Anticore_0.3.1_x64-setup.exe -p anticore.key.pub</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ## Building from Source
 
-To compile the binaries from source:
+To compile the binaries from source within a clean development environment, ensure the following toolchains are installed:
 
-### Prerequisites
-- Rust 1.80+ (`rustup toolchain install stable`)
-- Node.js 20+ LTS (`npm`)
-- Visual Studio 2022 C++ Build Tools (MSVC x64)
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/01_COMPILER-RUST_1.80+-20ffa0?style=for-the-badge&labelColor=08090D" alt="Rust" /><br /><br />
+        <b>Rust Toolchain</b><br />
+        <code>rustup toolchain install stable</code>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/02_FRONTEND-NODE.JS_20+_LTS-20f2ff?style=for-the-badge&labelColor=08090D" alt="Node" /><br /><br />
+        <b>Desktop UI Engine</b><br />
+        <code>Node.js 20+ &bull; npm &bull; Vite</code>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/03_NATIVE-MSVC_C++_2022-FFE600?style=for-the-badge&labelColor=08090D" alt="MSVC" /><br /><br />
+        <b>C++ Build Tools</b><br />
+        <code>Visual Studio 2022 (MSVC x64)</code>
+      </th>
+    </tr>
+  </thead>
+</table>
 
 ```powershell
 # 1. Clone the repository
