@@ -1,0 +1,19 @@
+{
+  "version": "0.3.1",
+  "notes": "Anticore v0.3.1 — 3D Telemetri, LAN Cihaz Paylasimi, Winsock Ag Onarimi ve Post-Quantum Kyber Cozumlemesi.",
+  "pub_date": "2026-09-11T05:19:23Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSVEh2UUJvTzJrRmIvaUpDaVkwS0FEbWh3WnJURTRXS3ZmcGU2SmppbFYyTmc4UVI4dFJMZTBqUEpBRG8veW9HR3dSa2oycHBCbDIyRFA5bjAzS2cxMnhNZUpPMk9FQ2dnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5MTA0NjgxCWZpbGU6QW50aWNvcmVfMC4zLjFfeDY0LXNldHVwLmV4ZQpwRWNQNU4vSldUTnhpT3FOMjdKK0szem5YYU55RWgzdy9XcWoxZ3gwamZzanM5VkhTL3ZmSlU3TUh0OFRNaHRCQmd2TmxSbjJaeFlaY21sTFFnL2hCdz09Cg==",
+      "url": "https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_0.3.1_x64-setup.exe"
+    },
+    "windows-x86_64-msi": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSVEh2UUJvTzJrRlR3TjUxU3BhSjRkbDhXUEd0QzhVYlJMQWpQRElPSmFzMnM1K3c4bnk5dW1aSC9uc1greThVVTBvVzNnY1hUeE9hM2JKZlpjczBCaTFNMUkwcU00L3dJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5MTA0Njg3CWZpbGU6QW50aWNvcmVfMC4zLjFfeDY0X2VuLVVTLm1zaQpNemtwRldtUnBDR3VQbk1YaGFac3lRamk2TjM3YlNmQWtqVWdhaW0vakVrVFpNTUpDTUw3Sjc4bHVNMGJVaVVCOFg4bUdCc2tSUjExZWs1RGJHVVdCUT09Cg==",
+      "url": "https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_0.3.1_x64_en-US.msi"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSVEh2UUJvTzJrRmIvaUpDaVkwS0FEbWh3WnJURTRXS3ZmcGU2SmppbFYyTmc4UVI4dFJMZTBqUEpBRG8veW9HR3dSa2oycHBCbDIyRFA5bjAzS2cxMnhNZUpPMk9FQ2dnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5MTA0NjgxCWZpbGU6QW50aWNvcmVfMC4zLjFfeDY0LXNldHVwLmV4ZQpwRWNQNU4vSldUTnhpT3FOMjdKK0szem5YYU55RWgzdy9XcWoxZ3gwamZzanM5VkhTL3ZmSlU3TUh0OFRNaHRCQmd2TmxSbjJaeFlaY21sTFFnL2hCdz09Cg==",
+      "url": "https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_0.3.1_x64-setup.exe"
+    }
+  }
+}
