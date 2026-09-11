@@ -27,7 +27,19 @@ export default function ConnectionTargets({ hosts, session, copy, onManage }: { 
         {!hosts.length && <p className="workspace-empty">{copy.emptyTargets}</p>}
         {hosts.slice(0, 3).map((host) => {
           const result = results.find((row) => row.host === host);
-          return <div className="target-row" key={host}><span className="target-symbol"><Globe2 size={17} /></span><div><strong>{host}</strong><span className={result?.result === "open" ? "result-open" : ""}>{busy ? copy.checking : label(result?.result)}</span></div><span className="target-latency">{result?.latency_ms != null ? `${result.latency_ms} ms` : "—"}</span></div>;
+          const res = result?.result;
+          const rowClass = !res ? "" : res === "open" ? "is-open" : res === "blocked" ? "is-blocked" : res === "filtered" ? "is-filtered" : "is-error";
+          const textClass = !res ? "" : res === "open" ? "result-open" : res === "blocked" ? "result-blocked" : res === "filtered" ? "result-filtered" : "result-error";
+          return (
+            <div className={`target-row ${rowClass}`} key={host}>
+              <span className="target-symbol"><Globe2 size={17} /></span>
+              <div>
+                <strong>{host}</strong>
+                <span className={busy ? "" : textClass}>{busy ? copy.checking : label(res)}</span>
+              </div>
+              <span className="target-latency">{result?.latency_ms != null ? `${result.latency_ms} ms` : "—"}</span>
+            </div>
+          );
         })}
       </div>
       <button className="workspace-button secondary full-width" disabled={busy || !hosts.length} onClick={() => void run()}>{busy ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCw size={16} />}{busy ? copy.checking : copy.check}</button>

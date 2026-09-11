@@ -794,7 +794,6 @@ html.theme-amber #root::before {
 [data-theme="amber"] h3,
 [data-theme="amber"] .text-live,
 [data-theme="amber"] [class*="text-paper-bright"] {
-  text-shadow: 0 0 8px rgba(255, 176, 32, 0.5) !important;
 }
 
 /* 2px Sharp Terminal Geometry - Hedefli Kartlar */
@@ -894,7 +893,6 @@ html.theme-cyberpunk h2,
 html.theme-cyberpunk h3 {
   text-transform: uppercase !important;
   letter-spacing: 0.08em !important;
-  text-shadow: 0 0 8px rgba(255, 230, 0, 0.35) !important;
 }
 
 [data-theme="cyberpunk"] .status-pill,
@@ -1270,7 +1268,6 @@ html.theme-crimson h2,
 html.theme-crimson h3 {
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
-  text-shadow: 0 0 8px rgba(255, 42, 77, 0.35) !important;
 }
 
 [data-theme="crimson"] .status-pill,

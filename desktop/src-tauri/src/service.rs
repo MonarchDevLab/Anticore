@@ -88,18 +88,31 @@ pub struct Stats {
 }
 
 /// Motor çalışma yapılandırması.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct EngineConfig {
     /// Gelen sahte RST'leri (port 80/443) çekirdekte düşürür.
     pub pasif_savunma: bool,
     /// QUIC/HTTP3 trafiğini düşürür (tarayıcı TLS'e döner, denetlenebilir).
     pub quic_engelle: bool,
+    /// Yerel ağ paylaşımı / Hotspot transit trafiğini de kapsama alır.
+    pub lan_share: bool,
+}
+
+impl Default for EngineConfig {
+    fn default() -> Self {
+        Self {
+            pasif_savunma: false,
+            quic_engelle: false,
+            lan_share: false,
+        }
+    }
 }
 
 pub struct Engine {
     pub running: Arc<AtomicBool>,
     pub stats: Arc<Stats>,
     pub profile_id: Mutex<String>,
+    pub blacklist: Arc<std::sync::RwLock<anticore_core::config::Blacklist>>,
     /// Motorun başlatıldığı an — arayüz sekme değiştirse/yeniden monte
     /// olsa bile "Çalışma Süresi" burada, tek gerçek kaynakta durur
     /// (önceden yalnızca Dashboard bileşeninin local state'indeydi ve
@@ -117,11 +130,19 @@ impl Engine {
             running: Arc::new(AtomicBool::new(false)),
             stats: Arc::new(Stats::default()),
             profile_id: Mutex::new("universal".into()),
+            blacklist: Arc::new(std::sync::RwLock::new(anticore_core::config::Blacklist::default())),
             started_at: Arc::new(Mutex::new(None)),
             stop_flag: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
             #[cfg(windows)]
             active_handles: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+
+    /// Çalışan motora anında yeni kara listeyi aktarır (motoru yeniden başlatmaya gerek kalmaz).
+    pub fn update_blacklist(&self, bl: anticore_core::config::Blacklist) {
+        if let Ok(mut lock) = self.blacklist.write() {
+            *lock = bl;
         }
     }
 
@@ -166,9 +187,9 @@ impl Engine {
         let started_at = self.started_at.clone();
         let profile_id = profile_id.to_string();
 
-        // Capture only candidates that the core can inspect.
+        // Capture only candidates that the core can inspect (including transit/hotspot if lan_share is active).
         let divert = Arc::new(WinDivert::open(
-            &anticore_core::dispatch::capture_filter(&steps),
+            &anticore_core::dispatch::capture_filter_with_options(&steps, config.lan_share),
             dll_dir.as_deref(),
         )?);
 
@@ -205,15 +226,20 @@ impl Engine {
             }
         }
 
+        if let Ok(mut lock) = self.blacklist.write() {
+            *lock = blacklist;
+        }
+        let blacklist_ref = self.blacklist.clone();
+
         *self.active_handles.lock().unwrap() = handles;
         let active_handles = self.active_handles.clone();
         *self.started_at.lock().unwrap() = Some(Instant::now());
         self.running.store(true, Ordering::SeqCst);
 
         let handle = std::thread::Builder::new().name("anticore-packets".into()).spawn(move || {
+            let initial_count = blacklist_ref.read().map(|b| b.len()).unwrap_or(0);
             on_log(format!(
-                "[+] motor aktif | profil={profile_id} | {} hedef domain",
-                blacklist.len()
+                "[+] motor aktif | profil={profile_id} | {initial_count} hedef domain",
             ));
             let mut buf = vec![0u8; 65_535];
             let mut consecutive_recv_errors = 0u32;
@@ -235,7 +261,11 @@ impl Engine {
 
                 let raw = &buf[..n];
                 use anticore_core::dispatch::{decide_packet, PacketDecision, PassthroughReason};
-                match decide_packet(raw, &blacklist, &steps) {
+                let decision = {
+                    let bl_guard = blacklist_ref.read().unwrap();
+                    decide_packet(raw, &bl_guard, &steps)
+                };
+                match decision {
                     PacketDecision::Passthrough(reason) => {
                         let _ = divert.send(raw, &addr);
                         if matches!(reason, PassthroughReason::TooLarge | PassthroughReason::NotTargeted) {

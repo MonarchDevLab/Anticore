@@ -64,13 +64,19 @@ pub const KNOWN_VPN_PROCESSES: &[(&str, &str)] = &[
 /// Çakışabilecek eski servisler listesi (WinDivert hariç tutulmuştur; zira Anticore'un kendi çekirdek sürücüsüdür).
 pub const KNOWN_LEGACY_SERVICES: &[&str] = &[
     "GoodbyeDPI",
+    "goodbyedpi",
     "GoodbyeDPI-Turkey",
+    "splitwire",
+    "SplitWire",
+    "splitwire-service",
+    "SplitwireService",
     "zapret",
     "winws1",
     "winws2",
     "WireSock",
     "WireSockService",
     "ProxiFyre",
+    "WinDivert14",
 ];
 
 #[cfg(windows)]

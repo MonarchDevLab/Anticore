@@ -7,6 +7,8 @@ import Sites from "./views/Sites";
 import Profiles from "./views/Profiles";
 import TestCenter from "./views/TestCenter";
 import NetworkRepair from "./views/NetworkRepair";
+import LanShare from "./views/LanShare";
+import ChangelogView from "./views/ChangelogView";
 import Setup from "./views/Setup";
 import SettingsView from "./views/SettingsView";
 import Wizard from "./views/Wizard";
@@ -45,17 +47,28 @@ export default function App() {
   useEffect(() => {
     setLogs([`[i] Anticore hazır — WinDivert çekirdeği bekleniyor`]);
 
-    if (localStorage.getItem("anticore_auto_update") === "true") {
+    const doCheck = () => {
       const repo = localStorage.getItem("anticore_github_repo") || undefined;
+      const token = localStorage.getItem("anticore_gh_token") || undefined;
       void api
-        .checkUpdate(repo)
+        .checkUpdate(repo, token)
         .then((info) => {
           if (info.has_update) {
             setUpdateAvailable(info.latest_version);
+            setUpdateModalOpen(true);
           }
         })
         .catch(() => {});
-    }
+    };
+
+    const timer = setTimeout(doCheck, 2000);
+    // Her 4 saatte bir tekrar kontrol et
+    const interval = setInterval(doCheck, 4 * 60 * 60 * 1000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -225,7 +238,9 @@ export default function App() {
           {view === "profiles" && <Profiles />}
           {view === "test" && <TestCenter pushLog={pushLog} />}
           {view === "network" && <NetworkRepair pushLog={pushLog} />}
+          {view === "lan_share" && <LanShare pushLog={pushLog} />}
           {view === "logs" && <LogsView liveLogs={logs} pushLog={pushLog} />}
+          {view === "changelog" && <ChangelogView />}
           {view === "setup" && <Setup pushLog={pushLog} />}
           {view === "settings" && (
             <SettingsView pushLog={pushLog} onOpenWizard={() => setView("wizard")} running={running} />
@@ -247,7 +262,12 @@ export default function App() {
       {/* ── 5. Güncelleme Modalı ── */}
       <UpdateModal
         open={updateModalOpen}
-        onClose={() => setUpdateModalOpen(false)}
+        onClose={() => {
+          setUpdateModalOpen(false);
+          if (updateAvailable) {
+            sessionStorage.setItem(`anticore_update_dismissed_${updateAvailable}`, "1");
+          }
+        }}
         onUpdateDetected={(has) => setUpdateAvailable(has ? "available" : null)}
       />
     </div>

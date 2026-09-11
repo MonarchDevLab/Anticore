@@ -89,10 +89,11 @@ pub struct LegacyServiceDto {
     pub installed: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EngineConfigDto {
     pub pasif_savunma: bool,
     pub quic_engelle: bool,
+    pub lan_share: bool,
 }
 
 #[tauri::command]
@@ -101,6 +102,7 @@ pub fn get_engine_config(app: AppHandle) -> EngineConfigDto {
     EngineConfigDto {
         pasif_savunma: c.pasif_savunma,
         quic_engelle: c.quic_engelle,
+        lan_share: c.lan_share,
     }
 }
 
@@ -110,12 +112,19 @@ pub fn set_engine_config(app: AppHandle, config: EngineConfigDto) -> Result<(), 
     if engine.running.load(Ordering::SeqCst) {
         return Err("Motor çalışırken ayar değiştirilemez; önce durdurun".into());
     }
+    let mut ec = load_engine_config(&app);
+    ec.pasif_savunma = config.pasif_savunma;
+    ec.quic_engelle = config.quic_engelle;
+    ec.lan_share = config.lan_share;
+    save_engine_config_internal(&app, &ec)
+}
+
+pub(crate) fn save_engine_config_internal(app: &AppHandle, config: &crate::service::EngineConfig) -> Result<(), String> {
     std::fs::write(
-        config_path(&app),
-        serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?,
+        config_path(app),
+        serde_json::to_string_pretty(config).map_err(|e| e.to_string())?,
     )
-    .map_err(|e| format!("kaydedilemedi: {e}"))?;
-    Ok(())
+    .map_err(|e| format!("kaydedilemedi: {e}"))
 }
 
 // ---------- kurulum: servis + bağımsız çalıştırma ----------
@@ -155,6 +164,12 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
                 candidates.push(parent.join("dist").join("anticore-cli.exe"));
             }
         }
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        candidates.push(cwd.join("anticore-cli.exe"));
+        candidates.push(cwd.join("bin").join("anticore.exe"));
+        candidates.push(cwd.join("antikor").join("anticore-cli.exe"));
+        candidates.push(cwd.join("antikor").join("bin").join("anticore.exe"));
     }
     for rel in [
         "anticore-cli.exe",
@@ -244,12 +259,18 @@ fn is_detached_running(app: &AppHandle) -> bool {
 pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
     let output = silent_command("sc").args(["query", SERVICE_NAME]).output()
         .map_err(|e| format!("Servis durumu sorgulanamadı: {e}"))?;
-    if !output.status.success() && output.status.code() != Some(1060) {
-        return Err(format!("Servis durumu sorgulanamadı: {} {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr)));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let combined = format!("{stdout} {stderr}");
+
+    // Windows 1060: ERROR_SERVICE_DOES_NOT_EXIST (servis kurulu değil, bu bir hata değildir)
+    let not_installed = combined.contains("1060") || output.status.code() == Some(1060);
+
+    if !output.status.success() && !not_installed {
+        return Err(format!("Servis durumu sorgulanamadı: {combined}"));
     }
-    let q = String::from_utf8_lossy(&output.stdout);
-    let service_installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
-    let service_running = service_installed && q.contains("RUNNING");
+    let service_installed = !not_installed && stdout.contains("SERVICE_NAME:");
+    let service_running = service_installed && stdout.contains("RUNNING");
     let detached_running = is_detached_running(&app);
 
     Ok(SetupStatusDto {
@@ -280,26 +301,27 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
     let exe_str = motor.to_string_lossy().to_string();
     let dir_str = data_dir.to_string_lossy().to_string();
 
-    let bin_path = format!(
-        "\"{exe}\" service-run --profile {profile} --data-dir \"{dir}\"",
-        exe = exe_str,
-        profile = profile_id,
-        dir = dir_str
+    // sc create komutunu CMD üzerinden tırnakları tam koruyarak çalıştır
+    let create_cmd = format!(
+        "sc.exe create {} binPath= \"\\\"{}\\\" service-run --profile {} --data-dir \\\"{}\\\"\" start= auto",
+        SERVICE_NAME, exe_str, profile_id, dir_str
     );
-
-    let out = silent_command("sc")
-        .args(["create", SERVICE_NAME, "binPath=", &bin_path, "start=", "auto"])
+    let out = silent_command("cmd")
+        .args(["/C", &create_cmd])
         .output()
         .map_err(|e| format!("sc çalıştırılamadı: {e}"))?;
+
     if !out.status.success() {
         return Err(format!(
             "servis oluşturulamadı: {} {}",
             String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr)
         ));
     }
-    let _ = silent_command("sc")
-        .args(["description", SERVICE_NAME, "Anticore DPI Paket Filtreleme ve Koruma Servisi"])
-        .output();
+    let desc_cmd = format!(
+        "sc.exe description {} \"Anticore DPI Paket Filtreleme ve Koruma Servisi\"",
+        SERVICE_NAME
+    );
+    let _ = silent_command("cmd").args(["/C", &desc_cmd]).output();
 
     let start = silent_command("sc")
         .args(["start", SERVICE_NAME])
@@ -309,7 +331,7 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
         let err = String::from_utf8_lossy(&start.stderr).trim().to_string();
         let out_msg = String::from_utf8_lossy(&start.stdout).trim().to_string();
         let msg = if !err.is_empty() { err } else { out_msg };
-        return Err(format!("servis başlatılamadı: {msg}"));
+        return Err(format!("servis başlatılamadı: {msg} (Başka DPI servisi çakışıyor olabilir)"));
     }
     app.emit("log", format!("[+] servis kuruldu ve başlatıldı (profil={profile_id})"))
         .ok();
@@ -329,7 +351,10 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
         .output()
         .map_err(|e| format!("sc delete başarısız: {e}"))?;
     if !out.status.success() {
-        return Err("servis kaldırılamadı (kurulu olmayabilir)".into());
+        let combined = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+        if !combined.contains("1060") {
+            return Err("servis kaldırılamadı (kurulu olmayabilir)".into());
+        }
     }
     app.emit("log", "[-] servis kaldırıldı".to_string()).ok();
     Ok(())
@@ -421,12 +446,13 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
         .args(["/PID", &pid.to_string(), "/F"])
         .output()
         .map_err(|e| format!("taskkill başarısız: {e}"))?;
-    if out.status.success() {
-        std::fs::remove_file(&pid_file).map_err(|e| format!("Motor durdu fakat PID kaydı temizlenemedi: {e}"))?;
+    let out_str = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+    if out.status.success() || out_str.contains("bulunamadı") || out_str.to_lowercase().contains("not found") {
+        let _ = std::fs::remove_file(&pid_file);
         app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
         Ok(())
     } else {
-        Err(format!("Motor sonlandırılamadı: {} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr)))
+        Err(format!("Motor sonlandırılamadı: {out_str}"))
     }
 }
 
@@ -451,20 +477,26 @@ fn config_path(app: &AppHandle) -> PathBuf {
 }
 
 /// Motor yapılandırması: dosyadan okur, yoksa varsayılan döner.
-fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfig {
+pub(crate) fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfig {
     let defaults = crate::service::EngineConfig::default();
-    let Ok(text) = std::fs::read_to_string(config_path(app)) else {
+    let p = config_path(app);
+    let Ok(text) = std::fs::read_to_string(&p) else {
+        if let Ok(serialized) = serde_json::to_string_pretty(&defaults) {
+            let _ = std::fs::write(&p, serialized);
+        }
         return defaults;
     };
     #[derive(Deserialize)]
     struct Raw {
         pasif_savunma: Option<bool>,
         quic_engelle: Option<bool>,
+        lan_share: Option<bool>,
     }
     match serde_json::from_str::<Raw>(&text) {
         Ok(r) => crate::service::EngineConfig {
             pasif_savunma: r.pasif_savunma.unwrap_or(defaults.pasif_savunma),
             quic_engelle: r.quic_engelle.unwrap_or(defaults.quic_engelle),
+            lan_share: r.lan_share.unwrap_or(defaults.lan_share),
         },
         Err(_) => defaults,
     }
@@ -682,7 +714,20 @@ fn chrono_like_id() -> u64 {
 pub fn get_blacklist(app: AppHandle) -> Vec<String> {
     let bl = load_blacklist(&app);
     let mut v: Vec<String> = bl.iter().cloned().collect();
-    v.sort();
+    
+    let priorities = ["discord.com", "roblox.com", "wattpad.com", "pastebin.com", "eksisozluk.com"];
+    
+    v.sort_by(|a, b| {
+        let p_a = priorities.iter().position(|&p| a.ends_with(p)).unwrap_or(usize::MAX);
+        let p_b = priorities.iter().position(|&p| b.ends_with(p)).unwrap_or(usize::MAX);
+        
+        if p_a != p_b {
+            p_a.cmp(&p_b)
+        } else {
+            a.cmp(b)
+        }
+    });
+    
     v
 }
 
@@ -709,7 +754,7 @@ pub fn export_sites_to_file(app: AppHandle) -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub fn add_site(app: AppHandle, domain: String) -> Result<(), String> {
+pub fn add_site(app: AppHandle, engine: tauri::State<Engine>, domain: String) -> Result<(), String> {
     let domain = domain.trim().to_lowercase();
     if domain.is_empty() || !domain.contains('.') || domain.contains(' ') {
         return Err("Geçersiz domain".into());
@@ -720,13 +765,15 @@ pub fn add_site(app: AppHandle, domain: String) -> Result<(), String> {
     }
     current.push(domain.clone());
     save_blacklist(&app, &current)?;
+    let new_bl = load_blacklist(&app);
+    engine.update_blacklist(new_bl);
     app.emit("log", format!("[+] hedef eklendi: {domain}")).ok();
     Ok(())
 }
 
 /// Birden fazla alan adını tek disk yazma işlemiyle kara listeye ekler.
 #[tauri::command]
-pub fn add_sites(app: AppHandle, domains: Vec<String>) -> Result<usize, String> {
+pub fn add_sites(app: AppHandle, engine: tauri::State<Engine>, domains: Vec<String>) -> Result<usize, String> {
     let current = get_blacklist(app.clone());
     let mut set: std::collections::HashSet<String> = current.into_iter().collect();
     let mut added = 0usize;
@@ -740,6 +787,8 @@ pub fn add_sites(app: AppHandle, domains: Vec<String>) -> Result<usize, String> 
         let mut sorted: Vec<String> = set.into_iter().collect();
         sorted.sort();
         save_blacklist(&app, &sorted)?;
+        let new_bl = load_blacklist(&app);
+        engine.update_blacklist(new_bl);
         app.emit("log", format!("[+] {added} yeni hedef listeye eklendi")).ok();
     }
     Ok(added)
@@ -759,12 +808,14 @@ pub fn resolve_domain(domain: String) -> bool {
 }
 
 #[tauri::command]
-pub fn remove_site(app: AppHandle, domain: String) -> Result<(), String> {
+pub fn remove_site(app: AppHandle, engine: tauri::State<Engine>, domain: String) -> Result<(), String> {
     let current = get_blacklist(app.clone());
     save_blacklist(
         &app,
         &current.into_iter().filter(|d| *d != domain).collect::<Vec<_>>(),
     )?;
+    let new_bl = load_blacklist(&app);
+    engine.update_blacklist(new_bl);
     app.emit("log", format!("[-] hedef çıkarıldı: {domain}")).ok();
     Ok(())
 }
@@ -1319,13 +1370,20 @@ pub async fn auto_discover_profile(app: AppHandle) -> Result<Vec<anticore_core::
 pub fn scan_legacy_services() -> Vec<LegacyServiceDto> {
     let targets = [
         ("GoodbyeDPI", "GoodbyeDPI Servisi"),
+        ("goodbyedpi", "GoodbyeDPI Servisi (Küçük Harf)"),
         ("GoodbyeDPI-Turkey", "GoodbyeDPI Türkiye Servisi"),
+        ("splitwire", "SplitWire Servisi"),
+        ("SplitWire", "SplitWire Servisi"),
+        ("splitwire-service", "SplitWire Arka Plan Servisi"),
+        ("SplitwireService", "SplitWire Arka Plan Servisi"),
         ("zapret", "Zapret DPI Servisi"),
         ("winws1", "WinWS Servisi 1"),
         ("winws2", "WinWS Servisi 2"),
         ("WireSock", "WireSock Servisi"),
         ("WireSockService", "WireSock Service"),
         ("ProxiFyre", "ProxiFyre SOCKS Proxy"),
+        ("WinDivert", "WinDivert Sürücü Servisi"),
+        ("WinDivert14", "WinDivert 1.4 Sürücü Servisi"),
     ];
 
     let mut results = Vec::new();
@@ -1354,6 +1412,20 @@ pub fn scan_legacy_services() -> Vec<LegacyServiceDto> {
 
 #[tauri::command]
 pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>) -> Result<Vec<String>, String> {
+    if !is_running_as_admin() {
+        return Err("Eski servisleri durdurmak ve kaldırmak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
+    }
+
+    // 1. Arka planda çalışan ve dosyaları kilitleyen eski süreçleri sonlandır
+    let legacy_procs = ["goodbyedpi.exe", "splitwire.exe", "winws.exe", "wiresock.exe", "sing-box.exe"];
+    for p in legacy_procs {
+        let _ = silent_command("taskkill").args(["/F", "/IM", p, "/T"]).output();
+    }
+
+    // 2. WinDivert sürücü kilitlerini çözmek için sürücü servislerini durdur
+    let _ = silent_command("sc").args(["stop", "WinDivert"]).output();
+    let _ = silent_command("sc").args(["stop", "WinDivert14"]).output();
+
     let to_clean = if let Some(ids) = service_ids {
         ids
     } else {
@@ -1365,22 +1437,46 @@ pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>)
     };
 
     let mut cleaned = Vec::new();
+    let mut failed = Vec::new();
+
     for srv in &to_clean {
         let _ = silent_command("sc").args(["stop", srv]).output();
-        std::thread::sleep(std::time::Duration::from_millis(300));
+        std::thread::sleep(std::time::Duration::from_millis(150));
         let out = silent_command("sc").args(["delete", srv]).output();
-        if let Ok(o) = out {
-            if o.status.success() {
+        match out {
+            Ok(o) if o.status.success() => {
                 cleaned.push(srv.clone());
+            }
+            Ok(o) => {
+                let err_msg = String::from_utf8_lossy(&o.stderr);
+                let out_msg = String::from_utf8_lossy(&o.stdout);
+                let combined = format!("{err_msg} {out_msg}").trim().to_string();
+                if combined.contains("1060") {
+                    cleaned.push(srv.clone());
+                } else {
+                    failed.push(format!("{srv}: {combined}"));
+                }
+            }
+            Err(e) => {
+                failed.push(format!("{srv}: {e}"));
             }
         }
     }
 
+    // Ek güvence: sürücüleri tekrar durdur
+    let _ = silent_command("sc").args(["stop", "WinDivert"]).output();
+    let _ = silent_command("sc").args(["stop", "WinDivert14"]).output();
+
     app.emit(
         "log",
-        format!("[+] {} adet eski servis temizlendi: {:?}", cleaned.len(), cleaned),
+        "[+] Eski süreç ve servis kilitleri temizlendi. Dosyalar artık silinebilir.".to_string(),
     )
     .ok();
+
+    if !failed.is_empty() {
+        return Err(format!("Bazı servisler silinemedi: {}", failed.join("; ")));
+    }
+
     Ok(cleaned)
 }
 
@@ -1569,6 +1665,8 @@ pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(),
     // 1. Blacklist varsayılana sıfırlanır
     std::fs::write(blacklist_path(&app), anticore_core::config::DEFAULT_BLACKLIST)
         .map_err(|e| format!("Blacklist sıfırlanamadı: {e}"))?;
+    let new_bl = load_blacklist(&app);
+    engine.update_blacklist(new_bl);
 
     // 2. Özel profiller kaldırılır
     let _ = std::fs::remove_file(profiles_path(&app));
@@ -1578,6 +1676,7 @@ pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(),
     let cfg_dto = EngineConfigDto {
         pasif_savunma: default_cfg.pasif_savunma,
         quic_engelle: default_cfg.quic_engelle,
+        lan_share: default_cfg.lan_share,
     };
     std::fs::write(
         config_path(&app),
@@ -1630,12 +1729,16 @@ Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContin
 Start-Sleep -Milliseconds 500
 
 Clear-DnsClientCache
+ipconfig /flushdns
 
-$localDiscord = Join-Path $env:LOCALAPPDATA 'Discord'
-if (Test-Path $localDiscord) {
-    Remove-Item -Path (Join-Path $localDiscord 'Update.exe.log') -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path (Join-Path $localDiscord 'Squirrel.log') -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -Path $localDiscord -Filter 'Squirrel-tmp*' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+$discordFolders = @('Discord', 'DiscordPTB', 'DiscordCanary')
+foreach ($f in $discordFolders) {
+    $localDiscord = Join-Path $env:LOCALAPPDATA $f
+    if (Test-Path $localDiscord) {
+        Remove-Item -Path (Join-Path $localDiscord 'Update.exe.log') -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path (Join-Path $localDiscord 'Squirrel.log') -Force -ErrorAction SilentlyContinue
+        Get-ChildItem -Path $localDiscord -Filter 'Squirrel-tmp*' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
 
 "Discord güncelleme kilitleri ve DNS önbelleği başarıyla temizlendi."
@@ -1652,21 +1755,63 @@ $ErrorActionPreference = 'SilentlyContinue'
 Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
 
-$appDataDiscord = Join-Path $env:APPDATA 'discord'
-if (Test-Path $appDataDiscord) {
-    $caches = @('Cache', 'Code Cache', 'GPUCache', 'DawnCache', 'blob_storage')
-    foreach ($c in $caches) {
-        $p = Join-Path $appDataDiscord $c
-        if (Test-Path $p) {
-            Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue
+$discordNames = @('discord', 'discordptb', 'discordcanary')
+foreach ($name in $discordNames) {
+    $appDataDiscord = Join-Path $env:APPDATA $name
+    if (Test-Path $appDataDiscord) {
+        $caches = @('Cache', 'Code Cache', 'GPUCache', 'DawnCache', 'DawnGraphiteCache', 'blob_storage', 'Session Storage', 'DIPS', 'lockfile')
+        foreach ($c in $caches) {
+            $p = Join-Path $appDataDiscord $c
+            if (Test-Path $p) {
+                Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        $netPersistent = Join-Path $appDataDiscord 'Network\Network Persistent State'
+        if (Test-Path $netPersistent) {
+            Remove-Item -Path $netPersistent -Force -ErrorAction SilentlyContinue
         }
     }
 }
 
-"Discord önbelleği (Cache / Code Cache / GPUCache) başarıyla temizlendi."
+Clear-DnsClientCache
+ipconfig /flushdns
+
+"Discord önbelleği (Cache / GPU / Network State) ve DNS önbelleği başarıyla temizlendi."
 "#;
     let out = run_powershell(script);
     app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
+    Ok(out.trim().to_string())
+}
+
+#[tauri::command]
+pub fn flush_dns_and_renew_adapters(app: AppHandle) -> Result<String, String> {
+    crate::net_teardown::flush_dns_cache();
+    let script = r#"
+$ErrorActionPreference = 'SilentlyContinue'
+Clear-DnsClientCache
+ipconfig /flushdns
+ipconfig /renew
+"DNS önbelleği temizlendi ve ağ bağdaştırıcıları (DHCP) başarıyla yenilendi."
+"#;
+    let out = run_powershell(script);
+    app.emit("log", "[+] Windows DNS önbelleği temizlendi ve bağdaştırıcılar yenilendi".to_string()).ok();
+    Ok(out.trim().to_string())
+}
+
+#[tauri::command]
+pub fn reset_network_stack(app: AppHandle) -> Result<String, String> {
+    if !is_running_as_admin() {
+        return Err("Ağ yığınını ve Winsock katmanını sıfırlamak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
+    }
+    let script = r#"
+$ErrorActionPreference = 'SilentlyContinue'
+netsh winsock reset
+netsh int ip reset
+ipconfig /flushdns
+"Winsock kataloğu ve TCP/IP protokol yığını başarıyla sıfırlandı. Değişikliklerin tam devreye girmesi için bilgisayarınızı yeniden başlatmanız önerilir."
+"#;
+    let out = run_powershell(script);
+    app.emit("log", "[+] Winsock ve TCP/IP ağ yığını başarıyla sıfırlandı".to_string()).ok();
     Ok(out.trim().to_string())
 }
 
@@ -1789,22 +1934,22 @@ pub fn check_update(
 }
 
 #[tauri::command]
-pub fn fetch_community_blacklist(app: AppHandle, source_url: Option<String>) -> Result<usize, String> {
+pub fn fetch_community_blacklist(app: AppHandle, engine: tauri::State<Engine>, source_url: Option<String>) -> Result<usize, String> {
     let url = source_url
         .filter(|s| !s.trim().is_empty())
         .unwrap_or_else(|| {
-            "https://raw.githubusercontent.com/bol-van/zapret/master/docs/turkey_dns.txt".to_string()
+            "https://raw.githubusercontent.com/alimali54/zapret-win-turkey/master/config/hostlist.txt".to_string()
         });
 
-    let resp = ureq::get(&url)
+    let remote_text = ureq::get(&url)
         .set("User-Agent", "Anticore-Desktop/0.3.0")
-        .timeout(std::time::Duration::from_secs(8))
+        .timeout(std::time::Duration::from_secs(6))
         .call()
-        .map_err(|e| format!("Topluluk hedef listesi indirilemedi: {e}"))?;
+        .ok()
+        .and_then(|resp| resp.into_string().ok());
 
-    let text = resp
-        .into_string()
-        .map_err(|e| format!("İçerik okunamadı: {e}"))?;
+    // Uzak liste indirilemediyse yerleşik genişletilmiş DEFAULT_BLACKLIST hedeflerini kullan
+    let text = remote_text.unwrap_or_else(|| anticore_core::config::DEFAULT_BLACKLIST.to_string());
 
     let path = blacklist_path(&app);
     let existing_text = std::fs::read_to_string(&path).unwrap_or_default();
@@ -1838,6 +1983,9 @@ pub fn fetch_community_blacklist(app: AppHandle, source_url: Option<String>) -> 
 
     std::fs::write(&path, lines.join("\n"))
         .map_err(|e| format!("Hedef listesi kaydedilemedi: {e}"))?;
+
+    let new_bl = load_blacklist(&app);
+    engine.update_blacklist(new_bl);
 
     app.emit(
         "log",

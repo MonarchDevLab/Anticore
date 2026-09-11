@@ -117,18 +117,21 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
         ],
     )?;
 
-    // Tray ikonu uygulama ikonu olarak ayarlandı; duruma göre tooltip ve menü metni güncellenir.
-    // İleride renkli durum varyantı gerekirse icons/ altına tray-active.png / tray-inactive.png
-    // eklenip TrayIconBuilder::icon() çağrısı duruma göre güncellenebilir.
+    let icon_active = Some(tauri::include_image!("icons/32x32.png"));
+    let icon_inactive = Some(tauri::include_image!("icons/32x32-inactive.png"));
+
     let mut builder = TrayIconBuilder::new()
         .tooltip("Anticore — Pasif")
         .menu(&menu)
         .show_menu_on_left_click(false);
-    if let Some(icon) = app.default_window_icon() {
+    if let Some(icon) = icon_inactive.as_ref().or(icon_active.as_ref()) {
         builder = builder.icon(icon.clone());
     }
     let click_count = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
     let click_counter = click_count.clone();
+    let last_double_click = std::sync::Arc::new(std::sync::Mutex::new(
+        std::time::Instant::now() - std::time::Duration::from_secs(10),
+    ));
 
     let tray = builder
         .on_tray_icon_event(move |tray, event| {
@@ -137,6 +140,7 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
                     button: MouseButton::Left,
                     ..
                 } => {
+                    *last_double_click.lock().unwrap() = std::time::Instant::now();
                     // Çift tıklama algılandı: bekleyen tek tık görevini iptal et ve ana pencereyi aç
                     click_counter.fetch_add(1, Ordering::SeqCst);
                     let app = tray.app_handle();
@@ -155,6 +159,9 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
                     rect,
                     ..
                 } => {
+                    if last_double_click.lock().unwrap().elapsed() < std::time::Duration::from_millis(500) {
+                        return;
+                    }
                     let app = tray.app_handle().clone();
                     let current_gen = click_counter.fetch_add(1, Ordering::SeqCst) + 1;
                     let counter = click_counter.clone();
@@ -215,7 +222,10 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     });
 
     let app_handle = app.handle().clone();
-    app.listen("status_changed", move |event| {
+    let app_handle_for_listen = app_handle.clone();
+    let active_icon_clone = icon_active.clone();
+    let inactive_icon_clone = icon_inactive.clone();
+    app_handle_for_listen.listen("status_changed", move |event| {
         let running: bool = serde_json::from_str(event.payload()).unwrap_or(false);
         if let Some(handles) = app_handle.try_state::<TrayHandles>() {
             let _ = handles
@@ -227,6 +237,14 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
                 } else {
                     "Anticore — Pasif"
                 }));
+                let target_icon = if running {
+                    active_icon_clone.as_ref()
+                } else {
+                    inactive_icon_clone.as_ref()
+                };
+                if let Some(icon) = target_icon {
+                    let _ = tray.set_icon(Some(icon.clone()));
+                }
             }
         }
     });

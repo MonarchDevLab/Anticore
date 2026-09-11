@@ -11,6 +11,7 @@ pub mod dispatch;
 pub mod dto;
 pub mod net;
 pub mod profile;
+pub mod proxy;
 pub mod strategy;
 pub mod tester;
 pub mod tls;

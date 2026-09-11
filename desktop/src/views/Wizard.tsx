@@ -89,7 +89,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
         await api.applyDohRegistry();
       }
 
-      // 3) Motoru başlat
+      // 3) Çekirdeği başlat
       await api.startEngine(selectedIsp);
 
       localStorage.setItem("anticore_last_profile", selectedIsp);

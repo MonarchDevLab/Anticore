@@ -94,8 +94,27 @@ fn parse_run_opts(args: &[String]) -> Result<RunOpts, String> {
             "--profile" => o.profile_id = it.next().ok_or("--profile değer ister")?.clone(),
             "--data-dir" => o.data_dir = Some(PathBuf::from(it.next().ok_or("--data-dir yol ister")?)),
             "--pasif-savunma" | "-p" => o.pasif_savunma = true,
+            "--no-pasif-savunma" => o.pasif_savunma = false,
             "--quic-engelle" | "-q" => o.quic_engelle = true,
+            "--no-quic-engelle" => o.quic_engelle = false,
             other => return Err(format!("bilinmeyen seçenek: {other}")),
+        }
+    }
+    if let Some(dir) = &o.data_dir {
+        if let Ok(text) = std::fs::read_to_string(dir.join("config.json")) {
+            #[derive(serde::Deserialize)]
+            struct RawConfig {
+                pasif_savunma: Option<bool>,
+                quic_engelle: Option<bool>,
+            }
+            if let Ok(raw) = serde_json::from_str::<RawConfig>(&text) {
+                if let Some(p) = raw.pasif_savunma {
+                    o.pasif_savunma = p;
+                }
+                if let Some(q) = raw.quic_engelle {
+                    o.quic_engelle = q;
+                }
+            }
         }
     }
     Ok(o)

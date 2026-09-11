@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
-  CheckSquare,
   Download,
   Globe,
   LoaderCircle,
   Plus,
   Search,
-  Square,
   Trash2,
   Upload,
   CloudDownload,
@@ -78,6 +76,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [fetchBusy, setFetchBusy] = useState(false);
   const [fetchMsg, setFetchMsg] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const refresh = () =>
     void api.getBlacklist().then((s) => {
@@ -101,8 +100,9 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
   const syncCommunityList = async () => {
     setFetchBusy(true);
     setFetchMsg(null);
+    setFetchError(null);
     try {
-      pushLog("[*] Topluluk engelli hedef listesi indiriliyor (bol-van zapret)...");
+      pushLog("[*] Topluluk engelli hedef listesi senkronize ediliyor...");
       const count = await api.fetchCommunityBlacklist();
       setFetchMsg(`+${count} yeni alan adı başarıyla eklendi ve senkronize edildi!`);
       pushLog(`[+] Topluluk listesinden ${count} yeni alan adı eklendi`);
@@ -110,8 +110,9 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
       setTimeout(() => setFetchMsg(null), 6000);
     } catch (err) {
       const msg = String(err);
-      setFetchMsg(`Hata: ${msg}`);
+      setFetchError(`Hata: ${msg}`);
       pushLog(`[!] Topluluk listesi hatası: ${msg}`);
+      setTimeout(() => setFetchError(null), 8000);
     } finally {
       setFetchBusy(false);
     }
@@ -294,6 +295,12 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
               <span>{fetchMsg}</span>
             </p>
           )}
+          {fetchError && (
+            <p className="text-xs font-bold text-alert flex items-center gap-1.5 pt-1">
+              <AlertTriangle size={13} />
+              <span>{fetchError}</span>
+            </p>
+          )}
         </div>
         <button
           onClick={syncCommunityList}
@@ -429,7 +436,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
         </div>
 
         {/* Kategori Filtre Butonları */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           {[
             { id: "all", label: t("sites_filter_all") },
             { id: "tr-core", label: t("sites_filter_tr_mega") },
@@ -442,10 +449,10 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
                 activeCategory === cat.id
-                  ? "bg-live/15 text-live border border-live/30"
-                  : "bg-surface-subtle text-paper-muted border border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
+                  ? "bg-live text-surface shadow-brutal-live"
+                  : "bg-surface-subtle text-paper-muted border border-border-brutal hover:text-paper hover:bg-white/[0.08]"
               }`}
             >
               {cat.label}
@@ -465,13 +472,15 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
         ) : (
           <>
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-              <button
-                onClick={toggleSelectAll}
-                className="flex items-center gap-2 text-xs font-semibold text-paper-muted hover:text-paper transition-colors cursor-pointer"
-              >
-                {allFilteredSelected ? <CheckSquare size={15} className="text-live" /> : <Square size={15} />}
+              <label className="flex items-center gap-2 text-xs font-semibold text-paper-muted hover:text-paper transition-colors cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  onChange={toggleSelectAll}
+                  className="w-3.5 h-3.5 accent-live rounded"
+                />
                 <span>{t("sites_select_all")}</span>
-              </button>
+              </label>
               {selected.size > 0 && (
                 <button
                   onClick={() => void removeSelected()}
@@ -484,27 +493,30 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
               )}
             </div>
 
-            <ul className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[360px] overflow-y-auto pr-1">
               {filtered.map((d) => (
                 <li
                   key={d}
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-white/[0.14] transition-all"
+                  className="group flex items-center justify-between p-2 rounded-lg border border-white/[0.04] bg-surface-subtle/30 hover:bg-surface-subtle/80 hover:border-white/[0.12] transition-all"
                 >
-                  <label className="flex items-center gap-3 cursor-pointer w-full">
+                  <label className="flex items-center gap-2.5 cursor-pointer w-full overflow-hidden">
                     <input
                       type="checkbox"
                       checked={selected.has(d)}
                       onChange={() => toggleSelected(d)}
-                      className="w-4 h-4 accent-live rounded"
+                      className="w-3.5 h-3.5 accent-live rounded"
                     />
-                    <span className="font-mono text-xs text-paper font-medium truncate">{d}</span>
+                    <div className="flex items-center gap-2 overflow-hidden w-full">
+                      <Globe size={13} className="text-paper-faint shrink-0" aria-hidden />
+                      <span className="font-mono text-[11.5px] text-paper font-medium truncate">{d}</span>
+                    </div>
                   </label>
                   <button
                     onClick={() => void api.removeSite(d).then(refresh)}
-                    className="text-paper-faint hover:text-alert p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors cursor-pointer"
+                    className="text-paper-faint hover:text-alert p-1 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-white/[0.05] transition-all cursor-pointer shrink-0"
                     title={t("sites_delete_count")}
                   >
-                    <Trash2 size={15} />
+                    <Trash2 size={13} />
                   </button>
                 </li>
               ))}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, Minus, Square, X, ArrowDownCircle, HelpCircle, Palette, Globe } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Minus, Square, X, ArrowDownCircle, HelpCircle, Palette, Globe } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useI18n } from "../lib/i18n";
 import { api, type Status } from "../lib/tauri";
@@ -114,21 +114,18 @@ export default function Titlebar({
       data-tauri-drag-region
       className="workspace-titlebar h-12 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono"
     >
-      {/* Sol: Logo & Marka Donanım Etiketi */}
+      {/* Sol: Logo */}
       <div className="flex items-center gap-2.5 pointer-events-none">
         <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all ${
           running
-            ? "border-live/40 bg-live/15 text-live shadow-[0_0_12px_rgba(0,245,155,0.3)]"
-            : "border-white/[0.1] bg-surface-card text-paper-muted"
+            ? "border-live/40 bg-live/15 text-live"
+            : "border-red-500/40 bg-red-500/15 text-red-400"
         }`}>
-          <ShieldCheck size={13} strokeWidth={2.5} />
+          {running ? <ShieldCheck size={13} strokeWidth={2.5} /> : <ShieldAlert size={13} strokeWidth={2.5} />}
         </div>
         <div className="flex items-center gap-1.5">
           <span className="font-bold tracking-widest text-paper-bright text-xs">
             ANTICORE
-          </span>
-          <span className="text-xs text-paper-faint tracking-wider hidden sm:inline">
-            Monolith Works
           </span>
         </div>
       </div>
@@ -137,7 +134,9 @@ export default function Titlebar({
       <div className="pointer-events-none hidden md:flex items-center gap-2 px-3 py-0.5 rounded-full border border-white/[0.06] bg-surface-subtle/80">
         <span
           className={`h-1.5 w-1.5 rounded-full transition-all ${
-            running ? "bg-live shadow-[var(--shadow-brutal-live)] animate-pulse" : "bg-paper-faint"
+            running
+              ? "bg-live animate-pulse"
+              : "bg-red-500"
           }`}
         />
         <span className="text-xs uppercase tracking-wider text-paper-muted">
@@ -146,7 +145,9 @@ export default function Titlebar({
               <strong className="text-live font-bold">{t("status_active")}</strong> · {status?.profile_id || selectedProfile}
             </span>
           ) : (
-            <span>{t("status_inactive")} · STANDBY</span>
+            <span className="text-red-400 font-medium">
+              <strong className="text-red-500 font-bold">{t("status_inactive")}</strong> · STANDBY
+            </span>
           )}
         </span>
       </div>
@@ -157,11 +158,11 @@ export default function Titlebar({
         {updateAvailable && (
           <button
             onClick={onOpenUpdateModal}
-            className="flex items-center gap-1.5 text-xs font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-all cursor-pointer mr-1"
-            title="Yeni sürüm hazır"
+            className="flex items-center gap-1.5 text-xs font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-all cursor-pointer mr-1 animate-pulse"
+            title={lang === "tr" ? "Yeni sürüm hazır" : "New version available"}
           >
             <ArrowDownCircle size={12} className="text-live" />
-            <span className="hidden sm:inline">GÜNCELLE</span>
+            <span className="hidden sm:inline">{lang === "tr" ? "GÜNCELLE" : "UPDATE"}</span>
           </button>
         )}
 

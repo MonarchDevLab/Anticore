@@ -76,24 +76,23 @@ pub fn parse_client_hello(payload: &[u8]) -> Option<ClientHelloInfo> {
         return None;
     }
     let record_len = cur.u16be()? as usize;
-    if record_len == 0 || record_len > cur.remaining() {
+    if record_len == 0 {
         return None;
     }
-    // Record içeriğiyle sınırlı alt imleç mantığı: kalan alanı record sonuna kadar say
-    let record_end = cur.pos + record_len;
-    if record_end > payload.len() {
-        return None;
-    }
+    // Record boyutu tek paketi aşabilir (MSS bölünmesi: örn. 1588 baytlık ClientHello
+    // ilk TCP segmentinde 1460 bayt olarak gelir). Bu yüzden record_end bu paketteki
+    // mevcut baytlarla sınırlandırılmalıdır.
+    let record_end = (cur.pos + record_len).min(payload.len());
 
     // --- Handshake header ---
     if cur.u8()? != 0x01 {
         return None; // client_hello değil
     }
     let hs_len = cur.u24be()? as usize;
-    if hs_len > record_end - cur.pos {
+    if hs_len == 0 {
         return None;
     }
-    let hs_end = cur.pos + hs_len;
+    let hs_end = (cur.pos + hs_len).min(record_end);
 
     // --- ClientHello gövdesi ---
     let _client_version_hi = cur.u8()?;
@@ -117,16 +116,13 @@ pub fn parse_client_hello(payload: &[u8]) -> Option<ClientHelloInfo> {
         return None;
     }
     let ext_total = cur.u16be()? as usize;
-    if ext_total > cur.remaining() {
-        return None;
-    }
-    let ext_end = cur.pos + ext_total;
+    let ext_end = (cur.pos + ext_total).min(hs_end);
 
     while cur.pos + 4 <= ext_end {
         let ext_type = cur.u16be()?;
         let ext_len = cur.u16be()? as usize;
         if cur.remaining() < ext_len {
-            return None;
+            break;
         }
         if ext_type == 0x0000 {
             // --- server_name extension ---
@@ -345,5 +341,20 @@ mod tests {
         let req = b"GET / HTTP/1.1\r\nHost:   \t  discord.com\r\n\r\n";
         let info = parse_http_host(req).expect("host");
         assert_eq!(&req[info.host_offset..info.host_offset + info.host_len], b"discord.com");
+    }
+
+    #[test]
+    fn parses_segmented_large_client_hello_exceeding_packet_boundary() {
+        // 1600 baytlık post-quantum ClientHello'nun ilk 1460 baytlık TCP segmenti simülasyonu
+        let mut p = build_client_hello(b"discord.com");
+        // Record uzunluğunu 1600 bayt olarak ayarla (MSS aşımı)
+        p[3..5].copy_from_slice(&1600u16.to_be_bytes());
+        // Paketin arkasına 1000 bayt dummy uzantı verisi ekle (ör. Kyber anahtarları)
+        p.extend_from_slice(&[0x42; 1000]);
+        // Ancak TCP MSS gereği tek paket sadece 1460 bayt taşıyor
+        p.truncate(1460);
+
+        let info = parse_client_hello(&p).expect("MSS bölünmesine rağmen ilk segmentteki SNI çözülmeli");
+        assert_eq!(info.sni(&p), Some(&b"discord.com"[..]));
     }
 }

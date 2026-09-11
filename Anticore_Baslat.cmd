@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0"
-start "" "%~dp0anticore-desktop.exe"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~dp0anticore-desktop.exe' -Verb RunAs"

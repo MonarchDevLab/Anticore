@@ -114,6 +114,18 @@ export function stepDetail(s: StepDto): string {
 export interface EngineConfig {
   pasif_savunma: boolean;
   quic_engelle: boolean;
+  lan_share: boolean;
+}
+
+export interface LanInfoDto {
+  local_ip: string;
+  proxy_port: number;
+  proxy_running: boolean;
+  hotspot_mode_enabled: boolean;
+  active_connections: number;
+  total_connections: number;
+  bytes_transferred: number;
+  pac_url: string;
 }
 
 export interface SetupStatus {
@@ -221,6 +233,8 @@ export const api = {
   autoFixDns: () => invoke<void>("auto_fix_dns"),
   repairDiscordUpdates: () => invoke<string>("repair_discord_updates"),
   clearDiscordCache: () => invoke<string>("clear_discord_cache"),
+  flushDnsAndRenewAdapters: () => invoke<string>("flush_dns_and_renew_adapters"),
+  resetNetworkStack: () => invoke<string>("reset_network_stack"),
   checkUpdate: (repoOverride?: string, tokenOverride?: string) =>
     invoke<UpdateInfoDto>("check_update", { repoOverride, tokenOverride }),
   fetchCommunityBlacklist: (sourceUrl?: string) =>
@@ -231,9 +245,15 @@ export const api = {
   minimizeWindow: () => invoke<void>("window_minimize"),
   toggleMaximizeWindow: () => invoke<boolean>("window_toggle_maximize"),
   isWindowMaximized: () => invoke<boolean>("window_is_maximized"),
-  showMainWindow: () => invoke<void>("show_main_window"),
+   showMainWindow: () => invoke<void>("show_main_window"),
   hideQuickPanel: () => invoke<void>("hide_quick_panel"),
   exitApp: () => invoke<void>("exit_app"),
+  getLanInfo: () => invoke<LanInfoDto>("get_lan_info"),
+  startLanProxy: (port?: number) => invoke<LanInfoDto>("start_lan_proxy", { port }),
+  stopLanProxy: () => invoke<LanInfoDto>("stop_lan_proxy"),
+  openHotspotSettings: () => invoke<void>("open_hotspot_settings"),
+  setLanShareHotspotMode: (enabled: boolean) =>
+    invoke<void>("set_lan_share_hotspot_mode", { enabled }),
 };
 
 export function onLog(cb: (line: string) => void): Promise<() => void> {

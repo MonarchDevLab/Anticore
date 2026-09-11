@@ -41,6 +41,11 @@ Safe-Replace-Exe $cli "$root\dist-portable\Anticore\bin\anticore.exe"
 
 function Safe-Copy {
     param([string]$Src, [string]$Dest)
+    if (Test-Path -LiteralPath $Dest) {
+        if ((Get-FileHash -LiteralPath $Src).Hash -eq (Get-FileHash -LiteralPath $Dest).Hash) {
+            return
+        }
+    }
     Copy-Item -LiteralPath $Src -Destination $Dest -Force -ErrorAction Stop
     if ((Get-FileHash -LiteralPath $Src).Hash -ne (Get-FileHash -LiteralPath $Dest).Hash) {
         throw "Package hash mismatch: $Dest"

@@ -228,7 +228,7 @@ pub fn apply_steps(view: &PacketView, steps: &[Step]) -> StrategyPlan {
                 Step::FakeWrongSeq => {
                     let past_seq = v0.seq().wrapping_sub(10_000);
                     let past_ack = ack_of(&v0).wrapping_sub(66_000);
-                    let fake = build_tcp_segment(&v0, past_seq, v0.payload(), None, Some(past_ack), true, None, window_size);
+                    let fake = build_tcp_segment(&v0, past_seq, v0.payload(), Some(configured_ttl), Some(past_ack), false, None, window_size);
                     fakes.push(fake);
                 }
                 Step::FakeWrongChecksum => {

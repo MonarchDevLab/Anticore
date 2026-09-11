@@ -26,6 +26,8 @@ export default function TrayQuickPanel() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [pps, setPps] = useState(0);
+  const [appVersion, setAppVersion] = useState("");
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const [topError, setTopError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -34,7 +36,22 @@ export default function TrayQuickPanel() {
   const statusRef = useRef(status);
   statusRef.current = status;
 
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+
+  const formatPackets = (n: number) => {
+    if (!n || n <= 0) return "0";
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+    return n.toLocaleString();
+  };
+
+  const formatUptime = (seconds: number) => {
+    if (!seconds || seconds <= 0) return "00:00:00";
+    const h = Math.floor(seconds / 3600).toString().padStart(2, "0");
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  };
 
   // Escape tuşu ile paneli kapat
   useEffect(() => {
@@ -48,9 +65,11 @@ export default function TrayQuickPanel() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Profilleri yükle
+  // Profilleri ve Sürüm Bilgisini Yükle
   useEffect(() => {
     void api.listProfiles().then(setProfiles).catch(() => {});
+    void api.getAppVersion().then(setAppVersion).catch(() => {});
+    void api.checkUpdate().then((info) => setUpdateAvailable(info.has_update)).catch(() => {});
   }, []);
 
   // Periyodik durum sorgulama & PPS hesaplama
@@ -185,7 +204,21 @@ export default function TrayQuickPanel() {
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="font-extrabold tracking-wider text-xs text-paper-bright">ANTICORE</span>
-            <span className="text-[10px] text-paper-faint font-mono font-medium">v0.3.0</span>
+            <span className="text-[10px] text-paper-faint font-mono font-medium">
+              v{appVersion || "0.3.0"}
+            </span>
+            {updateAvailable && (
+              <button
+                onClick={() => {
+                  void api.showMainWindow();
+                  void api.hideQuickPanel();
+                }}
+                title={t("update_modal_new_available")}
+                className="px-1.5 py-0.2 rounded bg-live/20 text-live border border-live/40 text-[9px] font-bold uppercase tracking-wider hover:bg-live/30 cursor-pointer animate-pulse"
+              >
+                {t("qp_update_badge")}
+              </button>
+            )}
           </div>
         </div>
 
@@ -285,7 +318,7 @@ export default function TrayQuickPanel() {
             {running ? t("qp_engine_active") : t("qp_engine_passive")}
           </span>
           <span className="text-[10px] text-paper-muted mt-0.5 font-medium">
-            {running ? `Profil: ${currentProfileObj?.name || selectedProfile}` : "Tıkla ve Güvenle Bağlan"}
+            {running ? `${lang === "tr" ? "Profil" : "Profile"}: ${currentProfileObj?.name || selectedProfile}` : (lang === "tr" ? "Tıkla ve Güvenle Bağlan" : "Click to Connect Safely")}
           </span>
         </button>
       </div>
@@ -294,7 +327,7 @@ export default function TrayQuickPanel() {
       <div className="relative mb-2">
         <div className="flex items-center justify-between text-[10px] text-paper-muted font-bold uppercase tracking-wider mb-1 px-1">
           <span>{t("qp_profile")}</span>
-          <span className="text-paper-faint font-mono">{profiles.length} Hazır</span>
+          <span className="text-paper-faint font-mono">{profiles.length} {lang === "tr" ? "Hazır" : "Ready"}</span>
         </div>
 
         <button
@@ -342,7 +375,7 @@ export default function TrayQuickPanel() {
         )}
       </div>
 
-      {/* ── 4. Mini Telemetri HUD (3 Sütun) ── */}
+      {/* ── 4. Mini Telemetri HUD (3 Sütun - Gerçek Veriler) ── */}
       <div className="grid grid-cols-3 gap-1.5 mb-2">
         <div className="rounded-lg bg-surface-card border border-border-brutal p-2 flex flex-col items-center text-center">
           <span className="text-[9px] text-paper-muted uppercase font-bold tracking-tight">
@@ -355,19 +388,19 @@ export default function TrayQuickPanel() {
 
         <div className="rounded-lg bg-surface-card border border-border-brutal p-2 flex flex-col items-center text-center">
           <span className="text-[9px] text-paper-muted uppercase font-bold tracking-tight">
-            {t("qp_telemetry_bypass")}
+            {t("qp_telemetry_packets")}
           </span>
           <span className="text-xs font-mono font-black text-live mt-0.5">
-            {t("telemetry_unmeasured")}
+            {running ? formatPackets(status?.packets_touched ?? 0) : "0"}
           </span>
         </div>
 
         <div className="rounded-lg bg-surface-card border border-border-brutal p-2 flex flex-col items-center text-center">
           <span className="text-[9px] text-paper-muted uppercase font-bold tracking-tight">
-            {t("qp_telemetry_latency")}
+            {t("qp_telemetry_uptime")}
           </span>
           <span className="text-xs font-mono font-black text-sky mt-0.5">
-            {t("telemetry_unmeasured")}
+            {running ? formatUptime(status?.uptime_sec ?? 0) : "00:00:00"}
           </span>
         </div>
       </div>

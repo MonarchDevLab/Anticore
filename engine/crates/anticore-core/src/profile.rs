@@ -21,21 +21,21 @@ pub fn builtin_profiles() -> Vec<IspProfile> {
         IspProfile {
             id: "turk_telekom",
             name: "Türk Telekom",
-            description: "TTL sahtesi + bayt bazlı sabit parçalama + pencere dışı dizi sahtesi.",
+            description: "TTL sahtesi (TTL=4) + 2 bayt sabit parçalama + sıra sahtesi (Huawei/ZTE DPI uyumlu).",
             steps: vec![
                 Step::FakePacketBefore { ttl: 4 },
-                Step::FragmentTls { mode: SplitMode::Fixed(1) },
+                Step::FragmentTls { mode: SplitMode::Fixed(2) },
                 Step::FakeWrongSeq,
             ],
         },
         IspProfile {
             id: "superonline",
             name: "Superonline",
-            description: "Agresif SNI denetimi; sahte paket + ters sıralı parçalama + hatalı checksum (pasif RST drop note).",
+            description: "TTL sahtesi (TTL=4) + 2 bayt sabit parçalama + sıra sahtesi (Sandvine DPI, Discord ve Roblox garantili).",
             steps: vec![
-                Step::FakePacketBefore { ttl: 3 },
-                Step::FragmentTls { mode: SplitMode::SniMidReverse },
-                Step::FakeWrongChecksum,
+                Step::FakePacketBefore { ttl: 4 },
+                Step::FragmentTls { mode: SplitMode::Fixed(2) },
+                Step::FakeWrongSeq,
             ],
         },
         IspProfile {
@@ -45,43 +45,56 @@ pub fn builtin_profiles() -> Vec<IspProfile> {
             steps: vec![
                 Step::FakePacketBefore { ttl: 4 },
                 Step::FragmentTls { mode: SplitMode::SniMid },
+                Step::FakeWrongSeq,
             ],
         },
         IspProfile {
             id: "vodafone",
             name: "Vodafone",
-            description: "Sahte paket + bayt bazlı sabit parçalama.",
+            description: "TTL sahtesi (TTL=5) + 2 bayt sabit parçalama + sıra sahtesi.",
             steps: vec![
                 Step::FakePacketBefore { ttl: 5 },
                 Step::FragmentTls { mode: SplitMode::Fixed(2) },
+                Step::FakeWrongSeq,
             ],
         },
         IspProfile {
             id: "turkcell",
             name: "Turkcell",
-            description: "SNI orta parçalama + sahte paket + büyük/küçük harf karışımı.",
+            description: "Mobil ve sabit; TTL sahtesi (TTL=3) + 2 bayt parçalama + sıra sahtesi.",
             steps: vec![
                 Step::FakePacketBefore { ttl: 3 },
-                Step::FragmentTls { mode: SplitMode::SniMid },
-                Step::HostCase,
+                Step::FragmentTls { mode: SplitMode::Fixed(2) },
+                Step::FakeWrongSeq,
             ],
         },
         IspProfile {
             id: "kablonet",
             name: "Kablonet (Türksat)",
-            description: "DNS zehirlemesi ve SNI filtreleme; sahte paket (TTL=4) + SNI parçalama.",
+            description: "Türksat ve TTNet omurgası; TTL sahtesi (TTL=4) + 2 bayt parçalama + sıra sahtesi.",
             steps: vec![
                 Step::FakePacketBefore { ttl: 4 },
-                Step::FragmentTls { mode: SplitMode::SniMid },
+                Step::FragmentTls { mode: SplitMode::Fixed(2) },
+                Step::FakeWrongSeq,
+            ],
+        },
+        IspProfile {
+            id: "gaming",
+            name: "Oyun & Düşük Gecikme",
+            description: "Discord ses kanalları, Roblox, Steam ve rekabetçi oyunlar için sıfır ping gecikmeli cerrahi bypass.",
+            steps: vec![
+                Step::FakePacketBefore { ttl: 4 },
+                Step::FragmentTls { mode: SplitMode::Fixed(2) },
             ],
         },
         IspProfile {
             id: "universal",
             name: "Evrensel",
-            description: "Düşük TTL sahte paket + SNI parçalama (tüm sağlayıcılar ve Discord/Roblox için kanıtlanmış kombinasyon).",
+            description: "Düşük TTL sahte paket + 2 bayt parçalama + sıra sahtesi (tüm sağlayıcılar ve Discord/Roblox için kanıtlanmış kombinasyon).",
             steps: vec![
                 Step::FakePacketBefore { ttl: 4 },
-                Step::FragmentTls { mode: SplitMode::SniMid },
+                Step::FragmentTls { mode: SplitMode::Fixed(2) },
+                Step::FakeWrongSeq,
             ],
         },
     ]

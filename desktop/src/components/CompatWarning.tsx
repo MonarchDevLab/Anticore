@@ -14,6 +14,7 @@ export default function CompatWarning() {
   const [dismissed, setDismissed] = useState(false);
   const [cleaning, setCleaning] = useState(false);
   const [cleanSuccess, setCleanSuccess] = useState(false);
+  const [cleanError, setCleanError] = useState<string | null>(null);
 
   const refreshReport = async () => {
     try {
@@ -30,6 +31,7 @@ export default function CompatWarning() {
 
   const handleCleanupLegacy = async () => {
     setCleaning(true);
+    setCleanError(null);
     try {
       await api.cleanupLegacyServices();
       setCleanSuccess(true);
@@ -37,8 +39,9 @@ export default function CompatWarning() {
         await refreshReport();
         setCleaning(false);
       }, 1200);
-    } catch (err) {
+    } catch (err: any) {
       setCleaning(false);
+      setCleanError(typeof err === "string" ? err : (err?.message || "Servisler silinemedi. Yönetici yetkisi gereklidir."));
     }
   };
 
@@ -96,6 +99,7 @@ export default function CompatWarning() {
         ))}
         {vpnNote && <p className="leading-relaxed opacity-90">{vpnNote}</p>}
         <p className="mt-0.5 text-[11px] font-mono opacity-80">{t("settings_compat_desc")}</p>
+        {cleanError && <p className="mt-1 text-[11px] text-alert font-bold bg-alert/15 px-2 py-0.5 rounded border border-alert/30">{cleanError}</p>}
       </div>
 
       {/* Aksiyon: Çakışan Servisleri Temizle Butonu */}

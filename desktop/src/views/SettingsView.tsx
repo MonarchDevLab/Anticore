@@ -413,7 +413,7 @@ export default function SettingsView({
         </div>
       </section>
 
-      {/* Motor Savunma Katmanları */}
+      {/* Çekirdek Savunma Katmanları */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
@@ -437,7 +437,7 @@ export default function SettingsView({
                 <AlertTriangle size={13} className="shrink-0" />
                 <span>
                   {lang === "tr"
-                    ? "Motor çalışırken savunma katmanları kilitlidir. Değiştirmek için önce motoru durdurun."
+                    ? "Çekirdek çalışırken savunma katmanları kilitlidir. Değiştirmek için önce Çekirdeği durdurun."
                     : "Defense layers are locked while the engine is running. Stop the engine first to edit."}
                 </span>
               </p>

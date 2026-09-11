@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, LoaderCircle, Network, RefreshCw, ShieldAlert, ShieldCheck, Wifi } from "lucide-react";
+import { CheckCircle2, LoaderCircle, Network, RefreshCw, RotateCcw, ShieldAlert, ShieldCheck, Wifi, Wrench } from "lucide-react";
 import { api, type AdapterDnsInfo, type DohStatusDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -16,7 +16,7 @@ const KNOWN_SECURE_SERVERS = new Set<string>(DNS_PROVIDERS.map((p) => p.primary)
 export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => void }) {
   const { t, lang } = useI18n();
   const [dns, setDns] = useState<string[] | null>(null);
-  const [dialog, setDialog] = useState<"apply" | "reset" | "discord-repair" | "discord-cache" | null>(null);
+  const [dialog, setDialog] = useState<"apply" | "reset" | "discord-repair" | "discord-cache" | "reset-stack" | null>(null);
   const [busy, setBusy] = useState(false);
   const [provider, setProvider] = useState<(typeof DNS_PROVIDERS)[number]["id"]>("google");
   const [adapters, setAdapters] = useState<AdapterDnsInfo[] | null>(null);
@@ -38,7 +38,26 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
     void api.checkIsAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
   }, []);
 
-  const run = async (kind: "apply" | "reset" | "discord-repair" | "discord-cache") => {
+  const handleFlushRenew = async () => {
+    setBusy(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const res = await api.flushDnsAndRenewAdapters();
+      pushLog(`[+] ${res}`);
+      setSuccessMessage(res);
+      refreshDns();
+      refreshAdapters();
+    } catch (e) {
+      const err = String(e);
+      pushLog(`[!] DNS & Bağdaştırıcı yenileme hatası: ${err}`);
+      setErrorMessage(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const run = async (kind: "apply" | "reset" | "discord-repair" | "discord-cache" | "reset-stack") => {
     setBusy(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -58,6 +77,10 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         setSuccessMessage(res);
       } else if (kind === "discord-cache") {
         const res = await api.clearDiscordCache();
+        pushLog(`[+] ${res}`);
+        setSuccessMessage(res);
+      } else if (kind === "reset-stack") {
+        const res = await api.resetNetworkStack();
         pushLog(`[+] ${res}`);
         setSuccessMessage(res);
       }
@@ -241,6 +264,41 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         </p>
       </section>
 
+      {/* Windows Ağ Yığını & Winsock Onarımı */}
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <Wrench size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("net_stack_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("net_stack_desc")}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2.5 pt-1">
+          <button
+            className="btn btn-primary text-xs"
+            onClick={() => void handleFlushRenew()}
+            disabled={busy}
+          >
+            <RefreshCw size={14} aria-hidden strokeWidth={2} />
+            <span>{t("net_flush_renew_btn")}</span>
+          </button>
+          <button
+            className="btn btn-danger text-xs"
+            onClick={() => setDialog("reset-stack")}
+            disabled={busy}
+          >
+            <RotateCcw size={14} aria-hidden strokeWidth={2} />
+            <span>{t("net_reset_stack_btn")}</span>
+          </button>
+        </div>
+        <p className="text-[11px] text-paper-faint">
+          {t("net_flush_renew_hint")}
+        </p>
+      </section>
+
       {/* Ağ Adaptörleri */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
@@ -384,6 +442,8 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             ? t("net_apply_confirm_title")
             : dialog === "reset"
             ? t("net_reset_confirm_title")
+            : dialog === "reset-stack"
+            ? t("net_reset_stack_confirm_title")
             : dialog === "discord-repair"
             ? (lang === "tr" ? "Discord Güncelleme Onarımı" : "Discord Update Repair")
             : (lang === "tr" ? "Discord Önbellek Temizleme" : "Discord Cache Clear")
@@ -393,6 +453,8 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             ? `${t("net_apply_confirm_body")} (${DNS_PROVIDERS.find((p) => p.id === provider)?.label})`
             : dialog === "reset"
             ? t("net_reset_confirm_body")
+            : dialog === "reset-stack"
+            ? t("net_reset_stack_confirm_body")
             : dialog === "discord-repair"
             ? (lang === "tr"
                 ? "Discord uygulaması geçici olarak kapatılacak, güncelleme kilitleri ve DNS önbelleği temizlenecektir. Devam etmek istiyor musunuz?"
@@ -406,9 +468,11 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             ? t("net_apply_btn")
             : dialog === "reset"
             ? t("net_reset_btn")
+            : dialog === "reset-stack"
+            ? (lang === "tr" ? "Yığını Sıfırla" : "Reset Stack")
             : (lang === "tr" ? "Onayla ve Temizle" : "Confirm and Clean")
         }
-        danger={dialog === "reset" || dialog === "discord-cache"}
+        danger={dialog === "reset" || dialog === "discord-cache" || dialog === "reset-stack"}
         busy={busy}
         onConfirm={() => dialog && void run(dialog)}
         onCancel={() => setDialog(null)}

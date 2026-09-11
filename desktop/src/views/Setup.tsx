@@ -81,15 +81,15 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
             ? [
                 {
                   q: "Servis olarak kurmak ne demek?",
-                  a: "Motor, Windows'un kendi hizmet sistemiyle (arka plan servisi olarak) kaydedilir. Bilgisayarı her açtığınızda otomatik başlar; panel kapalıyken bile koruma sürer.",
+                  a: "Çekirdek, Windows'un kendi hizmet sistemiyle (arka plan servisi olarak) kaydedilir. Bilgisayarı her açtığınızda otomatik başlar; panel kapalıyken bile koruma sürer.",
                 },
                 {
                   q: "Bağımsız çalıştırma ne demek?",
-                  a: "Motor bağımsız arka plan görevi olarak başlar. Paneli kapatsanız da çalışır ama bilgisayar yeniden başlatıldığında otomatik sonlanır.",
+                  a: "Çekirdek bağımsız arka plan görevi olarak başlar. Paneli kapatsanız da çalışır ama bilgisayar yeniden başlatıldığında otomatik sonlanır.",
                 },
                 {
                   q: "İkisini aynı anda kullanabilir miyim?",
-                  a: "Hayır — iki motorun aynı ağ trafiğine müdahale etmesi çakışma yaratır. Uygulama birini başlatmadan önce diğerini durdurmanızı sağlar.",
+                  a: "Hayır — iki Çekirdeğin aynı ağ trafiğine müdahale etmesi çakışma yaratır. Uygulama birini başlatmadan önce diğerini durdurmanızı sağlar.",
                 },
               ]
             : [
@@ -124,7 +124,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
               </div>
               <div className="text-xs text-paper-muted mt-0.5">
                 {lang === "tr"
-                  ? "Windows Servisi kurmak veya arka planda bağımsız motor çalıştırmak için Yönetici yetkisi gereklidir."
+                  ? "Windows Servisi kurmak veya arka planda bağımsız Çekirdek çalıştırmak için Yönetici yetkisi gereklidir."
                   : "Administrator privileges are required to install a Windows Service or run a detached engine."}
               </div>
             </div>
@@ -263,7 +263,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
                   void run(
                     "detached_start",
                     () => api.detachedStart(selected),
-                    `[+] bağımsız motor başladı (profil=${selected})`,
+                    `[+] bağımsız Çekirdek başladı (profil=${selected})`,
                   )
                 }
                 disabled={busy !== null || !status || isAdmin !== true || !profiles.length || status.service_installed}
@@ -281,7 +281,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
             <button
               className="btn btn-danger text-xs"
               onClick={() =>
-                void run("detached_stop", () => api.detachedStop(), "[*] bağımsız motor durduruldu")
+                void run("detached_stop", () => api.detachedStop(), "[*] bağımsız Çekirdek durduruldu")
               }
               disabled={busy !== null || !status || isAdmin !== true}
             >

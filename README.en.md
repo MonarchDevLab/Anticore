@@ -1,15 +1,10 @@
 <div align="center">
 
-```diff
-+  █████╗ ███╗   ██╗████████╗██╗ ██████╗ ██████╗ ██████╗ ███████╗
-+ ██╔══██╗████╗  ██║╚══██╔══╝██║██╔════╝██╔═══██╗██╔══██╗██╔════╝
-+ ███████║██╔██╗ ██║   ██║   ██║██║     ██║   ██║██████╔╝█████╗  
-+ ██╔══██║██║╚██╗██║   ██║   ██║██║     ██║   ██║██╔══██╗██╔════╝  
-+ ██║  ██║██║ ╚████║   ██║   ██║╚██████╗╚██████╔╝██║  ██║███████╗
-+ ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
-```
+<p align="center">
+  <img src="assets/banner.svg" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+</p>
 
-# <picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/desktop/src-tauri/icons/32x32.png"><img alt="Anticore" src="desktop/src-tauri/icons/32x32.png" width="28" height="28" align="center" /></picture> ANTICORE
+# ANTICORE
 
 ### Zero-Loss, High-Performance Open Source DPI Circumvention Suite for Windows
 
@@ -22,21 +17,21 @@
 
 **Next-generation packet manipulation software engineered against ISP censorship and filtering topologies. Runs completely on your local machine without routing traffic through third-party remote servers—preserving 100% of your network speed and ping latency.**
 
-[Downloads](#download-options-v030) • [What Is Anticore?](#what-anticore-is-and-is-not) • [Key Features](#key-features) • [How It Works](#how-it-works) • [Comparison](#comparison-traditional-vpn-vs-goodbyedpi-vs-splitwire-vs-anticore) • [Security & Verification](#security-and-integrity-verification) • [Türkçe Kılavuz](README.md)
+[Downloads](#download-options-v031) • [What Is Anticore?](#what-anticore-is-and-is-not) • [Key Features](#key-features) • [How It Works](#how-it-works) • [Comparison](#comparison-traditional-vpn-vs-goodbyedpi-vs-splitwire-vs-anticore) • [Security & Verification](#security-and-integrity-verification) • [Türkçe Kılavuz](README.md)
 
 </div>
 
 ---
 
-## Download Options (v0.3.0)
+## Download Options (v0.3.1)
 
 All distribution binaries are stripped of developer workstation paths during compilation and digitally signed.
 
 | Package Type | Filename | Size | Download | Intended Use |
 |---|---|:---:|:---:|---|
-| **Portable** | `Anticore_0.3.0_x64-portable.zip` | ~6.2 MB | [Download (.zip)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64-portable.zip) | **No installation.** Extract to any folder or USB stick and run `Anticore.exe` as Administrator. Leaves zero registry or AppData residue. |
-| **Installer (Setup EXE)** | `Anticore_0.3.0_x64-setup.exe` | ~4.3 MB | [Download (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64-setup.exe) | For desktop users requiring Start Menu integration, desktop shortcuts, and built-in automatic updates. |
-| **Enterprise (MSI)** | `Anticore_0.3.0_x64_en-US.msi` | ~6.0 MB | [Download (.msi)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.0_x64_en-US.msi) | Windows Installer MSI for system administrators automating deployment via Active Directory, Intune, or GPO. |
+| **Portable** | `Anticore_0.3.1_x64-portable.zip` | ~6.4 MB | [Download (.zip)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip) | **No installation.** Extract to any folder or USB stick and run `Anticore.exe` as Administrator. Leaves zero registry or AppData residue. |
+| **Installer (Setup EXE)** | `Anticore_0.3.1_x64-setup.exe` | ~4.4 MB | [Download (.exe)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe) | For desktop users requiring Start Menu integration, desktop shortcuts, and built-in automatic updates. |
+| **Enterprise (MSI)** | `Anticore_0.3.1_x64_en-US.msi` | ~6.1 MB | [Download (.msi)](https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi) | Windows Installer MSI for system administrators automating deployment via Active Directory, Intune, or GPO. |
 
 > **System Requirements & Administrator Privileges:** Intercepting and manipulating raw network packets at the Windows kernel level requires the `WinDivert` driver. Running as **Administrator** is technically mandatory. When launched by a standard user, Anticore alerts you and offers a one-click self-elevation restart.
 
@@ -64,20 +59,33 @@ Anticore intervenes strictly during this initial handshake:
 
 ## Key Features
 
-### 1. Dual-Mode Architecture
-- **Simple Mode (Casual Users):** One-click toggle with a high-visibility reactor button. Instant visual status for Discord, Roblox, and targeted services without manual parameter tuning.
-- **Pro Matrix Operational Console (Power Users):** WinDivert L3 kernel ring buffer diagnostics, microsecond packet latency telemetry, real-time PPS throughput sparklines, active strategy chain view, and live terminal event stream.
+### 1. Dual-Mode Interface & 3D Telemetry Visualization
+- **Simple Mode (Casual Users):** One-click toggle powered by a live 3D reactor orb (140 z-sorted particles, gyroscopic orbital rings, and dynamic aura state) for effortless protection.
+- **Pro Matrix & 3D Activity Visualizer:** Inspect real-time network throughput and packet rates (PPS) through an isometric 3D Canvas bar chart with depth shading, microsecond latency metrics, and terminal event logs.
 
-### 2. System Tray Quick Access Cockpit
+### 2. Local Network (LAN) Device Sharing & Hotspot Transit
+- **Protect Mobile & IoT Devices:** Turn your Windows PC into a local anti-censorship gateway.
+- **SOCKS5 & HTTP PAC Proxy:** Built-in proxy service on `0.0.0.0:10808` allowing iPhones, Android phones, tablets, and smart TVs on the same Wi-Fi network to bypass DPI blocks.
+- **Transparent Hotspot NAT Transit:** Intercepts forward/outbound traffic when Windows Mobile Hotspot is active, giving connected devices transparent DPI bypass without requiring root or third-party client apps.
+
+### 3. Windows Network Stack & Winsock Remediation
+- **One-Click Network Recovery:** Built-in diagnostic repair suite for corrupted network adapters, DNS poisoning, and stuck Discord updater loops.
+- **Winsock & IP Reset:** Execute `netsh winsock reset`, `netsh int ip reset`, and `ipconfig /flushdns`, `/release`, `/renew` directly from the UI to restore TCP/IP stacks to factory health.
+
+### 4. Dynamic Blacklist & Community Sync
+- **Zero-Restart Live Sync:** Adding or removing domains updates active kernel memory instantly via `Arc<RwLock<Blacklist>>` without restarting the engine or terminating open connections.
+- **2-Column Responsive Card Grid:** Domain tags, globe icons, hover quick-deletion controls, and category filter pills (TR Mega, Gaming, Media, Social).
+- **Redundant Community Feed:** Live Zapret Turkey hostlist mirror with an offline embedded fallback database.
+
+### 5. Post-Quantum TLS (Kyber) & Surgical Evasion
+- **Kyber / ML-KEM 768 & ECH Support:** Seamlessly parses SNI across TCP MSS boundaries for massive (1500+ bytes) Post-Quantum TLS ClientHello handshakes used in Chrome 124+ and Firefox 128+.
+- **Calibrated ISP Profiles:** Calibrated for Sandvine and Procera DPI hardware with `TTL=4` decoys, 2-byte TLS ClientHello segmentation (`Fixed(2)`), and active TCP TCB socket teardown.
+
+### 6. System Tray Quick Access Cockpit
 - Single click on the taskbar icon reveals a floating, compact (340x460px) cockpit in the corner of your screen.
-- Toggle the engine, switch active profiles, or trigger DNS repairs without restoring the main window.
-- Double-clicking opens the primary interface.
+- Track real live telemetry (PPS, touched packets, uptime) and trigger profile shifts or update checks without restoring the main window.
 
-### 3. Automated DNS Poisoning & Discord Repair
-- Automatically detects and mitigates ISP DNS poisoning where targeted domains are resolved to government block pages (e.g., `195.175.254.2`).
-- Provides one-click configuration for Cloudflare DNS and local Windows DoH (DNS-over-HTTPS) to permanently fix Discord voice RTC dropouts and endless update loops.
-
-### 4. 8 Morphological Hardware Themes
+### 7. 8 Morphological Hardware Themes
 More than simple palette swaps; distinct card geometries, CRT scanlines, and custom typography:
 - **Obsidian Emerald:** Cyber-hardware chassis with neon emerald telemetry (Default).
 - **Amber CRT:** Amber phosphor glow, full-screen scanline overlay, and monospace typography.
@@ -87,6 +95,10 @@ More than simple palette swaps; distinct card geometries, CRT scanlines, and cus
 - **Crimson Hazard:** Tactical military emergency red laser command console.
 - **Amethyst Nebula:** Translucent frosted glass and deep violet nebula backdrop.
 - **Titanium Laboratory:** Clinical light mode, CNC-machined surgical aluminum.
+
+### 8. Built-In Auto-Updater & Changelog
+- Automated GitHub Releases check on launch with silent detection, 1-click update, and browser download fallback.
+- In-app searchable **Changelog & Patch Notes** viewer categorized by features, hotfixes, security, and performance.
 
 ---
 
@@ -107,7 +119,7 @@ More than simple palette swaps; distinct card geometries, CRT scanlines, and cus
 └─────────────────────────────────────────────────────────────┘
            │
      ┌─────┴──────────────────────────────┐
-     │ 2. Decoy Packet (TTL=3)            │ 3. Split Genuine Segments
+     │ 2. Decoy Packet (TTL=3..4)         │ 3. Split Genuine Segments
      ▼                                    ▼
 [ ISP DPI Inspection Box ]        [ Destination Server (Discord) ]
 (Consumed by decoy)               (Reassembles TCP segments)
@@ -131,6 +143,10 @@ More than simple palette swaps; distinct card geometries, CRT scanlines, and cus
 | **Bandwidth Loss** | 50% to 80% loss | Zero loss | Zero loss | **Zero loss (Full Wire Speed)** |
 | **Ping Penalty** | +50 ms to 200 ms | 0 ms | 0 ms | **0 ms (Direct Route)** |
 | **User Interface** | SaaS Client | None (.cmd / CLI) | Basic GUI | **Dual-Mode Cyber-Hardware Panel** |
+| **3D Telemetry & Isometric Graphs** | None | None | None | **Yes (Isometric PPS + 3D Reactor Orb)** |
+| **LAN Sharing (Mobile/Tablet)** | Manual Routing | None | None | **Yes (SOCKS5 + PAC + Hotspot Transit)** |
+| **Network Stack & Winsock Repair** | None | None | None | **One-Click Winsock / TCP-IP / DNS Reset** |
+| **Dynamic Memory Synchronization** | Restart Required | Restart Required | Restart Required | **Instant Memory Sync (Zero Interruption)** |
 | **System Tray** | Yes | None | Partial | **Flyout Quick Cockpit & Background Mode** |
 | **Windows Service** | Partial | Manual `sc` script | None | **Integrated Windows Service Manager** |
 | **Auto DNS & Discord Repair** | None | None | None | **One-Click Poisoning & RTC Fix** |
@@ -149,7 +165,7 @@ dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE1QTRFREEwMDFGNDFFNTMKUldS
 
 Verification command:
 ```powershell
-minisign -Vm Anticore_0.3.0_x64-setup.exe -p anticore.key.pub
+minisign -Vm Anticore_0.3.1_x64-setup.exe -p anticore.key.pub
 ```
 
 For security policies and vulnerability reporting, see [SECURITY.md](SECURITY.md).

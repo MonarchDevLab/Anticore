@@ -21,7 +21,7 @@ interface Props {
 type ModalState = "idle" | "checking" | "up_to_date" | "available" | "installing" | "error";
 
 export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [status, setStatus] = useState<ModalState>("idle");
   const [updateInfo, setUpdateInfo] = useState<UpdateInfoDto | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -149,7 +149,9 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
             <div className="py-2 space-y-3">
               <div className="p-3.5 rounded-xl bg-surface-subtle border border-white/[0.08] space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-paper-muted uppercase">Yeni Sürüm</span>
+                  <span className="text-[10px] font-mono text-paper-muted uppercase">
+                    {lang === "tr" ? "Yeni Sürüm" : "New Version"}
+                  </span>
                   <span className="text-xs font-mono font-bold text-live px-2 py-0.5 rounded bg-live/10 border border-live/20">
                     {updateInfo.latest_version}
                   </span>
@@ -219,12 +221,18 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
                     className="flex items-center gap-1.5 text-[11px] text-paper-muted hover:text-live transition-colors cursor-pointer"
                   >
                     <KeyRound size={12} />
-                    <span>Özel GitHub Yetki Tokenı (Personal Access Token) Tanımla</span>
+                    <span>
+                      {lang === "tr"
+                        ? "Özel GitHub Yetki Tokenı (Personal Access Token) Tanımla"
+                        : "Define Custom GitHub Personal Access Token (PAT)"}
+                    </span>
                   </button>
                 ) : (
                   <div className="space-y-2 mt-2">
                     <label className="text-[10px] text-paper-muted block">
-                      GitHub PAT (repo okuma izinli):
+                      {lang === "tr"
+                        ? "GitHub PAT (repo okuma izinli):"
+                        : "GitHub PAT (read:repo scope):"}
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -238,7 +246,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
                         onClick={handleSaveToken}
                         className="btn btn-secondary text-xs py-1 px-3"
                       >
-                        Kaydet ve Dene
+                        {lang === "tr" ? "Kaydet ve Dene" : "Save & Retry"}
                       </button>
                     </div>
                   </div>
@@ -258,6 +266,16 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
               >
                 <RefreshCw size={13} strokeWidth={2} />
                 <span>{t("update_modal_recheck_btn")}</span>
+              </button>
+            )}
+
+            {status === "error" && updateInfo && (
+              <button
+                onClick={() => void api.openBrowserUrl(updateInfo.download_url || updateInfo.html_url)}
+                className="btn btn-primary text-xs flex items-center gap-1.5"
+              >
+                <Download size={13} strokeWidth={2} />
+                <span>{t("update_modal_download_manual")}</span>
               </button>
             )}
 

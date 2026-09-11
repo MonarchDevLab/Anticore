@@ -20,8 +20,18 @@ pub const MAX_INSPECT_PAYLOAD: usize = 2048;
 
 /// Keep bulk TLS data and control packets outside the user-mode packet loop.
 pub fn capture_filter(steps: &[Step]) -> String {
+    capture_filter_with_options(steps, false)
+}
+
+/// Mobil Etkin Nokta (Hotspot / Forwarding) seçeneğiyle genişletilmiş filtre.
+pub fn capture_filter_with_options(steps: &[Step], allow_forward: bool) -> String {
+    let direction = if allow_forward {
+        "(outbound or forward)"
+    } else {
+        "outbound"
+    };
     let base = format!(
-        "outbound and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80) and tcp.PayloadLength <= {MAX_INSPECT_PAYLOAD}"
+        "{direction} and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80) and tcp.PayloadLength <= {MAX_INSPECT_PAYLOAD}"
     );
     if steps.iter().any(|step| matches!(step, Step::WindowSize { .. })) {
         return base;

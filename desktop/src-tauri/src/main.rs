@@ -2,6 +2,7 @@
 #![windows_subsystem = "windows"]
 
 mod commands;
+pub mod lan_share;
 pub mod net_teardown;
 mod service;
 mod tray;
@@ -14,8 +15,44 @@ fn main() {
         let _ = std::fs::write("panic.log", &msg);
     }));
 
+    // Windows altında yönetici hakları zorunluluğu: uygulama standart
+    // kullanıcı olarak başlatıldıysa kendini UAC ile otomatik yükseltir.
+    #[cfg(windows)]
+    if !commands::is_running_as_admin() {
+        let args: Vec<String> = std::env::args().collect();
+        if !args.iter().any(|a| a == "--no-elevate") {
+            if let Ok(exe) = std::env::current_exe() {
+                let exe_str = exe.to_string_lossy().replace('\'', "''");
+                let forwarded_args: Vec<String> = args
+                    .iter()
+                    .skip(1)
+                    .map(|a| format!("'{}'", a.replace('\'', "''")))
+                    .collect();
+                let arg_list = if forwarded_args.is_empty() {
+                    String::new()
+                } else {
+                    format!("-ArgumentList @({})", forwarded_args.join(", "))
+                };
+                let script = format!(
+                    "try {{ Start-Process -FilePath '{}' {} -Verb RunAs -ErrorAction Stop }} catch {{ exit 1 }}",
+                    exe_str, arg_list
+                );
+                let status = std::process::Command::new("powershell")
+                    .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+                    .status();
+                if let Ok(st) = status {
+                    if st.success() {
+                        // Yeni yönetici örneği tetiklendi; mevcut standart örneği sonlandır.
+                        std::process::exit(0);
+                    }
+                }
+            }
+        }
+    }
+
     match tauri::Builder::default()
         .manage(Engine::new())
+        .manage(lan_share::LanProxyState::new())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
@@ -90,6 +127,8 @@ fn main() {
             commands::dns_leak_test,
             commands::repair_discord_updates,
             commands::clear_discord_cache,
+            commands::flush_dns_and_renew_adapters,
+            commands::reset_network_stack,
             commands::get_adapter_dns_info,
             commands::get_log_file,
             commands::clear_log_file,
@@ -112,6 +151,11 @@ fn main() {
             commands::exit_app,
             tray::get_tray_minimize,
             tray::set_tray_minimize,
+            lan_share::get_lan_info,
+            lan_share::start_lan_proxy,
+            lan_share::stop_lan_proxy,
+            lan_share::open_hotspot_settings,
+            lan_share::set_lan_share_hotspot_mode,
         ])
         .run(tauri::generate_context!())
     {

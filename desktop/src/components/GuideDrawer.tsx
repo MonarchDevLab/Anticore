@@ -45,7 +45,7 @@ export default function GuideDrawer({ open, onClose }: Props) {
     {
       icon: <ArrowRightLeft className="text-paper-muted" size={16} />,
       q: "Passthrough (Doğrudan Akış) ne demek?",
-      a: "Hedef listeniz dışındaki genel internet trafiğinin motordan hiç dokunulmadan, sıfır işlem gecikmesiyle geçtiğini gösterir. Bu sayının hızla artması motorun yalnızca gerektiğinde devreye girdiğini kanıtlar.",
+      a: "Hedef listeniz dışındaki genel internet trafiğinin Çekirdekdan hiç dokunulmadan, sıfır işlem gecikmesiyle geçtiğini gösterir. Bu sayının hızla artması Çekirdeğin yalnızca gerektiğinde devreye girdiğini kanıtlar.",
     },
   ] : [
     {

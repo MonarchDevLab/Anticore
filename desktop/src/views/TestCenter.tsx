@@ -125,7 +125,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
           const current = await api.getStatus().catch(() => null);
           if (!current?.running) {
             await api.startEngine(restoreProfile || compareProfile).catch((e) => {
-              pushLog(`[!] Test sonrası motor geri yüklenemedi: ${String(e)}`);
+              pushLog(`[!] Test sonrası Çekirdek geri yüklenemedi: ${String(e)}`);
             });
           } else if (restoreProfile && current.profile_id !== restoreProfile) {
             await api.stopEngine().catch(() => {});

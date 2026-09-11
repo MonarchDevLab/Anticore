@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Activity, ArrowRight, ArrowUpRight, Clock3, Layers, Shield, TriangleAlert, Wrench } from "lucide-react";
-import { STEP_LABELS, type Status } from "../lib/tauri";
+import { api, STEP_LABELS, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import type { ViewId } from "../components/AppNavigation";
 import { connectionCopy } from "../features/connection/copy";
@@ -36,7 +36,25 @@ export default function Dashboard({ status, running, logs, selectedProfile, onSe
     <div className="connection-workspace">
       <header className="workspace-heading"><div><p className="workspace-eyebrow">{copy.eyebrow}</p><h1>{copy.title}</h1><p>{copy.subtitle}</p></div><span className="workspace-badge"><Shield size={14} />{copy.local}</span></header>
       {data.error && <div className="workspace-notice" role="alert"><TriangleAlert size={18} /><span>{copy.loadError}</span><button onClick={data.reload} disabled={data.loading}>{copy.retry}</button></div>}
-      {data.dns?.poisoned && <div className="workspace-notice" role="alert"><TriangleAlert size={18} /><span>{copy.dnsWarning}</span><button onClick={() => onNavigate("network")}>{copy.dnsInspect}</button></div>}
+      {data.dns?.poisoned && (
+        <div className="workspace-notice" role="alert">
+          <TriangleAlert size={18} />
+          <span>{copy.dnsWarning}</span>
+          <button
+            onClick={async () => {
+              try {
+                await api.autoFixDns();
+                await data.reload();
+              } catch {
+                onNavigate("network");
+              }
+            }}
+          >
+            {lang === "tr" ? "Güvenli DNS Uygula" : "Apply Secure DNS"}
+          </button>
+          <button onClick={() => onNavigate("network")}>{copy.dnsInspect}</button>
+        </div>
+      )}
       <div className="operations-grid">
         <ConnectionConsole known={known} running={running} busy={busy} loading={data.loading} profiles={data.profiles} selectedProfile={selectedProfile} copy={copy} onToggle={onToggle} onSelect={onSelectedProfileChange} onConfigure={() => onNavigate("profiles")} />
         <div className="telemetry-console">
