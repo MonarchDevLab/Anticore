@@ -24,16 +24,36 @@
 
 <br />
 
-<p align="center">
-  <a href="#indirme-seçenekleri-v031"><code>[ Dağıtım Paketleri ]</code></a> &nbsp;
-  <a href="#anticore-nedir-ve-ne-değildir"><code>[ Temel Mimari ]</code></a> &nbsp;
-  <a href="#öne-çıkan-yetenekler"><code>[ Öne Çıkan Yetenekler ]</code></a> &nbsp;
-  <a href="#nasıl-çalışır"><code>[ Çalışma Prensibi ]</code></a> &nbsp;
-  <a href="#türkiye-iss-uyumluluk-ve-atlatma-matrisi"><code>[ İSS Matrisi ]</code></a> &nbsp;
-  <a href="#kapsamlı-karşılaştırma-tablosu"><code>[ Karşılaştırma ]</code></a> &nbsp;
-  <a href="#sıkça-sorulan-sorular-sss"><code>[ SSS ]</code></a> &nbsp;
-  <a href="README.en.md"><code>[ English ]</code></a>
-</p>
+<table width="100%" align="center">
+  <tr>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#indirme-seçenekleri-v031"><font color="#00FF9D"><b>01 &bull; DAĞITIM PAKETLERİ</b></font><br /><sub><font color="#8b949e">v0.3.1 Kurulum &amp; Taşınabilir</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#anticore-nedir-ve-ne-değildir"><font color="#00E5FF"><b>02 &bull; TEMEL MİMARİ</b></font><br /><sub><font color="#8b949e">VPN vs Cerrahi DPI Bypass</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#öne-çıkan-yetenekler"><font color="#FFE600"><b>03 &bull; YETENEKLER</b></font><br /><sub><font color="#8b949e">6 Çekirdek Güvenlik Modülü</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#nasıl-çalışır"><font color="#FF7733"><b>04 &bull; ÇALIŞMA PRENSİBİ</b></font><br /><sub><font color="#8b949e">Paket &amp; Bellek Akış Şeması</font></sub></a>
+    </td>
+  </tr>
+  <tr>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#türkiye-iss-uyumluluk-ve-atlatma-matrisi"><font color="#00FF9D"><b>05 &bull; İSS MATRİSİ</b></font><br /><sub><font color="#8b949e">Superonline, TTNet, TurkNet</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#kapsamlı-karşılaştırma-tablosu"><font color="#00E5FF"><b>06 &bull; KARŞILAŞTIRMA</b></font><br /><sub><font color="#8b949e">GoodbyeDPI &bull; SplitWire &bull; VPN</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#sıkça-sorulan-sorular-sss"><font color="#FFE600"><b>07 &bull; SORU &amp; YANIT (SSS)</b></font><br /><sub><font color="#8b949e">Sıkça Sorulan Sorular</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="README.en.md"><font color="#FFFFFF"><b>EN &bull; ENGLISH GUIDE</b></font><br /><sub><font color="#8b949e">Official Documentation</font></sub></a>
+    </td>
+  </tr>
+</table>
 
 </div>
 

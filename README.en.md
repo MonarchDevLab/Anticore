@@ -24,16 +24,36 @@
 
 <br />
 
-<p align="center">
-  <a href="#download-options-v031"><code>[ Distribution Packages ]</code></a> &nbsp;
-  <a href="#what-anticore-is-and-is-not"><code>[ Core Architecture ]</code></a> &nbsp;
-  <a href="#key-features"><code>[ Key Features ]</code></a> &nbsp;
-  <a href="#how-it-works"><code>[ How It Works ]</code></a> &nbsp;
-  <a href="#isp-compatibility--bypass-matrix"><code>[ ISP Matrix ]</code></a> &nbsp;
-  <a href="#comprehensive-comparison-matrix"><code>[ Comparison ]</code></a> &nbsp;
-  <a href="#frequently-asked-questions-faq"><code>[ FAQ ]</code></a> &nbsp;
-  <a href="README.md"><code>[ Türkçe Kılavuz ]</code></a>
-</p>
+<table width="100%" align="center">
+  <tr>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#download-options-v031"><font color="#00FF9D"><b>01 &bull; DISTRIBUTION PACKAGES</b></font><br /><sub><font color="#8b949e">v0.3.1 Setup &amp; Portable</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#what-anticore-is-and-is-not"><font color="#00E5FF"><b>02 &bull; CORE ARCHITECTURE</b></font><br /><sub><font color="#8b949e">VPN vs Surgical DPI Bypass</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#key-features"><font color="#FFE600"><b>03 &bull; KEY FEATURES</b></font><br /><sub><font color="#8b949e">6 Core Security Engines</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#how-it-works"><font color="#FF7733"><b>04 &bull; HOW IT WORKS</b></font><br /><sub><font color="#8b949e">Packet &amp; Memory Flowchart</font></sub></a>
+    </td>
+  </tr>
+  <tr>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#isp-compatibility--bypass-matrix"><font color="#00FF9D"><b>05 &bull; ISP MATRIX</b></font><br /><sub><font color="#8b949e">Circumvention Capabilities</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#comprehensive-comparison-matrix"><font color="#00E5FF"><b>06 &bull; COMPARISON</b></font><br /><sub><font color="#8b949e">GoodbyeDPI &bull; SplitWire &bull; VPN</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="#frequently-asked-questions-faq"><font color="#FFE600"><b>07 &bull; FAQ &amp; HELP</b></font><br /><sub><font color="#8b949e">Frequently Asked Questions</font></sub></a>
+    </td>
+    <td width="250" align="center" bgcolor="#0d1117">
+      <a href="README.md"><font color="#FFFFFF"><b>TR &bull; TÜRKÇE KILAVUZ</b></font><br /><sub><font color="#8b949e">Ana Dökümantasyona Geç</font></sub></a>
+    </td>
+  </tr>
+</table>
 
 </div>
 
