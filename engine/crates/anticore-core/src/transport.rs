@@ -1,7 +1,7 @@
 //! Platform-bağımsız ağ taşıyıcı (transport) arayüzü ve ortak veri tipleri.
 
 /// Taşınan her bir ham pakete ait platform-özgü meta veri.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct TransportMeta {
     /// İşletim sistemi / netfilter kuyruk paket tanıtıcısı (örn. Linux NFQUEUE id).
     pub packet_id: u64,
@@ -11,6 +11,20 @@ pub struct TransportMeta {
     pub mark: u32,
     /// Ağ arabirim indeksi (ifindex).
     pub interface_index: u32,
+    /// Platform-özel ham adres tamponu (örn. Windows WinDivertAddress).
+    pub opaque: [u8; 80],
+}
+
+impl Default for TransportMeta {
+    fn default() -> Self {
+        Self {
+            packet_id: 0,
+            inbound: false,
+            mark: 0,
+            interface_index: 0,
+            opaque: [0u8; 80],
+        }
+    }
 }
 
 /// Çekirdek kuyruğundaki pakete verilecek nihaî karar.

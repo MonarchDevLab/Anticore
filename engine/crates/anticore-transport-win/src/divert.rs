@@ -19,8 +19,16 @@ pub struct WindivertAddress {
 }
 
 impl WindivertAddress {
-    fn zeroed() -> Self {
+    pub fn zeroed() -> Self {
         Self { _data: [0u8; 80] }
+    }
+
+    pub fn to_bytes(&self) -> [u8; 80] {
+        self._data
+    }
+
+    pub fn from_bytes(bytes: &[u8; 80]) -> Self {
+        Self { _data: *bytes }
     }
 }
 
@@ -194,6 +202,33 @@ impl WinDivert {
 
 impl Drop for WinDivert {
     fn drop(&mut self) {
+        self.close_once();
+    }
+}
+
+impl anticore_core::transport::PacketTransport for WinDivert {
+    fn recv(&self, buf: &mut [u8]) -> Option<(usize, anticore_core::transport::TransportMeta)> {
+        self.recv(buf).map(|(n, addr)| {
+            let mut meta = anticore_core::transport::TransportMeta::default();
+            meta.opaque = addr.to_bytes();
+            (n, meta)
+        })
+    }
+
+    fn send(&self, raw: &[u8], meta: &anticore_core::transport::TransportMeta) -> Result<(), String> {
+        let addr = WindivertAddress::from_bytes(&meta.opaque);
+        if self.send(raw, &addr) {
+            Ok(())
+        } else {
+            Err("WinDivert send basarisiz".into())
+        }
+    }
+
+    fn set_verdict(&self, _id: u64, _verdict: anticore_core::transport::TransportVerdict) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn close(&self) {
         self.close_once();
     }
 }
