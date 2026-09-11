@@ -58,14 +58,6 @@ jobs:
         run: cargo test --workspace
         working-directory: engine
 
-      - name: Masaüstü backend testleri
-        run: cargo test
-        working-directory: desktop/src-tauri
-
-      - name: Frontend testleri
-        run: npm test
-        working-directory: desktop
-
       - name: Motor derle (release)
         shell: bash
         run: |
@@ -75,6 +67,14 @@ jobs:
             cp target/release/anticore target/release/anticore.exe
           fi
         working-directory: engine
+
+      - name: Masaüstü backend testleri
+        run: cargo test
+        working-directory: desktop/src-tauri
+
+      - name: Frontend testleri
+        run: npm test
+        working-directory: desktop
 
       - name: Derle ve yayınla
         uses: tauri-apps/tauri-action@v0
@@ -109,16 +109,7 @@ jobs:
           Copy-Item "vendor/windows/WinDivert64.sys" "$pDir/bin/WinDivert64.sys" -Force
           Copy-Item "vendor/windows/WebView2Loader.dll" "$pDir/WebView2Loader.dll" -Force
 
-          $readme = @"
-=====================================================
-ANTICORE - Portable (Kurulumsuz) Sürüm
-Sıfır Hız Kaybı ile DPI Atlatma
-=====================================================
-Kullanım:
-1. 'Anticore.exe' dosyasına sağ tıklayıp 'Yönetici olarak çalıştır'ı seçin.
-2. Başlat butonuna basın.
-=====================================================
-"@
+          $readme = "=====================================================`r`nANTICORE - Portable (Kurulumsuz) Surum`r`nSifir Hiz Kaybi ile DPI Atlatma`r`n=====================================================`r`nKullanim:`r`n1. 'Anticore.exe' dosyasina sag tiklayip 'Yonetici olarak calistir'i secin.`r`n2. Baslat butonuna basin.`r`n====================================================="
           Set-Content -Path "$pDir/README.txt" -Value $readme -Encoding UTF8
 
           $zipPath = "dist-portable/Anticore_${ver}_x64-portable.zip"

@@ -57,7 +57,7 @@ impl UtunDevice {
             return Err(format!("utun CTLIOCGINFO ioctl başarısız: {}", std::io::Error::last_os_error()));
         }
 
-        let mut sc = SockAddrCtl {
+        let sc = SockAddrCtl {
             sc_len: std::mem::size_of::<SockAddrCtl>() as u8,
             sc_family: libc::AF_SYSTEM as u8,
             ss_sysaddr: 2, // AF_SYS_CONTROL

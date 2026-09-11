@@ -29,14 +29,16 @@ pub mod stub {
         fn recv(&self, _buf: &mut [u8]) -> Option<(usize, TransportMeta)> {
             None
         }
-        fn send(&self, _buf: &[u8], _meta: &TransportMeta) -> bool {
-            false
+        fn send(&self, _buf: &[u8], _meta: &TransportMeta) -> Result<(), String> {
+            Err("WinDivert non-windows üzerinde desteklenmez".into())
         }
-        fn set_verdict(&self, _meta: &TransportMeta, _verdict: TransportVerdict) -> bool {
-            false
+        fn set_verdict(&self, _id: u64, _verdict: TransportVerdict) -> Result<(), String> {
+            Err("WinDivert non-windows üzerinde desteklenmez".into())
         }
+        fn close(&self) {}
     }
 }
 
 #[cfg(not(windows))]
 pub use stub::*;
+

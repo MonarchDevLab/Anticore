@@ -41,6 +41,15 @@ jobs:
         run: cargo test --workspace
         working-directory: engine
 
+      - name: Motor derle (Tauri kaynak bagimliligi)
+        shell: bash
+        run: |
+          cargo build --release --workspace
+          if [ -f "target/release/anticore" ]; then
+            cp target/release/anticore target/release/anticore.exe
+          fi
+        working-directory: engine
+
       - name: Masaustu backend testleri
         run: cargo test
         working-directory: desktop/src-tauri
