@@ -6,14 +6,14 @@
 
 # ANTICORE
 
-### Windows İçin Sıfır Hız Kayıplı Açık Kaynak DPI Aşma ve Ağ Özgürlüğü Motoru
+### Windows ve macOS İçin Sıfır Hız Kayıplı Açık Kaynak DPI Aşma ve Ağ Özgürlüğü Motoru
 
 [![Sürüm](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=20ffa0&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![İndirmeler](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=20f2ff&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Çekirdek](https://img.shields.io/badge/Çekirdek-Rust%20%2B%20WinDivert-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Çekirdek](https://img.shields.io/badge/Çekirdek-WinDivert%20%2B%20macOS%20UTUN-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Arayüz](https://img.shields.io/badge/Arayüz-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Testler](https://img.shields.io/badge/Testler-52%20Geçti-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Testler](https://img.shields.io/badge/Testler-53%20Geçti-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Sıfır Sızıntı](https://img.shields.io/badge/Muhafız-Sıfır%20Sızıntı%20PASS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Doğrulama](https://img.shields.io/badge/İmza-Minisign%20Doğrulamalı-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Lisans](https://img.shields.io/badge/Lisans-MIT-FFFFFF?style=for-the-badge&labelColor=08090D)](LICENSE)
@@ -142,6 +142,85 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
   </tbody>
 </table>
 
+<br />
+
+### macOS Dağıtım İstasyonu (v0.3.1)
+
+macOS (11.0 Big Sur ve üzeri • Apple Silicon M1/M2/M3/M4 & Intel x86_64) için yerel `utun` + `pfctl` motoru ve üst menü çubuğu Hızlı Panel (`quick-panel`) paketleri:
+
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/01-MACOS_DMG-20ffa0?style=for-the-badge&labelColor=08090D" alt="macOS DMG" /><br /><br />
+        <b>Disk Kalıbı Yükleyici</b><br />
+        <sub>Sürükle-Bırak • Uygulamalar Klasörü</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/02-MEN%C3%9C_%C3%87UBU%C4%9EU_APP-20f2ff?style=for-the-badge&labelColor=08090D" alt="Menu Bar App" /><br /><br />
+        <b>Hızlı Panel Masaüstü</b><br />
+        <sub>Üst Menü Çubuğu • Hafif UI</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/03-CLI_&_DAEMON-FFE600?style=for-the-badge&labelColor=08090D" alt="CLI Daemon" /><br /><br />
+        <b>Terminal &amp; Servis</b><br />
+        <sub>LaunchDaemon • Arka Plan Motoru</sub>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center" valign="top">
+        Standart Apple disk kalıbı (.dmg). Açıp <code>Anticore.app</code> dosyasını Uygulamalar (Applications) klasörüne bırakın.
+      </td>
+      <td align="center" valign="top">
+        macOS üst menü çubuğuna yerleşen, tek tıkla açılan 340x460px hafif taktik komuta paneli.
+      </td>
+      <td align="center" valign="top">
+        Arayüzsüz çalışan bağımsız CLI ikilisi ve sistem başlangıcında otomatik çalışan LaunchDaemon servisi.
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <code>✓ Universal Binary (ARM64/x64)</code>
+      </td>
+      <td align="center" valign="middle">
+        <code>✓ Menü Çubuğu Otomatik Hizalama</code>
+      </td>
+      <td align="center" valign="middle">
+        <code>✓ LaunchDaemon launchctl Desteği</code>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/INDIR_.DMG-Universal-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir DMG" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/INDIR_.APP-Universal-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir APP" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/INDIR_CLI-Tarball-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir CLI" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-macOS_11.0%2B_%E2%80%A2_M1%2FM2%2FM3%2FM4-20ffa0?style=flat-square&labelColor=08090D" alt="macOS 11+" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-MENU_BAR_%E2%80%A2_UTUN_%2B_PF-20f2ff?style=flat-square&labelColor=08090D" alt="Menu Bar" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/M%C4%B0MAR%C4%B0-CLI_%E2%80%A2_ROOT_LAUNCHD-FFE600?style=flat-square&labelColor=08090D" alt="LaunchDaemon" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center" bgcolor="#161b22" colspan="3">
+        <code>sudo ./scripts/macos-install-daemon.sh</code> &nbsp;|&nbsp; <code>./scripts/macos-package.sh</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
 <details>
 <summary><b>SHA-256 Paket Bütünlük Özetleri (Tıklayıp Genişletin)</b></summary>
 <br />
@@ -161,8 +240,9 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 </details>
 
 > [!IMPORTANT]
-> **Teknik Zorunluluk — Yönetici İzni (Administrator Privilege):**
-> Windows ağ kartından geçen ham ağ paketlerini çekirdek katmanında dinlemek ve manipüle etmek için açık kaynaklı `WinDivert` çekirdek sürücüsü kullanılır. Bu nedenle uygulamanın **Yönetici Olarak Çalıştırılması** gereklidir. Standart kullanıcı olarak başlatıldığında Anticore sizi uyarır ve tek tıkla kendini yetkili modda yeniden başlatabilir.
+> **Teknik Zorunluluk — Yönetici ve Root İzni (Administrator / Root Privilege):**
+> - **Windows:** Ağ kartından geçen ham paketleri çekirdek katmanında yakalamak için `WinDivert` sürücüsü kullanılır. Bu nedenle uygulamanın **Yönetici Olarak Çalıştırılması** gereklidir. Standart kullanıcı olarak başlatıldığında Anticore sizi uyarır ve tek tıkla yetkili modda yeniden başlar.
+> - **macOS:** Paketleri kullanıcı alanında yakalamak ve yönlendirmek için `utun` BSD arayüzü ve `pfctl` paket filtresi kullanılır. Bu sistem arabirimleri `root` (sudo) yetkisi gerektirir. CLI motoru veya LaunchDaemon arka plan servisi `sudo` ile başlatılmalıdır.
 
 ---
 

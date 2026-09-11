@@ -6,14 +6,14 @@
 
 # ANTICORE
 
-### Zero-Loss, High-Performance Open Source DPI Circumvention Suite for Windows
+### Zero-Loss, High-Performance Open Source DPI Circumvention Suite for Windows & macOS
 
 [![Version](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=20ffa0&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=20f2ff&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20x64-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Core](https://img.shields.io/badge/Core-Rust%20%2B%20WinDivert-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Core](https://img.shields.io/badge/Core-WinDivert%20%2B%20macOS%20UTUN-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![UI](https://img.shields.io/badge/UI-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Tests](https://img.shields.io/badge/Tests-52%20Passed-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Tests](https://img.shields.io/badge/Tests-53%20Passed-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Zero Leakage](https://img.shields.io/badge/Guard-Zero%20Leakage%20PASS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Verification](https://img.shields.io/badge/Signed-Minisign%20Verified-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![License](https://img.shields.io/badge/License-MIT-FFFFFF?style=for-the-badge&labelColor=08090D)](LICENSE)
@@ -142,6 +142,85 @@ All distribution binaries are built cleanly, stripped of developer workstation p
   </tbody>
 </table>
 
+<br />
+
+### macOS Distribution & Setup (v0.3.1)
+
+Native `utun` + `pfctl` engine and top menu bar Quick Panel (`quick-panel`) packages for macOS (11.0 Big Sur and newer • Apple Silicon M1/M2/M3/M4 & Intel x86_64):
+
+<table width="100%" align="center">
+  <thead>
+    <tr>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/01-MACOS_DMG-20ffa0?style=for-the-badge&labelColor=08090D" alt="macOS DMG" /><br /><br />
+        <b>Disk Image Installer</b><br />
+        <sub>Drag-and-Drop • Applications Folder</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/02-MENU_BAR_APP-20f2ff?style=for-the-badge&labelColor=08090D" alt="Menu Bar App" /><br /><br />
+        <b>Quick Panel Desktop</b><br />
+        <sub>Top Menu Bar • Lightweight UI</sub>
+      </th>
+      <th width="33.3%" align="center">
+        <img src="https://img.shields.io/badge/03-CLI_&_DAEMON-FFE600?style=for-the-badge&labelColor=08090D" alt="CLI Daemon" /><br /><br />
+        <b>Terminal &amp; Service</b><br />
+        <sub>LaunchDaemon • Background Engine</sub>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center" valign="top">
+        Standard Apple disk image (.dmg). Open and drag <code>Anticore.app</code> directly into your Applications directory.
+      </td>
+      <td align="center" valign="top">
+        Lightweight tactical 340x460px panel anchored directly beneath the macOS top menu bar icon.
+      </td>
+      <td align="center" valign="top">
+        Headless standalone CLI binary and system background LaunchDaemon service.
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <code>✓ Universal Binary (ARM64/x64)</code>
+      </td>
+      <td align="center" valign="middle">
+        <code>✓ Menu Bar Auto-Docking</code>
+      </td>
+      <td align="center" valign="middle">
+        <code>✓ LaunchDaemon launchctl Support</code>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-Universal-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download DMG" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/DOWNLOAD_.APP-Universal-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download APP" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/DOWNLOAD_CLI-Tarball-FFE600?style=for-the-badge&labelColor=08090D" alt="Download CLI" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/ARCH-macOS_11.0%2B_%E2%80%A2_M1%2FM2%2FM3%2FM4-20ffa0?style=flat-square&labelColor=08090D" alt="macOS 11+" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/ARCH-MENU_BAR_%E2%80%A2_UTUN_%2B_PF-20f2ff?style=flat-square&labelColor=08090D" alt="Menu Bar" />
+      </td>
+      <td align="center" valign="middle">
+        <img src="https://img.shields.io/badge/ARCH-CLI_%E2%80%A2_ROOT_LAUNCHD-FFE600?style=flat-square&labelColor=08090D" alt="LaunchDaemon" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center" bgcolor="#161b22" colspan="3">
+        <code>sudo ./scripts/macos-install-daemon.sh</code> &nbsp;|&nbsp; <code>./scripts/macos-package.sh</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
 <details>
 <summary><b>SHA-256 Checksums & Package Integrity (Click to Expand)</b></summary>
 <br />
@@ -161,8 +240,9 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 </details>
 
 > [!IMPORTANT]
-> **Technical Requirement — Administrator Privileges:**
-> Intercepting and modifying raw IP packets at the kernel level requires the `WinDivert` driver. Running as **Administrator** is technically required. When launched by a standard user, Anticore alerts you and provides one-click self-elevation.
+> **Technical Requirement — Administrator and Root Privileges:**
+> - **Windows:** Intercepting and modifying raw IP packets at the kernel level requires the `WinDivert` driver. Running as **Administrator** is technically required. When launched by a standard user, Anticore alerts you and provides one-click self-elevation.
+> - **macOS:** Capturing and redirecting packets in userspace requires the `utun` BSD interface and the `pfctl` packet filter. These kernel/network interfaces require `root` (sudo) privileges. The CLI engine or LaunchDaemon daemon service must be executed with `sudo`.
 
 ---
 
