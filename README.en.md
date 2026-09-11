@@ -380,7 +380,8 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Fake TTL=4 • 2-Byte Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-100%25_ACTIVE-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Active" /><br />
+        <b><font color="#00FF9D">Full Egress</font></b>
       </td>
     </tr>
     <tr>
@@ -401,7 +402,8 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>SNI Splitting • DoH Resolver</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-100%25_ACTIVE-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Active" /><br />
+        <b><font color="#00FF9D">Full Egress</font></b>
       </td>
     </tr>
     <tr>
@@ -422,7 +424,8 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Decoy Packet • RST Dropping</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-100%25_ACTIVE-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Active" /><br />
+        <b><font color="#00FF9D">Full Egress</font></b>
       </td>
     </tr>
     <tr>
@@ -443,7 +446,8 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>SNI Splitting • QUIC Downgrade</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-100%25_ACTIVE-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Active" /><br />
+        <b><font color="#00FF9D">Full Egress</font></b>
       </td>
     </tr>
     <tr>
@@ -464,7 +468,8 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>DoH Resolver • Standard Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-100%25_ACTIVE-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Active" /><br />
+        <b><font color="#00FF9D">Full Egress</font></b>
       </td>
     </tr>
     <tr>
@@ -485,7 +490,8 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
         <sub>Adaptive to Transit Carrier</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Bypass-100%25_Active-20ffa0?style=flat-square&labelColor=0d1117" alt="100% Active" />
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-100%25_ACTIVE-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Active" /><br />
+        <b><font color="#00FF9D">Full Egress</font></b>
       </td>
     </tr>
   </tbody>
