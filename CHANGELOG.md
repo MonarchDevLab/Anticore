@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.1] - 2026-09-11
 
 ### Added
+- **macOS Native Engine (UTUN + PFCTL):** Sürücüsüz Userspace TUN (`utun`) ve paket filtre (`pfctl`) anchor yönlendirme motoru (`anticore-transport-macos`), çekirdek uzantısı (KEXT) gerektirmeden tam hat hızında çalışır.
+- **Separated Apple Silicon & Intel macOS Packages:** Apple Silicon (`aarch64-apple-darwin` — M1/M2/M3/M4/M5) ve Intel (`x86_64-apple-darwin` — Core i5/i7/i9/Xeon) için bağımsız derlenmiş disk kalıpları (`Anticore_0.3.1_aarch64.dmg` & `Anticore_0.3.1_x64.dmg`), `.app.tar.gz` paketleri ve bağımsız CLI daemon arşivleri.
+- **macOS Menu Bar Quick Panel (Tray Flyout):** Üst menü çubuğuna kenetlenen, tek tıkla profil değişimi ve canlı telemetri sunan 340x460px taktik komuta paneli ve yeni sürüm uyarı şeridi.
+- **macOS Background LaunchDaemon:** Sistem başlangıcında sıfır arayüzle çalışan bağımsız servis yapılandırması (`com.monolithworks.anticore.plist`) ve otomatik kurulum betiği (`scripts/macos-install-daemon.sh`).
+- **macOS Update Notifications & Architecture Matching:** Yeni sürüm tespitinde yerel macOS Bildirim Merkezi (Notification Center) sesli uyarısı ve kullanıcının Mac çipine (ARM64 / Intel) göre otomatik DMG indirme eşleştirmesi.
+- **Cross-Platform CI/CD Pipeline:** Windows x64, macOS Apple Silicon ve macOS Intel için 3'lü GitHub Actions derleme, test ve dağıtım matrisi.
 - **In-App Auto Updater:** Direct GitHub Releases integration silently checking for new versions on startup, with 1-click update, download progress, and browser fallback.
 - **3D Isometric Activity Visualizer:** Real-time network throughput and PPS (packets per second) visualized via custom Canvas-based isometric 3D bar chart (`ActivityChart3D`) featuring dynamic face shading, depth projection, and live reactor pulse.
 - **Live Status Orb:** Interactive reactor state in the control console with rotating dual satellites, 140 3D z-sorted particles, gyroscopic orbital rings, and pulsing aura when running, and calm static crimson glow when stopped.

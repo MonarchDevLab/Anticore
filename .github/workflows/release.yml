@@ -174,10 +174,5 @@ jobs:
           tar_name="anticore-cli-macos-${arch}-${ver}.tar.gz"
           tar -czf "$tar_name" -C "$pDir" anticore-cli macos-install-daemon.sh
           gh release upload "$ref" "$tar_name" --clobber
-
-          if [ "$arch" == "arm64" ]; then
-            cp "$tar_name" "anticore-cli-macos-${ver}.tar.gz"
-            gh release upload "$ref" "anticore-cli-macos-${ver}.tar.gz" --clobber
-          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

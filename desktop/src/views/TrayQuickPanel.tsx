@@ -13,6 +13,7 @@ import {
   LoaderCircle,
   Check,
   Radio,
+  Download,
 } from "lucide-react";
 import { api, onStatusChange, type Profile, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
@@ -28,6 +29,7 @@ export default function TrayQuickPanel() {
   const [pps, setPps] = useState(0);
   const [appVersion, setAppVersion] = useState("");
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<{ version: string; downloadUrl?: string | null } | null>(null);
   const [topError, setTopError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -69,7 +71,12 @@ export default function TrayQuickPanel() {
   useEffect(() => {
     void api.listProfiles().then(setProfiles).catch(() => {});
     void api.getAppVersion().then(setAppVersion).catch(() => {});
-    void api.checkUpdate().then((info) => setUpdateAvailable(info.has_update)).catch(() => {});
+    void api.checkUpdate().then((info) => {
+      if (info.has_update) {
+        setUpdateAvailable(true);
+        setUpdateInfo({ version: info.latest_version, downloadUrl: info.download_url });
+      }
+    }).catch(() => {});
   }, []);
 
   // Periyodik durum sorgulama & PPS hesaplama
@@ -249,6 +256,43 @@ export default function TrayQuickPanel() {
           </button>
         </div>
       </div>
+
+      {/* ── Güncelleme Bildirim Kartı (macOS Menü Çubuğu & Taktik Panel) ── */}
+      {updateAvailable && updateInfo && (
+        <div className="my-1.5 p-2.5 rounded-xl bg-live/15 border border-live/35 flex items-center justify-between gap-2 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1 rounded-md bg-live/25 text-live shrink-0">
+              <Download size={13} className="animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-extrabold text-live uppercase tracking-wider">
+                  {lang === "tr" ? "Yeni Sürüm" : "New Update"}
+                </span>
+                <span className="text-[10px] font-mono font-bold text-paper-bright">
+                  {updateInfo.version}
+                </span>
+              </div>
+              <p className="text-[9px] text-paper-muted truncate">
+                {lang === "tr" ? "macOS & Windows paketi hazır" : "macOS & Windows package ready"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (updateInfo.downloadUrl) {
+                void api.openBrowserUrl(updateInfo.downloadUrl);
+              } else {
+                void api.showMainWindow();
+              }
+              void api.hideQuickPanel();
+            }}
+            className="px-2.5 py-1 rounded-lg bg-live text-black font-bold text-[10px] hover:bg-live/90 transition-all shrink-0 cursor-pointer shadow-sm"
+          >
+            {lang === "tr" ? "İndir" : "Download"}
+          </button>
+        </div>
+      )}
 
       {/* ── Hata / Bildirim Bildirim Şeridi ── */}
       {topError && (

@@ -139,6 +139,7 @@ fn main() {
             commands::get_doh_status,
             commands::factory_reset,
             commands::check_update,
+            commands::send_system_notification,
             commands::fetch_community_blacklist,
             commands::get_app_version,
             commands::open_browser_url,

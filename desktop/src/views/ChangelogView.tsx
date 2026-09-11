@@ -42,6 +42,26 @@ const RELEASES: ReleaseEntry[] = [
     changes: [
       {
         type: "feature",
+        textTr: "macOS Yerel Motoru (UTUN & PFCTL): KEXT uzantısı gerektirmeden Userspace TUN ve Paket Filtresi (PF) ile tam hat hızında DPI atlatma desteği eklendi.",
+        textEn: "macOS Native Engine (UTUN & PFCTL): Driverless Userspace TUN and Packet Filter anchor redirection for native DPI evasion without kernel extensions.",
+      },
+      {
+        type: "feature",
+        textTr: "Ayrıştırılmış Apple Silicon (ARM64) & Intel (x64) Paketleri: Modern M serisi Mac'ler ve Intel Mac'ler için optimize edilmiş bağımsız DMG ve App kurulum kalıpları sunuldu.",
+        textEn: "Dedicated Apple Silicon & Intel Packages: Separate, optimized DMG installers and App bundles for both ARM64 (M1-M5) and Intel (x86_64) Mac platforms.",
+      },
+      {
+        type: "feature",
+        textTr: "macOS Menü Çubuğu Paneli & Bildirim Merkezi: Üst menü çubuğuna kenetlenen taktik Hızlı Panel ve yeni sürüm çıktığında çalışan yerel sesli bildirimler.",
+        textEn: "macOS Menu Bar Quick Panel & Notifications: Compact tactical flyout docked to the menu bar with native Notification Center sound alerts on new updates.",
+      },
+      {
+        type: "feature",
+        textTr: "macOS Arka Plan LaunchDaemon: Arayüzsüz arka plan çalıştırma için sistem düzeyinde LaunchDaemon servisi ve tek komutla kurulum betiği.",
+        textEn: "macOS Background LaunchDaemon: System-level background daemon configuration and automated one-command installation script.",
+      },
+      {
+        type: "feature",
         textTr: "Uygulama İçi Otomatik Güncelleme: GitHub Releases entegrasyonu ile yeni sürümler anında açılışta algılanır ve tek tıkla güncellenir.",
         textEn: "In-App Auto Updater: Direct GitHub Releases integration silently detects new updates on startup with 1-click update.",
       },

@@ -237,6 +237,8 @@ export const api = {
   resetNetworkStack: () => invoke<string>("reset_network_stack"),
   checkUpdate: (repoOverride?: string, tokenOverride?: string) =>
     invoke<UpdateInfoDto>("check_update", { repoOverride, tokenOverride }),
+  sendSystemNotification: (title: string, subtitle?: string, body?: string) =>
+    invoke<void>("send_system_notification", { title, subtitle, body: body || "" }),
   fetchCommunityBlacklist: (sourceUrl?: string) =>
     invoke<number>("fetch_community_blacklist", { sourceUrl }),
   getAppVersion: () => invoke<string>("get_app_version"),

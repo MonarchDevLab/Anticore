@@ -22,6 +22,15 @@ node_modules/
 *.tmp
 *.old
 
+# macOS ve işletim sistemi kalıntıları
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 # Yerel çalışma ve teşhis kayıtları
 .ai/
 

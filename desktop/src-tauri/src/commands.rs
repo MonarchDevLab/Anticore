@@ -195,12 +195,15 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
         candidates.push(PathBuf::from("/usr/local/bin/anticore"));
         candidates.push(PathBuf::from("/opt/homebrew/bin/anticore"));
         candidates.push(PathBuf::from("/Applications/Anticore.app/Contents/MacOS/anticore-cli"));
+        candidates.push(PathBuf::from("/Applications/Anticore.app/Contents/Resources/anticore-cli"));
     }
     for rel in [
         "anticore-cli.exe",
         "anticore-cli",
         "bin/anticore.exe",
         "bin/anticore",
+        "../Resources/anticore-cli",
+        "../Resources/anticore-cli.exe",
         "engine/target/release/anticore.exe",
         "engine/target/release/anticore",
         "dist/anticore-cli.exe",
@@ -1944,13 +1947,66 @@ pub fn check_update(
 
     let latest_tag = parsed.tag_name.unwrap_or_default();
     let has_update = is_newer_version(current_ver, &latest_tag);
-    let download_url = parsed
-        .assets
-        .iter()
-        .find(|a| {
-            a.name.ends_with(".exe") || a.name.ends_with(".zip") || a.name.ends_with(".msi")
-        })
-        .map(|a| a.browser_download_url.clone());
+
+    // Platform ve donanım mimarisine duyarlı indirme paketi eşleştirme
+    let download_url = {
+        #[cfg(target_os = "macos")]
+        {
+            #[cfg(target_arch = "aarch64")]
+            {
+                // Apple Silicon (ARM64) macOS
+                parsed
+                    .assets
+                    .iter()
+                    .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg"))
+                    .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".dmg")))
+                    .or_else(|| parsed.assets.iter().find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
+                    .map(|a| a.browser_download_url.clone())
+            }
+            #[cfg(not(target_arch = "aarch64"))]
+            {
+                // Intel (x86_64) macOS
+                parsed
+                    .assets
+                    .iter()
+                    .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg"))
+                    .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".dmg")))
+                    .or_else(|| parsed.assets.iter().find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
+                    .map(|a| a.browser_download_url.clone())
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            // Windows
+            parsed
+                .assets
+                .iter()
+                .find(|a| a.name.ends_with("-setup.exe"))
+                .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".exe")))
+                .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".zip")))
+                .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".msi")))
+                .map(|a| a.browser_download_url.clone())
+        }
+    };
+
+    // macOS kullanıcıları için yerel Apple Notification Center sesli bildirimi
+    #[cfg(target_os = "macos")]
+    if has_update {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static MACOS_UPDATE_NOTIFIED: AtomicBool = AtomicBool::new(false);
+        if !MACOS_UPDATE_NOTIFIED.swap(true, Ordering::SeqCst) {
+            let release_title = parsed.name.as_deref().unwrap_or("Yeni Sürüm");
+            let script = format!(
+                "display notification \"Anticore {} hazır! İndirmek veya güncellemek için tıklayın.\" with title \"Anticore\" subtitle \"{}\" sound name \"default\"",
+                latest_tag,
+                release_title.replace('\"', "\\\"")
+            );
+            let _ = std::process::Command::new("osascript")
+                .arg("-e")
+                .arg(script)
+                .spawn();
+        }
+    }
 
     Ok(UpdateInfoDto {
         has_update,
@@ -1962,6 +2018,35 @@ pub fn check_update(
         download_url,
         published_at: parsed.published_at.unwrap_or_default(),
     })
+}
+
+#[tauri::command]
+pub fn send_system_notification(
+    title: String,
+    subtitle: Option<String>,
+    body: String,
+) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let sub = subtitle.unwrap_or_else(|| "Anticore".into());
+        let script = format!(
+            "display notification \"{}\" with title \"{}\" subtitle \"{}\" sound name \"default\"",
+            body.replace('\"', "\\\""),
+            title.replace('\"', "\\\""),
+            sub.replace('\"', "\\\"")
+        );
+        std::process::Command::new("osascript")
+            .arg("-e")
+            .arg(script)
+            .spawn()
+            .map_err(|e| format!("Bildirim gönderilemedi: {e}"))?;
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (title, subtitle, body);
+        Ok(())
+    }
 }
 
 #[tauri::command]
