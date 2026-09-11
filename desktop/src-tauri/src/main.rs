@@ -146,6 +146,7 @@ fn main() {
             commands::factory_reset,
             commands::purge_system,
             commands::check_update,
+            commands::install_update_direct,
             commands::send_system_notification,
             commands::fetch_community_blacklist,
             commands::get_app_version,

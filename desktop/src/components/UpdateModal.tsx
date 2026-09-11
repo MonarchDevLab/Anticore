@@ -71,7 +71,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
     setProgress(null);
     setErrorMsg(null);
     try {
-      await downloadAndInstallUpdate((downloaded, total) => {
+      await downloadAndInstallUpdate(updateInfo?.download_url, (downloaded, total) => {
         setProgress({ downloaded, total });
       });
     } catch (err) {
@@ -279,24 +279,59 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
               </button>
             )}
 
-            {status === "available" && updateInfo?.download_url && (
-              <button
-                onClick={() => void api.openBrowserUrl(updateInfo.download_url!)}
-                className="btn btn-secondary text-xs"
-              >
-                <Download size={13} strokeWidth={2} />
-                <span>{t("update_modal_download_manual")}</span>
-              </button>
-            )}
+            {status === "available" && updateInfo && (
+              <>
+                {updateInfo.setup_url && (
+                  <button
+                    onClick={() => void api.openBrowserUrl(updateInfo.setup_url!)}
+                    className="btn btn-secondary text-xs"
+                    title="Windows NSIS Kurulum Paketi (.exe)"
+                  >
+                    <Download size={13} strokeWidth={2} />
+                    <span>{t("settings_download_setup")}</span>
+                  </button>
+                )}
 
-            {status === "available" && (
-              <button
-                onClick={() => void handleInstall()}
-                className="btn btn-primary text-xs"
-              >
-                <Download size={14} strokeWidth={2.5} />
-                <span>{t("update_modal_update_btn")}</span>
-              </button>
+                {updateInfo.portable_exe_url && (
+                  <button
+                    onClick={() => void api.openBrowserUrl(updateInfo.portable_exe_url!)}
+                    className="btn btn-secondary text-xs"
+                    title="Tek Dosya Taşınabilir Sürüm (Anticore.exe)"
+                  >
+                    <Download size={13} strokeWidth={2} />
+                    <span>{t("settings_download_portable_exe")}</span>
+                  </button>
+                )}
+
+                {updateInfo.portable_zip_url && (
+                  <button
+                    onClick={() => void api.openBrowserUrl(updateInfo.portable_zip_url!)}
+                    className="btn btn-secondary text-xs"
+                    title="Taşınabilir ZIP Arşivi"
+                  >
+                    <Download size={13} strokeWidth={2} />
+                    <span>{t("settings_download_portable_zip")}</span>
+                  </button>
+                )}
+
+                {!updateInfo.setup_url && !updateInfo.portable_exe_url && !updateInfo.portable_zip_url && updateInfo.download_url && (
+                  <button
+                    onClick={() => void api.openBrowserUrl(updateInfo.download_url!)}
+                    className="btn btn-secondary text-xs"
+                  >
+                    <Download size={13} strokeWidth={2} />
+                    <span>{t("update_modal_download_manual")}</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => void handleInstall()}
+                  className="btn btn-primary text-xs"
+                >
+                  <Download size={14} strokeWidth={2.5} />
+                  <span>{t("update_modal_update_btn")}</span>
+                </button>
+              </>
             )}
 
             <button

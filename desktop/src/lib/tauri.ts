@@ -171,6 +171,10 @@ export interface UpdateInfoDto {
   release_notes: string;
   html_url: string;
   download_url: string | null;
+  setup_url: string | null;
+  portable_exe_url: string | null;
+  portable_zip_url: string | null;
+  is_portable: boolean;
   published_at: string;
 }
 
@@ -246,6 +250,8 @@ export const api = {
   resetNetworkStack: () => invoke<string>("reset_network_stack"),
   checkUpdate: (repoOverride?: string, tokenOverride?: string) =>
     invoke<UpdateInfoDto>("check_update", { repoOverride, tokenOverride }),
+  installUpdateDirect: (downloadUrl: string) =>
+    invoke<void>("install_update_direct", { downloadUrl }),
   sendSystemNotification: (title: string, subtitle?: string, body?: string) =>
     invoke<void>("send_system_notification", { title, subtitle, body: body || "" }),
   fetchCommunityBlacklist: (sourceUrl?: string) =>
@@ -284,36 +290,75 @@ export function onOpenUpdateModal(cb: () => void): Promise<() => void> {
   return listen("open_update_modal", () => cb());
 }
 
+export function onUpdateDownloadProgress(
+  cb: (progress: { downloaded: number; total: number }) => void
+): Promise<() => void> {
+  return listen<{ downloaded: number; total: number }>("update_download_progress", (e) => cb(e.payload));
+}
+
 /**
- * İmzalı güncelleme paketini indirip kurar ve uygulamayı yeniden başlatır
- * (tauri-plugin-updater + tauri-plugin-process). `commands::check_update`
- * yalnızca bildirim/changelog içindir — gerçek indirme/imza doğrulama/kurulum
- * burada, Tauri'nin kendi updater'ı üzerinden yapılır.
+ * Güncelleme paketini indirip kurar ve uygulamayı yeniden başlatır.
+ * Öncelikli olarak Tauri Updater (imzalı) dener; imza uyuşmazlığı, endpoint
+ * veya taşınabilir tek dosya kısıtlarında doğrudan güvenli indirme motoruna
+ * (Direct Fallback) geçiş yaparak kesintisiz kurulumu garanti eder.
  */
 export async function downloadAndInstallUpdate(
+  fallbackDownloadUrl?: string | null,
   onProgress?: (downloadedBytes: number, totalBytes: number) => void,
 ): Promise<void> {
-  const update = await checkPluginUpdate();
-  if (!update) {
-    throw new Error("Güncelleme bulunamadı (updater endpoint'i yeni sürüm görmüyor)");
-  }
-  let downloaded = 0;
-  let total = 0;
-  await update.downloadAndInstall((event) => {
-    if (event.event === "Started") {
-      total = event.data.contentLength ?? 0;
-    } else if (event.event === "Progress") {
-      downloaded += event.data.chunkLength;
-      onProgress?.(downloaded, total);
-    }
-  });
+  let directFallbackNeeded = false;
+  let tauriErr: unknown = null;
 
-  // Kurulum ve yeniden başlatma öncesinde kilitli motor ve alt süreçleri sonlandır
   try {
-    await api.prepareForUpdate();
-  } catch {
-    // prepareForUpdate başarısız olsa dahi yeniden başlatmayı engelleme
+    const update = await checkPluginUpdate();
+    if (!update) {
+      directFallbackNeeded = true;
+    } else {
+      let downloaded = 0;
+      let total = 0;
+      await update.downloadAndInstall((event) => {
+        if (event.event === "Started") {
+          total = event.data.contentLength ?? 0;
+        } else if (event.event === "Progress") {
+          downloaded += event.data.chunkLength;
+          onProgress?.(downloaded, total);
+        }
+      });
+
+      try {
+        await api.prepareForUpdate();
+      } catch {
+        // prepareForUpdate başarısız olsa dahi yeniden başlatmayı engelleme
+      }
+
+      await relaunch();
+      return;
+    }
+  } catch (err) {
+    tauriErr = err;
+    directFallbackNeeded = true;
   }
 
-  await relaunch();
+  // 2. Fallback: Doğrudan güvenli indirme ve kurma motoru
+  if (directFallbackNeeded) {
+    if (!fallbackDownloadUrl) {
+      throw (
+        tauriErr ||
+        new Error("Güncelleme bulunamadı ve geçerli bir indirme bağlantısı mevcut değil.")
+      );
+    }
+
+    let unlisten: (() => void) | undefined;
+    if (onProgress) {
+      unlisten = await onUpdateDownloadProgress((p) => {
+        onProgress(p.downloaded, p.total);
+      });
+    }
+
+    try {
+      await api.installUpdateDirect(fallbackDownloadUrl);
+    } finally {
+      unlisten?.();
+    }
+  }
 }

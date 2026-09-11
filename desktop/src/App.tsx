@@ -116,20 +116,28 @@ export default function App() {
           if (info.has_update) {
             setUpdateAvailable(info.latest_version);
             setUpdateModalOpen(true);
+            pushLog(`[+] Yeni sürüm tespit edildi: v${info.latest_version} (${info.release_name || "Anticore"})`);
+            void api.sendSystemNotification(
+              `Anticore v${info.latest_version} Hazır`,
+              "Yeni Güncelleme",
+              "Yeni sürüm yayınlandı. Güncellemek için tıklayın."
+            ).catch(() => {});
           }
         })
-        .catch(() => {});
+        .catch((err) => {
+          pushLog(`[!] Güncelleme denetimi: ${String(err)}`);
+        });
     };
 
-    const timer = setTimeout(doCheck, 2000);
-    // Her 4 saatte bir tekrar kontrol et
-    const interval = setInterval(doCheck, 4 * 60 * 60 * 1000);
+    const timer = setTimeout(doCheck, 1200);
+    // Her 30 dakikada bir kontrol et
+    const interval = setInterval(doCheck, 30 * 60 * 1000);
 
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, []);
+  }, [pushLog]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;

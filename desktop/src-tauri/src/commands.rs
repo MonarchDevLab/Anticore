@@ -2519,7 +2519,30 @@ pub struct UpdateInfoDto {
     pub release_notes: String,
     pub html_url: String,
     pub download_url: Option<String>,
+    pub setup_url: Option<String>,
+    pub portable_exe_url: Option<String>,
+    pub portable_zip_url: Option<String>,
+    pub is_portable: bool,
     pub published_at: String,
+}
+
+pub fn is_current_app_portable() -> bool {
+    #[cfg(windows)]
+    {
+        if let Ok(exe_path) = std::env::current_exe() {
+            let path_str = exe_path.to_string_lossy().to_lowercase();
+            if path_str.contains("program files") || path_str.contains(r"appdata\local\programs") {
+                return false;
+            }
+            if let Some(parent) = exe_path.parent() {
+                if parent.join("Uninstall Anticore.exe").exists() || parent.join("uninstall.exe").exists() {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    false
 }
 
 pub const APP_VERSION: &str = "0.3.2";
@@ -2558,11 +2581,13 @@ struct GhRelease {
     assets: Vec<GhAsset>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LatestJsonPlatform {
     url: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LatestJson {
     version: Option<String>,
@@ -2647,6 +2672,24 @@ pub fn check_update(
         if let Ok(parsed) = resp.into_json::<GhRelease>() {
             let latest_tag = parsed.tag_name.unwrap_or_default();
             let has_update = is_newer_version(current_ver, &latest_tag);
+            let is_portable = is_current_app_portable();
+
+            let mut setup_url = None;
+            let mut portable_exe_url = None;
+            let mut portable_zip_url = None;
+
+            for a in &parsed.assets {
+                if a.name.contains("cli") || a.name.contains("daemon") {
+                    continue;
+                }
+                if a.name.ends_with("-setup.exe") {
+                    setup_url = Some(a.browser_download_url.clone());
+                } else if a.name.ends_with("-portable.zip") {
+                    portable_zip_url = Some(a.browser_download_url.clone());
+                } else if a.name == "Anticore.exe" || a.name.ends_with("_portable.exe") {
+                    portable_exe_url = Some(a.browser_download_url.clone());
+                }
+            }
 
             let download_url = {
                 #[cfg(target_os = "macos")]
@@ -2676,16 +2719,15 @@ pub fn check_update(
                 }
                 #[cfg(not(target_os = "macos"))]
                 {
-                    parsed
-                        .assets
-                        .iter()
-                        .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                        .find(|a| a.name.ends_with("-setup.exe"))
-                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with("-portable.zip")))
-                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".msi")))
-                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".exe")))
-                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".zip")))
-                        .map(|a| a.browser_download_url.clone())
+                    if is_portable {
+                        portable_exe_url.clone()
+                            .or_else(|| portable_zip_url.clone())
+                            .or_else(|| setup_url.clone())
+                    } else {
+                        setup_url.clone()
+                            .or_else(|| portable_zip_url.clone())
+                            .or_else(|| portable_exe_url.clone())
+                    }
                 }
             };
 
@@ -2703,6 +2745,10 @@ pub fn check_update(
                 release_notes,
                 html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
                 download_url,
+                setup_url,
+                portable_exe_url,
+                portable_zip_url,
+                is_portable,
                 published_at: parsed.published_at.unwrap_or_default(),
             });
         }
@@ -2719,6 +2765,20 @@ pub fn check_update(
         if let Ok(latest_meta) = resp.into_json::<LatestJson>() {
             let latest_version = latest_meta.version.unwrap_or_default();
             let has_update = is_newer_version(current_ver, &latest_version);
+            let is_portable = is_current_app_portable();
+
+            let setup_url = Some(format!(
+                "https://github.com/{}/releases/download/v{}/Anticore_{}_x64-setup.exe",
+                repo.trim(), latest_version, latest_version
+            ));
+            let portable_exe_url = Some(format!(
+                "https://github.com/{}/releases/download/v{}/Anticore.exe",
+                repo.trim(), latest_version
+            ));
+            let portable_zip_url = Some(format!(
+                "https://github.com/{}/releases/download/v{}/Anticore_{}_x64-portable.zip",
+                repo.trim(), latest_version, latest_version
+            ));
 
             let download_url = {
                 #[cfg(target_os = "macos")]
@@ -2743,12 +2803,11 @@ pub fn check_update(
                 }
                 #[cfg(not(target_os = "macos"))]
                 {
-                    latest_meta
-                        .platforms
-                        .get("windows-x86_64")
-                        .or_else(|| latest_meta.platforms.get("windows-x86_64-nsis"))
-                        .and_then(|p| p.url.clone())
-                        .or_else(|| Some(format!("https://github.com/{}/releases/download/v{}/Anticore_{}_x64-setup.exe", repo.trim(), latest_version, latest_version)))
+                    if is_portable {
+                        portable_exe_url.clone()
+                    } else {
+                        setup_url.clone()
+                    }
                 }
             };
 
@@ -2766,12 +2825,118 @@ pub fn check_update(
                 release_notes,
                 html_url: format!("https://github.com/{repo}/releases/tag/v{latest_version}"),
                 download_url,
+                setup_url,
+                portable_exe_url,
+                portable_zip_url,
+                is_portable,
                 published_at: latest_meta.pub_date.unwrap_or_default(),
             });
         }
     }
 
     Err("Güncelleme sunucusuna ulaşılamadı (GitHub API ve CDN yedek kanalı yanıt vermedi).".into())
+}
+
+#[tauri::command]
+pub async fn install_update_direct(
+    app: AppHandle,
+    engine: tauri::State<'_, Engine>,
+    download_url: String,
+) -> Result<(), String> {
+    use std::io::{Read, Write};
+
+    if !download_url.starts_with("http://") && !download_url.starts_with("https://") {
+        return Err("Geçersiz indirme bağlantısı".into());
+    }
+
+    let is_portable = is_current_app_portable();
+    let temp_dir = std::env::temp_dir();
+
+    let is_portable_exe = is_portable && (download_url.ends_with("Anticore.exe") || (!download_url.ends_with("-setup.exe") && download_url.ends_with(".exe")));
+    let target_file_path = if is_portable_exe {
+        temp_dir.join("Anticore_New_Update.exe")
+    } else {
+        temp_dir.join("Anticore_Update_Setup.exe")
+    };
+
+    let resp = ureq::get(&download_url)
+        .set("User-Agent", &format!("Anticore-Desktop/{}", APP_VERSION))
+        .timeout(std::time::Duration::from_secs(180))
+        .call()
+        .map_err(|e| format!("İndirme başlatılamadı: {e}"))?;
+
+    let total_bytes: u64 = resp.header("Content-Length")
+        .and_then(|h| h.parse().ok())
+        .unwrap_or(0);
+
+    let mut reader = resp.into_reader();
+    let mut file = std::fs::File::create(&target_file_path)
+        .map_err(|e| format!("Geçici dosya oluşturulamadı: {e}"))?;
+
+    let mut buffer = [0u8; 64 * 1024];
+    let mut downloaded: u64 = 0;
+
+    #[derive(Clone, Serialize)]
+    struct ProgressPayload {
+        downloaded: u64,
+        total: u64,
+    }
+
+    loop {
+        let bytes_read = reader.read(&mut buffer)
+            .map_err(|e| format!("İndirme sırasında veri okuma hatası: {e}"))?;
+        if bytes_read == 0 {
+            break;
+        }
+        file.write_all(&buffer[..bytes_read])
+            .map_err(|e| format!("Diske yazma hatası: {e}"))?;
+        downloaded += bytes_read as u64;
+
+        let _ = app.emit("update_download_progress", ProgressPayload {
+            downloaded,
+            total: total_bytes,
+        });
+    }
+
+    drop(file);
+
+    // Motoru ve çalışan alt servisleri zarifçe kapat
+    let _ = prepare_for_update(app.clone(), engine);
+
+    #[cfg(windows)]
+    {
+        let current_exe = std::env::current_exe().map_err(|e| format!("Mevcut uygulama yolu alınamadı: {e}"))?;
+
+        if is_portable_exe {
+            let bat_path = temp_dir.join("anticore_portable_updater.bat");
+            let bat_content = format!(
+                "@echo off\r\ntimeout /t 1 /nobreak > nul\r\n:retry\r\nmove /y \"{}\" \"{}\" > nul 2>&1\r\nif errorlevel 1 (\r\n    timeout /t 1 /nobreak > nul\r\n    goto retry\r\n)\r\nstart \"\" \"{}\"\r\ndel \"%~f0\"\r\nexit\r\n",
+                target_file_path.display(),
+                current_exe.display(),
+                current_exe.display()
+            );
+            std::fs::write(&bat_path, bat_content).map_err(|e| format!("Güncelleme betiği yazılamadı: {e}"))?;
+
+            let _ = silent_command("cmd.exe")
+                .args(["/c", &bat_path.to_string_lossy()])
+                .spawn();
+
+            std::process::exit(0);
+        } else {
+            let _ = silent_command(target_file_path.to_str().unwrap_or_default())
+                .spawn();
+
+            std::process::exit(0);
+        }
+    }
+
+    #[cfg(not(windows))]
+    {
+        return Err("Doğrudan kurulum şu anda yalnızca Windows ortamında desteklenmektedir.".into());
+    }
+
+    #[allow(unreachable_code)]
+    Ok(())
 }
 
 #[tauri::command]

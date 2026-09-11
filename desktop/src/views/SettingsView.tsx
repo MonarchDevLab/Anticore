@@ -310,7 +310,7 @@ export default function SettingsView({
     setInstallProgress(null);
     try {
       pushLog("[*] Güncelleme indiriliyor ve kuruluyor...");
-      await downloadAndInstallUpdate((downloaded, total) => {
+      await downloadAndInstallUpdate(updInfo?.download_url, (downloaded, total) => {
         setInstallProgress({ downloaded, total });
       });
     } catch (e) {
@@ -827,7 +827,38 @@ export default function SettingsView({
                       : t("settings_update_now_btn")}
                   </span>
                 </button>
-                {updInfo.download_url && (
+                {/* Ayrılmış Elle İndirme Seçenekleri */}
+                {updInfo.setup_url && (
+                  <button
+                    onClick={() => void api.openBrowserUrl(updInfo.setup_url!)}
+                    className="btn btn-secondary text-xs"
+                    title="Windows NSIS Kurulum Paketi (.exe)"
+                  >
+                    <Download size={13} /> <span>{t("settings_download_setup")}</span>
+                  </button>
+                )}
+
+                {updInfo.portable_exe_url && (
+                  <button
+                    onClick={() => void api.openBrowserUrl(updInfo.portable_exe_url!)}
+                    className="btn btn-secondary text-xs"
+                    title="Bağımsız Tek Dosya Taşınabilir Sürüm (Anticore.exe)"
+                  >
+                    <Download size={13} /> <span>{t("settings_download_portable_exe")}</span>
+                  </button>
+                )}
+
+                {updInfo.portable_zip_url && (
+                  <button
+                    onClick={() => void api.openBrowserUrl(updInfo.portable_zip_url!)}
+                    className="btn btn-secondary text-xs"
+                    title="Taşınabilir ZIP Arşivi"
+                  >
+                    <Download size={13} /> <span>{t("settings_download_portable_zip")}</span>
+                  </button>
+                )}
+
+                {!updInfo.setup_url && !updInfo.portable_exe_url && !updInfo.portable_zip_url && updInfo.download_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updInfo.download_url!)}
                     className="btn btn-secondary text-xs"
@@ -835,6 +866,7 @@ export default function SettingsView({
                     <Download size={13} /> <span>{t("settings_manual_download_btn")}</span>
                   </button>
                 )}
+
                 <button
                   onClick={() => void api.openBrowserUrl(updInfo.html_url)}
                   className="btn btn-secondary text-xs"
