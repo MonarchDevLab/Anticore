@@ -1707,63 +1707,106 @@ fn run_powershell_script(script: &str) -> Result<(), String> {
 
 // ---------- YENI GOREV B4 KOMUTLARI ----------
 
-/// WinDivert.dll ve WinDivert64.sys dosyalarının uygulamanın çalıştığı dizinde
-/// var olduğunu doğrular. Eksikse bin, vendor/windows veya dist klasörlerinden
-/// otomatik olarak geri yükler (kendi kendini onarma - auto-heal).
+#[cfg(windows)]
+const EMBEDDED_WINDIVERT_DLL: &[u8] = include_bytes!("../../../vendor/windows/WinDivert.dll");
+#[cfg(windows)]
+const EMBEDDED_WINDIVERT_SYS: &[u8] = include_bytes!("../../../vendor/windows/WinDivert64.sys");
+#[cfg(windows)]
+const EMBEDDED_WEBVIEW2_LOADER_DLL: &[u8] = include_bytes!("../../../vendor/windows/WebView2Loader.dll");
+
+/// WinDivert.dll, WinDivert64.sys ve WebView2Loader.dll dosyalarının uygulamanın
+/// çalıştığı dizinde var olduğunu doğrular. Eksikse önce yerel aday dizinlerden,
+/// bulunamazsa doğrudan binary içerisine gömülü baytlardan (include_bytes!)
+/// diske çıkartarak (self-extract) tek dosya (single-file) portable çalışmasını sağlar.
 pub fn ensure_windivert_files(app: Option<&AppHandle>) -> bool {
-    let target_dir = match std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.to_path_buf())) {
-        Some(d) => d,
-        None => return false,
-    };
-
-    let target_dll = target_dir.join("WinDivert.dll");
-    let target_sys = target_dir.join("WinDivert64.sys");
-
-    if target_dll.exists() && target_sys.exists() {
-        return true;
+    #[cfg(not(windows))]
+    {
+        let _ = app;
+        true
     }
 
-    let mut candidate_dirs = Vec::new();
-    candidate_dirs.push(target_dir.join("bin"));
-    candidate_dirs.push(target_dir.join("vendor").join("windows"));
-    candidate_dirs.push(target_dir.join("dist"));
-    candidate_dirs.push(target_dir.join("dist-portable").join("Anticore"));
-    candidate_dirs.push(target_dir.join("dist-portable").join("Anticore").join("bin"));
+    #[cfg(windows)]
+    {
+        let target_dir = match std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.to_path_buf())) {
+            Some(d) => d,
+            None => return false,
+        };
 
-    if let Ok(cur) = std::env::current_dir() {
-        if cur != target_dir {
-            candidate_dirs.push(cur.clone());
-            candidate_dirs.push(cur.join("bin"));
-            candidate_dirs.push(cur.join("vendor").join("windows"));
-            candidate_dirs.push(cur.join("dist"));
-        }
-    }
+        let target_dll = target_dir.join("WinDivert.dll");
+        let target_sys = target_dir.join("WinDivert64.sys");
+        let target_webview2 = target_dir.join("WebView2Loader.dll");
 
-    if let Some(parent) = target_dir.parent() {
-        candidate_dirs.push(parent.join("bin"));
-        candidate_dirs.push(parent.join("vendor").join("windows"));
-        candidate_dirs.push(parent.join("dist"));
-        candidate_dirs.push(parent.to_path_buf());
-    }
+        if target_dll.exists() && target_sys.exists() {
+            return true;
+        }
 
-    for dir in &candidate_dirs {
-        let src_dll = dir.join("WinDivert.dll");
-        let src_sys = dir.join("WinDivert64.sys");
-        if src_dll.exists() && !target_dll.exists() {
-            let _ = std::fs::copy(&src_dll, &target_dll);
+        let mut candidate_dirs = Vec::new();
+        candidate_dirs.push(target_dir.join("bin"));
+        candidate_dirs.push(target_dir.join("vendor").join("windows"));
+        candidate_dirs.push(target_dir.join("dist"));
+        candidate_dirs.push(target_dir.join("dist-portable").join("Anticore"));
+        candidate_dirs.push(target_dir.join("dist-portable").join("Anticore").join("bin"));
+
+        if let Ok(cur) = std::env::current_dir() {
+            if cur != target_dir {
+                candidate_dirs.push(cur.clone());
+                candidate_dirs.push(cur.join("bin"));
+                candidate_dirs.push(cur.join("vendor").join("windows"));
+                candidate_dirs.push(cur.join("dist"));
+            }
         }
-        if src_sys.exists() && !target_sys.exists() {
-            let _ = std::fs::copy(&src_sys, &target_sys);
+
+        if let Some(parent) = target_dir.parent() {
+            candidate_dirs.push(parent.join("bin"));
+            candidate_dirs.push(parent.join("vendor").join("windows"));
+            candidate_dirs.push(parent.join("dist"));
+            candidate_dirs.push(parent.to_path_buf());
         }
+
+        for dir in &candidate_dirs {
+            let src_dll = dir.join("WinDivert.dll");
+            let src_sys = dir.join("WinDivert64.sys");
+            if src_dll.exists() && !target_dll.exists() {
+                let _ = std::fs::copy(&src_dll, &target_dll);
+            }
+            if src_sys.exists() && !target_sys.exists() {
+                let _ = std::fs::copy(&src_sys, &target_sys);
+            }
+            if target_dll.exists() && target_sys.exists() {
+                if let Some(h) = app {
+                    h.emit("log", "[+] WinDivert sürücü dosyaları yerel dizinden geri yüklendi".to_string()).ok();
+                }
+                return true;
+            }
+        }
+
+        // Gömülü ikili baytlardan diske çıkart (Self-Extract / Auto-Provision)
+        let mut extracted = false;
+        if !target_dll.exists() {
+            if std::fs::write(&target_dll, EMBEDDED_WINDIVERT_DLL).is_ok() {
+                extracted = true;
+            }
+        }
+        if !target_sys.exists() {
+            if std::fs::write(&target_sys, EMBEDDED_WINDIVERT_SYS).is_ok() {
+                extracted = true;
+            }
+        }
+        if !target_webview2.exists() {
+            let _ = std::fs::write(&target_webview2, EMBEDDED_WEBVIEW2_LOADER_DLL);
+        }
+
         if target_dll.exists() && target_sys.exists() {
             if let Some(h) = app {
-                h.emit("log", "[+] WinDivert sürücü dosyaları otomatik olarak geri yüklendi/onarıldı".to_string()).ok();
+                if extracted {
+                    h.emit("log", "[+] WinDivert ve WebView2 çalışma zamanı dosyaları gömülü ikili baytlardan başarıyla sağlandı (Tek Dosya Portable)".to_string()).ok();
+                }
             }
             return true;
         }
-    }
 
-    target_dll.exists() && target_sys.exists()
+        target_dll.exists() && target_sys.exists()
+    }
 }
 
 #[tauri::command]

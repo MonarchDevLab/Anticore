@@ -154,7 +154,7 @@ export default function Titlebar({
             </span>
           ) : (
             <span className="text-red-400 font-medium">
-              <strong className="text-red-500 font-bold">{t("status_inactive")}</strong> · STANDBY
+              <strong className="text-red-500 font-bold">{t("status_inactive")}</strong> · {t("dash_matrix_sys_standby")}
             </span>
           )}
         </span>
@@ -178,7 +178,7 @@ export default function Titlebar({
         <button
           onClick={onToggleGuide}
           className="h-11 w-11 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
-          title="Kullanım Rehberi & Bilgi Bankası (F1)"
+          title={lang === "tr" ? "Kullanım Rehberi & Bilgi Bankası (F1)" : "User Guide & Knowledge Base (F1)"}
         >
           <HelpCircle size={14} />
         </button>
@@ -197,7 +197,7 @@ export default function Titlebar({
         <button
           onClick={handleNextTheme}
           className="h-11 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
-          title={`Tema: ${currentThemeObj.name} (Tıkla ve Değiştir)`}
+          title={lang === "tr" ? `Tema: ${currentThemeObj.name} (Tıkla ve Değiştir)` : `Theme: ${currentThemeObj.name} (Click to Switch)`}
         >
           <Palette size={13} style={{ color: currentThemeObj.accent }} />
           <span className="text-xs font-mono hidden md:inline">{currentThemeObj.name.split(" ")[0]}</span>
@@ -211,21 +211,24 @@ export default function Titlebar({
           <button
             onClick={handleMinimize}
             className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
-            aria-label="Küçült"
+            aria-label={lang === "tr" ? "Küçült" : "Minimize"}
+            title={lang === "tr" ? "Küçült" : "Minimize"}
           >
             <Minus size={13} />
           </button>
           <button
             onClick={handleToggleMaximize}
             className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
-            aria-label={isMaximized ? "Geri Yükle" : "Büyüt"}
+            aria-label={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
+            title={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
           >
             <Square size={11} />
           </button>
           <button
             onClick={handleClose}
             className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-white hover:bg-alert transition-colors cursor-pointer"
-            aria-label="Kapat"
+            aria-label={lang === "tr" ? "Kapat" : "Close"}
+            title={lang === "tr" ? "Kapat" : "Close"}
           >
             <X size={14} />
           </button>

@@ -15,6 +15,9 @@ fn main() {
         let _ = std::fs::write("panic.log", &msg);
     }));
 
+    // Taşınabilir tek dosya modu: sürücü ve DLL dosyalarını başlatma anında sağla
+    commands::ensure_windivert_files(None);
+
     // Windows altında yönetici hakları zorunluluğu: uygulama standart
     // kullanıcı olarak başlatıldıysa kendini UAC ile otomatik yükseltir.
     #[cfg(windows)]
