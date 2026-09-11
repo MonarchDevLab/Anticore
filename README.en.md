@@ -50,7 +50,7 @@ All distribution binaries are built cleanly, stripped of developer workstation p
 ### Portable Edition
 *(Most Popular)*
 
-No installation required. Extract to any directory or USB flash drive and launch immediately. Leaves zero residue.
+No installation required. Extract to any<br />folder or USB drive and run directly.<br />Leaves zero residue on the system.
 
 <br />
 
@@ -58,7 +58,7 @@ No installation required. Extract to any directory or USB flash drive and launch
 
 <br />
 
-`v0.3.1` • `Windows x64` • `Zero Residue`
+`v0.3.1` • `Windows x64`<br />`Zero Residue`
 
 </td>
 <td width="33%" align="center" valign="top">
@@ -66,7 +66,7 @@ No installation required. Extract to any directory or USB flash drive and launch
 ### Installer (Setup EXE)
 *(Standard User)*
 
-Desktop shortcut, Start Menu integration, and silent in-app background automatic update support.
+Desktop shortcut, Start Menu integration,<br />and silent in-app automatic background<br />update engine support.
 
 <br />
 
@@ -74,7 +74,7 @@ Desktop shortcut, Start Menu integration, and silent in-app background automatic
 
 <br />
 
-`v0.3.1` • `Windows x64` • `Auto Updates`
+`v0.3.1` • `Windows x64`<br />`Auto Updates`
 
 </td>
 <td width="33%" align="center" valign="top">
@@ -82,7 +82,7 @@ Desktop shortcut, Start Menu integration, and silent in-app background automatic
 ### Enterprise (MSI)
 *(System Admins)*
 
-Windows Installer MSI package for centralized, silent deployment across fleet workstations via Active Directory, Intune, or GPO.
+Windows Installer MSI package for silent,<br />centralized deployment across fleet machines<br />via Active Directory, Intune, or GPO.
 
 <br />
 
@@ -90,7 +90,7 @@ Windows Installer MSI package for centralized, silent deployment across fleet wo
 
 <br />
 
-`v0.3.1` • `Windows x64` • `GPO & Intune`
+`v0.3.1` • `Windows x64`<br />`GPO & Intune Ready`
 
 </td>
 </tr>
@@ -98,8 +98,8 @@ Windows Installer MSI package for centralized, silent deployment across fleet wo
 
 <p align="center">
   <b>Standalone Binaries:</b> &nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI Binary, 15.6 MB)</code></a> &nbsp;•&nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (Headless Engine, 384 KB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI, 15.6 MB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (CLI, 384 KB)</code></a> &nbsp;•&nbsp;
   <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><code>Release Archive</code></a>
 </p>
 

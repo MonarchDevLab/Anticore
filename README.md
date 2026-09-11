@@ -50,7 +50,7 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
 ### Taşınabilir (Portable)
 *(En Çok Tercih Edilen)*
 
-Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kayıt bırakmaz.
+Kurulum gerektirmez. Arşivi klasöre veya<br />USB diske çıkartıp doğrudan çalıştırın.<br />Sistemde hiçbir kayıt bırakmaz.
 
 <br />
 
@@ -58,7 +58,7 @@ Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çal�
 
 <br />
 
-`v0.3.1` • `Windows x64` • `Sıfır Kalıntı`
+`v0.3.1` • `Windows x64`<br />`Sıfır Kalıntı`
 
 </td>
 <td width="33%" align="center" valign="top">
@@ -66,7 +66,7 @@ Kurulum gerektirmez. Arşivi klasöre veya USB diske çıkartıp doğrudan çal�
 ### Kurulumlu (Setup EXE)
 *(Standart Kullanıcı)*
 
-Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili otomatik arka plan güncelleme desteği.
+Masaüstü kısayolu, Başlat menüsü<br />entegrasyonu ve dahili otomatik arka<br />plan güncelleme desteği sunar.
 
 <br />
 
@@ -74,7 +74,7 @@ Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili otomatik arka plan
 
 <br />
 
-`v0.3.1` • `Windows x64` • `Otomatik Güncelleme`
+`v0.3.1` • `Windows x64`<br />`Otomatik Güncelleme`
 
 </td>
 <td width="33%" align="center" valign="top">
@@ -82,7 +82,7 @@ Masaüstü kısayolu, Başlat menüsü entegrasyonu ve dahili otomatik arka plan
 ### Kurumsal (MSI)
 *(Sistem Yöneticileri)*
 
-Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurulum paketi.
+Active Directory, Microsoft Intune veya<br />GPO üzerinden çoklu bilgisayara sessiz<br />ve merkezi kurulum paketi.
 
 <br />
 
@@ -90,7 +90,7 @@ Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz
 
 <br />
 
-`v0.3.1` • `Windows x64` • `GPO & Intune Uyumlu`
+`v0.3.1` • `Windows x64`<br />`GPO & Intune Uyumlu`
 
 </td>
 </tr>
@@ -98,8 +98,8 @@ Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz
 
 <p align="center">
   <b>Bağımsız İkililer:</b> &nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI Arayüzü, 15.6 MB)</code></a> &nbsp;•&nbsp;
-  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (Terminal Motoru, 384 KB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><code>Anticore.exe (GUI, 15.6 MB)</code></a> &nbsp;•&nbsp;
+  <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><code>anticore-cli.exe (CLI, 384 KB)</code></a> &nbsp;•&nbsp;
   <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><code>Tüm Dağıtım Arşivi</code></a>
 </p>
 
