@@ -140,6 +140,7 @@ fn main() {
             commands::scan_legacy_services,
             commands::get_doh_status,
             commands::factory_reset,
+            commands::purge_system,
             commands::check_update,
             commands::send_system_notification,
             commands::fetch_community_blacklist,

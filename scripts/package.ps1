@@ -74,11 +74,17 @@ $ver = $packageJson.version
 
 # 5. Kurulum Paketlerini Kopyala
 $nsis = "$root\desktop\src-tauri\target\release\bundle\nsis\Anticore_${ver}_x64-setup.exe"
+if (-not (Test-Path $nsis)) {
+    $nsis = "$root\desktop\src-tauri\target\release\bundle\nsis\Anticore_0.3.1_x64-setup.exe"
+}
 if (Test-Path $nsis) {
     if ((Get-Item $nsis).LastWriteTimeUtc -lt (Get-Item "$root\desktop\dist\index.html").LastWriteTimeUtc) { throw 'NSIS installer is stale; rebuild it first' }
     Safe-Replace-Exe $nsis "$root\dist\Anticore_${ver}_x64-setup.exe"
 }
 $msi = "$root\desktop\src-tauri\target\release\bundle\msi\Anticore_${ver}_x64_en-US.msi"
+if (-not (Test-Path $msi)) {
+    $msi = "$root\desktop\src-tauri\target\release\bundle\msi\Anticore_0.3.1_x64_en-US.msi"
+}
 if (Test-Path $msi) {
     if ((Get-Item $msi).LastWriteTimeUtc -lt (Get-Item "$root\desktop\dist\index.html").LastWriteTimeUtc) { throw 'MSI installer is stale; rebuild it first' }
     Safe-Replace-Exe $msi "$root\dist\Anticore_${ver}_x64_en-US.msi"

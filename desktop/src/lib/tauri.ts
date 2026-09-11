@@ -226,6 +226,7 @@ export const api = {
   exportProfilesToFile: () => invoke<boolean>("export_profiles_to_file"),
   importProfilesFromFile: () => invoke<number>("import_profiles_from_file"),
   factoryReset: () => invoke<void>("factory_reset"),
+  purgeSystem: () => invoke<void>("purge_system"),
   getTrayMinimize: () => invoke<boolean>("get_tray_minimize"),
   setTrayMinimize: (enabled: boolean) => invoke<void>("set_tray_minimize", { enabled }),
   getShowTrayIcon: () => invoke<boolean>("get_show_tray_icon"),

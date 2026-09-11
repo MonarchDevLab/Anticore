@@ -2072,6 +2072,129 @@ pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(),
 }
 
 #[tauri::command]
+pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
+    app.emit("log", "[!] Kapsamlı sistem temizliği başlatıldı. Tüm Anticore bileşenleri siliniyor...".to_string()).ok();
+
+    // 1. Canlı motoru durdur
+    engine.stop().ok();
+
+    // 2. Servis ve süreçleri durdur/kaldır
+    #[cfg(target_os = "macos")]
+    {
+        let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
+        if plist_path.exists() {
+            let _ = silent_command("launchctl").args(["bootout", "system", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
+            let _ = silent_command("launchctl").args(["unload", "-w", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
+            let _ = std::fs::remove_file(plist_path);
+        }
+        let _ = silent_command("pkill").args(["-9", "-f", "anticore-cli"]).output();
+        let _ = silent_command("pfctl").args(["-F", "all"]).output();
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        // Windows Servisini durdur ve sil
+        let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
+        let _ = silent_command("sc").args(["delete", SERVICE_NAME]).output();
+        // WinDivert sürücüsünü durdur
+        let _ = silent_command("net").args(["stop", "WinDivert"]).output();
+        // anticore-cli süreçlerini sonlandır
+        let _ = silent_command("taskkill").args(["/F", "/IM", "anticore-cli.exe"]).output();
+    }
+
+    // 3. DNS ve DoH kayıtlarını sıfırla, önbelleği boşalt
+    reset_dns(app.clone()).ok();
+    #[cfg(windows)]
+    reset_doh_registry(app.clone()).ok();
+    crate::net_teardown::flush_dns_cache();
+
+    // 4. Başlangıç görevlerini (schtasks / registry) sil
+    set_startup_enabled(app.clone(), false).ok();
+    #[cfg(windows)]
+    {
+        let _ = silent_command("schtasks").args(["/Delete", "/TN", "AnticoreAutoStart", "/F"]).output();
+        let _ = silent_command("schtasks").args(["/Delete", "/TN", "Anticore", "/F"]).output();
+        let run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run";
+        if let Ok(run_key) = windows_registry::CURRENT_USER.create(run_key_path) {
+            let _ = run_key.remove_value("Anticore");
+        }
+    }
+
+    // 5. Masaüstü ve Başlat Menüsü kısayollarını temizle (Windows)
+    #[cfg(windows)]
+    {
+        let ps_clean_shortcuts = r#"
+            $desktop = [Environment]::GetFolderPath('Desktop')
+            $commonDesktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
+            $startMenu = [Environment]::GetFolderPath('Programs')
+            $commonStartMenu = [Environment]::GetFolderPath('CommonPrograms')
+            $paths = @(
+                "$desktop\Anticore.lnk",
+                "$commonDesktop\Anticore.lnk",
+                "$startMenu\Anticore.lnk",
+                "$startMenu\Anticore",
+                "$commonStartMenu\Anticore.lnk",
+                "$commonStartMenu\Anticore"
+            )
+            foreach ($p in $paths) {
+                if (Test-Path $p) { Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue }
+            }
+        "#;
+        let _ = silent_command("powershell").args(["-NoProfile", "-NonInteractive", "-Command", ps_clean_shortcuts]).output();
+    }
+
+    // 6. Uygulama veri dizinini (AppData / config) temizle
+    let data_dir = app_dir(&app);
+    if data_dir.exists() {
+        let _ = std::fs::remove_dir_all(&data_dir);
+    }
+
+    // 7. Kendi kendini kaldırma / ikili dosya silme betiğini arka planda başlat
+    let current_exe = std::env::current_exe().ok();
+    let app_pid = std::process::id();
+
+    #[cfg(windows)]
+    if let Some(exe) = current_exe {
+        if let Some(install_dir) = exe.parent() {
+            let uninstaller = install_dir.join("uninstall.exe");
+            let install_dir_str = install_dir.to_string_lossy().to_string();
+
+            if uninstaller.is_file() {
+                let uninstaller_str = uninstaller.to_string_lossy().to_string();
+                let cmd = format!(
+                    "start /b \"\" cmd /c \"timeout /t 2 /nobreak >nul & taskkill /F /PID {} >nul 2>&1 & \"{}\" /S\"",
+                    app_pid, uninstaller_str
+                );
+                let _ = silent_command("cmd").args(["/C", &cmd]).spawn();
+            } else {
+                let cmd = format!(
+                    "start /b \"\" cmd /c \"timeout /t 2 /nobreak >nul & taskkill /F /PID {} >nul 2>&1 & rmdir /s /q \"{}\"\"",
+                    app_pid, install_dir_str
+                );
+                let _ = silent_command("cmd").args(["/C", &cmd]).spawn();
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let cmd = format!(
+            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore /var/log/anticore.*' >/dev/null 2>&1 &",
+            app_pid
+        );
+        let _ = silent_command("sh").args(["-c", &cmd]).spawn();
+    }
+
+    // 8. Uygulamayı 800ms sonra sonlandır
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(800));
+        std::process::exit(0);
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn dns_leak_test() -> Result<String, String> {
     #[cfg(windows)]
     {
@@ -2290,9 +2413,11 @@ pub struct UpdateInfoDto {
     pub published_at: String,
 }
 
+pub const APP_VERSION: &str = "0.3.1.1";
+
 #[tauri::command]
 pub fn get_app_version() -> String {
-    env!("CARGO_PKG_VERSION").to_string()
+    APP_VERSION.to_string()
 }
 
 #[tauri::command]
@@ -2335,7 +2460,7 @@ pub fn check_update(
     let repo = repo_override
         .filter(|s| !s.trim().is_empty())
         .unwrap_or_else(|| "MonarchDevLab/Anticore".to_string());
-    let current_ver = env!("CARGO_PKG_VERSION");
+    let current_ver = APP_VERSION;
 
     let uri = format!("https://api.github.com/repos/{}/releases/latest", repo.trim());
     let mut req = ureq::get(&uri)
@@ -2582,18 +2707,38 @@ pub fn fetch_community_blacklist(app: AppHandle, engine: tauri::State<Engine>, s
     Ok(added_count)
 }
 
-/// `current`/`remote`, başında opsiyonel "v" ile, semver olarak karşılaştırılır.
-/// Ayrıştırılamayan (semver-dışı) etiketler güncelleme YOK sayılır — hatalı
-/// pozitif güncelleme bildirimi vermek, bildirim vermemekten daha kötüdür.
+fn parse_version_tuple(s: &str) -> Vec<u64> {
+    let clean = s.trim().trim_start_matches('v');
+    let base = clean.split(|c| c == '-' || c == '+').next().unwrap_or("");
+    base.split('.')
+        .filter_map(|p| p.parse::<u64>().ok())
+        .collect()
+}
+
+/// `current`/`remote`, başında opsiyonel "v" ile, semver veya 4 parçalı revizyon (örn. 0.3.1.1) olarak karşılaştırılır.
 fn is_newer_version(current: &str, remote: &str) -> bool {
     let clean = |s: &str| s.trim().trim_start_matches('v').to_string();
-    let (Ok(c), Ok(r)) = (
+    if let (Ok(c), Ok(r)) = (
         semver::Version::parse(&clean(current)),
         semver::Version::parse(&clean(remote)),
-    ) else {
-        return false;
-    };
-    r > c
+    ) {
+        return r > c;
+    }
+    let c_parts = parse_version_tuple(current);
+    let r_parts = parse_version_tuple(remote);
+    if !c_parts.is_empty() && !r_parts.is_empty() {
+        let max_len = c_parts.len().max(r_parts.len());
+        for i in 0..max_len {
+            let cp = c_parts.get(i).copied().unwrap_or(0);
+            let rp = r_parts.get(i).copied().unwrap_or(0);
+            if rp > cp {
+                return true;
+            } else if rp < cp {
+                return false;
+            }
+        }
+    }
+    false
 }
 
 /// Sürüm notlarındaki veya dış içeriklerdeki tüm Unicode emojilerini temizler.

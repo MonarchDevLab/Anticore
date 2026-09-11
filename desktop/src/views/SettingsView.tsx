@@ -81,6 +81,10 @@ export default function SettingsView({
   const [factorySuccess, setFactorySuccess] = useState(false);
   const [factoryError, setFactoryError] = useState<string | null>(null);
 
+  const [purgeConfirm, setPurgeConfirm] = useState(false);
+  const [purgeBusy, setPurgeBusy] = useState(false);
+  const [purgeError, setPurgeError] = useState<string | null>(null);
+
   useEffect(() => {
     void api.getEngineConfig().then(setConfig);
     void api.getStartupEnabled().then(setStartup);
@@ -259,6 +263,22 @@ export default function SettingsView({
       pushLog(`[!] Fabrika sıfırlama hatası: ${msg}`);
       setFactoryBusy(false);
       setFactoryConfirm(false);
+    }
+  };
+
+  const runPurgeSystem = async () => {
+    setPurgeBusy(true);
+    setPurgeError(null);
+    try {
+      pushLog("[!] Anticore sistemden tamamen kaldırılıyor...");
+      await api.purgeSystem();
+      pushLog("[*] Temizlik başlatıldı, uygulama sonlandırılıyor.");
+    } catch (e) {
+      const msg = String(e);
+      setPurgeError(msg);
+      pushLog(`[!] Sistemden kaldırma hatası: ${msg}`);
+      setPurgeBusy(false);
+      setPurgeConfirm(false);
     }
   };
 
@@ -876,6 +896,34 @@ export default function SettingsView({
         </button>
       </section>
 
+      {/* Sistemden Tamamen Kaldır */}
+      <section className="card p-5 lg:p-6 border border-alert/30 rounded-2xl bg-surface-card space-y-3 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-alert/10 border border-alert/25 text-alert">
+            <Trash2 size={18} aria-hidden strokeWidth={2} />
+          </div>
+          <div>
+            <h3 id="purge" className="text-sm font-bold text-alert">{t("settings_purge_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_purge_desc")}</p>
+          </div>
+        </div>
+        {purgeError && (
+          <div className="p-3 rounded-xl bg-alert/10 border border-alert/25 text-alert text-xs flex items-center gap-2">
+            <AlertTriangle size={14} />
+            <span>Kaldırma hatası: {purgeError}</span>
+          </div>
+        )}
+
+        <button
+          className="btn btn-danger text-xs mt-2"
+          onClick={() => setPurgeConfirm(true)}
+          disabled={purgeBusy}
+        >
+          {purgeBusy ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <Trash2 size={14} strokeWidth={2} />}
+          <span>{t("settings_purge_btn")}</span>
+        </button>
+      </section>
+
       {/* Güvenlik Modeli */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-3 shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
@@ -933,6 +981,17 @@ export default function SettingsView({
         busy={factoryBusy}
         onConfirm={() => void runFactoryReset()}
         onCancel={() => setFactoryConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={purgeConfirm}
+        title={t("settings_purge_confirm_title")}
+        body={t("settings_purge_confirm_body")}
+        confirmLabel={t("settings_purge_confirm_btn")}
+        danger
+        busy={purgeBusy}
+        onConfirm={() => void runPurgeSystem()}
+        onCancel={() => setPurgeConfirm(false)}
       />
     </div>
   );

@@ -32,14 +32,75 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
-    version: "v0.3.1",
-    titleTr: "Arıza Onarımları, Dinamik Kara Liste & Canlı Telemetri",
-    titleEn: "Hotfix, Dynamic Blacklist & Live Telemetry",
+    version: "v0.3.1.1",
+    titleTr: "Kalıntısız Sistem Temizliği (Purge), 10 Donanım Teması & Akıllı Bildirimler",
+    titleEn: "Zero-Trace System Purge, 10 Hardware Themes & Intelligent Notifications",
     date: "11 Eylül 2026",
     isLatest: true,
-    highlightTr: "Saha kararlılığı, Discord/Roblox cerrahi erişimi ve dinamik Çekirdek senkronizasyonu.",
-    highlightEn: "Field stability, Discord/Roblox surgical bypass and dynamic engine synchronization.",
+    highlightTr: "Tek tıkla sıfır-iz sistem kaldırma, donanım temaları, çift platform kurulum sihirbazı ve kesintisiz güncelleme bildirimleri.",
+    highlightEn: "1-click zero-trace system purge, hardware themes, cross-platform setup wizard, and seamless update notifications.",
     changes: [
+      {
+        type: "feature",
+        textTr: "Sistemden Tamamen Kaldır (Zero-Trace Purge): Ayarlar ekranına tek tıkla Anticore ile ilişkili tüm servisleri, WinDivert çekirdek sürücüsünü, DNS/DoH kayıtlarını, başlangıç görevlerini, kısayolları ve uygulama verilerini arkada hiçbir iz bırakmadan temizleyen kaldırma motoru eklendi.",
+        textEn: "Complete System Purge (Zero-Trace): One-click uninstallation engine in Settings that completely removes all services, WinDivert kernel drivers, DNS/DoH entries, startup tasks, shortcuts, and application data without leaving traces.",
+      },
+      {
+        type: "feature",
+        textTr: "10 Morfolojik Donanım Teması & Marka Renkleri: #020617 koyu zemin, #ff642b canlı köz birincil ve #00edff siber camgöbeği ikincil renkleriyle donatılan 10 bağımsız donanım karakteri entegre edildi.",
+        textEn: "10 Morphological Hardware Themes & Brand Palette: 10 distinct hardware themes tuned with #020617 void background, #ff642b live ember primary, and #00edff cyan secondary accents.",
+      },
+      {
+        type: "feature",
+        textTr: "Çift Platform Kurulum & Bağımsız Çalıştırma: Hem Windows hem macOS için sistem servisi kurulumu veya tek seferlik taşınabilir (portable) çalıştırma seçenekleri netleştirildi.",
+        textEn: "Cross-Platform Setup & Portable Execution: Streamlined persistent system service installation and single-run portable execution for both Windows and macOS.",
+      },
+      {
+        type: "fix",
+        textTr: "Gelişmiş Güncelleme Algılama & Bildirimleri: Çok parçalı sürüm numaraları ve OTA bildirimleri optimize edildi; açılışta ve arka planda yeni sürümler gecikmesiz bildirilir.",
+        textEn: "Enhanced Update Detection & Notifications: Multi-part versioning and OTA notifications refined to ensure instant alerts both on startup and in the background.",
+      },
+      {
+        type: "security",
+        textTr: "Hukuki Dil & Dağıtım Standartlaştırması: Tüm kullanıcı dokümanları ve dağıtım paketleri ISS kaynaklı DPI kısıtlamalarına odaklı nötr ve teknik terminolojiyle güncellendi.",
+        textEn: "Legal Terminology & Distribution Neutralization: All documentation and distribution packages standardized with neutral ISP DPI terminology.",
+      },
+    ],
+  },
+  {
+    version: "v0.3.1",
+    titleTr: "Çift Platform (Windows & macOS), 10 Donanım Teması & Canlı Telemetri",
+    titleEn: "Cross-Platform (Windows & macOS), 10 Hardware Themes & Live Telemetry",
+    date: "11 Eylül 2026",
+    isLatest: false,
+    highlightTr: "macOS/Windows tam uyumluluğu, 10 morfolojik tema, taktik sistem tepsisi ve sıfır-çakışmalı akıllı güncelleyici.",
+    highlightEn: "macOS/Windows full parity, 10 morphological themes, tactical system tray and zero-conflict smart updater.",
+    changes: [
+      {
+        type: "feature",
+        textTr: "10 Morfolojik Donanım Teması: Yalnızca renk değil; kart sınırları, köşe kavisleri, gölge derinlikleri ve reaktif atmosfer parçacıklarıyla 10 bağımsız donanım karakteri (Obsidian Core, Cyberpunk Volt, Luxury Gold, Crimson Protocol, Cobalt Matrix, Amber CRT, Amethyst Void, Abyss Aqua, Solar Flare, Titanium Clean).",
+        textEn: "10 Morphological Hardware Themes: Not just color shifts; distinct card radii, border depths, shadow layers, and reactive atmospheric particles defining 10 unique hardware characters.",
+      },
+      {
+        type: "feature",
+        textTr: "Gelişmiş Pencere ve Sistem Tepsisi Yönetimi: Sistem tepsisi simgesini gizleme/gösterme, pencereyi her zaman en üstte sabitleme ve kapatıldığında arka planda tepsiye küçültme kontrolleri Ayarlar ekranına eklendi.",
+        textEn: "Advanced Window & Tray Controls: System tray icon visibility toggle, Always-on-Top window pinning, and Minimize-to-Tray on close added to Settings.",
+      },
+      {
+        type: "feature",
+        textTr: "5 Seçenekli Taktik Sistem Tepsisi Menüsü: Sağ tık menüsü Aç, Başlat, Durdur, Güncellemeleri Kontrol Et ve Kapat olmak üzere tam 5 fonksiyonla donatıldı; Menü Çubuğu Hızlı Paneline anlık güncelleme butonu entegre edildi.",
+        textEn: "5-Item Tactical System Tray Menu: System tray menu standardized with Open, Start, Stop, Check for Updates, and Quit; added quick-update button to Tray Quick Panel.",
+      },
+      {
+        type: "feature",
+        textTr: "Sıfır-Çakışmalı Akıllı Güncelleyici: Güncelleme sırasında eski süreçlerin ve sürücülerin dosya kilidi oluşturmasını engelleyen yükleyici süreç sonlandırma kancası ve hazırlık motoru eklendi.",
+        textEn: "Zero-Conflict Smart Updater: Automated process teardown hooks in installer ensuring seamless in-place updates without file locks or driver collisions.",
+      },
+      {
+        type: "feature",
+        textTr: "Çift Platform Yerel Sistem Bildirimleri: Yeni sürüm çıktığında Windows WinRT Toast ve macOS UserNotification üzerinden yerel sesli sistem uyarıları bağlandı.",
+        textEn: "Cross-Platform Native Notifications: Audible desktop toast notifications via Windows WinRT and macOS Notification Center when new updates are detected.",
+      },
       {
         type: "feature",
         textTr: "macOS Yerel Motoru (UTUN & PFCTL): KEXT uzantısı gerektirmeden Userspace TUN ve Paket Filtresi (PF) ile tam hat hızında DPI atlatma desteği eklendi.",
@@ -52,13 +113,8 @@ const RELEASES: ReleaseEntry[] = [
       },
       {
         type: "feature",
-        textTr: "macOS Menü Çubuğu Paneli & Bildirim Merkezi: Üst menü çubuğuna kenetlenen taktik Hızlı Panel ve yeni sürüm çıktığında çalışan yerel sesli bildirimler.",
-        textEn: "macOS Menu Bar Quick Panel & Notifications: Compact tactical flyout docked to the menu bar with native Notification Center sound alerts on new updates.",
-      },
-      {
-        type: "feature",
-        textTr: "macOS Arka Plan LaunchDaemon: Arayüzsüz arka plan çalıştırma için sistem düzeyinde LaunchDaemon servisi ve tek komutla kurulum betiği.",
-        textEn: "macOS Background LaunchDaemon: System-level background daemon configuration and automated one-command installation script.",
+        textTr: "macOS Menü Çubuğu Paneli & LaunchDaemon: Üst menü çubuğuna kenetlenen taktik Hızlı Panel ve arayüzsüz sistem başlangıcı için LaunchDaemon servisi.",
+        textEn: "macOS Menu Bar Quick Panel & LaunchDaemon: Compact tactical flyout docked to the menu bar and system LaunchDaemon configuration for headless startup.",
       },
       {
         type: "feature",

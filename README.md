@@ -59,7 +59,7 @@
 
 ---
 
-## İndirme Seçenekleri (v0.3.1)
+## İndirme Seçenekleri (v0.3.1.1)
 
 Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arındırılmış (Zero Leakage) ve Minisign ile doğrulanmıştır.
 
@@ -108,13 +108,13 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/INDIR_.ZIP-6.3_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir ZIP" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64-portable.zip"><img src="https://img.shields.io/badge/INDIR_.ZIP-6.3_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-6.1_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-6.1_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -130,7 +130,7 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(15.7_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTOR-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
@@ -425,7 +425,34 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
     <td width="50%" valign="top">
       &bull; <b>Kyber / ML-KEM 768 &amp; ECH:</b> Chrome/Firefox 1500+ baytlık kuantum sonrası el sıkışma paketlerini kusursuz işler.<br /><br />
       &bull; <b>Sentetik Test Sondaları:</b> Modern tarayıcı uzantılarıyla birebir uyumlu testlerle sıfır sahte negatif sonuç garantisi.<br /><br />
-      &bull; <b>8 Özel Donanım Teması:</b> Obsidian Emerald'dan Cyberpunk Volt ve Amethyst Nebula'ya tam arayüz kişiselleştirme.
+      &bull; <b>Kriptografik Güvenlik:</b> TLS bütünlüğünü bozmadan yalnızca hedefli SNI segmentasyonu ile veri gizliliğini tam koruma.
+    </td>
+  </tr>
+
+  <!-- ROW 4 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/07-SİSTEM_TEMİZLİĞİ-ff4444?style=flat-square&labelColor=08090D" alt="07 Sistem Temizliği" /><br />
+      <h3>Kalıntısız Sistem Temizliği (Zero-Trace Purge)</h3>
+      <sub>Tek tıkla tüm servisleri, çekirdek sürücüleri, DNS kayıtlarını ve izleri kalıcı olarak silme.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/08-DONANIM_DENEYİMİ-FFE600?style=flat-square&labelColor=08090D" alt="08 Donanım Deneyimi" /><br />
+      <h3>10 Morfolojik Tema &amp; Çift Platform Sihirbazı</h3>
+      <sub>Derinlikli donanım karakteri ve macOS/Windows için tam pariteli kurulum deneyimi.</sub>
+    </th>
+  </tr>
+  <!-- ROW 4 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>Tam Kapsamlı Kaldırma:</b> Windows servisini durdurup siler (<code>sc delete</code>), WinDivert sürücüsünü bellekten boşaltır ve artık bırakmaz.<br /><br />
+      &bull; <b>Ağ &amp; Başlangıç Sıfırlama:</b> DNS ve DoH kayıtlarını fabrika ayarlarına döndürür, Görev Zamanlayıcı ve Kayıt Defteri girdilerini tamamen yok eder.<br /><br />
+      &bull; <b>Kalıntısız Dosya Silme:</b> Kısayolları, AppData önbelleğini ve uygulama ikililerini tek operasyonla sistemden tamamen temizler.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>10 Morfolojik Tema:</b> <code>#020617</code> void zemin, <code>#ff642b</code> akkor turuncu ve <code>#00edff</code> elektrik siyanı ile 10 bağımsız donanım karakteri.<br /><br />
+      &bull; <b>Çift Platform Kurulum Sihirbazı:</b> Windows servisi veya macOS LaunchDaemon olarak kalıcı kurulum ya da tek seferlik taşınabilir mod seçimi.<br /><br />
+      &bull; <b>Pencere &amp; Tepsi Özgürlüğü:</b> Tepsi simgesi gizleme, Her Zaman Üstte sabitleme ve arka planda sessiz çalışma kontrolleri.
     </td>
   </tr>
 </table>
@@ -838,9 +865,9 @@ Ana uygulama penceresini açmadan, Windows görev çubuğunun sağ alt köşesin
         &bull; <b>Çekirdek Paylaşımı:</b> WinDivert çekirdek kanalı üzerinden sıfır gecikmeli veri aktarımı.
       </td>
       <td valign="top">
-        &bull; <b>Anti-Flicker Debounce:</b> Windows kabuğunun seri tıklamalarındaki titremeyi engeller.<br /><br />
-        &bull; <b>Çift Tıkla Büyüt:</b> Tepsi simgesine çift tıklandığında doğrudan ana kontrol kokpitini açar.<br /><br />
-        &bull; <b>Tek Dokunuş Müdahale:</b> Paneli açar açmaz tek tıkla motoru durdurma veya <i>Ağ Onarımı</i>.
+        &bull; <b>Anti-Flicker Debounce:</b> Seri tıklamalardaki arayüz titremesini ve çift tık çakışmasını engeller.<br /><br />
+        &bull; <b>5 Öğeli Taktik Menü:</b> Aç, Başlat, Durdur, Güncellemeleri Kontrol Et ve Kapat seçenekleriyle tam kontrol.<br /><br />
+        &bull; <b>Pencere &amp; Tepsi Yönetimi:</b> Tepsi simgesini gizleme/gösterme, Her Zaman Üstte ve Kapatınca Tepsiye Küçültme.
       </td>
     </tr>
   </tbody>

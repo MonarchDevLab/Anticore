@@ -59,7 +59,7 @@
 
 ---
 
-## Download Options (v0.3.1)
+## Download Options (v0.3.1.1)
 
 All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
@@ -108,13 +108,13 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -130,7 +130,7 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(15.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(15.7_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_ENGINE-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
@@ -425,7 +425,34 @@ When online services like Discord or gaming servers are blocked, users typically
     <td width="50%" valign="top">
       &bull; <b>Kyber / ML-KEM 768 &amp; ECH:</b> Reassembles 1500+ byte quantum-resistant ClientHello frames across TCP MSS without loss.<br /><br />
       &bull; <b>Synthetic TLS Probes:</b> Browser-calibrated handshake tests guaranteeing zero false-negative bypass verification.<br /><br />
-      &bull; <b>8 Cyber-Hardware Themes:</b> Full UI morphology customization from Obsidian Emerald to Cyberpunk Volt and Amethyst Nebula.
+      &bull; <b>Cryptographic Confidentiality:</b> Preserves complete payload integrity by restricting surgery strictly to SNI boundaries.
+    </td>
+  </tr>
+
+  <!-- ROW 4 HEADERS -->
+  <tr>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/07-SYSTEM_PURGE-ff4444?style=flat-square&labelColor=08090D" alt="07 System Purge" /><br />
+      <h3>Zero-Trace System Purge</h3>
+      <sub>Single-click teardown removing all drivers, services, DNS modifications, and application data.</sub>
+    </th>
+    <th width="50%" align="left" valign="top">
+      <img src="https://img.shields.io/badge/08-HARDWARE_EXPERIENCE-FFE600?style=flat-square&labelColor=08090D" alt="08 Hardware Experience" /><br />
+      <h3>10 Morphological Themes &amp; Cross-Platform Wizard</h3>
+      <sub>Tactile hardware profiles and unified setup wizard parity across Windows and macOS.</sub>
+    </th>
+  </tr>
+  <!-- ROW 4 CONTENT -->
+  <tr>
+    <td width="50%" valign="top">
+      &bull; <b>Exhaustive Service Teardown:</b> Stops and unregisters background services (<code>sc delete</code>), unloads WinDivert driver cleanly.<br /><br />
+      &bull; <b>Network &amp; Task Sanitization:</b> Resets DNS and DoH configurations to factory state, wipes Task Scheduler and Registry entries.<br /><br />
+      &bull; <b>Zero Leftover Footprint:</b> Deletes desktop shortcuts, AppData caches, and binaries in a single automated teardown cycle.
+    </td>
+    <td width="50%" valign="top">
+      &bull; <b>10 Morphological Themes:</b> <code>#020617</code> void chassis, <code>#ff642b</code> ember orange, and <code>#00edff</code> electric cyan default palette.<br /><br />
+      &bull; <b>Cross-Platform Setup Wizard:</b> Setup persistent system service (Windows Service / macOS LaunchDaemon) or single-run portable mode.<br /><br />
+      &bull; <b>Window &amp; Tray Controls:</b> Configurable tray icon visibility, Always-on-Top pinning, and background minimize on close.
     </td>
   </tr>
 </table>
@@ -736,7 +763,7 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
       <td align="center"><code>Light / Dark</code></td>
       <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
       <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
-      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_8_Custom_Themes-20ffa0?style=flat-square&labelColor=08090D" alt="Themes" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_10_Morphological_Themes-20ffa0?style=flat-square&labelColor=08090D" alt="Themes" /></td>
     </tr>
   </tbody>
 </table>
@@ -839,8 +866,8 @@ Control your network protection instantly without opening the main workspace win
       </td>
       <td valign="top">
         &bull; <b>Anti-Flicker Debounce:</b> Eliminates window flickering and redraw bugs during rapid shell clicks.<br /><br />
-        &bull; <b>Double-Click Maximize:</b> Double-clicking tray icon directly foregrounds primary cockpit window.<br /><br />
-        &bull; <b>One-Touch Intervention:</b> Toggle protection or trigger instant <i>Network Repair</i> with single click.
+        &bull; <b>5-Item Tactical Menu:</b> Standardized controls with Open, Start, Stop, Check for Updates, and Quit.<br /><br />
+        &bull; <b>Window &amp; Tray Controls:</b> Tray icon visibility toggle, Always-on-Top pinning, and Minimize-to-Tray.
       </td>
     </tr>
   </tbody>

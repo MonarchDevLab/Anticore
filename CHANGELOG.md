@@ -6,9 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.1.1] - 2026-09-11
+
+### Added
+- **Complete System Purge (Zero-Trace):** Added a dedicated "Purge System Completely" uninstallation feature in Settings. Safely stops the engine, terminates CLI/daemon processes, cleanly removes Windows services (`sc delete`), unloads the WinDivert driver (`net stop WinDivert`), resets DNS/DoH configurations, deletes Task Scheduler and Registry startup entries, clears desktop/Start menu shortcuts, wipes local AppData runtime caches, and executes a zero-trace uninstaller without leaving residual files.
+- **Brand Palette & Morphological Refinement:** Refined application identity with `#020617` void background, `#ff642b` live ember primary, and `#00edff` cyan secondary across all 10 morphological themes.
+- **Cross-Platform Setup Wizard Parity:** Standardized wizard language for persistent system service installation and single-run portable execution across Windows and macOS.
+
+### Fixed
+- **Multi-Part Versioning & Update Notifications:** Enhanced updater version comparison logic to seamlessly parse and notify for multi-part patch revisions (e.g. `0.3.1.1`) across Windows WinRT Toast and macOS Notification Center.
+- **Sanitized Distribution & Documentation:** Complete compliance review removing legacy blocking terminology across all documentation, metadata, and distribution artifacts.
+
 ## [0.3.1] - 2026-09-11
 
 ### Added
+- **10 Morphological Hardware Themes:** 10 distinct, tactile hardware themes (Obsidian Core, Cyberpunk Volt, Luxury Gold, Crimson Protocol, Cobalt Matrix, Amber CRT, Amethyst Void, Abyss Aqua, Solar Flare, Titanium Clean) featuring unique corner radii, border depths, shadow treatments, and dynamic atmospheric glows. Default brand colors tuned to `#020617` void, `#ff642b` live ember, and `#00edff` cyan accent.
+- **Advanced Window & System Tray Management:** Integrated fine-grained controls in Settings for system tray icon visibility toggle, Always-on-Top window pinning, and Minimize-to-Tray on window close.
+- **5-Item Tactical System Tray Menu:** Standardized system tray context menu across platforms with Open, Start, Stop, Check for Updates, and Quit; added 1-click update check button to the Tray Quick Panel.
+- **Zero-Conflict Smart Updater:** Built-in installer teardown hooks and graceful pre-update shutdown routines preventing file-lock collisions during in-place upgrades.
+- **Cross-Platform Native Notifications:** Audible desktop toast alerts via Windows WinRT and macOS Notification Center when new releases are detected.
 - **macOS Native Engine (UTUN + PFCTL):** Sürücüsüz Userspace TUN (`utun`) ve paket filtre (`pfctl`) anchor yönlendirme motoru (`anticore-transport-macos`), çekirdek uzantısı (KEXT) gerektirmeden tam hat hızında çalışır.
 - **Separated Apple Silicon & Intel macOS Packages:** Apple Silicon (`aarch64-apple-darwin` — M1/M2/M3/M4/M5) ve Intel (`x86_64-apple-darwin` — Core i5/i7/i9/Xeon) için bağımsız derlenmiş disk kalıpları (`Anticore_0.3.1_aarch64.dmg` & `Anticore_0.3.1_x64.dmg`), `.app.tar.gz` paketleri ve bağımsız CLI daemon arşivleri.
 - **macOS Menu Bar Quick Panel (Tray Flyout):** Üst menü çubuğuna kenetlenen, tek tıkla profil değişimi ve canlı telemetri sunan 340x460px taktik komuta paneli ve yeni sürüm uyarı şeridi.

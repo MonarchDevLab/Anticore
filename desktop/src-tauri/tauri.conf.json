@@ -44,7 +44,7 @@
   "bundle": {
     "active": true,
     "targets": ["nsis", "msi", "app", "dmg"],
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "copyright": "Copyright (c) 2026 Monolith Works. All rights reserved.",
     "publisher": "MonarchDevLab",
     "icon": [

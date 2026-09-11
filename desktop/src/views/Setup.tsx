@@ -81,7 +81,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
             ? [
                 {
                   q: "Servis olarak kurmak ne demek?",
-                  a: "Çekirdek, Windows'un kendi hizmet sistemiyle (arka plan servisi olarak) kaydedilir. Bilgisayarı her açtığınızda otomatik başlar; panel kapalıyken bile koruma sürer.",
+                  a: "Çekirdek, işletim sisteminin kendi servis yöneticisiyle (Windows Hizmeti / macOS LaunchDaemon) arka plan servisi olarak kaydedilir. Bilgisayarı her açtığınızda otomatik başlar; panel kapalıyken bile koruma sürer.",
                 },
                 {
                   q: "Bağımsız çalıştırma ne demek?",
@@ -95,7 +95,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
             : [
                 {
                   q: "What does installing as a service mean?",
-                  a: "The engine is registered with Windows' own service manager (as a background service). It starts automatically every time the computer boots; protection continues even with the panel closed.",
+                  a: "The engine is registered with the OS background service manager (Windows Service / macOS LaunchDaemon). It starts automatically every time the computer boots; protection continues even with the panel closed.",
                 },
                 {
                   q: "What does detached mode mean?",
@@ -124,8 +124,8 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
               </div>
               <div className="text-xs text-paper-muted mt-0.5">
                 {lang === "tr"
-                  ? "Windows Servisi kurmak veya arka planda bağımsız Çekirdek çalıştırmak için Yönetici yetkisi gereklidir."
-                  : "Administrator privileges are required to install a Windows Service or run a detached engine."}
+                  ? "Sistem servisi kurmak veya arka planda bağımsız Çekirdek çalıştırmak için Yönetici / root yetkisi gereklidir."
+                  : "Administrator / root privileges are required to install a system service or run a detached engine."}
               </div>
             </div>
           </div>
