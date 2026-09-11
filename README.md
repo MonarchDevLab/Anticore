@@ -26,31 +26,31 @@
 
 <table width="100%" align="center">
   <tr>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#indirme-seçenekleri-v031"><font color="#00FF9D"><b>01 &bull; DAĞITIM PAKETLERİ</b></font><br /><sub><font color="#8b949e">v0.3.1 Kurulum &amp; Taşınabilir</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#indirme-seçenekleri-v031"><img src="https://img.shields.io/badge/01-DAĞITIM_PAKETLERİ-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Dağıtım Paketleri" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#anticore-nedir-ve-ne-değildir"><font color="#00E5FF"><b>02 &bull; TEMEL MİMARİ</b></font><br /><sub><font color="#8b949e">VPN vs Cerrahi DPI Bypass</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#anticore-nedir-ve-ne-değildir"><img src="https://img.shields.io/badge/02-TEMEL_MİMARİ-20f2ff?style=for-the-badge&labelColor=08090D" alt="02 Temel Mimari" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#öne-çıkan-yetenekler"><font color="#FFE600"><b>03 &bull; YETENEKLER</b></font><br /><sub><font color="#8b949e">6 Çekirdek Güvenlik Modülü</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#öne-çıkan-yetenekler"><img src="https://img.shields.io/badge/03-YETENEKLER-FFE600?style=for-the-badge&labelColor=08090D" alt="03 Yetenekler" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#nasıl-çalışır"><font color="#FF7733"><b>04 &bull; ÇALIŞMA PRENSİBİ</b></font><br /><sub><font color="#8b949e">Paket &amp; Bellek Akış Şeması</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#nasıl-çalışır"><img src="https://img.shields.io/badge/04-ÇALIŞMA_PRENSİBİ-FF7733?style=for-the-badge&labelColor=08090D" alt="04 Çalışma Prensibi" /></a>
     </td>
   </tr>
   <tr>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#türkiye-iss-uyumluluk-ve-atlatma-matrisi"><font color="#00FF9D"><b>05 &bull; İSS MATRİSİ</b></font><br /><sub><font color="#8b949e">Superonline, TTNet, TurkNet</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#türkiye-iss-uyumluluk-ve-atlatma-matrisi"><img src="https://img.shields.io/badge/05-İSS_MATRİSİ-20ffa0?style=for-the-badge&labelColor=08090D" alt="05 İSS Matrisi" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#kapsamlı-karşılaştırma-tablosu"><font color="#00E5FF"><b>06 &bull; KARŞILAŞTIRMA</b></font><br /><sub><font color="#8b949e">GoodbyeDPI &bull; SplitWire &bull; VPN</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#kapsamlı-karşılaştırma-tablosu"><img src="https://img.shields.io/badge/06-KARŞILAŞTIRMA-20f2ff?style=for-the-badge&labelColor=08090D" alt="06 Karşılaştırma" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#sıkça-sorulan-sorular-sss"><font color="#FFE600"><b>07 &bull; SORU &amp; YANIT (SSS)</b></font><br /><sub><font color="#8b949e">Sıkça Sorulan Sorular</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#sıkça-sorulan-sorular-sss"><img src="https://img.shields.io/badge/07-SORU_&_YANIT-FFE600?style=for-the-badge&labelColor=08090D" alt="07 Soru &amp; Yanıt" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="README.en.md"><font color="#FFFFFF"><b>EN &bull; ENGLISH GUIDE</b></font><br /><sub><font color="#8b949e">Official Documentation</font></sub></a>
+    <td width="25%" align="center">
+      <a href="README.en.md"><img src="https://img.shields.io/badge/EN-ENGLISH_DOCS-FFFFFF?style=for-the-badge&labelColor=08090D" alt="EN Documentation" /></a>
     </td>
   </tr>
 </table>
@@ -494,284 +494,106 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
 <table width="100%" align="center">
   <thead>
     <tr>
-      <th width="28%" align="left">Değerlendirme Kriteri</th>
-      <th width="18%" align="center">Geleneksel VPN</th>
-      <th width="18%" align="center">GoodbyeDPI</th>
-      <th width="18%" align="center">SplitWire</th>
-      <th width="18%" align="center" bgcolor="#0d231a">
-        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-20ffa0?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
+      <th width="24%" align="left">Teknik Kriter</th>
+      <th width="19%" align="center">Geleneksel VPN</th>
+      <th width="19%" align="center">GoodbyeDPI</th>
+      <th width="19%" align="center">SplitWire</th>
+      <th width="19%" align="center">
+        <img src="https://img.shields.io/badge/ANTICORE-v0.3.1-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore v0.3.1" />
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>
-        <b>Bant Genişliği & İndirme Hızı</b><br />
-        <sub>Ağ çıkışında hız sınırlaması veya paket kaybı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%96%BC_%2550--%2580_Düşüş-DA3633?style=flat-square&labelColor=21262D" alt="Kayıp" /><br />
-        <sub>Şifreleme Tüneli Kaybı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-8B949E?style=flat-square&labelColor=21262D" alt="Tam Hat" /><br />
-        <sub>%100 Hat Hızı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-8B949E?style=flat-square&labelColor=21262D" alt="Tam Hat" /><br />
-        <sub>%100 Hat Hızı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-20ffa0?style=flat-square&labelColor=08090D" alt="Tam Hat" /><br />
-        <b>%100 Koruma (Sıfır Kayıp)</b>
-      </td>
+      <td><b>İndirme Hızı &amp; Hat</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%96%BC_%2550--80_Düşüş-DA3633?style=flat-square&labelColor=21262D" alt="Kayıp" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-8B949E?style=flat-square&labelColor=21262D" alt="Tam Hat" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Tam_Hat-8B949E?style=flat-square&labelColor=21262D" alt="Tam Hat" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_%25100_Tam_Hat-20ffa0?style=flat-square&labelColor=08090D" alt="Tam Hat" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Oyun İçi Ping & Gecikme</b><br />
-        <sub>Valorant, CS2, LoL ve Steam gecikme etkisi</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%96%B2_%2B50--200_ms-DA3633?style=flat-square&labelColor=21262D" alt="Artış" /><br />
-        <sub>Yüksek Sunucu Gecikmesi</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
-        <sub>Doğrudan Çıkış</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
-        <sub>Doğrudan Çıkış</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Artış-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
-        <b>Sıfır Ek Ping (Doğrudan)</b>
-      </td>
+      <td><b>Oyun Pingi &amp; Gecikme</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%96%B2_%2B100~250_ms-DA3633?style=flat-square&labelColor=21262D" alt="Yüksek Ping" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/0_ms_Artış-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/0_ms_Artış-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Artış-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Modern Grafik Arayüz (GUI)</b><br />
-        <sub>Kullanıcı dostu yönetim ve durum paneli</sub>
-      </td>
-      <td align="center">
-        <code>Standart SaaS UI</code><br />
-        <sub>Klasik Web Formu</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /><br />
-        <sub>.cmd Siyah Ekran</sub>
-      </td>
-      <td align="center">
-        <code>Temel Form UI</code><br />
-        <sub>WinForms / WPF Arayüz</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-20ffa0?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
-        <b>Çift Modlu Donanım Paneli</b>
-      </td>
+      <td><b>Kullanıcı Arayüzü (GUI)</b></td>
+      <td align="center"><code>Standart SaaS UI</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok_(Salt_Konsol)-30363D?style=flat-square&labelColor=161B22" alt="Konsol" /></td>
+      <td align="center"><code>Temel WinForms</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware_3D-20ffa0?style=flat-square&labelColor=08090D" alt="Cyber GUI" /></td>
     </tr>
     <tr>
-      <td>
-        <b>3D Telemetri & İzometrik Grafik</b><br />
-        <sub>Gerçek zamanlı görsel veri akışı ve reaktör</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>Canlı Reaktör Orbu</b>
-      </td>
+      <td><b>Canlı 3D Telemetri</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_60_FPS_Reaktör_Orbu-20ffa0?style=flat-square&labelColor=08090D" alt="Reaktör" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Yerel Ağ (LAN) Paylaşımı</b><br />
-        <sub>Mobil cihazlar, konsol ve TV'ler için ağ geçidi</sub>
-      </td>
-      <td align="center">
-        <code>Karmaşık Yönlendirme</code><br />
-        <sub>Sanal Adaptör Paylaşımı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>Hotspot Transit Geçişi</b>
-      </td>
+      <td><b>LAN / SOCKS5 Ağ Geçidi</b></td>
+      <td align="center"><code>Sanal Adaptör Paylaşımı</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_Hotspot-20ffa0?style=flat-square&labelColor=08090D" alt="SOCKS5" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Winsock & TCP/IP Yığını Onarımı</b><br />
-        <sub>Ağ arızaları ve kilitlenmelerini tek tıkla çözme</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>Tek Tıkla Ağ Onarımı</b>
-      </td>
+      <td><b>Winsock &amp; DNS Onarımı</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_1--Tıkla_Ağ_Onarımı-20ffa0?style=flat-square&labelColor=08090D" alt="Onarım" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Dinamik Bellek İçi Kara Liste</b><br />
-        <sub>Uygulamayı kapatmadan anında alan adı ekleme</sub>
-      </td>
-      <td align="center">
-        <code>Yeniden Bağlantı</code><br />
-        <sub>Tünel Sıfırlama Şart</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9A%A0_Yeniden_Başlat-30363D?style=flat-square&labelColor=161B22" alt="Yeniden Başlat" /><br />
-        <sub>Servis Yeniden Başlatma</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9A%A0_Yeniden_Başlat-30363D?style=flat-square&labelColor=161B22" alt="Yeniden Başlat" /><br />
-        <sub>Servis Yeniden Başlatma</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Anlık_Senkron-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>Arc&lt;RwLock&gt; Canlı Bellek</b>
-      </td>
+      <td><b>Dinamik Bellek Kara Listesi</b></td>
+      <td align="center"><code>Tünel Yeniden Başlatma</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9A%A0_Servis_Reset-30363D?style=flat-square&labelColor=161B22" alt="Reset" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9A%A0_Servis_Reset-30363D?style=flat-square&labelColor=161B22" alt="Reset" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Arc_RwLock_Canlı-20ffa0?style=flat-square&labelColor=08090D" alt="Arc" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Sistem Tepsisi (Tray) Flyout Paneli</b><br />
-        <sub>Görev çubuğundan kompakt hızlı erişim</sub>
-      </td>
-      <td align="center">
-        <code>Kısmi Menü</code><br />
-        <sub>Basit Bağlan/Kop Menüsü</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <code>Temel Menü</code><br />
-        <sub>Sağ Tık Menü Öğeleri</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Canlı_Flyout-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>340x460px Komuta Kokpiti</b>
-      </td>
+      <td><b>Sistem Tepsisi (Tray Flyout)</b></td>
+      <td align="center"><code>Basit Sağ Tık</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><code>Temel Sağ Tık</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_340x460px_Kokpit-20ffa0?style=flat-square&labelColor=08090D" alt="Tray" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Windows Hizmet (Service) Modu</b><br />
-        <sub>Arka planda sessiz daemon olarak çalışma</sub>
-      </td>
-      <td align="center">
-        <code>Kısmi Hizmet</code><br />
-        <sub>Arka Plan Sürücüsü</sub>
-      </td>
-      <td align="center">
-        <code>Manuel sc.exe</code><br />
-        <sub>Konsol Komutları Gerekli</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Entegre-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>Arayüzden Tek Tık Yönetim</b>
-      </td>
+      <td><b>Windows Servis (Daemon)</b></td>
+      <td align="center"><code>Kısmi Servis</code></td>
+      <td align="center"><code>Manuel sc.exe</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Entegre_Daemon-20ffa0?style=flat-square&labelColor=08090D" alt="Daemon" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Discord DNS & RTC Onarımı</b><br />
-        <sub>Kilitlenen güncellemeler ve ses kanalı hataları</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Otomatik_Onarım-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>RTC & Zehirlenme Çözümü</b>
-      </td>
+      <td><b>Discord DNS &amp; RTC Çözümü</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Entegre_RTC_Onarımı-20ffa0?style=flat-square&labelColor=08090D" alt="Discord" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Bellek Tüketimi (RAM)</b><br />
-        <sub>Çalışma esnasında tüketilen bellek miktarı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/150--350_MB-DA3633?style=flat-square&labelColor=21262D" alt="150-350 MB" /><br />
-        <sub>Ağır SaaS Katmanı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/~10_MB-8B949E?style=flat-square&labelColor=21262D" alt="~10 MB" /><br />
-        <sub>Salt C Konsolu</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/~80_MB-8B949E?style=flat-square&labelColor=21262D" alt="~80 MB" /><br />
-        <sub>.NET Çalışma Zamanı</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-20ffa0?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
-        <b>Rust Çekirdeği + WebView2</b>
-      </td>
+      <td><b>Bellek Tüketimi (RAM)</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/150--350_MB-DA3633?style=flat-square&labelColor=21262D" alt="150-350 MB" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/~10_MB-8B949E?style=flat-square&labelColor=21262D" alt="~10 MB" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/~80_MB-8B949E?style=flat-square&labelColor=21262D" alt="~80 MB" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_~25_MB_(Rust)-20ffa0?style=flat-square&labelColor=08090D" alt="~25 MB" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Dahili Otomatik Güncelleme</b><br />
-        <sub>Yeni sürümleri güvenle denetleme ve kurma</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Var-8B949E?style=flat-square&labelColor=21262D" alt="Var" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /><br />
-        <sub>Manuel Zip İndirme</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /><br />
-        <sub>Manuel Takip</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>İmzalı GitHub Updater</b>
-      </td>
+      <td><b>Otomatik Güncelleyici</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Var-8B949E?style=flat-square&labelColor=21262D" alt="Var" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Manuel_Zip-30363D?style=flat-square&labelColor=161B22" alt="Manuel" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Manuel_Takip-30363D?style=flat-square&labelColor=161B22" alt="Manuel" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_İmzalı_GitHub_OTA-20ffa0?style=flat-square&labelColor=08090D" alt="OTA" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Donanım Temaları</b><br />
-        <sub>Görsel morfoloji ve arayüz kişiselleştirme</sub>
-      </td>
-      <td align="center">
-        <code>Açık / Koyu</code>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_8_Özel_Tema-20ffa0?style=flat-square&labelColor=08090D" alt="Var" /><br />
-        <b>Cyber-Hardware Morfoloji</b>
-      </td>
+      <td><b>Donanım Temaları</b></td>
+      <td align="center"><code>Açık / Koyu</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Yok-30363D?style=flat-square&labelColor=161B22" alt="Yok" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_8_Özel_Cyber_Tema-20ffa0?style=flat-square&labelColor=08090D" alt="Temalar" /></td>
     </tr>
   </tbody>
 </table>

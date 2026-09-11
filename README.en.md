@@ -26,31 +26,31 @@
 
 <table width="100%" align="center">
   <tr>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#download-options-v031"><font color="#00FF9D"><b>01 &bull; DISTRIBUTION PACKAGES</b></font><br /><sub><font color="#8b949e">v0.3.1 Setup &amp; Portable</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#download-options-v031"><img src="https://img.shields.io/badge/01-DISTRIBUTION-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Distribution" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#what-anticore-is-and-is-not"><font color="#00E5FF"><b>02 &bull; CORE ARCHITECTURE</b></font><br /><sub><font color="#8b949e">VPN vs Surgical DPI Bypass</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#what-anticore-is-and-is-not"><img src="https://img.shields.io/badge/02-CORE_ARCH-20f2ff?style=for-the-badge&labelColor=08090D" alt="02 Core Architecture" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#key-features"><font color="#FFE600"><b>03 &bull; KEY FEATURES</b></font><br /><sub><font color="#8b949e">6 Core Security Engines</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#key-features"><img src="https://img.shields.io/badge/03-FEATURES-FFE600?style=for-the-badge&labelColor=08090D" alt="03 Features" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#how-it-works"><font color="#FF7733"><b>04 &bull; HOW IT WORKS</b></font><br /><sub><font color="#8b949e">Packet &amp; Memory Flowchart</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#how-it-works"><img src="https://img.shields.io/badge/04-WORKFLOW-FF7733?style=for-the-badge&labelColor=08090D" alt="04 Workflow" /></a>
     </td>
   </tr>
   <tr>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#isp-compatibility--bypass-matrix"><font color="#00FF9D"><b>05 &bull; ISP MATRIX</b></font><br /><sub><font color="#8b949e">Circumvention Capabilities</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#isp-compatibility--bypass-matrix"><img src="https://img.shields.io/badge/05-ISP_MATRIX-20ffa0?style=for-the-badge&labelColor=08090D" alt="05 ISP Matrix" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#comprehensive-comparison-matrix"><font color="#00E5FF"><b>06 &bull; COMPARISON</b></font><br /><sub><font color="#8b949e">GoodbyeDPI &bull; SplitWire &bull; VPN</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#comprehensive-comparison-matrix"><img src="https://img.shields.io/badge/06-COMPARISON-20f2ff?style=for-the-badge&labelColor=08090D" alt="06 Comparison" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="#frequently-asked-questions-faq"><font color="#FFE600"><b>07 &bull; FAQ &amp; HELP</b></font><br /><sub><font color="#8b949e">Frequently Asked Questions</font></sub></a>
+    <td width="25%" align="center">
+      <a href="#frequently-asked-questions-faq"><img src="https://img.shields.io/badge/07-FAQ_SECTION-FFE600?style=for-the-badge&labelColor=08090D" alt="07 FAQ" /></a>
     </td>
-    <td width="250" align="center" bgcolor="#0d1117">
-      <a href="README.md"><font color="#FFFFFF"><b>TR &bull; TÜRKÇE KILAVUZ</b></font><br /><sub><font color="#8b949e">Ana Dökümantasyona Geç</font></sub></a>
+    <td width="25%" align="center">
+      <a href="README.md"><img src="https://img.shields.io/badge/TR-TÜRKÇE_KILAVUZ-FFFFFF?style=for-the-badge&labelColor=08090D" alt="TR Guide" /></a>
     </td>
   </tr>
 </table>
@@ -494,284 +494,106 @@ Common ISP Deep Packet Inspection implementations and Anticore's calibrated miti
 <table width="100%" align="center">
   <thead>
     <tr>
-      <th width="28%" align="left">Evaluation Criteria</th>
-      <th width="18%" align="center">Traditional VPN</th>
-      <th width="18%" align="center">GoodbyeDPI</th>
-      <th width="18%" align="center">SplitWire</th>
-      <th width="18%" align="center" bgcolor="#0d231a">
-        <img src="https://img.shields.io/badge/%E2%9A%A1_ANTICORE-v0.3.1-20ffa0?style=flat-square&labelColor=08090D" alt="ANTICORE v0.3.1" />
+      <th width="24%" align="left">Technical Criteria</th>
+      <th width="19%" align="center">Traditional VPN</th>
+      <th width="19%" align="center">GoodbyeDPI</th>
+      <th width="19%" align="center">SplitWire</th>
+      <th width="19%" align="center">
+        <img src="https://img.shields.io/badge/ANTICORE-v0.3.1-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore v0.3.1" />
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>
-        <b>Bandwidth & Download Speed</b><br />
-        <sub>Throughput penalty or tunnel throttling</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%96%BC_50%25--80%25_Loss-DA3633?style=flat-square&labelColor=21262D" alt="Loss" /><br />
-        <sub>Encryption Tunnel Overhead</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Line_Rate-8B949E?style=flat-square&labelColor=21262D" alt="Line Rate" /><br />
-        <sub>100% Line Speed</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Line_Rate-8B949E?style=flat-square&labelColor=21262D" alt="Line Rate" /><br />
-        <sub>100% Line Speed</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Full_Speed-20ffa0?style=flat-square&labelColor=08090D" alt="Full Speed" /><br />
-        <b>100% Line Rate (Zero Loss)</b>
-      </td>
+      <td><b>Download Speed &amp; Pipe</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%96%BC_50%25--80%25_Loss-DA3633?style=flat-square&labelColor=21262D" alt="Loss" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Line_Rate-8B949E?style=flat-square&labelColor=21262D" alt="Line Rate" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Line_Rate-8B949E?style=flat-square&labelColor=21262D" alt="Line Rate" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_100%25_Line_Rate-20ffa0?style=flat-square&labelColor=08090D" alt="Line Rate" /></td>
     </tr>
     <tr>
-      <td>
-        <b>In-Game Ping Latency</b><br />
-        <sub>Latency impact on Valorant, CS2, LoL, Steam</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%96%B2_%2B50--200_ms-DA3633?style=flat-square&labelColor=21262D" alt="Latency Penalty" /><br />
-        <sub>Remote Server Routing</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
-        <sub>Direct Transit</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/0_ms-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /><br />
-        <sub>Direct Transit</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Penalty-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" /><br />
-        <b>Zero Ping Penalty (Direct)</b>
-      </td>
+      <td><b>Gaming Ping &amp; Latency</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%96%B2_%2B100~250_ms-DA3633?style=flat-square&labelColor=21262D" alt="High Ping" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/0_ms_Penalty-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/0_ms_Penalty-8B949E?style=flat-square&labelColor=21262D" alt="0 ms" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_0_ms_Penalty-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Modern Graphic Interface (GUI)</b><br />
-        <sub>User-friendly control cockpit and status telemetry</sub>
-      </td>
-      <td align="center">
-        <code>Standard SaaS UI</code><br />
-        <sub>Generic Web Wrapper</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /><br />
-        <sub>.cmd Terminal Console</sub>
-      </td>
-      <td align="center">
-        <code>Basic Form UI</code><br />
-        <sub>WinForms / WPF Interface</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware-20ffa0?style=flat-square&labelColor=08090D" alt="Cyber-Hardware" /><br />
-        <b>Dual-Mode Hardware HUD</b>
-      </td>
+      <td><b>Graphical Interface (GUI)</b></td>
+      <td align="center"><code>Standard SaaS UI</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None_(Console_Only)-30363D?style=flat-square&labelColor=161B22" alt="Console" /></td>
+      <td align="center"><code>Basic WinForms</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Cyber--Hardware_3D-20ffa0?style=flat-square&labelColor=08090D" alt="Cyber GUI" /></td>
     </tr>
     <tr>
-      <td>
-        <b>3D Telemetry & Isometric Chart</b><br />
-        <sub>Real-time interactive rendering and reactor orb</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Canvas_3D_PPS-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>Active Gyroscopic Reactor</b>
-      </td>
+      <td><b>Live 3D Telemetry</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_60_FPS_Reactor_Orb-20ffa0?style=flat-square&labelColor=08090D" alt="Reactor" /></td>
     </tr>
     <tr>
-      <td>
-        <b>LAN Device Sharing (Hotspot / Proxy)</b><br />
-        <sub>Network gateway for phones, consoles, Smart TVs</sub>
-      </td>
-      <td align="center">
-        <code>Complex Routing</code><br />
-        <sub>Virtual Adapter Bridging</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_PAC-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>Hotspot Transit Gateway</b>
-      </td>
+      <td><b>LAN / SOCKS5 Gateway</b></td>
+      <td align="center"><code>Virtual Adapter Sharing</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_SOCKS5_%2B_Hotspot-20ffa0?style=flat-square&labelColor=08090D" alt="SOCKS5" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Winsock & TCP/IP Stack Repair</b><br />
-        <sub>One-click diagnosis and adapter restoration</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>One-Click Stack Repair</b>
-      </td>
+      <td><b>Winsock &amp; DNS Recovery</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_1--Click_Network_Fix-20ffa0?style=flat-square&labelColor=08090D" alt="Recovery" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Dynamic In-Memory Blacklist</b><br />
-        <sub>Live domain sync without restarting core engine</sub>
-      </td>
-      <td align="center">
-        <code>Reconnect Required</code><br />
-        <sub>Tunnel Restart Needed</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9A%A0_Restart_Req-30363D?style=flat-square&labelColor=161B22" alt="Restart" /><br />
-        <sub>Service Restart Required</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9A%A0_Restart_Req-30363D?style=flat-square&labelColor=161B22" alt="Restart" /><br />
-        <sub>Service Restart Required</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Sync-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>Arc&lt;RwLock&gt; Atomic Cache</b>
-      </td>
+      <td><b>In-Memory Blacklist</b></td>
+      <td align="center"><code>Tunnel Restart Req</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9A%A0_Service_Reset-30363D?style=flat-square&labelColor=161B22" alt="Reset" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9A%A0_Service_Reset-30363D?style=flat-square&labelColor=161B22" alt="Reset" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Arc_RwLock_Live-20ffa0?style=flat-square&labelColor=08090D" alt="Arc" /></td>
     </tr>
     <tr>
-      <td>
-        <b>System Tray Flyout Cockpit</b><br />
-        <sub>Lightweight taskbar quick command console</sub>
-      </td>
-      <td align="center">
-        <code>Basic Tray Menu</code><br />
-        <sub>Simple Connect/Disconnect</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <code>Basic Context Menu</code><br />
-        <sub>Standard Right-Click Items</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Live_Flyout-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>340x460px Floating Cockpit</b>
-      </td>
+      <td><b>System Tray Cockpit Flyout</b></td>
+      <td align="center"><code>Basic Context Menu</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><code>Basic Context Menu</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_340x460px_Cockpit-20ffa0?style=flat-square&labelColor=08090D" alt="Tray" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Windows Service Background Daemon</b><br />
-        <sub>Silent background operation on boot</sub>
-      </td>
-      <td align="center">
-        <code>Partial Service</code><br />
-        <sub>Background Driver</sub>
-      </td>
-      <td align="center">
-        <code>Manual sc.exe</code><br />
-        <sub>CLI Configuration Required</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Integrated-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>One-Click Daemon Control</b>
-      </td>
+      <td><b>Windows Service (Daemon)</b></td>
+      <td align="center"><code>Partial Driver</code></td>
+      <td align="center"><code>Manual sc.exe</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Integrated_Daemon-20ffa0?style=flat-square&labelColor=08090D" alt="Daemon" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Discord DNS & Voice RTC Fix</b><br />
-        <sub>Remediates update loops and voice connect failure</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Auto_Fix-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>RTC & DNS Poisoning Remedy</b>
-      </td>
+      <td><b>Discord DNS &amp; RTC Repair</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Built--in_RTC_Fix-20ffa0?style=flat-square&labelColor=08090D" alt="Discord" /></td>
     </tr>
     <tr>
-      <td>
-        <b>RAM Consumption</b><br />
-        <sub>Memory footprint under active load</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/150--350_MB-DA3633?style=flat-square&labelColor=21262D" alt="150-350 MB" /><br />
-        <sub>Bloated Electron/SaaS</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/~10_MB-8B949E?style=flat-square&labelColor=21262D" alt="~10 MB" /><br />
-        <sub>Pure C Binary</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/~80_MB-8B949E?style=flat-square&labelColor=21262D" alt="~80 MB" /><br />
-        <sub>.NET Runtime</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_~25_MB-20ffa0?style=flat-square&labelColor=08090D" alt="~25 MB" /><br />
-        <b>Rust Engine + WebView2</b>
-      </td>
+      <td><b>Memory Footprint (RAM)</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/150--350_MB-DA3633?style=flat-square&labelColor=21262D" alt="150-350 MB" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/~10_MB-8B949E?style=flat-square&labelColor=21262D" alt="~10 MB" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/~80_MB-8B949E?style=flat-square&labelColor=21262D" alt="~80 MB" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_~25_MB_(Rust)-20ffa0?style=flat-square&labelColor=08090D" alt="~25 MB" /></td>
     </tr>
     <tr>
-      <td>
-        <b>In-App Auto Updater</b><br />
-        <sub>Cryptographic seamless delta releases</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Yes-8B949E?style=flat-square&labelColor=21262D" alt="Yes" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /><br />
-        <sub>Manual Archive Extraction</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /><br />
-        <sub>Manual Tracking</sub>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_Tauri_Signed-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>Signed GitHub Updater</b>
-      </td>
+      <td><b>Auto-Updater (OTA)</b></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Supported-8B949E?style=flat-square&labelColor=21262D" alt="Supported" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Manual_Zip-30363D?style=flat-square&labelColor=161B22" alt="Manual" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_Manual_Tracking-30363D?style=flat-square&labelColor=161B22" alt="Manual" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_Signed_GitHub_OTA-20ffa0?style=flat-square&labelColor=08090D" alt="OTA" /></td>
     </tr>
     <tr>
-      <td>
-        <b>Hardware Themes</b><br />
-        <sub>Visual morphology and tactile theme presets</sub>
-      </td>
-      <td align="center">
-        <code>Light / Dark</code>
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" />
-      </td>
-      <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_8_Custom_Themes-20ffa0?style=flat-square&labelColor=08090D" alt="Active" /><br />
-        <b>Morphological Hardware Deck</b>
-      </td>
+      <td><b>Hardware Cyber Themes</b></td>
+      <td align="center"><code>Light / Dark</code></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%97_None-30363D?style=flat-square&labelColor=161B22" alt="None" /></td>
+      <td align="center"><img src="https://img.shields.io/badge/%E2%9C%93_8_Custom_Themes-20ffa0?style=flat-square&labelColor=08090D" alt="Themes" /></td>
     </tr>
   </tbody>
 </table>
