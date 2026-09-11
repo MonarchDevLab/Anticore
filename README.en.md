@@ -624,46 +624,56 @@ Control your network protection instantly without opening the main workspace win
 <table width="100%" align="center">
   <thead>
     <tr>
-      <th width="60%" align="left">
-        <img src="https://img.shields.io/badge/TRAY_COCKPIT-ANTICORE_v0.3.1_COMMAND_CONSOLE-161b22?style=flat-square" alt="Tray Cockpit" />
+      <th width="50%" align="left">
+        <img src="https://img.shields.io/badge/TRAY_COCKPIT-ANTICORE_v0.3.1_LIVE_COMMAND-161b22?style=flat-square" alt="Tray Cockpit" />
       </th>
-      <th width="40%" align="right">
-        <img src="https://img.shields.io/badge/ENGINE_STATUS-●_ACTIVE_RUNNING-20ffa0?style=flat-square&labelColor=08090D" alt="Status Active" />
+      <th width="50%" align="right">
+        <img src="https://img.shields.io/badge/ENGINE-PROTECTION_ACTIVE-20ffa0?style=flat-square&labelColor=08090D" alt="Status Active" /> &nbsp;
         <img src="https://img.shields.io/badge/DRIVER-WinDivert_Attached-20f2ff?style=flat-square&labelColor=08090D" alt="Driver" />
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td width="50%" valign="top">
-        <b>Active Bypass Profile:</b><br />
+      <td width="50%">
+        <b>Active Profile:</b> &nbsp;
         <img src="https://img.shields.io/badge/PROFILE_3-Superonline_Aggressive-20f2ff?style=flat-square&labelColor=08090D" alt="Profile 3" />
-        <br /><br />
-        <b>Active Surgical Rule:</b><br />
-        <code>Fake TTL=4 + 2-Byte SNI Segmentation</code>
-        <br /><br />
-        <b>Rapid Actions:</b><br />
-        <kbd>⏹ Stop Engine</kbd> &nbsp;
-        <kbd>⚡ Network Repair</kbd> &nbsp;
-        <kbd>⚙ Main Cockpit</kbd>
       </td>
-      <td width="50%" valign="top">
-        <b>Live Throughput (PPS):</b><br />
-        <img src="https://img.shields.io/badge/1,480_p/s-Live_Reactor_Pulse-20ffa0?style=flat-square&labelColor=08090D" alt="1480 PPS" />
-        <br /><br />
-        <b>IPC Latency &amp; Uptime:</b><br />
-        <code>0.12 ms IPC</code> &bull; <code>02:45:12 Continuous Uptime</code>
-        <br /><br />
-        <b>Session Packet Counter:</b><br />
-        <code>24,190 pkts processed</code> &bull; <code>100% Accuracy</code>
+      <td width="50%">
+        <b>Live Egress:</b> &nbsp;
+        <img src="https://img.shields.io/badge/1,480_PPS-Reactor_Pulse-20ffa0?style=flat-square&labelColor=08090D" alt="1480 PPS" />
       </td>
     </tr>
     <tr>
-      <td colspan="2" align="center">
-        <img src="https://img.shields.io/badge/WINDOW-340x460px_Borderless-161b22?style=flat-square" alt="340x460" />
-        <img src="https://img.shields.io/badge/IPC_LATENCY-0_ms_Zero_Overhead-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" />
-        <img src="https://img.shields.io/badge/SHELL_API-Win32_Shell_NotifyIconW-20f2ff?style=flat-square&labelColor=08090D" alt="Win32" />
-        <img src="https://img.shields.io/badge/GUARD-Anti--Flicker_Debounced-FFE600?style=flat-square&labelColor=08090D" alt="Anti-Flicker" />
+      <td width="50%">
+        <b>Surgical Rule:</b> &nbsp;
+        <code>Fake TTL=4 + 2-Byte SNI</code>
+      </td>
+      <td width="50%">
+        <b>IPC &amp; Uptime:</b> &nbsp;
+        <code>0.12 ms IPC</code> &bull; <code>02:45:12 Active</code>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <b>Quick Action:</b> &nbsp;
+        <kbd>⏹ Stop</kbd> &nbsp;
+        <kbd>⚡ Repair</kbd> &nbsp;
+        <kbd>⚙ Cockpit</kbd>
+      </td>
+      <td width="50%">
+        <b>Packet Counter:</b> &nbsp;
+        <code>24,190 pkts</code> &bull; <code>100% Accuracy</code>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%" align="center" bgcolor="#161b22">
+        <img src="https://img.shields.io/badge/WINDOW-340x460px_Borderless-161b22?style=flat-square" alt="340x460" /> &nbsp;
+        <img src="https://img.shields.io/badge/IPC-0_ms_Zero_Lag-20ffa0?style=flat-square&labelColor=08090D" alt="0 ms" />
+      </td>
+      <td width="50%" align="center" bgcolor="#161b22">
+        <img src="https://img.shields.io/badge/SHELL_API-Win32_NotifyIcon-20f2ff?style=flat-square&labelColor=08090D" alt="Win32" /> &nbsp;
+        <img src="https://img.shields.io/badge/GUARD-Anti--Flicker-FFE600?style=flat-square&labelColor=08090D" alt="Anti-Flicker" />
       </td>
     </tr>
   </tbody>
@@ -673,18 +683,18 @@ Control your network protection instantly without opening the main workspace win
   <thead>
     <tr>
       <th width="33.3%" align="left">
-        <img src="https://img.shields.io/badge/01-RAPID_FLYOUT-20ffa0?style=flat-square&labelColor=08090D" alt="01 Rapid Flyout" /><br />
-        <h3>Single-Click Tactical HUD</h3>
-        <sub>340x460px Borderless Hardware Window</sub>
+        <img src="https://img.shields.io/badge/01-RAPID_FLYOUT-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Rapid Flyout" /><br /><br />
+        <b>Single-Click Tactical HUD</b><br />
+        <sub>340x460px Borderless Hardware UI</sub>
       </th>
       <th width="33.3%" align="left">
-        <img src="https://img.shields.io/badge/02-LIVE_TELEMETRY-20f2ff?style=flat-square&labelColor=08090D" alt="02 Live Telemetry" /><br />
-        <h3>0 ms IPC &amp; Reactor Pulse</h3>
-        <sub>Rust Core Engine &bull; WinDivert Kernel Bridge</sub>
+        <img src="https://img.shields.io/badge/02-LIVE_TELEMETRY-20f2ff?style=for-the-badge&labelColor=08090D" alt="02 Live Telemetry" /><br /><br />
+        <b>0 ms IPC &amp; Reactor Pulse</b><br />
+        <sub>Rust Engine &bull; WinDivert Bridge</sub>
       </th>
       <th width="33.3%" align="left">
-        <img src="https://img.shields.io/badge/03-SHELL_GUARD-FFE600?style=flat-square&labelColor=08090D" alt="03 Shell Guard" /><br />
-        <h3>Anti-Flicker &amp; Rapid Action</h3>
+        <img src="https://img.shields.io/badge/03-SHELL_GUARD-FFE600?style=for-the-badge&labelColor=08090D" alt="03 Shell Guard" /><br /><br />
+        <b>Anti-Flicker &amp; Quick Action</b><br />
         <sub>Debounced Win32 State Coordinator</sub>
       </th>
     </tr>
@@ -692,19 +702,19 @@ Control your network protection instantly without opening the main workspace win
   <tbody>
     <tr>
       <td valign="top">
-        &bull; <b>Single-Click Elevation:</b> Hardware-accelerated compact flyout immediately rises above the taskbar notification area.<br /><br />
-        &bull; <b>Seamless Blur Dismiss:</b> Automatically dismisses without delay when clicking outside or pressing <kbd>Esc</kbd>.<br /><br />
-        &bull; <b>Zero RAM Overhead:</b> Sleeps in low-power idle with 0 MB CPU overhead; awakes in microseconds upon click.
+        &bull; <b>Single-Click Launch:</b> Hardware-accelerated compact flyout rises immediately above taskbar.<br /><br />
+        &bull; <b>Seamless Blur Dismiss:</b> Dismisses cleanly without delay when clicking outside or pressing <kbd>Esc</kbd>.<br /><br />
+        &bull; <b>Zero Memory Footprint:</b> Sleeps in low-power idle with 0 MB CPU/RAM; awakes in microseconds.
       </td>
       <td valign="top">
-        &bull; <b>Real-Time Throughput:</b> Instantaneous packet rate (PPS) and <code>0.12 ms</code> IPC latency telemetry stream.<br /><br />
-        &bull; <b>Profile &amp; Rule Beacon:</b> Direct visibility into which bypass profile and SNI rule is currently engaged.<br /><br />
-        &bull; <b>Zero Egress Penalty:</b> Kernel driver and UI communicate over shared memory ring buffer for zero-lag updates.
+        &bull; <b>Real-Time Throughput:</b> Instantaneous packet rate (PPS) and <code>0.12 ms</code> IPC latency stream.<br /><br />
+        &bull; <b>Profile &amp; Rule Beacon:</b> Direct visibility into active bypass profile and engaged SNI rules.<br /><br />
+        &bull; <b>Shared Memory Channel:</b> Zero-copy memory buffer guarantees lag-free telemetry synchronization.
       </td>
       <td valign="top">
-        &bull; <b>Anti-Flicker Guard:</b> Debounced event coordinator eliminates window flickering during rapid successive clicks.<br /><br />
-        &bull; <b>Double-Click Maximize:</b> Double-clicking the notification tray icon directly foregrounds the primary cockpit.<br /><br />
-        &bull; <b>One-Touch Intervention:</b> Stop/start engine protection or execute <i>Network Repair</i> with a single touch.
+        &bull; <b>Anti-Flicker Debounce:</b> Eliminates window flickering and redraw bugs during rapid shell clicks.<br /><br />
+        &bull; <b>Double-Click Maximize:</b> Double-clicking tray icon directly foregrounds primary cockpit window.<br /><br />
+        &bull; <b>One-Touch Intervention:</b> Toggle protection or trigger instant <i>Network Repair</i> with single click.
       </td>
     </tr>
   </tbody>
