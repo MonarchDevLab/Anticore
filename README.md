@@ -344,11 +344,11 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
 <table width="100%" align="center">
   <thead>
     <tr>
-      <th width="22%" align="left">İnternet Servis Sağlayıcı</th>
-      <th width="20%" align="left">Tespit Edilen DPI Donanımı</th>
-      <th width="25%" align="left">Sansür & Filtreleme Yöntemi</th>
-      <th width="21%" align="left">Varsayılan Uyumlu Profil</th>
-      <th width="12%" align="center">Başarı Durumu</th>
+      <th width="20%" align="left">İnternet Servis Sağlayıcı</th>
+      <th width="18%" align="left">Tespit Edilen DPI Donanımı</th>
+      <th width="22%" align="left">Sansür & Filtreleme Yöntemi</th>
+      <th width="19%" align="left">Varsayılan Uyumlu Profil</th>
+      <th width="21%" align="center">Başarı Durumu</th>
     </tr>
   </thead>
   <tbody>
@@ -370,8 +370,9 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Fake TTL=4 • 2-Bayt Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-%25100_AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Aktif" /><br />
-        <b><font color="#00FF9D">Tam Erişim</font></b>
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="Bypass Aktif" /><br />
+        <b>%100 Tam Hat Erişimi</b><br />
+        <sub>Doğrudan Çıkış • 0 ms Ping</sub>
       </td>
     </tr>
     <tr>
@@ -392,8 +393,9 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>SNI Parçalama • DoH Çözümleyici</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-%25100_AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Aktif" /><br />
-        <b><font color="#00FF9D">Tam Erişim</font></b>
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="Bypass Aktif" /><br />
+        <b>%100 Tam Hat Erişimi</b><br />
+        <sub>Doğrudan Çıkış • 0 ms Ping</sub>
       </td>
     </tr>
     <tr>
@@ -414,8 +416,9 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Sahte Paket • RST Düşürme</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-%25100_AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Aktif" /><br />
-        <b><font color="#00FF9D">Tam Erişim</font></b>
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="Bypass Aktif" /><br />
+        <b>%100 Tam Hat Erişimi</b><br />
+        <sub>Doğrudan Çıkış • 0 ms Ping</sub>
       </td>
     </tr>
     <tr>
@@ -436,8 +439,9 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>SNI Parçalama • QUIC Düşürme</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-%25100_AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Aktif" /><br />
-        <b><font color="#00FF9D">Tam Erişim</font></b>
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="Bypass Aktif" /><br />
+        <b>%100 Tam Hat Erişimi</b><br />
+        <sub>Doğrudan Çıkış • 0 ms Ping</sub>
       </td>
     </tr>
     <tr>
@@ -458,8 +462,9 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>DoH Entegrasyonu • Standart Split</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-%25100_AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Aktif" /><br />
-        <b><font color="#00FF9D">Tam Erişim</font></b>
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="Bypass Aktif" /><br />
+        <b>%100 Tam Hat Erişimi</b><br />
+        <sub>Doğrudan Çıkış • 0 ms Ping</sub>
       </td>
     </tr>
     <tr>
@@ -480,8 +485,9 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
         <sub>Altyapı Tipine Göre Seçim</sub>
       </td>
       <td align="center">
-        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-%25100_AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="100% Aktif" /><br />
-        <b><font color="#00FF9D">Tam Erişim</font></b>
+        <img src="https://img.shields.io/badge/%E2%9C%93_BYPASS-AKT%C4%B0F-20ffa0?style=for-the-badge&labelColor=08090D" alt="Bypass Aktif" /><br />
+        <b>%100 Tam Hat Erişimi</b><br />
+        <sub>Doğrudan Çıkış • 0 ms Ping</sub>
       </td>
     </tr>
   </tbody>
