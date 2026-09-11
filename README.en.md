@@ -13,7 +13,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Core](https://img.shields.io/badge/Core-WinDivert%20%2B%20macOS%20UTUN-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![UI](https://img.shields.io/badge/UI-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Tests](https://img.shields.io/badge/Tests-53%20Passed-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Tests](https://img.shields.io/badge/Tests-72%20Passed-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Zero Leakage](https://img.shields.io/badge/Guard-Zero%20Leakage%20PASS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Verification](https://img.shields.io/badge/Signed-Minisign%20Verified-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![License](https://img.shields.io/badge/License-MIT-FFFFFF?style=for-the-badge&labelColor=08090D)](LICENSE)
@@ -936,9 +936,9 @@ To compile the binaries from source within a clean development environment, ensu
         <code>Node.js 20+ &bull; npm &bull; Vite</code>
       </th>
       <th width="33.3%" align="center">
-        <img src="https://img.shields.io/badge/03_NATIVE-MSVC_C++_2022-FFE600?style=for-the-badge&labelColor=08090D" alt="MSVC" /><br /><br />
-        <b>C++ Build Tools</b><br />
-        <code>Visual Studio 2022 (MSVC x64)</code>
+        <img src="https://img.shields.io/badge/03_NATIVE-MSVC_%2F_CLANG-FFE600?style=for-the-badge&labelColor=08090D" alt="MSVC" /><br /><br />
+        <b>C/C++ Build Tools</b><br />
+        <code>MSVC (Win) &bull; Clang (macOS)</code>
       </th>
     </tr>
   </thead>
@@ -949,18 +949,14 @@ To compile the binaries from source within a clean development environment, ensu
 git clone https://github.com/MonarchDevLab/Anticore.git
 cd Anticore/antikor
 
-# 2. Run Rust unit and integration tests (52 tests)
-cd engine
-cargo test --workspace
+# ── Windows Build & Packaging ──
+cd engine && cargo test --workspace && cargo build --release --workspace
+cd ../desktop && npm install && npm test && npm run tauri build
 
-# 3. Build the release engine binary
-cargo build --release --workspace
-
-# 4. Install desktop dependencies and build
-cd ../desktop
-npm install
-npm test
-npm run tauri build
+# ── macOS Build & Packaging (Apple Silicon & Intel DMG) ──
+cd Anticore/antikor
+chmod +x scripts/macos-package.sh
+./scripts/macos-package.sh all
 ```
 
 ---

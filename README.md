@@ -13,7 +13,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Çekirdek](https://img.shields.io/badge/Çekirdek-WinDivert%20%2B%20macOS%20UTUN-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Arayüz](https://img.shields.io/badge/Arayüz-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
-[![Testler](https://img.shields.io/badge/Testler-53%20Geçti-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
+[![Testler](https://img.shields.io/badge/Testler-72%20Geçti-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Sıfır Sızıntı](https://img.shields.io/badge/Muhafız-Sıfır%20Sızıntı%20PASS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Doğrulama](https://img.shields.io/badge/İmza-Minisign%20Doğrulamalı-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Lisans](https://img.shields.io/badge/Lisans-MIT-FFFFFF?style=for-the-badge&labelColor=08090D)](LICENSE)
@@ -936,9 +936,9 @@ Kendi ikili dosyalarınızı temiz bir ortamda derlemek isterseniz aşağıdaki 
         <code>Node.js 20+ &bull; npm &bull; Vite</code>
       </th>
       <th width="33.3%" align="center">
-        <img src="https://img.shields.io/badge/03_%C3%87EK%C4%B0RDEK-MSVC_C++_2022-FFE600?style=for-the-badge&labelColor=08090D" alt="MSVC" /><br /><br />
-        <b>C++ Derleme Araçları</b><br />
-        <code>Visual Studio 2022 (MSVC x64)</code>
+        <img src="https://img.shields.io/badge/03_%C3%87EK%C4%B0RDEK-MSVC_%2F_CLANG-FFE600?style=for-the-badge&labelColor=08090D" alt="MSVC" /><br /><br />
+        <b>C/C++ Derleme Araçları</b><br />
+        <code>MSVC (Win) &bull; Clang (macOS)</code>
       </th>
     </tr>
   </thead>
@@ -949,18 +949,14 @@ Kendi ikili dosyalarınızı temiz bir ortamda derlemek isterseniz aşağıdaki 
 git clone https://github.com/MonarchDevLab/Anticore.git
 cd Anticore/antikor
 
-# 2. Rust çekirdek birim ve entegrasyon testlerini çalıştırın
-cd engine
-cargo test --workspace
+# ── Windows Derleme & Paketleme ──
+cd engine && cargo test --workspace && cargo build --release --workspace
+cd ../desktop && npm install && npm test && npm run tauri build
 
-# 3. Bağımsız motor ikilisini derleyin
-cargo build --release --workspace
-
-# 4. Masaüstü arayüzünü test edin ve paketleyin
-cd ../desktop
-npm install
-npm test
-npm run tauri build
+# ── macOS Derleme & Paketleme (Apple Silicon & Intel DMG) ──
+cd Anticore/antikor
+chmod +x scripts/macos-package.sh
+./scripts/macos-package.sh all
 ```
 
 ---
