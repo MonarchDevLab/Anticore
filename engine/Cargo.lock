@@ -7,6 +7,7 @@ name = "anticore-cli"
 version = "0.3.1"
 dependencies = [
  "anticore-core",
+ "anticore-transport-macos",
  "anticore-transport-win",
  "serde",
  "serde_json",
@@ -23,8 +24,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "anticore-transport-macos"
+version = "0.3.1"
+dependencies = [
+ "anticore-core",
+ "libc",
+]
+
+[[package]]
 name = "anticore-transport-win"
 version = "0.3.1"
+dependencies = [
+ "anticore-core",
+]
 
 [[package]]
 name = "bitflags"
