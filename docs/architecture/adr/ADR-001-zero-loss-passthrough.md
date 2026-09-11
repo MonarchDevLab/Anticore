@@ -5,7 +5,7 @@
 - **Karar Sahibi:** Monolith Works Mimarlık Kurulu
 
 ## 1. Bağlam ve Problem
-DPI bypass araçlarının çoğu sistem düzeyinde tüm giden ve gelen TCP paketlerini bir kullanıcı alanı (user-space) proxy'sine yönlendirir. Bu yaklaşım tüm ağ trafiğinde gecikme (latency), CPU tüketimi ve özellikle bankacılık, oyun ve canlı yayın bağlantılarında kararsızlık yaratır. Anticore için temel gereksinim, yalnızca sansürlenen hedeflerin trafiğini işlerken kalan tüm trafiği sıfır performans kaybıyla doğrudan iletmektir.
+DPI bypass araçlarının çoğu sistem düzeyinde tüm giden ve gelen TCP paketlerini bir kullanıcı alanı (user-space) proxy'sine yönlendirir. Bu yaklaşım tüm ağ trafiğinde gecikme (latency), CPU tüketimi ve özellikle bankacılık, oyun ve canlı yayın bağlantılarında kararsızlık yaratır. Anticore için temel gereksinim, yalnızca erişim kısıtlaması veya DPI filtrelemesi uygulanan hedeflerin trafiğini işlerken kalan tüm trafiği sıfır performans kaybıyla doğrudan iletmektir.
 
 ## 2. Değerlendirilen Seçenekler
 1. **Lokal SOCKS5 / HTTP Proxy:**
@@ -19,7 +19,7 @@ DPI bypass araçlarının çoğu sistem düzeyinde tüm giden ve gelen TCP paket
 WinDivert kernel sürücüsü tabanlı seçici filtreleme mimarisi kabul edilmiştir:
 - Yalnızca giden `TCP SYN` ve ilk `TLS ClientHello` paketleri derinlemesine incelenir.
 - Hedef alan adı (SNI) `Sites.tsx` beyaz listesinde yer almıyorsa, paket hiçbir değişikliğe uğramadan `WinDivertSend` ile iletilir.
-- Yalnızca tespit edilen sansürlü akışlarda TCP segment parçalama (fragmentation) ve sahte paket (fake packet injection) zinciri yürütülür.
+- Yalnızca tespit edilen kısıtlı akışlarda TCP segment parçalama (fragmentation) ve sahte paket (fake packet injection) zinciri yürütülür.
 
 ## 4. Sonuçlar
 - Normal internet trafiği, bankacılık uygulamaları ve oyun ping süreleri %0 ek gecikmeyle çalışır.

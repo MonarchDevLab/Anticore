@@ -9,7 +9,9 @@ export type ThemeMode =
   | "cobalt"
   | "amethyst"
   | "crimson"
-  | "titanium";
+  | "titanium"
+  | "abyss"
+  | "solar";
 
 export interface ThemeOption {
   id: ThemeMode;
@@ -21,67 +23,81 @@ export interface ThemeOption {
 
 export const THEME_OPTIONS: ThemeOption[] = [
   {
+    id: "obsidian",
+    name: "Obsidian Core",
+    description: "Derin CNC şasi (#020617), akkor alev (#ff642b) 1. cil renk ve elektrik siyanı (#00edff) 2. cil renk",
+    accent: "#ff642b",
+    bg: "#020617",
+  },
+  {
     id: "cyberpunk",
     name: "Cyberpunk 2077",
-    description: "45° kesik açılı poligon kartlar, endüstriyel HUD gridi, mecha tetik butonları ve sarı/siyan yüksek gerilim",
+    description: "3px mikro-kesik açılı mecha kartlar, endüstriyel HUD gridi, yüksek voltaj sarı ve siyan lazer hatlar",
     accent: "#FFE600",
     bg: "#08090D",
   },
   {
-    id: "crimson",
-    name: "Crimson Hazard",
-    description: "Taktik askeri kırmızı lazer HUD, acil durum komuta paneli, yüksek kontrastlı kantaşı ve karbon şasi",
-    accent: "#FF2A4D",
-    bg: "#0B0406",
-  },
-  {
     id: "luxury",
     name: "Quiet Luxury",
-    description: "Patek Philippe & Mayfair zarafeti, editoryal serif tipografi, fırçalanmış şampanya altını ve kadife siyah şasi",
+    description: "Patek Philippe zarafeti, 8px ipeksi kavis, fırçalanmış şampanya altını ve kadife derin siyah şasi",
     accent: "#D4AF37",
     bg: "#0A090C",
   },
   {
-    id: "obsidian",
-    name: "Obsidian Emerald",
-    description: "Havacılık sınıfı CNC obsidyen şasi, 16px kavisli cam paneller ve zümrüt telemetri",
-    accent: "#00F59B",
-    bg: "#06080C",
-  },
-  {
-    id: "amber",
-    name: "Amber CRT",
-    description: "VT220 monokrom kehribar fosfor terminali, CRT scanline tarama ve zorunlu monospace kod arayüzü",
-    accent: "#FFB020",
-    bg: "#0C0A06",
+    id: "crimson",
+    name: "Crimson Hazard",
+    description: "Taktik askeri kırmızı lazer HUD, 5px sert taktik pahlar, acil durum komuta paneli ve karbon şasi",
+    accent: "#FF2A4D",
+    bg: "#0B0406",
   },
   {
     id: "cobalt",
     name: "Cobalt Matrix",
-    description: "C2 Muharebe ve denizaltı komuta konsolu, 6px taktik çerçeveler, sonar radarı ve sol polar mavi çapa",
+    description: "C2 Muharebe ve denizaltı komuta konsolu, 6px taktik köşeler, sonar radarı ve kutup mavisi çapa",
     accent: "#00E5FF",
     bg: "#050B14",
   },
   {
+    id: "amber",
+    name: "Amber CRT",
+    description: "VT220 monokrom kehribar fosfor terminali, 4px retro cam, CRT scanline tarama ve monospace kod arayüzü",
+    accent: "#FFB020",
+    bg: "#0C0A06",
+  },
+  {
     id: "amethyst",
     name: "Amethyst Nebula",
-    description: "24px ultra yumuşak organik hap formları, Apple VisionOS buzlu cam ve kozmik derin nebula",
+    description: "22px ultra yumuşak organik hap formları, Apple VisionOS derin buzlu cam ve kozmik nebula ışıması",
     accent: "#B388FF",
     bg: "#090610",
   },
   {
+    id: "abyss",
+    name: "Abyss Aqua",
+    description: "Mariana çukuru derin akuamarin zemin, 16px hidrodinamik kavis, parlayan sualtı siyanı ve okyanus camı",
+    accent: "#00F2FE",
+    bg: "#031114",
+  },
+  {
+    id: "solar",
+    name: "Solar Flare",
+    description: "Stealth havacılık karbon siyahı, 6px süpersonik açılar, akkor güneş turuncusu ve termal telemetri",
+    accent: "#FF6B00",
+    bg: "#09090B",
+  },
+  {
     id: "titanium",
     name: "Titanium Laboratory",
-    description: "Açık mod klinik cerrahi lab, hassas 12px CNC pahlar, beyaz yükseltilmiş kartlar ve nokta ızgarası",
-    accent: "#047857",
+    description: "Açık mod klinik cerrahi lab, hassas 10px CNC pahlar, beyaz yükseltilmiş kartlar ve temiz gölgeler",
+    accent: "#059669",
     bg: "#F1F5F9",
   },
   {
     id: "system",
-    name: "Sistem",
+    name: "Sistem (Otomatik)",
     description: "İşletim sistemi temasına otomatik senkronize adaptif mod",
-    accent: "#00F59B",
-    bg: "#141B2B",
+    accent: "#ff642b",
+    bg: "#020617",
   },
 ];
 
@@ -102,6 +118,8 @@ export function getStoredTheme(): ThemeMode {
     saved === "amethyst" ||
     saved === "crimson" ||
     saved === "titanium" ||
+    saved === "abyss" ||
+    saved === "solar" ||
     saved === "system"
   ) {
     return saved;
@@ -142,7 +160,9 @@ export function applyTheme(mode: ThemeMode) {
     "theme-cyberpunk",
     "theme-amethyst",
     "theme-crimson",
-    "theme-titanium"
+    "theme-titanium",
+    "theme-abyss",
+    "theme-solar"
   );
 
   if (effective === "titanium") {

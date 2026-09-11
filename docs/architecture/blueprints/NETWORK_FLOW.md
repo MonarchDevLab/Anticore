@@ -9,7 +9,7 @@ sequenceDiagram
     participant OS as Windows TCP/IP Yığını
     participant WD as WinDivert Kernel Sürücüsü
     participant Core as Anticore İşlem Motoru
-    participant ISP as Servis Sağlayıcı (DPI / Sansür)
+    participant ISP as Servis Sağlayıcı (DPI Filtreleme)
     participant Dest as Hedef Sunucu
 
     User->>OS: TCP Bağlantı İsteği (SYN)
@@ -20,7 +20,7 @@ sequenceDiagram
         Core->>WD: Verdict: Passthrough (Dokunulmadan)
         WD->>OS: Paketi Aynen İlet
         OS->>Dest: Normal Trafik (Gecikmesiz)
-    else Paket Sansürlü Hedefe Aitse (Örn: Discord / YouTube)
+    else Paket Kısıtlı Hedefe Aitse (Örn: Discord / YouTube)
         Core->>Core: TLS ClientHello & SNI Ayrıştırması
         Core->>WD: Sahte Paket Enjeksiyonu (TTL=3 / Wrong Checksum)
         WD->>ISP: Sahte Paket İletilir (DPI Önbelleği Zehirlenir)

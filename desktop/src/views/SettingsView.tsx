@@ -17,6 +17,8 @@ import {
   ExternalLink,
   PictureInPicture2,
   RotateCcw,
+  Eye,
+  Pin,
 } from "lucide-react";
 import {
   api,
@@ -70,6 +72,8 @@ export default function SettingsView({
   const [legacyBusy, setLegacyBusy] = useState<"scan" | "clean" | null>(null);
 
   const [trayMinimize, setTrayMinimize] = useState<boolean>(true);
+  const [showTrayIcon, setShowTrayIcon] = useState<boolean>(true);
+  const [alwaysOnTop, setAlwaysOnTop] = useState<boolean>(false);
   const [trayBusy, setTrayBusy] = useState<boolean>(false);
 
   const [factoryConfirm, setFactoryConfirm] = useState(false);
@@ -81,6 +85,8 @@ export default function SettingsView({
     void api.getEngineConfig().then(setConfig);
     void api.getStartupEnabled().then(setStartup);
     void api.getTrayMinimize().then(setTrayMinimize).catch(() => {});
+    void api.getShowTrayIcon().then(setShowTrayIcon).catch(() => {});
+    void api.getAlwaysOnTop().then(setAlwaysOnTop).catch(() => {});
     void api.getAppVersion().then(setAppVersion).catch(() => {});
   }, []);
 
@@ -110,6 +116,48 @@ export default function SettingsView({
       pushLog(`[!] başlangıç ayarı hatası: ${String(e)}`);
     } finally {
       setStartupBusy(false);
+    }
+  };
+
+  const toggleTrayMinimize = async () => {
+    setTrayBusy(true);
+    const next = !trayMinimize;
+    try {
+      await api.setTrayMinimize(next);
+      setTrayMinimize(next);
+      pushLog(`[+] tepsiye küçültme: ${next ? "açık" : "kapalı"}`);
+    } catch (e) {
+      pushLog(`[!] tepsi ayarı hatası: ${String(e)}`);
+    } finally {
+      setTrayBusy(false);
+    }
+  };
+
+  const toggleShowTrayIcon = async () => {
+    setTrayBusy(true);
+    const next = !showTrayIcon;
+    try {
+      await api.setShowTrayIcon(next);
+      setShowTrayIcon(next);
+      pushLog(`[+] tepsi simgesi gösterimi: ${next ? "açık" : "kapalı"}`);
+    } catch (e) {
+      pushLog(`[!] tepsi simgesi ayarı hatası: ${String(e)}`);
+    } finally {
+      setTrayBusy(false);
+    }
+  };
+
+  const toggleAlwaysOnTop = async () => {
+    setTrayBusy(true);
+    const next = !alwaysOnTop;
+    try {
+      await api.setAlwaysOnTop(next);
+      setAlwaysOnTop(next);
+      pushLog(`[+] pencereyi en üstte tutma: ${next ? "açık" : "kapalı"}`);
+    } catch (e) {
+      pushLog(`[!] pencere konumu ayarı hatası: ${String(e)}`);
+    } finally {
+      setTrayBusy(false);
     }
   };
 
@@ -191,20 +239,6 @@ export default function SettingsView({
       pushLog(`[!] Servis temizleme hatası: ${String(e)}`);
     } finally {
       setLegacyBusy(null);
-    }
-  };
-
-  const toggleTrayMinimize = async () => {
-    setTrayBusy(true);
-    const next = !trayMinimize;
-    try {
-      await api.setTrayMinimize(next);
-      setTrayMinimize(next);
-      pushLog(`[+] Tray'e küçültme: ${next ? "açık" : "kapalı"}`);
-    } catch (e) {
-      pushLog(`[!] Tray ayarı hatası: ${String(e)}`);
-    } finally {
-      setTrayBusy(false);
     }
   };
 
@@ -387,29 +421,81 @@ export default function SettingsView({
         </div>
       </section>
 
-      {/* Kapatınca Tray'e Küçült */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card shadow-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
-              <PictureInPicture2 size={18} aria-hidden strokeWidth={2} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-paper-bright">{t("settings_tray_title")}</h3>
-              <p className="text-xs text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
-            </div>
+      {/* Pencere ve Sistem Tepsisi (Tray) */}
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+            <PictureInPicture2 size={18} aria-hidden strokeWidth={2} />
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={trayMinimize}
-            aria-label={t("settings_tray_title")}
-            disabled={trayBusy}
-            onClick={() => void toggleTrayMinimize()}
-            className={`toggle-track ${trayMinimize ? "is-active" : ""}`}
-          >
-            <span className="toggle-thumb" />
-          </button>
+          <div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("settings_window_tray_group")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 pt-1">
+          {/* 1. Kapatınca Tray'e Küçült */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
+            <div>
+              <h4 className="text-xs font-semibold text-paper-bright">{t("settings_tray_title")}</h4>
+              <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={trayMinimize}
+              aria-label={t("settings_tray_title")}
+              disabled={trayBusy}
+              onClick={() => void toggleTrayMinimize()}
+              className={`toggle-track ${trayMinimize ? "is-active" : ""}`}
+            >
+              <span className="toggle-thumb" />
+            </button>
+          </div>
+
+          {/* 2. Sistem Tepsisi Simgesini Göster */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
+            <div className="flex items-start gap-2.5">
+              <Eye size={16} className="text-paper-muted mt-0.5 shrink-0" />
+              <div>
+                <h4 className="text-xs font-semibold text-paper-bright">{t("settings_show_tray_icon_title")}</h4>
+                <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_show_tray_icon_desc")}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showTrayIcon}
+              aria-label={t("settings_show_tray_icon_title")}
+              disabled={trayBusy}
+              onClick={() => void toggleShowTrayIcon()}
+              className={`toggle-track ${showTrayIcon ? "is-active" : ""}`}
+            >
+              <span className="toggle-thumb" />
+            </button>
+          </div>
+
+          {/* 3. Pencereyi Her Zaman En Üstte Tut */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
+            <div className="flex items-start gap-2.5">
+              <Pin size={16} className="text-paper-muted mt-0.5 shrink-0" />
+              <div>
+                <h4 className="text-xs font-semibold text-paper-bright">{t("settings_always_on_top_title")}</h4>
+                <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_always_on_top_desc")}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={alwaysOnTop}
+              aria-label={t("settings_always_on_top_title")}
+              disabled={trayBusy}
+              onClick={() => void toggleAlwaysOnTop()}
+              className={`toggle-track ${alwaysOnTop ? "is-active" : ""}`}
+            >
+              <span className="toggle-thumb" />
+            </button>
+          </div>
         </div>
       </section>
 

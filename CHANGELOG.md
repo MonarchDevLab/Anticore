@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dynamic Blacklist Synchronization:** Adding or removing sites from the target list now instantly updates active engine memory via `Arc<RwLock<Blacklist>>` without restarting the engine.
 - **Community Blacklist 404 Resolution & Error Reporting:** Switched to a reliable live Zapret hostlist mirror with an offline embedded fallback database, and added dedicated error banner and localized failure reporting for synchronization issues.
 - **Legacy Service & Process Locks:** Automated cleanup tool forcibly terminating locked GoodbyeDPI, Splitwire, WinWS processes and stopping WinDivert drivers.
-- **Discord DNS Poisoning Auto-Fix:** One-click automated DNS restoration (Cloudflare 1.1.1.1 + native Windows DoH + DNS cache flush) resolving BTK ISP redirection.
+- **Discord DNS Poisoning Auto-Fix:** One-click automated DNS restoration (Cloudflare 1.1.1.1 + native Windows DoH + DNS cache flush) resolving ISP DNS redirection and poisoning.
 - **Titlebar & Status HUD Polish:** Distinct standby/active state styling with dedicated red status indicators for inactive engines, animated pulse badges for available updates, and unified engine control labels.
 
 ### Performance & Security

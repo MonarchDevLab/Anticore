@@ -30,7 +30,7 @@ export default function GuideDrawer({ open, onClose }: Props) {
     {
       icon: <Shield className="text-live" size={16} />,
       q: "Anticore tam olarak ne yapar?",
-      a: "Sitelere bağlanırken ilk 'el sıkışma' (TLS ClientHello) paketi, sağlayıcının denetim cihazı (DPI) tarafından okunup engellenir. Anticore bu ilk paketi parçalayıp sahte paket enjekte ederek sansür donanımını yanıltır; gerisi doğrudan akar.",
+      a: "Sitelere bağlanırken ilk 'el sıkışma' (TLS ClientHello) paketi, sağlayıcının denetim cihazı (DPI) tarafından okunup filtrelenir. Anticore bu ilk paketi parçalayıp sahte paket enjekte ederek filtreleme donanımının kısıtlamasını aşar; gerisi doğrudan akar.",
     },
     {
       icon: <Zap className="text-cyan" size={16} />,

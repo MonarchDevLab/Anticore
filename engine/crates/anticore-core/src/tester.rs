@@ -28,7 +28,7 @@ fn is_bogon_or_poisoned(ip: &IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => {
             let o = v4.octets();
-            // BTK / TTNet / Superonline ISP Zehirleme IP Havuzları (195.175.254.2 vb.)
+            // Operatör Yönlendirme ve DNS Zehirleme IP Havuzları (195.175.254.2 vb.)
             if o[0] == 195 && o[1] == 175 { return true; }
             if o[0] == 212 && o[1] == 156 { return true; }
             if o[0] == 213 && o[1] == 74 { return true; }

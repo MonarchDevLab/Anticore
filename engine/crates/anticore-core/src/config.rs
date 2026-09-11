@@ -68,8 +68,8 @@ impl Blacklist {
     }
 }
 
-/// Türkiye ve küresel engelli siteler için genişletilmiş varsayılan hedef listesi.
-pub const DEFAULT_BLACKLIST: &str = r#"# Anticore Varsayılan Hedef Listesi (Türkiye & Global Sansür Atlatma)
+/// Türkiye ve küresel erişim kısıtlaması uygulanan siteler için genişletilmiş varsayılan hedef listesi.
+pub const DEFAULT_BLACKLIST: &str = r#"# Anticore Varsayılan Hedef Listesi (Erişim Kısıtlı & DPI Filtreli Alan Adları)
 
 # --- Discord Ekosistemi ---
 discord.com

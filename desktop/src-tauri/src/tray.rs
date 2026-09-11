@@ -17,16 +17,31 @@ use tauri::{
 
 use crate::service::Engine;
 
-#[derive(Serialize, Deserialize)]
-struct TraySettings {
-    minimize_to_tray: bool,
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TraySettings {
+    #[serde(default = "default_true")]
+    pub minimize_to_tray: bool,
+    #[serde(default = "default_true")]
+    pub show_tray_icon: bool,
+    #[serde(default = "default_false")]
+    pub always_on_top: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_false() -> bool {
+    false
 }
 
 impl Default for TraySettings {
     fn default() -> Self {
-        // Varsayılan AÇIK: bu tarz arka plan koruma araçlarında beklenen
-        // davranış pencereyi kapatmanın korumayı durdurmaması.
-        Self { minimize_to_tray: true }
+        Self {
+            minimize_to_tray: true,
+            show_tray_icon: true,
+            always_on_top: false,
+        }
     }
 }
 
@@ -39,32 +54,83 @@ fn settings_path(app: &AppHandle) -> std::path::PathBuf {
     dir.join("tray_settings.json")
 }
 
-pub fn get_tray_minimize_pref(app: &AppHandle) -> bool {
+pub fn get_tray_settings(app: &AppHandle) -> TraySettings {
     std::fs::read_to_string(settings_path(app))
         .ok()
         .and_then(|s| serde_json::from_str::<TraySettings>(&s).ok())
         .unwrap_or_default()
-        .minimize_to_tray
 }
 
-fn save_tray_minimize_pref(app: &AppHandle, enabled: bool) -> Result<(), String> {
-    let text = serde_json::to_string_pretty(&TraySettings {
-        minimize_to_tray: enabled,
-    })
-    .map_err(|e| e.to_string())?;
+pub fn save_tray_settings(app: &AppHandle, settings: &TraySettings) -> Result<(), String> {
+    let text = serde_json::to_string_pretty(settings)
+        .map_err(|e| e.to_string())?;
     std::fs::write(settings_path(app), text).map_err(|e| e.to_string())
+}
+
+pub fn get_tray_minimize_pref(app: &AppHandle) -> bool {
+    get_tray_settings(app).minimize_to_tray
 }
 
 // ---------- IPC ----------
 
 #[tauri::command]
 pub fn get_tray_minimize(app: AppHandle) -> bool {
-    get_tray_minimize_pref(&app)
+    get_tray_settings(&app).minimize_to_tray
 }
 
 #[tauri::command]
 pub fn set_tray_minimize(app: AppHandle, enabled: bool) -> Result<(), String> {
-    save_tray_minimize_pref(&app, enabled)
+    let mut settings = get_tray_settings(&app);
+    settings.minimize_to_tray = enabled;
+    save_tray_settings(&app, &settings)
+}
+
+#[tauri::command]
+pub fn get_show_tray_icon(app: AppHandle) -> bool {
+    get_tray_settings(&app).show_tray_icon
+}
+
+#[tauri::command]
+pub fn set_show_tray_icon(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut settings = get_tray_settings(&app);
+    settings.show_tray_icon = enabled;
+    save_tray_settings(&app, &settings)?;
+
+    if let Some(handles) = app.try_state::<TrayHandles>() {
+        if let Ok(tray) = handles.tray.lock() {
+            let _ = tray.set_visible(enabled);
+        }
+    }
+
+    // Güvenlik koruması: Eğer simge gizleniyorsa, kullanıcının pencereyi kaybetmesini
+    // ve arayüze erişememesini önlemek için ana pencere görünür yapılır.
+    if !enabled {
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_always_on_top(app: AppHandle) -> bool {
+    get_tray_settings(&app).always_on_top
+}
+
+#[tauri::command]
+pub fn set_always_on_top(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut settings = get_tray_settings(&app);
+    settings.always_on_top = enabled;
+    save_tray_settings(&app, &settings)?;
+
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_always_on_top(enabled);
+    }
+
+    Ok(())
 }
 
 // ---------- Kurulum ----------
@@ -275,6 +341,11 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
         })
         .build(app)?;
 
+    let settings = get_tray_settings(&app.handle());
+    if !settings.show_tray_icon {
+        let _ = tray.set_visible(false);
+    }
+
     app.manage(TrayHandles {
         tray: Mutex::new(tray),
         start_item: start_i,
@@ -311,17 +382,18 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     Ok(())
 }
 
-struct TrayHandles {
-    tray: Mutex<TrayIcon>,
-    start_item: MenuItem<tauri::Wry>,
-    stop_item: MenuItem<tauri::Wry>,
+pub struct TrayHandles {
+    pub tray: Mutex<TrayIcon>,
+    pub start_item: MenuItem<tauri::Wry>,
+    pub stop_item: MenuItem<tauri::Wry>,
 }
 
-/// Pencere `X` ile kapatılmak istendiğinde çağrılır. "Tray'e küçült" açıksa
-/// pencereyi gizleyip kapatmayı iptal eder (motor arka planda çalışmaya
-/// devam eder); kapalıysa olağan kapatma davranışına izin verilir.
+/// Pencere `X` ile kapatılmak istendiğinde çağrılır. "Tray'e küçült" VE tepsi simgesi
+/// açıksa pencereyi gizleyip kapatmayı iptal eder. Tepsi simgesi kapalıysa veya küçültme
+/// istenmiyorsa kullanıcıyı kilitlememek için olağan kapatma davranışına izin verilir.
 pub fn handle_close_request(window: &tauri::WebviewWindow, api: &tauri::CloseRequestApi) {
-    if get_tray_minimize_pref(window.app_handle()) {
+    let settings = get_tray_settings(window.app_handle());
+    if settings.minimize_to_tray && settings.show_tray_icon {
         let _ = window.hide();
         api.prevent_close();
     } else {

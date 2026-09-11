@@ -189,6 +189,15 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
         candidates.push(cwd.join("antikor").join("bin").join("anticore.exe"));
         candidates.push(cwd.join("antikor").join("bin").join("anticore"));
     }
+    // Tauri resource dizini
+    if let Ok(res_dir) = _app.path().resource_dir() {
+        candidates.push(res_dir.join("anticore-cli.exe"));
+        candidates.push(res_dir.join("anticore-cli"));
+        candidates.push(res_dir.join("bin").join("anticore.exe"));
+        candidates.push(res_dir.join("bin").join("anticore"));
+        candidates.push(res_dir.join("anticore.exe"));
+        candidates.push(res_dir.join("anticore"));
+    }
     // macOS standart sistem yolları
     #[cfg(target_os = "macos")]
     {
@@ -246,13 +255,43 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
         .next()
         .ok_or_else(|| "anticore-cli.exe bulunamadı (CLI motor dosyası panel yanında olmalı)".to_string())?;
 
-    if let Ok(canon) = found.canonicalize() {
+    let resolved_path = if let Ok(canon) = found.canonicalize() {
         let s = canon.to_string_lossy().to_string();
         let clean = s.strip_prefix(r"\\?\").unwrap_or(&s).to_string();
-        Ok(PathBuf::from(clean))
+        PathBuf::from(clean)
     } else {
-        Ok(found)
+        found
+    };
+
+    // Windows altında WinDivert.dll ve WinDivert64.sys motorun yanında değilse kopyala
+    #[cfg(windows)]
+    if let Some(motor_dir) = resolved_path.parent() {
+        let dll = motor_dir.join("WinDivert.dll");
+        let sys = motor_dir.join("WinDivert64.sys");
+        if !dll.is_file() || !sys.is_file() {
+            let search_sources = [
+                current_exe.as_ref().and_then(|e| e.parent().map(|p| p.to_path_buf())),
+                _app.path().resource_dir().ok(),
+                std::env::current_dir().ok(),
+                std::env::current_dir().ok().map(|d| d.join("bin")),
+                std::env::current_dir().ok().map(|d| d.join("vendor").join("windows")),
+            ];
+            for src_opt in &search_sources {
+                if let Some(src_dir) = src_opt {
+                    let s_dll = src_dir.join("WinDivert.dll");
+                    let s_sys = src_dir.join("WinDivert64.sys");
+                    if s_dll.is_file() && !dll.is_file() {
+                        let _ = std::fs::copy(&s_dll, &dll);
+                    }
+                    if s_sys.is_file() && !sys.is_file() {
+                        let _ = std::fs::copy(&s_sys, &sys);
+                    }
+                }
+            }
+        }
     }
+
+    Ok(resolved_path)
 }
 
 fn sc_query(service: &str) -> String {
@@ -272,52 +311,95 @@ pub struct SetupStatusDto {
 
 fn is_detached_running(app: &AppHandle) -> bool {
     let pid_file = app_dir(app).join("detached.pid");
-    pid_file.is_file()
-        && std::fs::read_to_string(&pid_file)
-            .ok()
-            .and_then(|s| s.trim().parse::<u32>().ok())
-            .map(|pid| {
-                silent_command("tasklist")
-                    .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
-                    .output()
-                    .map(|o| {
-                        let out = String::from_utf8_lossy(&o.stdout).to_lowercase();
-                        out.contains("anticore")
-                    })
-                    .unwrap_or(false)
+    if !pid_file.is_file() {
+        return false;
+    }
+    let Ok(s) = std::fs::read_to_string(&pid_file) else {
+        return false;
+    };
+    let Some(pid) = s.trim().parse::<u32>().ok() else {
+        return false;
+    };
+
+    #[cfg(target_os = "macos")]
+    {
+        let status = silent_command("kill").args(["-0", &pid.to_string()]).status();
+        status.map(|s| s.success()).unwrap_or(false)
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        silent_command("tasklist")
+            .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
+            .output()
+            .map(|o| {
+                let out = String::from_utf8_lossy(&o.stdout).to_lowercase();
+                out.contains("anticore")
             })
             .unwrap_or(false)
+    }
 }
 
 #[tauri::command]
 pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
-    let output = silent_command("sc").args(["query", SERVICE_NAME]).output()
-        .map_err(|e| format!("Servis durumu sorgulanamadı: {e}"))?;
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    let combined = format!("{stdout} {stderr}");
+    #[cfg(target_os = "macos")]
+    {
+        let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
+        let service_installed = plist_path.exists();
+        let service_running = if service_installed {
+            let out = silent_command("launchctl")
+                .args(["list", "com.monolithworks.anticore"])
+                .output()
+                .ok();
+            out.map(|o| {
+                if !o.status.success() {
+                    return false;
+                }
+                let s = String::from_utf8_lossy(&o.stdout);
+                !s.contains("\"PID\" = 0;") && (s.contains("\"PID\"") || s.split_whitespace().next().map(|p| p != "-").unwrap_or(false))
+            }).unwrap_or(false)
+        } else {
+            false
+        };
+        let detached_running = is_detached_running(&app);
 
-    // Windows 1060: ERROR_SERVICE_DOES_NOT_EXIST (servis kurulu değil, bu bir hata değildir)
-    let not_installed = combined.contains("1060") || output.status.code() == Some(1060);
-
-    if !output.status.success() && !not_installed {
-        return Err(format!("Servis durumu sorgulanamadı: {combined}"));
+        return Ok(SetupStatusDto {
+            service_installed,
+            service_running,
+            detached_running,
+        });
     }
-    let service_installed = !not_installed && stdout.contains("SERVICE_NAME:");
-    let service_running = service_installed && stdout.contains("RUNNING");
-    let detached_running = is_detached_running(&app);
 
-    Ok(SetupStatusDto {
-        service_installed,
-        service_running,
-        detached_running,
-    })
+    #[cfg(not(target_os = "macos"))]
+    {
+        let output = silent_command("sc").args(["query", SERVICE_NAME]).output()
+            .map_err(|e| format!("Servis durumu sorgulanamadı: {e}"))?;
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let combined = format!("{stdout} {stderr}");
+
+        // Windows 1060: ERROR_SERVICE_DOES_NOT_EXIST (servis kurulu değil, bu bir hata değildir)
+        let not_installed = combined.contains("1060") || output.status.code() == Some(1060);
+
+        if !output.status.success() && !not_installed {
+            return Err(format!("Servis durumu sorgulanamadı: {combined}"));
+        }
+        let service_installed = !not_installed && stdout.contains("SERVICE_NAME:");
+        let service_running = service_installed && stdout.contains("RUNNING");
+        let detached_running = is_detached_running(&app);
+
+        Ok(SetupStatusDto {
+            service_installed,
+            service_running,
+            detached_running,
+        })
+    }
 }
 
 #[tauri::command]
 pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String> {
     if !is_running_as_admin() {
-        return Err("Windows servisi kurmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+        return Err("Sistem servisi kurmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
     }
 
     if app.state::<Engine>().running.load(Ordering::SeqCst) || is_detached_running(&app) {
@@ -335,63 +417,125 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
     let exe_str = motor.to_string_lossy().to_string();
     let dir_str = data_dir.to_string_lossy().to_string();
 
-    // sc create komutunu CMD üzerinden tırnakları tam koruyarak çalıştır
-    let create_cmd = format!(
-        "sc.exe create {} binPath= \"\\\"{}\\\" service-run --profile {} --data-dir \\\"{}\\\"\" start= auto",
-        SERVICE_NAME, exe_str, profile_id, dir_str
-    );
-    let out = silent_command("cmd")
-        .args(["/C", &create_cmd])
-        .output()
-        .map_err(|e| format!("sc çalıştırılamadı: {e}"))?;
-
-    if !out.status.success() {
-        return Err(format!(
-            "servis oluşturulamadı: {} {}",
-            String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr)
-        ));
+    #[cfg(target_os = "macos")]
+    {
+        let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
+        let plist_content = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.monolithworks.anticore</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{}</string>
+        <string>run</string>
+        <string>--profile</string>
+        <string>{}</string>
+        <string>--data-dir</string>
+        <string>{}</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/var/log/anticore.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/anticore.err</string>
+</dict>
+</plist>
+"#,
+            exe_str, profile_id, dir_str
+        );
+        std::fs::write(plist_path, plist_content).map_err(|e| format!("Plist yazılamadı: {e}"))?;
+        let _ = silent_command("chmod").args(["644", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
+        let _ = silent_command("chown").args(["root:wheel", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
+        let out = silent_command("launchctl").args(["load", "-w", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output()
+            .map_err(|e| format!("launchctl load başarısız: {e}"))?;
+        if !out.status.success() {
+            return Err(format!("launchctl load hatası: {}", String::from_utf8_lossy(&out.stderr)));
+        }
+        app.emit("log", format!("[+] macOS LaunchDaemon kuruldu ve başlatıldı (profil={profile_id})")).ok();
+        return Ok(());
     }
-    let desc_cmd = format!(
-        "sc.exe description {} \"Anticore DPI Paket Filtreleme ve Koruma Servisi\"",
-        SERVICE_NAME
-    );
-    let _ = silent_command("cmd").args(["/C", &desc_cmd]).output();
 
-    let start = silent_command("sc")
-        .args(["start", SERVICE_NAME])
-        .output()
-        .map_err(|e| format!("sc start başarısız: {e}"))?;
-    if !start.status.success() {
-        let err = String::from_utf8_lossy(&start.stderr).trim().to_string();
-        let out_msg = String::from_utf8_lossy(&start.stdout).trim().to_string();
-        let msg = if !err.is_empty() { err } else { out_msg };
-        return Err(format!("servis başlatılamadı: {msg} (Başka DPI servisi çakışıyor olabilir)"));
+    #[cfg(not(target_os = "macos"))]
+    {
+        // sc create komutunu CMD üzerinden tırnakları tam koruyarak çalıştır
+        let create_cmd = format!(
+            "sc.exe create {} binPath= \"\\\"{}\\\" service-run --profile {} --data-dir \\\"{}\\\"\" start= auto",
+            SERVICE_NAME, exe_str, profile_id, dir_str
+        );
+        let out = silent_command("cmd")
+            .args(["/C", &create_cmd])
+            .output()
+            .map_err(|e| format!("sc çalıştırılamadı: {e}"))?;
+
+        if !out.status.success() {
+            return Err(format!(
+                "servis oluşturulamadı: {} {}",
+                String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr)
+            ));
+        }
+        let desc_cmd = format!(
+            "sc.exe description {} \"Anticore DPI Paket Filtreleme ve Koruma Servisi\"",
+            SERVICE_NAME
+        );
+        let _ = silent_command("cmd").args(["/C", &desc_cmd]).output();
+
+        let start = silent_command("sc")
+            .args(["start", SERVICE_NAME])
+            .output()
+            .map_err(|e| format!("sc start başarısız: {e}"))?;
+        if !start.status.success() {
+            let err = String::from_utf8_lossy(&start.stderr).trim().to_string();
+            let out_msg = String::from_utf8_lossy(&start.stdout).trim().to_string();
+            let msg = if !err.is_empty() { err } else { out_msg };
+            return Err(format!("servis başlatılamadı: {msg} (Başka DPI servisi çakışıyor olabilir)"));
+        }
+        app.emit("log", format!("[+] servis kuruldu ve başlatıldı (profil={profile_id})"))
+            .ok();
+        Ok(())
     }
-    app.emit("log", format!("[+] servis kuruldu ve başlatıldı (profil={profile_id})"))
-        .ok();
-    Ok(())
 }
 
 #[tauri::command]
 pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
     if !is_running_as_admin() {
-        return Err("Servisi kaldırmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+        return Err("Servisi kaldırmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
     }
 
-    let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
-    std::thread::sleep(std::time::Duration::from_millis(1000));
-    let out = silent_command("sc")
-        .args(["delete", SERVICE_NAME])
-        .output()
-        .map_err(|e| format!("sc delete başarısız: {e}"))?;
-    if !out.status.success() {
-        let combined = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
-        if !combined.contains("1060") {
-            return Err("servis kaldırılamadı (kurulu olmayabilir)".into());
+    #[cfg(target_os = "macos")]
+    {
+        let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
+        if plist_path.exists() {
+            let _ = silent_command("launchctl").args(["unload", "-w", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
+            let _ = std::fs::remove_file(plist_path);
         }
+        let _ = silent_command("pkill").args(["-9", "-f", "anticore-cli"]).output();
+        app.emit("log", "[-] macOS LaunchDaemon kaldırıldı".to_string()).ok();
+        return Ok(());
     }
-    app.emit("log", "[-] servis kaldırıldı".to_string()).ok();
-    Ok(())
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
+        std::thread::sleep(std::time::Duration::from_millis(1000));
+        let out = silent_command("sc")
+            .args(["delete", SERVICE_NAME])
+            .output()
+            .map_err(|e| format!("sc delete başarısız: {e}"))?;
+        if !out.status.success() {
+            let combined = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+            if !combined.contains("1060") {
+                return Err("servis kaldırılamadı (kurulu olmayabilir)".into());
+            }
+        }
+        app.emit("log", "[-] servis kaldırıldı".to_string()).ok();
+        Ok(())
+    }
 }
 
 #[tauri::command]
@@ -399,7 +543,7 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     use std::process::Stdio;
 
     if !is_running_as_admin() {
-        return Err("Bağımsız motor çalıştırmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+        return Err("Bağımsız motor çalıştırmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
     }
 
     if app.state::<Engine>().running.load(Ordering::SeqCst) {
@@ -407,10 +551,12 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     }
     if is_detached_running(&app) {
         return Err("Bağımsız motor zaten çalışıyor.".into());
+    } else {
+        // Eski/ölü PID dosyasını temizle
+        let _ = std::fs::remove_file(app_dir(&app).join("detached.pid"));
     }
     resolve_steps(&app, &profile_id)?;
-    let q = sc_query(SERVICE_NAME);
-    if q.contains("SERVICE_NAME:") && !q.contains("1060") {
+    if get_setup_status(app.clone())?.service_installed {
         return Err("Servis kurulu; çakışmayı önlemek için önce servisi kaldırın".into());
     }
 
@@ -468,7 +614,7 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
 #[tauri::command]
 pub fn detached_stop(app: AppHandle) -> Result<(), String> {
     if !is_running_as_admin() {
-        return Err("Bağımsız motoru durdurmak için uygulamanın Yönetici olarak çalıştırılması gerekir.".into());
+        return Err("Bağımsız motoru durdurmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
     }
 
     let pid_file = app_dir(&app).join("detached.pid");
@@ -476,17 +622,33 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
         .ok()
         .and_then(|s| s.trim().parse::<u32>().ok())
         .ok_or_else(|| "çalışan bağımsız motor bulunamadı".to_string())?;
-    let out = silent_command("taskkill")
-        .args(["/PID", &pid.to_string(), "/F"])
-        .output()
-        .map_err(|e| format!("taskkill başarısız: {e}"))?;
-    let out_str = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
-    if out.status.success() || out_str.contains("bulunamadı") || out_str.to_lowercase().contains("not found") {
+
+    #[cfg(target_os = "macos")]
+    {
+        let out = silent_command("kill").args(["-15", &pid.to_string()]).output()
+            .map_err(|e| format!("kill başarısız: {e}"))?;
+        if !out.status.success() {
+            let _ = silent_command("kill").args(["-9", &pid.to_string()]).output();
+        }
         let _ = std::fs::remove_file(&pid_file);
         app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
-        Ok(())
-    } else {
-        Err(format!("Motor sonlandırılamadı: {out_str}"))
+        return Ok(());
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let out = silent_command("taskkill")
+            .args(["/PID", &pid.to_string(), "/F"])
+            .output()
+            .map_err(|e| format!("taskkill başarısız: {e}"))?;
+        let out_str = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+        if out.status.success() || out_str.contains("bulunamadı") || out_str.to_lowercase().contains("not found") {
+            let _ = std::fs::remove_file(&pid_file);
+            app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
+            Ok(())
+        } else {
+            Err(format!("Motor sonlandırılamadı: {out_str}"))
+        }
     }
 }
 
@@ -1197,7 +1359,7 @@ Clear-DnsClientCache
     }
 }
 
-/// Verilen IP'nin BTK/ISP DNS zehirlenmesi, mahkeme engelleme sayfası veya
+/// Verilen IP'nin operatör DNS zehirlenmesi, yönlendirme sayfası veya
 /// geçersiz/özel ağ (bogon/RFC1918) yönlendirmesi olup olmadığını belirler.
 pub fn is_poisoned_or_bogus_ip(ip: &std::net::IpAddr) -> bool {
     match ip {
@@ -1217,36 +1379,34 @@ pub fn is_poisoned_or_bogus_ip(ip: &std::net::IpAddr) -> bool {
             if octets[0] == 100 && (octets[1] >= 64 && octets[1] <= 127) {
                 return true;
             }
-            // Türk Telekom & BTK Resmi Mahkeme Engelleme Sunucu Havuzları
+            // Türk Telekom Resmi Yönlendirme Sunucu Havuzları
             if octets[0] == 195 && octets[1] == 175 {
                 return true;
             }
             if octets[0] == 212 && octets[1] == 156 {
                 return true;
             }
-            // Turkcell Superonline Engelleme Sunucu Havuzları
-            if octets[0] == 213 && octets[1] == 74 {
+            // Turkcell Superonline Yönlendirme Sunucu Havuzları
+            if (octets[0] == 213 && octets[1] == 74)
+                || (octets[0] == 85 && octets[1] == 29)
+                || (octets[0] == 212 && octets[1] == 252)
+            {
                 return true;
             }
-            if octets[0] == 85 && octets[1] == 29 {
-                return true;
-            }
-            if octets[0] == 212 && octets[1] == 252 {
-                return true;
-            }
-            // Vodafone Türkiye Engelleme Sunucu Havuzları
+            // Vodafone Yönlendirme Sunucu Havuzları
             if octets[0] == 212 && octets[1] == 65 {
                 return true;
             }
+            // Diğer ISP Yönlendirme IP'leri (0.0.0.0, 127.0.0.1 hariç)
             false
         }
         std::net::IpAddr::V6(v6) => {
             if v6.is_loopback() || v6.is_unspecified() {
                 return true;
             }
-            let segments = v6.segments();
-            // Türk Telekom IPv6 engelleme bloğu (2a00:1368::/32)
-            if segments[0] == 0x2a00 && segments[1] == 0x1368 {
+            // Türk Telekom IPv6 Yönlendirme Bloğu (2a00:1368::)
+            let segs = v6.segments();
+            if segs[0] == 0x2a00 && segs[1] == 0x1368 {
                 return true;
             }
             false
@@ -1254,7 +1414,7 @@ pub fn is_poisoned_or_bogus_ip(ip: &std::net::IpAddr) -> bool {
     }
 }
 
-/// Discord ve engelli siteler için DNS'in sahte BTK/ISP engelleme IP'sine
+/// Discord ve hedef siteler için DNS'in operatör yönlendirme IP'sine
 /// yönlendirilip yönlendirilmediğini (DNS zehirlenmesi) asenkron ve kilitlenmesiz test eder.
 #[tauri::command]
 pub async fn check_dns_health() -> DnsHealthDto {
@@ -1291,7 +1451,7 @@ pub async fn check_dns_health() -> DnsHealthDto {
                     poisoned: true,
                     resolved_ip: bad_ip,
                     is_secure: false,
-                    message: "İnternet sağlayıcınız (ISP) Discord'u sahte BTK/ISP engelleme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
+                    message: "İnternet sağlayıcınız (ISP) Discord'u hatalı yönlendirme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
                 }
             } else {
                 DnsHealthDto {
@@ -2658,13 +2818,13 @@ mod tests {
     fn test_is_poisoned_or_bogus_ip() {
         use std::net::IpAddr;
 
-        // TTNet / BTK mahkeme kararı sahte engelleme IP'leri
-        let btk_1: IpAddr = "195.175.254.2".parse().unwrap();
-        let btk_2: IpAddr = "212.156.4.1".parse().unwrap();
-        assert!(is_poisoned_or_bogus_ip(&btk_1));
-        assert!(is_poisoned_or_bogus_ip(&btk_2));
+        // TTNet operatör yönlendirme sahte IP'leri
+        let tt_1: IpAddr = "195.175.254.2".parse().unwrap();
+        let tt_2: IpAddr = "212.156.4.1".parse().unwrap();
+        assert!(is_poisoned_or_bogus_ip(&tt_1));
+        assert!(is_poisoned_or_bogus_ip(&tt_2));
 
-        // Superonline engelleme IP'leri
+        // Superonline yönlendirme IP'leri
         let sol_1: IpAddr = "213.74.1.1".parse().unwrap();
         let sol_2: IpAddr = "85.29.16.1".parse().unwrap();
         let sol_3: IpAddr = "212.252.0.1".parse().unwrap();
@@ -2672,7 +2832,7 @@ mod tests {
         assert!(is_poisoned_or_bogus_ip(&sol_2));
         assert!(is_poisoned_or_bogus_ip(&sol_3));
 
-        // Vodafone TR engelleme IP'si
+        // Vodafone TR yönlendirme IP'si
         let voda: IpAddr = "212.65.128.1".parse().unwrap();
         assert!(is_poisoned_or_bogus_ip(&voda));
 
@@ -2697,10 +2857,10 @@ mod tests {
         assert!(!is_poisoned_or_bogus_ip(&google_dns));
 
         // IPv6 testleri
-        let btk_v6: IpAddr = "2a00:1368::1".parse().unwrap();
+        let isp_v6: IpAddr = "2a00:1368::1".parse().unwrap();
         let clean_v6: IpAddr = "2606:4700:4700::1111".parse().unwrap();
         let loopback_v6: IpAddr = "::1".parse().unwrap();
-        assert!(is_poisoned_or_bogus_ip(&btk_v6));
+        assert!(is_poisoned_or_bogus_ip(&isp_v6));
         assert!(is_poisoned_or_bogus_ip(&loopback_v6));
         assert!(!is_poisoned_or_bogus_ip(&clean_v6));
     }

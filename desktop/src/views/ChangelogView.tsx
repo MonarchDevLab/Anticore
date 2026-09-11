@@ -147,8 +147,8 @@ const RELEASES: ReleaseEntry[] = [
     changes: [
       {
         type: "feature",
-        textTr: "8 Donanım Teması: Obsidian, Amber CRT, Cobalt, Cyberpunk 2077, Quiet Luxury, Amethyst, Titanium ve Crimson Hazard.",
-        textEn: "8 Hardware Themes: Obsidian, Amber CRT, Cobalt, Cyberpunk 2077, Quiet Luxury, Amethyst, Titanium and Crimson Hazard.",
+        textTr: "10 Morfolojik Donanım Teması: Obsidian Core, Cyberpunk 2077, Quiet Luxury, Crimson Hazard, Cobalt Matrix, Amber CRT, Amethyst Nebula, Abyss Aqua, Solar Flare ve Titanium Lab.",
+        textEn: "10 Morphological Hardware Themes: Obsidian Core, Cyberpunk 2077, Quiet Luxury, Crimson Hazard, Cobalt Matrix, Amber CRT, Amethyst Nebula, Abyss Aqua, Solar Flare and Titanium Lab.",
       },
       {
         type: "feature",
@@ -157,8 +157,8 @@ const RELEASES: ReleaseEntry[] = [
       },
       {
         type: "feature",
-        textTr: "Windows DoH ve DNS Zehirlenme Koruması: BTK'nın sahte IP yönlendirmelerine karşı otomatik DoH ve Cloudflare 1.1.1.1 tamiri.",
-        textEn: "Windows DoH & Anti-Poisoning: Automatic encrypted DNS (DoH) and Cloudflare 1.1.1.1 restoration against BTK ISP poisoning.",
+        textTr: "Windows DoH ve DNS Manipülasyon Koruması: Operatörlerin hatalı IP yönlendirmelerine ve DNS zehirlenmesine karşı otomatik DoH ve Cloudflare 1.1.1.1 onarımı.",
+        textEn: "Windows DoH & DNS Manipulation Protection: Automatic encrypted DNS (DoH) and Cloudflare 1.1.1.1 restoration against ISP redirection.",
       },
       {
         type: "security",

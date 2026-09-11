@@ -64,8 +64,10 @@ fn main() {
             tray::setup(app)?;
             let args: Vec<String> = std::env::args().collect();
             let start_hidden = args.iter().any(|a| a == "--hidden" || a == "--minimized" || a == "-m");
+            let tray_settings = tray::get_tray_settings(&app.handle());
 
             if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_always_on_top(tray_settings.always_on_top);
                 let window_for_close = window.clone();
                 window.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -153,6 +155,10 @@ fn main() {
             commands::exit_app,
             tray::get_tray_minimize,
             tray::set_tray_minimize,
+            tray::get_show_tray_icon,
+            tray::set_show_tray_icon,
+            tray::get_always_on_top,
+            tray::set_always_on_top,
             lan_share::get_lan_info,
             lan_share::start_lan_proxy,
             lan_share::stop_lan_proxy,

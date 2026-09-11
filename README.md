@@ -20,7 +20,7 @@
 
 <br />
 
-**Türkiye internet servis sağlayıcılarının sansür ve derin paket inceleme (DPI) altyapılarına karşı geliştirilmiş; trafiği üçüncü taraf uzak sunuculara yönlendirmeden, internet hızınızı ve ping değerinizi %100 koruyarak çalışan yeni nesil yerel paket manipülasyon yazılımı.**
+**İnternet servis sağlayıcılarının uyguladığı derin paket inceleme (DPI) filtreleme ve kısıtlamalarına karşı geliştirilmiş; trafiği üçüncü taraf uzak sunuculara yönlendirmeden, internet hızınızı ve ping değerinizi %100 koruyarak çalışan yeni nesil yerel paket manipülasyon yazılımı.**
 
 <br />
 
@@ -353,7 +353,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
     <th width="50%" align="left" valign="top">
       <img src="https://img.shields.io/badge/01-ÇEKİRDEK_MOTOR-20ffa0?style=flat-square&labelColor=08090D" alt="01 Çekirdek Motor" /><br />
       <h3>Cerrahi Paket Manipülasyonu</h3>
-      <sub>Kernel düzeyinde WinDivert sürücüsü ile ISS sansür donanımlarını atlatma.</sub>
+      <sub>Kernel düzeyinde WinDivert sürücüsü ile ISS DPI filtrelemelerini aşma.</sub>
     </th>
     <th width="50%" align="left" valign="top">
       <img src="https://img.shields.io/badge/02-GÖRSEL_TELEMETRİ-20f2ff?style=flat-square&labelColor=08090D" alt="02 Görsel Telemetri" /><br />
@@ -380,7 +380,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
     <th width="50%" align="left" valign="top">
       <img src="https://img.shields.io/badge/03-AĞ_GEÇİDİ-FFE600?style=flat-square&labelColor=08090D" alt="03 Ağ Geçidi" /><br />
       <h3>Yerel Ağ (LAN) Cihaz Paylaşımı</h3>
-      <sub>Bilgisayarınızı tüm ev ve ofis için merkezi sansür atlatma ağ geçidine çevirin.</sub>
+      <sub>Bilgisayarınızı tüm ev ve ofis için merkezi yerel DPI ağ geçidine çevirin.</sub>
     </th>
     <th width="50%" align="left" valign="top">
       <img src="https://img.shields.io/badge/04-SİSTEM_ONARIMI-FF7733?style=flat-square&labelColor=08090D" alt="04 Sistem Onarımı" /><br />
@@ -393,12 +393,12 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
     <td width="50%" valign="top">
       &bull; <b>SOCKS5 / HTTP Proxy:</b> Mobil cihazlar, tabletler ve akıllı TV'ler için yerel ağda <code>0.0.0.0:10808</code> vekil sunucu servisi.<br /><br />
       &bull; <b>Şeffaf Hotspot Transit:</b> Windows Mobil Etkin Noktası üzerinden bağlı tüm cihazlara ek ayar gerektirmeden tam koruma.<br /><br />
-      &bull; <b>PAC Otomasyonu:</b> Yalnızca yasaklı hedefleri yönlendiren dinamik Proxy Auto-Config desteği ile optimum hat kullanımı.
+      &bull; <b>PAC Otomasyonu:</b> Yalnızca hedeflenen alan adlarını yönlendiren dinamik Proxy Auto-Config desteği ile optimum hat kullanımı.
     </td>
     <td width="50%" valign="top">
       &bull; <b>Tek Tıkla Sıfırlama:</b> Bozulan ağ yığınını <code>netsh winsock reset</code> ve <code>netsh int ip reset</code> ile anında onarma.<br /><br />
       &bull; <b>DNS Önbellek Boşaltma:</b> <code>ipconfig /flushdns</code>, <code>/release</code> ve <code>/renew</code> komutlarıyla DNS zehirlenmesini temizleme.<br /><br />
-      &bull; <b>Güvenli DoH Aktivasyonu:</b> Cloudflare 1.1.1.1 veya Google 8.8.8.8 şifreli DNS motoruyla sansürsüz çözümleme.
+      &bull; <b>Güvenli DoH Aktivasyonu:</b> Cloudflare 1.1.1.1 veya Google 8.8.8.8 şifreli DNS motoruyla doğrudan güvenli çözümleme.
     </td>
   </tr>
 
@@ -451,14 +451,14 @@ flowchart TD
     end
 
     subgraph Net["İnternet Altyapısı & Servis Sağlayıcı"]
-        ISP["ISS DPI Sansür Donanımı\n(Sandvine / Procera)"]
+        ISP["ISS DPI Filtreleme Donanımı\n(Sandvine / Procera)"]
         Target["Hedef Sunucu\n(Discord, Roblox, Cloudflare Edge)"]
     end
 
     App --> TCPIP
     TCPIP --> WD
     WD --> Check
-    Check -- "Eşleşti (Sansürlü)" --> Manip
+    Check -- "Eşleşti (Hedef Alan Adı)" --> Manip
     Check -- "Normal Trafik" --> Bypass
     Manip -- "1. Düşük TTL Sahte Paket (DPI Filtresi Yutar)" --> ISP
     Manip -- "2. Bölünmüş Gerçek El Sıkışma" --> Target
@@ -483,7 +483,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
     <tr>
       <th width="20%" align="left">İnternet Servis Sağlayıcı</th>
       <th width="18%" align="left">Tespit Edilen DPI Donanımı</th>
-      <th width="22%" align="left">Sansür & Filtreleme Yöntemi</th>
+      <th width="22%" align="left">DPI Trafik Sınıflandırma Yöntemi</th>
       <th width="19%" align="left">Varsayılan Uyumlu Profil</th>
       <th width="21%" align="center">Başarı Durumu</th>
     </tr>
@@ -879,7 +879,7 @@ Windows işletim sisteminde ağ sürücüsü başlatmak (Kernel Driver Load) ve 
 <details>
 <summary><b>5. Discord "Starting..." döngüsünde kalıyor, ne yapmalıyım?</b></summary>
 <br />
-Servis sağlayıcınızın Discord CDN alan adlarını yanlış IP'ye (BTK uyarı sayfası) yönlendirmesinden (DNS zehirlemesi) kaynaklanır. Anticore içerisindeki <b>Ağ Onarımı</b> sekmesine gidin; <b>"Güvenli DNS Uygula"</b> ve <b>"Ağ Yığınını Sıfırla"</b> butonlarına basarak DNS önbelleğinizi temizleyin.
+Servis sağlayıcınızın Discord CDN alan adlarını hatalı yönlendirme IP'sine yönlendirmesinden (DNS zehirlemesi) kaynaklanır. Anticore içerisindeki <b>Ağ Onarımı</b> sekmesine gidin; <b>"Güvenli DNS Uygula"</b> ve <b>"Ağ Yığınını Sıfırla"</b> butonlarına basarak DNS önbelleğinizi temizleyin.
 </details>
 
 ---
@@ -967,7 +967,7 @@ Bu proje [MIT Lisansı](LICENSE) altında açık kaynak olarak sunulmaktadır.
 
 - **WinDivert:** [LGPLv3](https://reqrypt.org/windivert.html) lisansına sahip bağımsız ağ filtreleme sürücüsüdür; dinamik bağlantı ile harici olarak yüklenir.
 - **WebView2:** Microsoft Corporation mülkiyetindedir.
-- **Yasal Sorumluluk:** Anticore; ağ performansı analizi, kişisel veri mahremiyeti ve sansürsüz bilgiye erişim ilkeleri doğrultusunda geliştirilmiştir. Kullanıcıların yerel yasal düzenlemelere uygun hareket etmesi kendi sorumluluğundadır.
+- **Yasal Sorumluluk:** Anticore; ağ performansı analizi, kişisel veri mahremiyeti, ağ tarafsızlığı ve paket bütünlüğü ilkeleri doğrultusunda geliştirilmiştir. Kullanıcıların yerel yasal düzenlemelere uygun hareket etmesi kendi sorumluluğundadır.
 
 <div align="center">
   <br />
