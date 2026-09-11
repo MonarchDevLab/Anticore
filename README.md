@@ -43,17 +43,17 @@
 
 Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arındırılmış (Zero Leakage) ve Minisign ile doğrulanmıştır.
 
-<table>
+<table width="100%" align="center">
 <tr>
-  <th width="33%" align="center">
+  <th width="340" align="center">
     <h3>Taşınabilir (Portable)</h3>
     <em>(En Çok Tercih Edilen)</em>
   </th>
-  <th width="33%" align="center">
+  <th width="340" align="center">
     <h3>Kurulumlu (Setup EXE)</h3>
     <em>(Standart Kullanıcı)</em>
   </th>
-  <th width="33%" align="center">
+  <th width="340" align="center">
     <h3>Kurumsal (MSI)</h3>
     <em>(Sistem Yöneticileri)</em>
   </th>
@@ -131,19 +131,19 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 
 Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıtlandığında kullanıcıların başvurduğu klasik çözüm VPN tünelleridir. Ancak VPN protokolleri modern internet kullanımını aksatır:
 
-<table>
+<table width="100%" align="center">
 <tr>
-  <th width="50%" align="center">
+  <th width="500" align="center">
     <h3>Geleneksel VPN Tünelleme</h3>
     <sub>(Dolaylı, Yavaş &amp; Veri Güvenliği Riskli)</sub>
   </th>
-  <th width="50%" align="center">
+  <th width="500" align="center">
     <h3>Anticore Cerrahi DPI Bypass</h3>
     <sub>(Doğrudan, Tam Hat Hızı &amp; Sıfır Gecikme)</sub>
   </th>
 </tr>
 <tr>
-  <td align="center" valign="top">
+  <td width="500" align="center" valign="top">
     <br />
     <code>[İstemci PC]</code><br />
     &darr; <i>(Şifreli Tünel Encapsulation)</i><br />
@@ -152,7 +152,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
     <code>[Hedef Servis / Oyun Sunucusu]</code>
     <br /><br />
   </td>
-  <td align="center" valign="top">
+  <td width="500" align="center" valign="top">
     <br />
     <code>[İstemci PC]</code><br />
     &darr; <i>(Yalnızca İlk TLS ClientHello Parçalanır)</i><br />
@@ -163,14 +163,14 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
   </td>
 </tr>
 <tr>
-  <td align="left" valign="top">
+  <td width="500" align="left" valign="top">
     &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%2550--%2580_Düşüş-ff4444?style=flat-square" alt="Hız Düşüşü" align="right" /><br /><br />
     &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Artışı" align="right" /><br /><br />
     &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Yabancı_Sunucu-red?style=flat-square" alt="Yabancı Sunucu" align="right" /><br /><br />
     &bull; <b>Banka / e-Devlet:</b> <img src="https://img.shields.io/badge/IP-Yurtdışı_Blokeli-grey?style=flat-square" alt="Banka Engeli" align="right" /><br /><br />
     &bull; <b>Maliyet:</b> <img src="https://img.shields.io/badge/Model-Aylık_Abonelik-lightgrey?style=flat-square" alt="Abonelik" align="right" />
   </td>
-  <td align="left" valign="top">
+  <td width="500" align="left" valign="top">
     &bull; <b>Hat Hızı:</b> <img src="https://img.shields.io/badge/Hız-%25100_Tam_Hat-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Tam Hat" align="right" /><br /><br />
     &bull; <b>Oyun Gecikmesi:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Artış-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Sıfır Ping" align="right" /><br /><br />
     &bull; <b>Veri Rotası:</b> <img src="https://img.shields.io/badge/Trafik-Doğrudan_Kendi_Hattınız-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Doğrudan" align="right" /><br /><br />
@@ -190,9 +190,9 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 
 ## Öne Çıkan Yetenekler
 
-<table>
+<table width="100%" align="center">
 <tr>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/01-ÇEKİRDEK_MOTOR-00FF9D?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Çekirdek Motor" />
 
@@ -206,7 +206,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 - `RST Düşürme & QUIC` &mdash; ISS kaynaklı sahte TCP RST koparma paketlerini sessizce filtreler.
 
 </td>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/02-GÖRSEL_TELEMETRİ-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Görsel Telemetri" />
 
@@ -222,7 +222,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 </td>
 </tr>
 <tr>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/03-AĞ_GEÇİDİ-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="03 Ağ Geçidi" />
 
@@ -236,7 +236,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 - `PAC Otomasyonu` &mdash; Yalnızca yasaklı hedefleri yönlendiren dinamik Proxy Auto-Config desteği.
 
 </td>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/04-SİSTEM_ONARIMI-FF7733?style=flat-square&logoColor=08090D&labelColor=08090D" alt="04 Sistem Onarımı" />
 
@@ -252,7 +252,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 </td>
 </tr>
 <tr>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/05-BELLEK_YÖNETİMİ-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Bellek Yönetimi" />
 
@@ -266,7 +266,7 @@ Discord kapatıldığında, Roblox engellendiğinde veya bilgiye erişim kısıt
 - `Yedekli Topluluk Aynası` &mdash; Zapret Türkiye hostlist aynası ve yerleşik çevrimdışı yedek veritabanı.
 
 </td>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/06-GELECEK_UYUMU-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Gelecek Uyumu" />
 

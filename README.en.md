@@ -43,17 +43,17 @@
 
 All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
-<table>
+<table width="100%" align="center">
 <tr>
-  <th width="33%" align="center">
+  <th width="340" align="center">
     <h3>Portable Edition</h3>
     <em>(Most Popular)</em>
   </th>
-  <th width="33%" align="center">
+  <th width="340" align="center">
     <h3>Installer (Setup EXE)</h3>
     <em>(Standard User)</em>
   </th>
-  <th width="33%" align="center">
+  <th width="340" align="center">
     <h3>Enterprise (MSI)</h3>
     <em>(System Admins)</em>
   </th>
@@ -131,19 +131,19 @@ Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
 
 When online services like Discord or gaming servers are blocked, users typically resort to VPNs. However, conventional VPN routing severely degrades daily performance:
 
-<table>
+<table width="100%" align="center">
 <tr>
-  <th width="50%" align="center">
+  <th width="500" align="center">
     <h3>Traditional VPN Tunneling</h3>
     <sub>(Indirect, Slow &amp; Privacy Risks)</sub>
   </th>
-  <th width="50%" align="center">
+  <th width="500" align="center">
     <h3>Anticore Surgical DPI Bypass</h3>
     <sub>(Direct, Full Line Speed &amp; Zero Latency)</sub>
   </th>
 </tr>
 <tr>
-  <td align="center" valign="top">
+  <td width="500" align="center" valign="top">
     <br />
     <code>[Client Workstation]</code><br />
     &darr; <i>(Encrypted Tunnel Encapsulation)</i><br />
@@ -152,7 +152,7 @@ When online services like Discord or gaming servers are blocked, users typically
     <code>[Target Service / Game Server]</code>
     <br /><br />
   </td>
-  <td align="center" valign="top">
+  <td width="500" align="center" valign="top">
     <br />
     <code>[Client Workstation]</code><br />
     &darr; <i>(Only Initial TLS ClientHello Fragmented)</i><br />
@@ -163,14 +163,14 @@ When online services like Discord or gaming servers are blocked, users typically
   </td>
 </tr>
 <tr>
-  <td align="left" valign="top">
+  <td width="500" align="left" valign="top">
     &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-50%25--80%25_Drop-ff4444?style=flat-square" alt="Speed Drop" align="right" /><br /><br />
     &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-+100~250_ms-ff7733?style=flat-square" alt="Ping Increase" align="right" /><br /><br />
     &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Foreign_Relay-red?style=flat-square" alt="Foreign Relay" align="right" /><br /><br />
     &bull; <b>Banking / Local Services:</b> <img src="https://img.shields.io/badge/IP-Overseas_Blocked-grey?style=flat-square" alt="Blocked" align="right" /><br /><br />
     &bull; <b>Cost Model:</b> <img src="https://img.shields.io/badge/Model-Monthly_Subscription-lightgrey?style=flat-square" alt="Subscription" align="right" />
   </td>
-  <td align="left" valign="top">
+  <td width="500" align="left" valign="top">
     &bull; <b>Bandwidth:</b> <img src="https://img.shields.io/badge/Speed-100%25_Full_Wire-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Full Wire" align="right" /><br /><br />
     &bull; <b>Gaming Latency:</b> <img src="https://img.shields.io/badge/Ping-0_ms_Added-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Zero Ping" align="right" /><br /><br />
     &bull; <b>Data Route:</b> <img src="https://img.shields.io/badge/Traffic-Direct_Local_Gateway-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="Direct" align="right" /><br /><br />
@@ -190,9 +190,9 @@ When online services like Discord or gaming servers are blocked, users typically
 
 ## Key Features
 
-<table>
+<table width="100%" align="center">
 <tr>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/01-CORE_ENGINE-00FF9D?style=flat-square&logo=rust&logoColor=08090D&labelColor=08090D" alt="01 Core Engine" />
 
@@ -206,7 +206,7 @@ When online services like Discord or gaming servers are blocked, users typically
 - `Passive RST Mitigation` &mdash; Silently drops spoofed TCP RST packets injected by ISPs to preserve sessions.
 
 </td>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/02-VISUAL_TELEMETRY-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="02 Visual Telemetry" />
 
@@ -222,7 +222,7 @@ When online services like Discord or gaming servers are blocked, users typically
 </td>
 </tr>
 <tr>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/03-LAN_GATEWAY-FFE600?style=flat-square&logoColor=08090D&labelColor=08090D" alt="03 LAN Gateway" />
 
@@ -236,7 +236,7 @@ When online services like Discord or gaming servers are blocked, users typically
 - `PAC Automation` &mdash; Proxy Auto-Config routing that directs only censored domains through the engine.
 
 </td>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/04-SYSTEM_RECOVERY-FF7733?style=flat-square&logoColor=08090D&labelColor=08090D" alt="04 System Recovery" />
 
@@ -252,7 +252,7 @@ When online services like Discord or gaming servers are blocked, users typically
 </td>
 </tr>
 <tr>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/05-MEMORY_MANAGEMENT-00FF9D?style=flat-square&logoColor=08090D&labelColor=08090D" alt="05 Memory Management" />
 
@@ -266,7 +266,7 @@ When online services like Discord or gaming servers are blocked, users typically
 - `Dual-Layered Mirrors` &mdash; Community hostlist sync backed by an offline embedded fallback database.
 
 </td>
-<td width="50%" valign="top">
+<td width="500" valign="top">
 
 <img src="https://img.shields.io/badge/06-NEXT_GEN_TLS-00E5FF?style=flat-square&logoColor=08090D&labelColor=08090D" alt="06 Next Gen TLS" />
 
