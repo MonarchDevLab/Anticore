@@ -59,7 +59,7 @@
 
 ---
 
-## İndirme Seçenekleri (v0.3.1.2)
+## İndirme Seçenekleri (v0.3.2)
 
 Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arındırılmış (Zero Leakage) ve Minisign ile doğrulanmıştır.
 
@@ -108,13 +108,13 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.2_x64-portable.zip"><img src="https://img.shields.io/badge/INDIR_.ZIP-6.5_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir ZIP" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.2_x64-portable.zip"><img src="https://img.shields.io/badge/INDIR_.ZIP-6.5_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.2_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.2_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.2_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-6.3_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.2_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-6.3_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
       </td>
     </tr>
     <tr>

@@ -6,13 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.3.1.2] - 2026-09-12
+## [0.3.2] - 2026-09-12
 
 ### Added
 - **In-Binary Driver Embedding (True Single-File Portable):** Statically compiled `WinDivert.dll`, `WinDivert64.sys`, and `WebView2Loader.dll` directly into `Anticore.exe` using Rust's `include_bytes!` macro. The application now runs as a completely self-contained single executable requiring zero external DLLs or SYS files.
 - **Auto-Extracting Driver Provisioning (Self-Heal):** On launch, if driver binaries are absent from the host directory, the executable silently provisions them from embedded memory to disk within milliseconds, satisfying Windows Authenticode/WHQL kernel integrity requirements.
+- **Zero-Rate-Limit CDN Fallback Updater:** Integrated transparent secondary failover to GitHub CDN `latest.json` endpoint whenever GitHub REST API rate limits (HTTP 403) or network interruptions occur, guaranteeing 100% update availability.
 
 ### Fixed
+- **Universal SemVer 2.0 Compliance:** Migrated versioning scheme back to strict 3-part SemVer (`0.3.2`), resolving an issue where legacy versions (`v0.3.0` / `v0.3.1`) failed to detect 4-part release tags. All historical clients now discover and prompt for updates automatically.
 - **Titlebar Language Standardization:** Replaced hardcoded status pill string in `Titlebar.tsx` with dynamic i18n keys; standby mode properly displays `ETKİN DEĞİL · BEKLEMEDE` in Turkish and `INACTIVE · STANDBY` in English.
 - **Bilingual Window Controls & Tooltips:** Standardized F1 guide, theme toggler, minimize, maximize/restore, and close tooltips to be fully bilingual.
 - **Driver Error Discrimination:** Separated Windows OS error codes (`ERROR_ACCESS_DENIED`, `ERROR_FILE_NOT_FOUND`, `ERROR_DRIVER_BLOCKED`) during `WinDivertOpen` to eliminate false admin elevation prompts under valid elevated sessions.

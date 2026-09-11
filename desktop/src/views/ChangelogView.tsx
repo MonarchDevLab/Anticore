@@ -32,13 +32,13 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
-    version: "v0.3.1.2",
-    titleTr: "Tek Dosya (Single-File) Portable Mimarisi & Başlık Çubuğu Dil Standardizasyonu",
-    titleEn: "True Single-File Portable Architecture & Titlebar Language Standardization",
+    version: "v0.3.2",
+    titleTr: "Tek Dosya (Single-File) Portable, Kesintisiz Güncelleme Fallback & SemVer 2.0 Uyumluluğu",
+    titleEn: "Single-File Portable Architecture, Seamless CDN Fallback & SemVer 2.0 Parity",
     date: "12 Eylül 2026",
     isLatest: true,
-    highlightTr: "Harici dosya gerektirmeyen bağımsız tek EXE taşınabilir sürüm, sürücü otomatik sağlama ve tam iki dilli başlık çubuğu.",
-    highlightEn: "Self-contained single-executable portable architecture with auto-provisioning drivers and fully bilingual titlebar.",
+    highlightTr: "Tüm eski sürümlerle uyumlu SemVer 2.0 güncelleme döngüsü, sınırsız CDN fallback kanalı, bağımsız tek EXE taşınabilir sürüm ve tam iki dilli başlık çubuğu.",
+    highlightEn: "SemVer 2.0 upgrade loop compatible with all legacy versions, unlimited CDN fallback channel, self-contained single EXE portable and bilingual titlebar.",
     changes: [
       {
         type: "feature",
@@ -47,8 +47,18 @@ const RELEASES: ReleaseEntry[] = [
       },
       {
         type: "feature",
+        textTr: "Kesintisiz Güncelleme Yedekleme Kanalı (CDN latest.json Fallback): GitHub API hız sınırı (rate limit) aşıldığında veya API engellendiğinde, güncelleme motoru otomatik olarak doğrudan GitHub CDN üzerindeki latest.json dosyasına geçerek güncelleme bildirimlerinin kesilmesini kalıcı olarak engeller.",
+        textEn: "Zero-Rate-Limit CDN Fallback: When GitHub REST API rate limit is exceeded or unreachable, the updater transparently falls back to direct GitHub CDN latest.json endpoint, ensuring 100% notification reliability.",
+      },
+      {
+        type: "feature",
         textTr: "Kendi Kendini Onarma & Çıkartma (Self-Extracting Auto-Heal): Uygulama boş bir dizinde tek başına çalıştırıldığında gerekli sürücüleri milisaniyeler içinde disk üzerine sessizce çıkartır ve Windows çekirdek imza gereksinimlerini eksiksiz karşılar.",
         textEn: "Self-Extracting Auto-Heal: When launched alone in any directory, Anticore automatically provisions runtime drivers to disk within milliseconds, satisfying Windows kernel code integrity requirements.",
+      },
+      {
+        type: "fix",
+        textTr: "Evrensel SemVer 2.0 Sürüm Standartlaşması: Eski sürümlerin (v0.3.0 / v0.3.1) 4 parçalı revizyonları parse edememesi sorunu giderildi; 3 parçalı SemVer (0.3.2) ile tüm eski istemcilerin güncellemeleri anında algılaması sağlandı.",
+        textEn: "Universal SemVer 2.0 Standardization: Resolved issue where legacy clients (v0.3.0 / v0.3.1) failed to parse 4-part versions; 3-part SemVer (0.3.2) restores seamless update discovery across all clients.",
       },
       {
         type: "fix",

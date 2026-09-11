@@ -239,7 +239,7 @@ export default function TrayQuickPanel() {
           <div className="flex items-baseline gap-1.5">
             <span className="font-extrabold tracking-wider text-xs text-paper-bright">ANTICORE</span>
             <span className="text-[10px] text-paper-faint font-mono font-medium">
-              v{appVersion || "0.3.1.2"}
+              v{appVersion || "0.3.2"}
             </span>
             {updateAvailable && (
               <button

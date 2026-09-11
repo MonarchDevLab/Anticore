@@ -2522,7 +2522,7 @@ pub struct UpdateInfoDto {
     pub published_at: String,
 }
 
-pub const APP_VERSION: &str = "0.3.1.2";
+pub const APP_VERSION: &str = "0.3.2";
 
 #[tauri::command]
 pub fn get_app_version() -> String {
@@ -2558,9 +2558,63 @@ struct GhRelease {
     assets: Vec<GhAsset>,
 }
 
-/// GitHub Releases API'ye doğrudan HTTPS isteği (ureq/rustls) — önceden
-/// PowerShell `Invoke-RestMethod` çağırıyordu (~300-600ms process-spawn
-/// başına + kırılgan kısıtlı PowerShell ortamlarında).
+#[derive(Deserialize)]
+struct LatestJsonPlatform {
+    url: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct LatestJson {
+    version: Option<String>,
+    notes: Option<String>,
+    pub_date: Option<String>,
+    #[serde(default)]
+    platforms: std::collections::HashMap<String, LatestJsonPlatform>,
+}
+
+#[cfg(windows)]
+fn trigger_windows_toast(title: &str, body: &str) {
+    let t = title.replace('\'', "''").replace('\"', "`\"");
+    let b = body.replace('\'', "''").replace('\"', "`\"");
+    let script = format!(
+        r#"$title = '{}'; $body = '{}'; [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null; $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); $textNodes = $template.GetElementsByTagName('text'); $textNodes.Item(0).AppendChild($template.CreateTextNode($title)) | Out-Null; $textNodes.Item(1).AppendChild($template.CreateTextNode($body)) | Out-Null; $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'); $toast = [Windows.UI.Notifications.ToastNotification]::new($template); $notifier.Show($toast);"#,
+        t, b
+    );
+    let _ = silent_command("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .spawn();
+}
+
+fn trigger_update_notification(tag: &str, title: &str) {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static UPDATE_NOTIFIED: AtomicBool = AtomicBool::new(false);
+    if !UPDATE_NOTIFIED.swap(true, Ordering::SeqCst) {
+        let notif_body = format!("Anticore {} ({}) hazır! İndirmek veya güncellemek için tıklayın.", tag, title);
+
+        #[cfg(target_os = "macos")]
+        {
+            let script = format!(
+                "display notification \"{}\" with title \"Anticore\" subtitle \"{}\" sound name \"default\"",
+                notif_body.replace('\"', "\\\""),
+                title.replace('\"', "\\\"")
+            );
+            let _ = std::process::Command::new("osascript")
+                .arg("-e")
+                .arg(script)
+                .spawn();
+        }
+
+        #[cfg(windows)]
+        {
+            let t = "Anticore";
+            trigger_windows_toast(t, &notif_body);
+        }
+    }
+}
+
+/// GitHub Releases API'ye doğrudan HTTPS isteği (ureq/rustls).
+/// API 403 (Rate Limit) veya ağ engeli verirse, doğrudan GitHub CDN üzerindeki
+/// sınırsız `latest.json` dosyasını yedek (fallback) kanal olarak kullanır.
 #[tauri::command]
 pub fn check_update(
     repo_override: Option<String>,
@@ -2586,128 +2640,138 @@ pub fn check_update(
         req = req.set("Authorization", &format!("Bearer {}", tok.trim()));
     }
 
-    let resp = match req.call() {
-        Ok(r) => r,
-        Err(ureq::Error::Status(404, _)) => {
-            return Err(format!(
-                "GitHub deposu ({}) özel (private) modda veya henüz bir 'Release' yayımlanmamış. Güncelleme denetimi için geçerli bir GitHub Token tanımlayabilir veya depoyu genel erişime açabilirsiniz.",
-                repo.trim()
-            ));
-        }
-        Err(ureq::Error::Status(403, _)) => {
-            return Err("GitHub API hız sınırı (rate limit) aşıldı veya yetkisiz erişim.".into());
-        }
-        Err(e) => {
-            return Err(format!("Güncelleme sunucusuna ulaşılamadı (zaman aşımı veya ağ hatası): {e}"));
-        }
-    };
+    let api_result = req.call();
 
-    let parsed: GhRelease = resp
-        .into_json()
-        .map_err(|e| format!("Yanıt ayrıştırılamadı: {e}"))?;
+    // 1. Birincil Yol: GitHub Releases REST API
+    if let Ok(resp) = api_result {
+        if let Ok(parsed) = resp.into_json::<GhRelease>() {
+            let latest_tag = parsed.tag_name.unwrap_or_default();
+            let has_update = is_newer_version(current_ver, &latest_tag);
 
-    let latest_tag = parsed.tag_name.unwrap_or_default();
-    let has_update = is_newer_version(current_ver, &latest_tag);
+            let download_url = {
+                #[cfg(target_os = "macos")]
+                {
+                    #[cfg(target_arch = "aarch64")]
+                    {
+                        parsed
+                            .assets
+                            .iter()
+                            .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
+                            .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg"))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
+                            .map(|a| a.browser_download_url.clone())
+                    }
+                    #[cfg(not(target_arch = "aarch64"))]
+                    {
+                        parsed
+                            .assets
+                            .iter()
+                            .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
+                            .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg"))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
+                            .map(|a| a.browser_download_url.clone())
+                    }
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    parsed
+                        .assets
+                        .iter()
+                        .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
+                        .find(|a| a.name.ends_with("-setup.exe"))
+                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with("-portable.zip")))
+                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".msi")))
+                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".exe")))
+                        .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".zip")))
+                        .map(|a| a.browser_download_url.clone())
+                }
+            };
 
-    // Platform ve donanım mimarisine duyarlı indirme paketi eşleştirme
-    let download_url = {
-        #[cfg(target_os = "macos")]
-        {
-            #[cfg(target_arch = "aarch64")]
-            {
-                // Apple Silicon (ARM64) macOS
-                parsed
-                    .assets
-                    .iter()
-                    .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                    .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg"))
-                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
-                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
-                    .map(|a| a.browser_download_url.clone())
-            }
-            #[cfg(not(target_arch = "aarch64"))]
-            {
-                // Intel (x86_64) macOS
-                parsed
-                    .assets
-                    .iter()
-                    .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                    .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg"))
-                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
-                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
-                    .map(|a| a.browser_download_url.clone())
-            }
-        }
-        #[cfg(not(target_os = "macos"))]
-        {
-            // Windows
-            parsed
-                .assets
-                .iter()
-                .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                .find(|a| a.name.ends_with("-setup.exe"))
-                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with("-portable.zip")))
-                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".msi")))
-                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".exe")))
-                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".zip")))
-                .map(|a| a.browser_download_url.clone())
-        }
-    };
-
-    #[cfg(windows)]
-    fn trigger_windows_toast(title: &str, body: &str) {
-        let t = title.replace('\'', "''").replace('\"', "`\"");
-        let b = body.replace('\'', "''").replace('\"', "`\"");
-        let script = format!(
-            r#"$title = '{}'; $body = '{}'; [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null; $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); $textNodes = $template.GetElementsByTagName('text'); $textNodes.Item(0).AppendChild($template.CreateTextNode($title)) | Out-Null; $textNodes.Item(1).AppendChild($template.CreateTextNode($body)) | Out-Null; $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'); $toast = [Windows.UI.Notifications.ToastNotification]::new($template); $notifier.Show($toast);"#,
-            t, b
-        );
-        let _ = silent_command("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
-            .spawn();
-    }
-
-    // macOS ve Windows kullanıcıları için yerel sesli sistem bildirimi
-    if has_update {
-        use std::sync::atomic::{AtomicBool, Ordering};
-        static UPDATE_NOTIFIED: AtomicBool = AtomicBool::new(false);
-        if !UPDATE_NOTIFIED.swap(true, Ordering::SeqCst) {
-            let release_title = parsed.name.as_deref().unwrap_or("Yeni Sürüm");
-            let notif_body = format!("Anticore {} ({}) hazır! İndirmek veya güncellemek için tıklayın.", latest_tag, release_title);
-
-            #[cfg(target_os = "macos")]
-            {
-                let script = format!(
-                    "display notification \"{}\" with title \"Anticore\" subtitle \"{}\" sound name \"default\"",
-                    notif_body.replace('\"', "\\\""),
-                    release_title.replace('\"', "\\\"")
-                );
-                let _ = std::process::Command::new("osascript")
-                    .arg("-e")
-                    .arg(script)
-                    .spawn();
+            let release_title = parsed.name.clone().unwrap_or_else(|| "Yeni Sürüm".into());
+            if has_update {
+                trigger_update_notification(&latest_tag, &release_title);
             }
 
-            #[cfg(windows)]
-            {
-                let t = "Anticore";
-                trigger_windows_toast(t, &notif_body);
-            }
+            let release_notes = strip_emojis(&parsed.body.unwrap_or_default());
+            return Ok(UpdateInfoDto {
+                has_update,
+                current_version: current_ver.to_string(),
+                latest_version: latest_tag,
+                release_name: parsed.name.unwrap_or_default(),
+                release_notes,
+                html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
+                download_url,
+                published_at: parsed.published_at.unwrap_or_default(),
+            });
         }
     }
 
-    let release_notes = strip_emojis(&parsed.body.unwrap_or_default());
+    // 2. İkincil Yol (Rate Limit ve Ağ Fallback): Doğrudan GitHub CDN latest.json
+    let cdn_uri = format!("https://github.com/{}/releases/latest/download/latest.json", repo.trim());
+    let cdn_resp = ureq::get(&cdn_uri)
+        .set("User-Agent", &format!("Anticore-Desktop/{current_ver}"))
+        .timeout(std::time::Duration::from_secs(6))
+        .call();
 
-    Ok(UpdateInfoDto {
-        has_update,
-        current_version: current_ver.to_string(),
-        latest_version: latest_tag,
-        release_name: parsed.name.unwrap_or_default(),
-        release_notes,
-        html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
-        download_url,
-        published_at: parsed.published_at.unwrap_or_default(),
-    })
+    if let Ok(resp) = cdn_resp {
+        if let Ok(latest_meta) = resp.into_json::<LatestJson>() {
+            let latest_version = latest_meta.version.unwrap_or_default();
+            let has_update = is_newer_version(current_ver, &latest_version);
+
+            let download_url = {
+                #[cfg(target_os = "macos")]
+                {
+                    #[cfg(target_arch = "aarch64")]
+                    {
+                        latest_meta
+                            .platforms
+                            .get("darwin-aarch64")
+                            .or_else(|| latest_meta.platforms.get("darwin-arm64"))
+                            .and_then(|p| p.url.clone())
+                            .or_else(|| Some(format!("https://github.com/{}/releases/latest", repo.trim())))
+                    }
+                    #[cfg(not(target_arch = "aarch64"))]
+                    {
+                        latest_meta
+                            .platforms
+                            .get("darwin-x86_64")
+                            .and_then(|p| p.url.clone())
+                            .or_else(|| Some(format!("https://github.com/{}/releases/latest", repo.trim())))
+                    }
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    latest_meta
+                        .platforms
+                        .get("windows-x86_64")
+                        .or_else(|| latest_meta.platforms.get("windows-x86_64-nsis"))
+                        .and_then(|p| p.url.clone())
+                        .or_else(|| Some(format!("https://github.com/{}/releases/download/v{}/Anticore_{}_x64-setup.exe", repo.trim(), latest_version, latest_version)))
+                }
+            };
+
+            let release_title = format!("Anticore v{latest_version}");
+            if has_update {
+                trigger_update_notification(&latest_version, &release_title);
+            }
+
+            let release_notes = strip_emojis(&latest_meta.notes.unwrap_or_default());
+            return Ok(UpdateInfoDto {
+                has_update,
+                current_version: current_ver.to_string(),
+                latest_version: latest_version.clone(),
+                release_name: release_title,
+                release_notes,
+                html_url: format!("https://github.com/{repo}/releases/tag/v{latest_version}"),
+                download_url,
+                published_at: latest_meta.pub_date.unwrap_or_default(),
+            });
+        }
+    }
+
+    Err("Güncelleme sunucusuna ulaşılamadı (GitHub API ve CDN yedek kanalı yanıt vermedi).".into())
 }
 
 #[tauri::command]
