@@ -1958,9 +1958,10 @@ pub fn check_update(
                 parsed
                     .assets
                     .iter()
+                    .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
                     .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg"))
-                    .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".dmg")))
-                    .or_else(|| parsed.assets.iter().find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
+                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
+                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
                     .map(|a| a.browser_download_url.clone())
             }
             #[cfg(not(target_arch = "aarch64"))]
@@ -1969,9 +1970,10 @@ pub fn check_update(
                 parsed
                     .assets
                     .iter()
+                    .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
                     .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg"))
-                    .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".dmg")))
-                    .or_else(|| parsed.assets.iter().find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
+                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
+                    .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
                     .map(|a| a.browser_download_url.clone())
             }
         }
@@ -1981,10 +1983,12 @@ pub fn check_update(
             parsed
                 .assets
                 .iter()
+                .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
                 .find(|a| a.name.ends_with("-setup.exe"))
-                .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".exe")))
-                .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".zip")))
-                .or_else(|| parsed.assets.iter().find(|a| a.name.ends_with(".msi")))
+                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with("-portable.zip")))
+                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".msi")))
+                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".exe")))
+                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli")).find(|a| a.name.ends_with(".zip")))
                 .map(|a| a.browser_download_url.clone())
         }
     };
@@ -2008,12 +2012,14 @@ pub fn check_update(
         }
     }
 
+    let release_notes = strip_emojis(&parsed.body.unwrap_or_default());
+
     Ok(UpdateInfoDto {
         has_update,
         current_version: current_ver.to_string(),
         latest_version: latest_tag,
         release_name: parsed.name.unwrap_or_default(),
-        release_notes: parsed.body.unwrap_or_default(),
+        release_notes,
         html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
         download_url,
         published_at: parsed.published_at.unwrap_or_default(),
@@ -2124,6 +2130,24 @@ fn is_newer_version(current: &str, remote: &str) -> bool {
         return false;
     };
     r > c
+}
+
+/// Sürüm notlarındaki veya dış içeriklerdeki tüm Unicode emojilerini temizler.
+/// UI ve içerik standartlarında emoji kesinlikle yasaktır (P2/P5).
+fn strip_emojis(input: &str) -> String {
+    input
+        .chars()
+        .filter(|&c| {
+            !matches!(c,
+                '\u{1F000}'..='\u{1FFFF}'
+                | '\u{2600}'..='\u{27BF}'
+                | '\u{FE00}'..='\u{FE0F}'
+                | '\u{200D}'
+                | '\u{2300}'..='\u{23FF}'
+                | '\u{2B50}'..='\u{2B55}'
+            )
+        })
+        .collect()
 }
 
 #[tauri::command]
@@ -2340,5 +2364,12 @@ mod tests {
         assert!(is_poisoned_or_bogus_ip(&btk_v6));
         assert!(is_poisoned_or_bogus_ip(&loopback_v6));
         assert!(!is_poisoned_or_bogus_ip(&clean_v6));
+    }
+
+    #[test]
+    fn test_strip_emojis() {
+        let input = "#### 🍏 macOS Paketleri (Apple Silicon) 🖥️ 🪟 Windows ⚡ ⚙ ⭐";
+        let output = strip_emojis(input);
+        assert_eq!(output.trim(), "####  macOS Paketleri (Apple Silicon)   Windows");
     }
 }

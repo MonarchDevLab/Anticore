@@ -783,9 +783,9 @@ Ana uygulama penceresini açmadan, Windows görev çubuğunun sağ alt köşesin
     <tr>
       <td width="50%">
         <b>Hızlı Müdahale:</b> &nbsp;
-        <kbd>⏹ Durdur</kbd> &nbsp;
-        <kbd>⚡ Onarım</kbd> &nbsp;
-        <kbd>⚙ Kokpit</kbd>
+        <kbd>Durdur</kbd> &nbsp;
+        <kbd>Onarım</kbd> &nbsp;
+        <kbd>Kokpit</kbd>
       </td>
       <td width="50%">
         <b>Paket Sayacı:</b> &nbsp;

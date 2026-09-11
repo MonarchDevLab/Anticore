@@ -10,6 +10,7 @@ import {
   Upload,
   CloudDownload,
   Check,
+  X,
 } from "lucide-react";
 import { api } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
@@ -428,9 +429,10 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           {query && (
             <button
               onClick={() => setQuery("")}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-paper-muted hover:text-alert cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-paper-muted hover:text-alert cursor-pointer p-0.5 rounded"
+              aria-label="Aramayı temizle"
             >
-              ✕
+              <X size={12} strokeWidth={2.5} />
             </button>
           )}
         </div>

@@ -782,10 +782,10 @@ Control your network protection instantly without opening the main workspace win
     </tr>
     <tr>
       <td width="50%">
-        <b>Quick Action:</b> &nbsp;
-        <kbd>⏹ Stop</kbd> &nbsp;
-        <kbd>⚡ Repair</kbd> &nbsp;
-        <kbd>⚙ Cockpit</kbd>
+        <b>Quick Response:</b> &nbsp;
+        <kbd>Stop</kbd> &nbsp;
+        <kbd>Repair</kbd> &nbsp;
+        <kbd>Cockpit</kbd>
       </td>
       <td width="50%">
         <b>Packet Counter:</b> &nbsp;
