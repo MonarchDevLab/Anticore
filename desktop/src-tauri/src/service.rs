@@ -122,6 +122,8 @@ pub struct Engine {
     worker: Mutex<Option<std::thread::JoinHandle<()>>>,
     #[cfg(windows)]
     active_handles: Arc<Mutex<Vec<Arc<anticore_transport_win::WinDivert>>>>,
+    #[cfg(target_os = "macos")]
+    active_transport_macos: Arc<Mutex<Option<Arc<anticore_transport_macos::UtunTransport>>>>,
 }
 
 impl Engine {
@@ -136,6 +138,8 @@ impl Engine {
             worker: Mutex::new(None),
             #[cfg(windows)]
             active_handles: Arc::new(Mutex::new(Vec::new())),
+            #[cfg(target_os = "macos")]
+            active_transport_macos: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -307,7 +311,124 @@ impl Engine {
         Ok(())
     }
 
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    pub fn start(
+        &self,
+        profile_id: &str,
+        blacklist: anticore_core::config::Blacklist,
+        steps: Vec<anticore_core::strategy::Step>,
+        config: &EngineConfig,
+        _dll_dir: Option<std::path::PathBuf>,
+        on_log: impl Fn(String) + Send + 'static,
+    ) -> Result<(), String> {
+        use anticore_core::dispatch::{decide_packet, PacketDecision, PassthroughReason};
+        use anticore_core::transport::PacketTransport;
+        use anticore_transport_macos::UtunTransport;
+
+        let mut worker = self.worker.lock().unwrap();
+        if self.running.load(Ordering::SeqCst) {
+            return Err("Motor zaten çalışıyor".into());
+        }
+        if let Some(previous) = worker.take() {
+            previous.join().map_err(|_| "Önceki motor iş parçacığı başarısız oldu")?;
+        }
+        *self.profile_id.lock().unwrap() = profile_id.to_string();
+        self.stop_flag.store(false, Ordering::SeqCst);
+        self.stats.packets_seen.store(0, Ordering::Relaxed);
+        self.stats.packets_touched.store(0, Ordering::Relaxed);
+        self.stats.passthrough.store(0, Ordering::Relaxed);
+
+        let running = self.running.clone();
+        let stop = self.stop_flag.clone();
+        let stats = self.stats.clone();
+        let started_at = self.started_at.clone();
+        let profile_id = profile_id.to_string();
+
+        let transport = Arc::new(UtunTransport::open(config.pasif_savunma, config.quic_engelle)?);
+        *self.active_transport_macos.lock().unwrap() = Some(transport.clone());
+        let active_transport = self.active_transport_macos.clone();
+
+        if let Ok(mut lock) = self.blacklist.write() {
+            *lock = blacklist;
+        }
+        let blacklist_ref = self.blacklist.clone();
+
+        *self.started_at.lock().unwrap() = Some(Instant::now());
+        self.running.store(true, Ordering::SeqCst);
+
+        let transport_for_thread = transport.clone();
+        let handle = std::thread::Builder::new().name("anticore-packets-macos".into()).spawn(move || {
+            let initial_count = blacklist_ref.read().map(|b| b.len()).unwrap_or(0);
+            on_log(format!(
+                "[+] macOS motoru aktif | profil={profile_id} | {initial_count} hedef domain",
+            ));
+            let mut buf = vec![0u8; 65_535];
+            let mut consecutive_errors = 0u32;
+            loop {
+                if stop.load(Ordering::SeqCst) {
+                    break;
+                }
+                let Some((n, meta)) = transport_for_thread.recv(&mut buf) else {
+                    consecutive_errors += 1;
+                    if consecutive_errors > 100 {
+                        on_log("[!] utun arabirim bağlantısı koptu (ardışık 100 recv hatası)".into());
+                        break;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                    continue;
+                };
+                consecutive_errors = 0;
+                stats.packets_seen.fetch_add(1, Ordering::Relaxed);
+
+                let raw = &buf[..n];
+                let decision = {
+                    let bl_guard = blacklist_ref.read().unwrap();
+                    decide_packet(raw, &bl_guard, &steps)
+                };
+                match decision {
+                    PacketDecision::Passthrough(reason) => {
+                        let _ = transport_for_thread.send(raw, &meta);
+                        if matches!(reason, PassthroughReason::TooLarge | PassthroughReason::NotTargeted) {
+                            stats.passthrough.fetch_add(1, Ordering::Relaxed);
+                        }
+                    }
+                    PacketDecision::Rewrite(segments) => {
+                        let mut ok = true;
+                        for seg in &segments {
+                            if transport_for_thread.send(seg, &meta).is_err() {
+                                ok = false;
+                                break;
+                            }
+                        }
+                        if ok {
+                            stats.packets_touched.fetch_add(1, Ordering::Relaxed);
+                        }
+                    }
+                }
+            }
+            if let Some(t) = active_transport.lock().unwrap().take() {
+                t.close();
+            }
+            *started_at.lock().unwrap() = None;
+            running.store(false, Ordering::SeqCst);
+            on_log("[*] macOS motoru durduruldu ve pfctl kuralları temizlendi".into());
+        });
+
+        match handle {
+            Ok(handle) => *worker = Some(handle),
+            Err(error) => {
+                if let Some(t) = self.active_transport_macos.lock().unwrap().take() {
+                    t.close();
+                }
+                *self.started_at.lock().unwrap() = None;
+                self.running.store(false, Ordering::SeqCst);
+                return Err(format!("Motor iş parçacığı başlatılamadı: {error}"));
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(not(any(windows, target_os = "macos")))]
     pub fn start(
         &self,
         _p: &str,
@@ -317,7 +438,7 @@ impl Engine {
         _d: Option<std::path::PathBuf>,
         _l: impl Fn(String) + Send + 'static,
     ) -> Result<(), String> {
-        Err("Canlı mod bu platformda henüz desteklenmiyor (Faz 4)".into())
+        Err("Canlı mod bu platformda desteklenmiyor".into())
     }
 
     /// Stop capture, drain the queue, join the worker, then release handles.
@@ -340,7 +461,23 @@ impl Engine {
         Ok(())
     }
 
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    pub fn stop(&self) -> Result<(), String> {
+        let mut worker = self.worker.lock().unwrap();
+        if worker.is_none() {
+            return Err("Motor zaten durdurulmuş".into());
+        }
+        self.stop_flag.store(true, Ordering::SeqCst);
+        if let Some(t) = self.active_transport_macos.lock().unwrap().take() {
+            t.close();
+        }
+        if let Some(h) = worker.take() {
+            h.join().map_err(|_| "Motor iş parçacığı başarısız oldu")?;
+        }
+        Ok(())
+    }
+
+    #[cfg(not(any(windows, target_os = "macos")))]
     pub fn stop(&self) -> Result<(), String> {
         Err("Motor çalışmıyor".into())
     }
