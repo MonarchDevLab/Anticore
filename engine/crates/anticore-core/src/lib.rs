@@ -15,3 +15,4 @@ pub mod proxy;
 pub mod strategy;
 pub mod tester;
 pub mod tls;
+pub mod transport;
