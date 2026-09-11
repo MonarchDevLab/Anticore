@@ -14,4 +14,29 @@ pub mod divert;
 pub use divert::*;
 
 #[cfg(not(windows))]
-compile_error!("Anticore-transport-win yalnizca Windows icin derlenir");
+pub mod stub {
+    use anticore_core::transport::{PacketTransport, TransportMeta, TransportVerdict};
+
+    pub struct WinDivert;
+
+    impl WinDivert {
+        pub fn open_default() -> Result<Self, String> {
+            Err("WinDivert yalnızca Windows üzerinde desteklenir".into())
+        }
+    }
+
+    impl PacketTransport for WinDivert {
+        fn recv(&self, _buf: &mut [u8]) -> Option<(usize, TransportMeta)> {
+            None
+        }
+        fn send(&self, _buf: &[u8], _meta: &TransportMeta) -> bool {
+            false
+        }
+        fn set_verdict(&self, _meta: &TransportMeta, _verdict: TransportVerdict) -> bool {
+            false
+        }
+    }
+}
+
+#[cfg(not(windows))]
+pub use stub::*;

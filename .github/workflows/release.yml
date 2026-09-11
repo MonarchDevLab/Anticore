@@ -23,6 +23,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Sürüm etiketini belirle
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "${GITHUB_REF}" != refs/tags/* ]]; then
+            TAG="${{ github.event.inputs.release_tag }}"
+            if [ -z "$TAG" ]; then
+              TAG="v0.3.1"
+            fi
+          fi
+          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+
       - name: Node kurulumu
         uses: actions/setup-node@v4
         with:
@@ -72,8 +84,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: desktop
-          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag || 'v0.3.1' }}
-          releaseName: "Anticore ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag || 'v0.3.1' }}"
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: "Anticore ${{ env.RELEASE_TAG }}"
           releaseBody: "Sürümlü dağıtım — Windows ve macOS kurulum paketleri."
           releaseDraft: false
           prerelease: false
@@ -82,8 +94,7 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          $ref = if ("${{ github.ref_name }}" -ne "") { "${{ github.ref_name }}" } else { "${{ inputs.release_tag }}" }
-          if (-not $ref) { $ref = "v0.3.1" }
+          $ref = "${{ env.RELEASE_TAG }}"
           $ver = $ref.TrimStart('v')
           $pDir = "dist-portable/Anticore"
           New-Item -ItemType Directory -Force -Path $pDir | Out-Null
@@ -120,7 +131,7 @@ Kullanım:
         if: matrix.platform == 'macos-latest'
         shell: bash
         run: |
-          ref="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag || 'v0.3.1' }}"
+          ref="${{ env.RELEASE_TAG }}"
           ver="${ref#v}"
           mkdir -p dist-macos
           cp engine/target/release/anticore dist-macos/anticore-cli
