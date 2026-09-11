@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/anticore-core",
     "crates/anticore-transport-win",
+    "crates/anticore-transport-macos",
     "crates/anticore-cli",
 ]
 

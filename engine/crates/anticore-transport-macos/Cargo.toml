@@ -1,0 +1,13 @@
+[package]
+name = "anticore-transport-macos"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "macOS native network transport for Anticore using utun and pfctl"
+
+[dependencies]
+anticore-core = { path = "../anticore-core" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
