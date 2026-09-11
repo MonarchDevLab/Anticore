@@ -59,7 +59,7 @@
 
 ---
 
-## Download Options (v0.3.1.1)
+## Download Options (v0.3.1.2)
 
 All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
@@ -108,13 +108,13 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.3_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.2_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.5_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.2_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.1_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.1_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.1.2_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.3_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
       </td>
     </tr>
     <tr>

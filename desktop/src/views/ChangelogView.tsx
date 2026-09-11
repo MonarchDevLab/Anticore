@@ -32,11 +32,42 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.3.1.2",
+    titleTr: "Tek Dosya (Single-File) Portable Mimarisi & Başlık Çubuğu Dil Standardizasyonu",
+    titleEn: "True Single-File Portable Architecture & Titlebar Language Standardization",
+    date: "12 Eylül 2026",
+    isLatest: true,
+    highlightTr: "Harici dosya gerektirmeyen bağımsız tek EXE taşınabilir sürüm, sürücü otomatik sağlama ve tam iki dilli başlık çubuğu.",
+    highlightEn: "Self-contained single-executable portable architecture with auto-provisioning drivers and fully bilingual titlebar.",
+    changes: [
+      {
+        type: "feature",
+        textTr: "Gömülü Sürücü & Bağımsız Tek Dosya (In-Binary Embedding): WinDivert çekirdek sürücüsü (WinDivert.dll, WinDivert64.sys) ve WebView2 kütüphanesi doğrudan Anticore.exe ikili dosyasının içine statik olarak derlendi. Uygulama harici hiçbir DLL/SYS dosyasına ihtiyaç duymadan tek bir EXE olarak her yerde bağımsız çalışır.",
+        textEn: "In-Binary Driver Embedding & Single-File Portable: WinDivert kernel drivers (WinDivert.dll, WinDivert64.sys) and WebView2Loader are now statically embedded directly into Anticore.exe. The application runs anywhere as a single self-contained executable with zero loose files.",
+      },
+      {
+        type: "feature",
+        textTr: "Kendi Kendini Onarma & Çıkartma (Self-Extracting Auto-Heal): Uygulama boş bir dizinde tek başına çalıştırıldığında gerekli sürücüleri milisaniyeler içinde disk üzerine sessizce çıkartır ve Windows çekirdek imza gereksinimlerini eksiksiz karşılar.",
+        textEn: "Self-Extracting Auto-Heal: When launched alone in any directory, Anticore automatically provisions runtime drivers to disk within milliseconds, satisfying Windows kernel code integrity requirements.",
+      },
+      {
+        type: "fix",
+        textTr: "Başlık Çubuğu Dil Standardizasyonu: Üst başlık çubuğunda Türkçe arayüzde görünen İngilizce durum rozeti giderildi; bekleme modu ETKİN DEĞİL · BEKLEMEDE / INACTIVE · STANDBY olarak dinamik bağlandı, pencere kontrolleri ve araç ipuçları iki dilli yapıldı.",
+        textEn: "Titlebar Language Standardization: Fixed hardcoded English status badge in Turkish mode; standby status now displays INACTIVE · STANDBY / ETKİN DEĞİL · BEKLEMEDE dynamically with fully localized window controls.",
+      },
+      {
+        type: "fix",
+        textTr: "Sürücü Hata Ayrıştırması & Sahte Yönetici Uyarısı Çözümü: WinDivertOpen hata kodları ayrıştırıldı; yönetici yetkisi varken oluşan dosya eksikliklerinin sahte 'yönetici oturumu gerektirir' uyarısı üretmesi engellendi.",
+        textEn: "Driver Error Classification & False Admin Prompt Resolution: WinDivertOpen error codes properly classified; file absences under active admin sessions no longer trigger misleading elevation prompts.",
+      },
+    ],
+  },
+  {
     version: "v0.3.1.1",
     titleTr: "Kalıntısız Sistem Temizliği (Purge), 10 Donanım Teması & Akıllı Bildirimler",
     titleEn: "Zero-Trace System Purge, 10 Hardware Themes & Intelligent Notifications",
     date: "11 Eylül 2026",
-    isLatest: true,
+    isLatest: false,
     highlightTr: "Tek tıkla sıfır-iz sistem kaldırma, donanım temaları, çift platform kurulum sihirbazı ve kesintisiz güncelleme bildirimleri.",
     highlightEn: "1-click zero-trace system purge, hardware themes, cross-platform setup wizard, and seamless update notifications.",
     changes: [
