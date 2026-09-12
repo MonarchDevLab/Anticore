@@ -232,5 +232,41 @@ describe('connectivitySync service', () => {
     await connectivitySync.flush();
     expect(probeSpy).toHaveBeenCalledWith('discord.com');
   });
+
+  it('runServiceProbeMatrix çağrıldığında 4 kritik servis probe edilmeli ve telemetri metrikleri flush payloadına eklenmeli', async () => {
+    vi.spyOn(api, 'probeTarget').mockImplementation(async (host: string) => {
+      if (host === 'discord.com') return { host, result: 'OPEN', latency_ms: 35 };
+      if (host === 'roblox.com') return { host, result: 'BLOCKED_RST', latency_ms: null };
+      if (host === 'youtube.com') return { host, result: 'OPEN', latency_ms: 22 };
+      return { host, result: 'OPEN', latency_ms: 45 };
+    });
+
+    let sentPayload: any = null;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (_url, opts) => {
+      if (opts?.body) {
+        sentPayload = JSON.parse(opts.body);
+      }
+      return {
+        ok: true,
+        json: async () => ({ status: 'ok' }),
+      };
+    }));
+
+    await (connectivitySync as any).runServiceProbeMatrix();
+    await connectivitySync.flush();
+
+    expect(sentPayload?.telemetryMetrics).toBeDefined();
+    expect(sentPayload.telemetryMetrics.serviceMatrix).toBeDefined();
+    expect(sentPayload.telemetryMetrics.serviceMatrix.discord.status).toBe('OPEN');
+    expect(sentPayload.telemetryMetrics.serviceMatrix.roblox.status).toBe('BLOCKED_RST');
+    expect(sentPayload.telemetryMetrics.latencyRttMs).toBeGreaterThan(0);
+  });
+
+  it('getNextJitterInterval 45000ms ile 75000ms (60s ± 15s) arasında değer üretmeli', () => {
+    const interval = (connectivitySync as any).getNextJitterInterval();
+    expect(interval).toBeGreaterThanOrEqual(45000);
+    expect(interval).toBeLessThanOrEqual(75000);
+  });
 });
+
 

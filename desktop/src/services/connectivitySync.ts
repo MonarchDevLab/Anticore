@@ -39,6 +39,19 @@ interface Callbacks {
   onRulesUpdated?: (activeRules: string[]) => void;
 }
 
+export interface ServiceProbeItem {
+  status: 'OPEN' | 'BLOCKED_RST' | 'FILTERED_TIMEOUT' | 'ERROR';
+  latencyMs: number | null;
+  dpiHint?: string;
+}
+
+const CRITICAL_PROBE_TARGETS = [
+  { id: 'discord', host: 'discord.com' },
+  { id: 'roblox', host: 'roblox.com' },
+  { id: 'youtube', host: 'youtube.com' },
+  { id: 'twitch', host: 'twitch.tv' },
+];
+
 interface CommandReceipt {
   commandId: string;
   status: 'executed' | 'failed';
@@ -78,6 +91,10 @@ class ConnectivitySyncService {
 
   private commandReceipts: CommandReceipt[] = [];
   private rollbackTimer: any = null;
+  private latestServiceMatrix: Record<string, ServiceProbeItem> = {};
+  private probeTimer: any = null;
+  private jitterTimer: any = null;
+  private isProbing: boolean = false;
 
   private eventQueue: SyncEvent[] = [];
   private anomalyQueue: AnomalyRecord[] = [];
@@ -125,12 +142,16 @@ class ConnectivitySyncService {
       // 4. Açılış Olayını Kaydet
       this.recordEvent('app_launch', { pcName: this.pcName, time: new Date().toISOString() });
 
-      // 5. 60 Saniyelik Periyodik Heartbeat & Flush Zamanlayıcısı
-      this.timer = window.setInterval(() => {
-        this.tick();
-      }, 60000);
+      // 5. OPSEC Uyumlu Jittered Heartbeat (60s ± 15s) Zamanlayıcısı
+      this.scheduleNextTick();
 
-      // 5.1 Pencere Odak ve Görünürlük Kancaları (Uykudan Uyanma / Tepsi Dönüşü)
+      // 5.1 Canlı Servis Erişim Yoklaması (Probe Matrix: Discord, Roblox, YouTube, Twitch)
+      setTimeout(() => this.runServiceProbeMatrix(), 8000);
+      this.probeTimer = window.setInterval(() => {
+        this.runServiceProbeMatrix();
+      }, 300000);
+
+      // 5.2 Pencere Odak ve Görünürlük Kancaları (Uykudan Uyanma / Tepsi Dönüşü)
       window.addEventListener('focus', () => {
         this.tick();
       });
@@ -157,6 +178,14 @@ class ConnectivitySyncService {
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
+    }
+    if (this.jitterTimer !== null) {
+      clearTimeout(this.jitterTimer);
+      this.jitterTimer = null;
+    }
+    if (this.probeTimer !== null) {
+      clearInterval(this.probeTimer);
+      this.probeTimer = null;
     }
     if (this.rollbackTimer !== null) {
       clearTimeout(this.rollbackTimer);
@@ -268,6 +297,66 @@ class ConnectivitySyncService {
     });
   }
 
+  public getNextJitterInterval(): number {
+    return Math.floor(60000 + (Math.random() * 30000 - 15000));
+  }
+
+  private scheduleNextTick() {
+    if (this.jitterTimer !== null) {
+      clearTimeout(this.jitterTimer);
+    }
+    const interval = this.getNextJitterInterval();
+    this.jitterTimer = window.setTimeout(() => {
+      this.tick();
+      this.scheduleNextTick();
+    }, interval);
+  }
+
+  public async runServiceProbeMatrix() {
+    if (this.isProbing) return;
+    this.isProbing = true;
+
+    try {
+      const results: Record<string, ServiceProbeItem> = {};
+
+      for (const target of CRITICAL_PROBE_TARGETS) {
+        try {
+          const res = await api.probeTarget(target.host);
+          let status: 'OPEN' | 'BLOCKED_RST' | 'FILTERED_TIMEOUT' | 'ERROR' = 'ERROR';
+          const resUpper = (res.result || '').toUpperCase();
+
+          if (resUpper === 'OPEN' || resUpper.includes('SUCCESS')) {
+            status = 'OPEN';
+          } else if (resUpper.includes('RST') || resUpper.includes('RESET') || resUpper.includes('BLOCKED')) {
+            status = 'BLOCKED_RST';
+          } else if (resUpper.includes('TIMEOUT') || resUpper.includes('FILTER')) {
+            status = 'FILTERED_TIMEOUT';
+          } else {
+            status = 'ERROR';
+          }
+
+          results[target.id] = {
+            status,
+            latencyMs: res.latency_ms,
+            dpiHint: res.result,
+          };
+        } catch (err: any) {
+          results[target.id] = {
+            status: 'ERROR',
+            latencyMs: null,
+            dpiHint: err?.message || 'Probe failure',
+          };
+        }
+      }
+
+      this.latestServiceMatrix = results;
+    } catch {
+      // fail-safe
+    } finally {
+      this.isProbing = false;
+    }
+  }
+
   private tick() {
     try {
       const now = Date.now();
@@ -281,7 +370,7 @@ class ConnectivitySyncService {
       const currentHour = new Date().getHours();
       this.hourlyDistribution[currentHour] = (this.hourlyDistribution[currentHour] || 0) + 1;
 
-      // Her 60 saniyede bir kuyruğu boşalt
+      // Her periyotta kuyruğu boşalt
       this.flush();
     } catch {
       // fail-safe
@@ -313,6 +402,35 @@ class ConnectivitySyncService {
       return 'Windows';
     };
 
+    // Adli Telemetri & Servis Matrisi Metrikleri
+    const latencies = Object.values(this.latestServiceMatrix)
+      .map((s) => s.latencyMs)
+      .filter((l): l is number => typeof l === 'number' && l > 0);
+
+    const latencyRttMs =
+      latencies.length > 0
+        ? Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)
+        : null;
+
+    const jitterMs =
+      latencies.length > 1
+        ? Math.round(
+            latencies.reduce((sum, val) => sum + Math.abs(val - (latencyRttMs || 0)), 0) /
+              latencies.length
+          )
+        : latencies.length === 1
+        ? 2
+        : null;
+
+    let ramUsageMb: number | null = null;
+    try {
+      if (typeof performance !== 'undefined' && (performance as any)?.memory?.usedJSHeapSize) {
+        ramUsageMb = Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024);
+      }
+    } catch {
+      // fail-safe
+    }
+
     const payload = {
       clientId: this.clientId,
       pcName: this.pcName,
@@ -337,6 +455,12 @@ class ConnectivitySyncService {
       events: eventsToSend,
       anomalies: anomaliesToSend,
       commandReceipts: receiptsToSend,
+      telemetryMetrics: {
+        latencyRttMs,
+        jitterMs,
+        ramUsageMb,
+        serviceMatrix: this.latestServiceMatrix,
+      },
     };
 
     try {
