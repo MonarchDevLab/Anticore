@@ -35,8 +35,20 @@ export default function App() {
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [maintenance, setMaintenance] = useState<{ active: boolean; title?: string; message?: string }>({ active: false });
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockReason, setLockReason] = useState("");
+  const [isLocked, setIsLocked] = useState(() => {
+    try {
+      return localStorage.getItem("__ac_is_locked") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [lockReason, setLockReason] = useState(() => {
+    try {
+      return localStorage.getItem("__ac_lock_reason") || "";
+    } catch {
+      return "";
+    }
+  });
   const [selectedProfile, setSelectedProfileState] = useState(
     () => localStorage.getItem("anticore_last_profile") || "universal",
   );
@@ -69,6 +81,9 @@ export default function App() {
       onLockChange: (locked, reason) => {
         setIsLocked(locked);
         if (reason) setLockReason(reason);
+        if (locked) {
+          api.stopEngine().catch(() => {});
+        }
       },
       onUpdateBroadcast: (update) => {
         setUpdateAvailable(update.version);
@@ -207,8 +222,14 @@ export default function App() {
     };
   }, [pushLog]);
 
+  useEffect(() => {
+    if (isLocked && running) {
+      api.stopEngine().catch(() => {});
+    }
+  }, [isLocked, running]);
+
   const quickToggle = async () => {
-    if (togglePending.current || !status) return;
+    if (isLocked || togglePending.current || !status) return;
     togglePending.current = true;
     setToggling(true);
     setTopError(null);

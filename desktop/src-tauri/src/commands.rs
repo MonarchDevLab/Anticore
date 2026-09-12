@@ -2264,24 +2264,35 @@ pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), 
 
     #[cfg(windows)]
     if let Some(exe) = current_exe {
-        if let Some(install_dir) = exe.parent() {
-            let uninstaller = install_dir.join("uninstall.exe");
-            let install_dir_str = install_dir.to_string_lossy().to_string();
+        let exe_str = exe.to_string_lossy().to_string();
+        let install_dir = exe.parent();
+        let uninstaller = install_dir.map(|d| d.join("uninstall.exe"));
 
-            if uninstaller.is_file() {
-                let uninstaller_str = uninstaller.to_string_lossy().to_string();
-                let cmd = format!(
-                    "start /b \"\" cmd /c \"timeout /t 2 /nobreak >nul & taskkill /F /PID {} >nul 2>&1 & \"{}\" /S\"",
-                    app_pid, uninstaller_str
-                );
-                let _ = silent_command("cmd").args(["/C", &cmd]).spawn();
+        let batch_path = std::env::temp_dir().join(format!("anticore_purge_{}.bat", app_pid));
+        let batch_content = if let Some(ref uninst) = uninstaller {
+            if uninst.is_file() {
+                format!(
+                    "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n\"{uninst_path}\" /S\r\n(goto) 2>nul & del \"%~f0\"\r\n",
+                    pid = app_pid,
+                    uninst_path = uninst.to_string_lossy()
+                )
             } else {
-                let cmd = format!(
-                    "start /b \"\" cmd /c \"timeout /t 2 /nobreak >nul & taskkill /F /PID {} >nul 2>&1 & rmdir /s /q \"{}\"\"",
-                    app_pid, install_dir_str
-                );
-                let _ = silent_command("cmd").args(["/C", &cmd]).spawn();
+                format!(
+                    "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n:retry\r\ndel /F /Q \"{exe_path}\" >nul 2>&1\r\nif exist \"{exe_path}\" (\r\n  timeout /t 1 /nobreak >nul\r\n  goto retry\r\n)\r\n(goto) 2>nul & del \"%~f0\"\r\n",
+                    pid = app_pid,
+                    exe_path = exe_str
+                )
             }
+        } else {
+            format!(
+                "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n:retry\r\ndel /F /Q \"{exe_path}\" >nul 2>&1\r\nif exist \"{exe_path}\" (\r\n  timeout /t 1 /nobreak >nul\r\n  goto retry\r\n)\r\n(goto) 2>nul & del \"%~f0\"\r\n",
+                pid = app_pid,
+                exe_path = exe_str
+            )
+        };
+
+        if std::fs::write(&batch_path, batch_content).is_ok() {
+            let _ = silent_command("cmd").args(["/C", &batch_path.to_string_lossy()]).spawn();
         }
     }
 

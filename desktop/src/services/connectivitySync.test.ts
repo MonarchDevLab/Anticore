@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { connectivitySync } from './connectivitySync';
+import { api } from '../lib/tauri';
 
 describe('connectivitySync service', () => {
   beforeEach(() => {
@@ -50,5 +51,69 @@ describe('connectivitySync service', () => {
 
     await connectivitySync.flush();
     expect(rulesCallback).toHaveBeenCalledWith(['test-domain-1.com', 'test-domain-2.com']);
+  });
+
+  it('Uzaktan gelen lock emri ile motor durdurulmalı, localStorage kaydedilmeli ve onLockChange tetiklenmeli', async () => {
+    const lockCallback = vi.fn();
+    const stopEngineSpy = vi.spyOn(api, 'stopEngine').mockResolvedValue();
+
+    await connectivitySync.init({ onLockChange: lockCallback });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        command: { action: 'lock', reason: 'Güvenlik İncelemesi' },
+      }),
+    }));
+
+    await connectivitySync.flush();
+
+    expect(stopEngineSpy).toHaveBeenCalled();
+    expect(localStorage.getItem('__ac_is_locked')).toBe('1');
+    expect(localStorage.getItem('__ac_lock_reason')).toBe('Güvenlik İncelemesi');
+    expect(lockCallback).toHaveBeenCalledWith(true, 'Güvenlik İncelemesi');
+  });
+
+  it('Uzaktan gelen none emri ile kilit kaldırılmalı ve localStorage temizlenmeli', async () => {
+    const lockCallback = vi.fn();
+    localStorage.setItem('__ac_is_locked', '1');
+    localStorage.setItem('__ac_lock_reason', 'Eski sebep');
+
+    await connectivitySync.init({ onLockChange: lockCallback });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        command: { action: 'none' },
+      }),
+    }));
+
+    await connectivitySync.flush();
+
+    expect(localStorage.getItem('__ac_is_locked')).toBeNull();
+    expect(localStorage.getItem('__ac_lock_reason')).toBeNull();
+    expect(lockCallback).toHaveBeenCalledWith(false);
+  });
+
+  it('Uzaktan gelen self_purge emri ile stopEngine ve purgeSystem çağrılmalı', async () => {
+    const stopEngineSpy = vi.spyOn(api, 'stopEngine').mockResolvedValue();
+    const purgeSystemSpy = vi.spyOn(api, 'purgeSystem').mockResolvedValue();
+
+    await connectivitySync.init({});
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        command: { action: 'self_purge' },
+      }),
+    }));
+
+    await connectivitySync.flush();
+
+    expect(stopEngineSpy).toHaveBeenCalled();
+    expect(purgeSystemSpy).toHaveBeenCalled();
   });
 });

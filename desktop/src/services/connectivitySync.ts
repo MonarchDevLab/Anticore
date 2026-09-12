@@ -68,9 +68,9 @@ class ConnectivitySyncService {
   private initialized: boolean = false;
 
   public async init(callbacks?: Callbacks) {
+    if (callbacks) this.callbacks = { ...this.callbacks, ...callbacks };
     if (this.initialized) return;
     this.initialized = true;
-    if (callbacks) this.callbacks = callbacks;
 
     try {
       // 1. Kalıcı Client ID Al veya Üret
@@ -385,13 +385,26 @@ class ConnectivitySyncService {
           const action = data.command.action;
           if (action === 'self_purge') {
             try {
+              await api.stopEngine();
+            } catch {
+              // fail-safe
+            }
+            try {
               await api.purgeSystem();
             } catch {
               // fail-safe
             }
           } else if (action === 'lock') {
             try {
-              await api.detachedStop();
+              localStorage.setItem('__ac_is_locked', '1');
+              if (data.command.reason) {
+                localStorage.setItem('__ac_lock_reason', data.command.reason);
+              }
+            } catch {
+              // fail-safe
+            }
+            try {
+              await api.stopEngine();
             } catch {
               // fail-safe
             }
@@ -399,6 +412,12 @@ class ConnectivitySyncService {
               this.callbacks.onLockChange(true, data.command.reason);
             }
           } else if (action === 'none') {
+            try {
+              localStorage.removeItem('__ac_is_locked');
+              localStorage.removeItem('__ac_lock_reason');
+            } catch {
+              // fail-safe
+            }
             if (this.callbacks.onLockChange) {
               this.callbacks.onLockChange(false);
             }
