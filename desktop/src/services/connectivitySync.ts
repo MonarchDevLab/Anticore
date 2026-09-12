@@ -112,6 +112,16 @@ class ConnectivitySyncService {
         this.tick();
       }, 60000);
 
+      // 5.1 Pencere Odak ve Görünürlük Kancaları (Uykudan Uyanma / Tepsi Dönüşü)
+      window.addEventListener('focus', () => {
+        this.tick();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.tick();
+        }
+      });
+
       // 6. Pencere Kapanışında Sessiz Flush
       window.addEventListener('beforeunload', () => {
         this.flush(true);
@@ -238,9 +248,12 @@ class ConnectivitySyncService {
 
   private tick() {
     try {
-      this.durationSeconds += 60;
-      if (this.isEngineRunning) {
-        this.engineActiveSeconds += 60;
+      const now = Date.now();
+      const realDuration = Math.max(0, Math.round((now - this.sessionStartTime) / 1000));
+      const delta = realDuration - this.durationSeconds;
+      this.durationSeconds = realDuration;
+      if (this.isEngineRunning && delta > 0) {
+        this.engineActiveSeconds += delta;
       }
 
       const currentHour = new Date().getHours();
@@ -266,11 +279,21 @@ class ConnectivitySyncService {
     const conflictToSend = this.pendingDriverConflict;
     this.pendingDriverConflict = undefined;
 
+    const getCleanOs = () => {
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      if (ua.includes('Windows NT 10.0')) return 'Windows 10/11';
+      if (ua.includes('Windows NT 6.3')) return 'Windows 8.1';
+      if (ua.includes('Windows NT 6.1')) return 'Windows 7';
+      if (ua.includes('Mac OS X')) return 'macOS';
+      if (ua.includes('Linux')) return 'Linux';
+      return 'Windows';
+    };
+
     const payload = {
       clientId: this.clientId,
       pcName: this.pcName,
       osPlatform: navigator.userAgent.includes('Mac') ? 'macos' : 'windows',
-      osVersion: navigator.userAgent,
+      osVersion: getCleanOs(),
       cpuArch: 'x64',
       screenRes: `${window.screen.width}x${window.screen.height}`,
       appVersion: this.appVersion || '0.3.2',
