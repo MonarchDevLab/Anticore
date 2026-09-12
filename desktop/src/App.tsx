@@ -17,6 +17,7 @@ import Wizard from "./views/Wizard";
 import LogsView from "./views/LogsView";
 import CompatWarning from "./components/CompatWarning";
 import UpdateModal from "./components/UpdateModal";
+import UpdateBanner from "./components/UpdateBanner";
 import Titlebar from "./components/Titlebar";
 import GuideDrawer from "./components/GuideDrawer";
 
@@ -32,6 +33,7 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [maintenance, setMaintenance] = useState<{ active: boolean; title?: string; message?: string }>({ active: false });
@@ -130,7 +132,7 @@ export default function App() {
         .then((info) => {
           if (info.has_update) {
             setUpdateAvailable(info.latest_version);
-            setUpdateModalOpen(true);
+            setBannerDismissed(false);
             pushLog(`[+] Yeni sürüm tespit edildi: v${info.latest_version} (${info.release_name || "Anticore"})`);
             void api.sendSystemNotification(
               `Anticore v${info.latest_version} Hazır`,
@@ -264,6 +266,15 @@ export default function App() {
         onToggleGuide={() => setGuideOpen(true)}
       />
 
+      {/* ── 1.1 Sabit Güncelleme Bildirim Bandı ── */}
+      {updateAvailable && !bannerDismissed && (
+        <UpdateBanner
+          version={updateAvailable}
+          onOpenModal={() => setUpdateModalOpen(true)}
+          onDismiss={() => setBannerDismissed(true)}
+        />
+      )}
+
       <div className="workspace-layout">
         <AppNavigation view={view} onNavigate={setView} running={running} known={status !== null} busy={toggling} onToggle={() => void quickToggle()} />
         <div className="workspace-content">
@@ -343,7 +354,15 @@ export default function App() {
           {view === "changelog" && <ChangelogView />}
           {view === "setup" && <Setup pushLog={pushLog} />}
           {view === "settings" && (
-            <SettingsView pushLog={pushLog} onOpenWizard={() => setView("wizard")} running={running} />
+            <SettingsView
+              pushLog={pushLog}
+              onOpenWizard={() => setView("wizard")}
+              running={running}
+              onSimulateUpdate={(ver) => {
+                setUpdateAvailable(ver);
+                setBannerDismissed(false);
+              }}
+            />
           )}
           {view === "wizard" && (
             <Wizard onComplete={() => {

@@ -59,6 +59,7 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             use tauri::Manager;
             if let Some(window) = app.get_webview_window("main") {
@@ -156,6 +157,7 @@ fn main() {
             commands::check_update,
             commands::install_update_direct,
             commands::send_system_notification,
+            commands::test_update_notification,
             commands::fetch_community_blacklist,
             commands::get_app_version,
             commands::open_browser_url,

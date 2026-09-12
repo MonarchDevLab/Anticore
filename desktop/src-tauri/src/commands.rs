@@ -2556,7 +2556,7 @@ pub fn is_current_app_portable() -> bool {
     false
 }
 
-pub const APP_VERSION: &str = "0.3.2";
+pub const APP_VERSION: &str = "0.3.3";
 
 #[tauri::command]
 pub fn get_app_version() -> String {
@@ -2608,43 +2608,18 @@ struct LatestJson {
     platforms: std::collections::HashMap<String, LatestJsonPlatform>,
 }
 
-#[cfg(windows)]
-fn trigger_windows_toast(title: &str, body: &str) {
-    let t = title.replace('\'', "''").replace('\"', "`\"");
-    let b = body.replace('\'', "''").replace('\"', "`\"");
-    let script = format!(
-        r#"$title = '{}'; $body = '{}'; [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null; $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); $textNodes = $template.GetElementsByTagName('text'); $textNodes.Item(0).AppendChild($template.CreateTextNode($title)) | Out-Null; $textNodes.Item(1).AppendChild($template.CreateTextNode($body)) | Out-Null; $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'); $toast = [Windows.UI.Notifications.ToastNotification]::new($template); $notifier.Show($toast);"#,
-        t, b
-    );
-    let _ = silent_command("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
-        .spawn();
-}
-
-fn trigger_update_notification(tag: &str, title: &str) {
+fn trigger_update_notification(app: &AppHandle, tag: &str, title: &str) {
     use std::sync::atomic::{AtomicBool, Ordering};
     static UPDATE_NOTIFIED: AtomicBool = AtomicBool::new(false);
     if !UPDATE_NOTIFIED.swap(true, Ordering::SeqCst) {
+        use tauri_plugin_notification::NotificationExt;
         let notif_body = format!("Anticore {} ({}) hazır! İndirmek veya güncellemek için tıklayın.", tag, title);
-
-        #[cfg(target_os = "macos")]
-        {
-            let script = format!(
-                "display notification \"{}\" with title \"Anticore\" subtitle \"{}\" sound name \"default\"",
-                notif_body.replace('\"', "\\\""),
-                title.replace('\"', "\\\"")
-            );
-            let _ = std::process::Command::new("osascript")
-                .arg("-e")
-                .arg(script)
-                .spawn();
-        }
-
-        #[cfg(windows)]
-        {
-            let t = "Anticore";
-            trigger_windows_toast(t, &notif_body);
-        }
+        let _ = app
+            .notification()
+            .builder()
+            .title("Anticore")
+            .body(&notif_body)
+            .show();
     }
 }
 
@@ -2653,6 +2628,7 @@ fn trigger_update_notification(tag: &str, title: &str) {
 /// sınırsız `latest.json` dosyasını yedek (fallback) kanal olarak kullanır.
 #[tauri::command]
 pub fn check_update(
+    app: AppHandle,
     repo_override: Option<String>,
     token_override: Option<String>,
 ) -> Result<UpdateInfoDto, String> {
@@ -2744,7 +2720,7 @@ pub fn check_update(
 
             let release_title = parsed.name.clone().unwrap_or_else(|| "Yeni Sürüm".into());
             if has_update {
-                trigger_update_notification(&latest_tag, &release_title);
+                trigger_update_notification(&app, &latest_tag, &release_title);
             }
 
             let release_notes = strip_emojis(&parsed.body.unwrap_or_default());
@@ -2824,7 +2800,7 @@ pub fn check_update(
 
             let release_title = format!("Anticore v{latest_version}");
             if has_update {
-                trigger_update_notification(&latest_version, &release_title);
+                trigger_update_notification(&app, &latest_version, &release_title);
             }
 
             let release_notes = strip_emojis(&latest_meta.notes.unwrap_or_default());
@@ -2952,45 +2928,34 @@ pub async fn install_update_direct(
 
 #[tauri::command]
 pub fn send_system_notification(
+    app: AppHandle,
     title: String,
     subtitle: Option<String>,
     body: String,
 ) -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        let sub = subtitle.unwrap_or_else(|| "Anticore".into());
-        let script = format!(
-            "display notification \"{}\" with title \"{}\" subtitle \"{}\" sound name \"default\"",
-            body.replace('\"', "\\\""),
-            title.replace('\"', "\\\""),
-            sub.replace('\"', "\\\"")
-        );
-        std::process::Command::new("osascript")
-            .arg("-e")
-            .arg(script)
-            .spawn()
-            .map_err(|e| format!("Bildirim gönderilemedi: {e}"))?;
-        Ok(())
+    use tauri_plugin_notification::NotificationExt;
+    let mut builder = app.notification().builder().title(&title);
+    if let Some(sub) = subtitle.as_deref().filter(|s| !s.trim().is_empty()) {
+        builder = builder.body(format!("{}: {}", sub, body));
+    } else {
+        builder = builder.body(&body);
     }
-    #[cfg(windows)]
-    {
-        let _ = subtitle;
-        let t = title.replace('\'', "''").replace('\"', "`\"");
-        let b = body.replace('\'', "''").replace('\"', "`\"");
-        let script = format!(
-            r#"$title = '{}'; $body = '{}'; [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null; $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); $textNodes = $template.GetElementsByTagName('text'); $textNodes.Item(0).AppendChild($template.CreateTextNode($title)) | Out-Null; $textNodes.Item(1).AppendChild($template.CreateTextNode($body)) | Out-Null; $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}}\WindowsPowerShell\v1.0\powershell.exe'); $toast = [Windows.UI.Notifications.ToastNotification]::new($template); $notifier.Show($toast);"#,
-            t, b
-        );
-        let _ = silent_command("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
-            .spawn();
-        Ok(())
-    }
-    #[cfg(not(any(target_os = "macos", windows)))]
-    {
-        let _ = (title, subtitle, body);
-        Ok(())
-    }
+    builder
+        .show()
+        .map_err(|e| format!("Bildirim gönderilemedi: {e}"))?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn test_update_notification(app: AppHandle) -> Result<(), String> {
+    use tauri_plugin_notification::NotificationExt;
+    app.notification()
+        .builder()
+        .title("Anticore v0.3.3 Test Bildirimi")
+        .body("Kesintisiz yerel bildirim motoru aktif. Güncelleme bildirimleri başarıyla iletiliyor.")
+        .show()
+        .map_err(|e| format!("Test bildirimi gönderilemedi: {e}"))?;
+    Ok(())
 }
 
 #[tauri::command]

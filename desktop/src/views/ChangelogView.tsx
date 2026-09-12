@@ -32,11 +32,42 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.3.3",
+    titleTr: "Kesintisiz Yerel Bildirim Motoru, Arayüz Bildirim Bandı & Anlık Simülasyon Testi",
+    titleEn: "Seamless Native Notification Engine, In-App Update Banner & Instant Test Simulation",
+    date: "12 Eylül 2026",
+    isLatest: true,
+    highlightTr: "Tauri v2 yerel bildirim motoru entegrasyonu, başlık altında sabit UpdateBanner bildirim bandı, PowerShell bağımlılığının kaldırılması ve Ayarlar ekranında anlık bildirim testi.",
+    highlightEn: "Tauri v2 native notification plugin integration, sticky in-app UpdateBanner, elimination of fragile PowerShell toast scripts, and live notification testing in Settings.",
+    changes: [
+      {
+        type: "feature",
+        textTr: "Tauri v2 Yerel Bildirim Eklentisi (tauri-plugin-notification): Windows 10/11 WinRT ve macOS NotificationCenter doğrudan yerel C/Rust API'leri üzerinden bağlandı. PowerShell alt süreç çağırma kaldırıldı; bildirimler hiçbir güvenlik engeline takılmadan sistem bildirim alanına doğrudan iletilir.",
+        textEn: "Tauri v2 Native Notification Plugin: Windows 10/11 WinRT and macOS UNUserNotificationCenter connected directly through native Rust APIs. Fragile PowerShell subprocess invocation eliminated, ensuring 100% reliable system notification delivery.",
+      },
+      {
+        type: "feature",
+        textTr: "Sabit Arayüz Bildirim Bandı (UpdateBanner): Yeni sürüm algılandığında veya açılışta başlık çubuğunun hemen altında dikkat çekici, kesintisiz bir bildirim bandı belirir. Kullanıcı akışını bölmeden tek tıkla güncelleme detaylarına ve doğrudan kurulum adımlarına erişim sağlar.",
+        textEn: "Sticky In-App Update Banner (UpdateBanner): When a new release is detected or at startup, an elegant banner appears directly below the titlebar. Allows one-click access to release details and direct installation without interrupting the workflow.",
+      },
+      {
+        type: "feature",
+        textTr: "Canlı Bildirim Simülasyon Testi: Ayarlar ekranına 'Bildirim Sistemini Test Et' butonu eklendi. Kullanıcı ve geliştiriciler, hem yerel işletim sistemi bildirim kartını hem de arayüz üst bandını tek tıkla test edebilir.",
+        textEn: "Live Notification Simulation: Added a 'Test Notification System' button in Settings. Allows developers and users to verify both native OS notification cards and in-app banners instantly.",
+      },
+      {
+        type: "fix",
+        textTr: "Windows AUMID Sessiz Engelleme Çözümü: Windows Eylem Merkezi'nde PowerShell AppID'sinin onaylı olmamasından kaynaklanan sessiz bildirim düşme (silent drop) sorunu kalıcı olarak giderildi.",
+        textEn: "Resolved Windows AUMID Silent Drop: Fixed issue where Windows Notification Service silently dropped toast notifications due to unregistered PowerShell AppIDs.",
+      },
+    ],
+  },
+  {
     version: "v0.3.2",
     titleTr: "Tek Dosya (Single-File) Portable, Kesintisiz Güncelleme Fallback & SemVer 2.0 Uyumluluğu",
     titleEn: "Single-File Portable Architecture, Seamless CDN Fallback & SemVer 2.0 Parity",
     date: "12 Eylül 2026",
-    isLatest: true,
+    isLatest: false,
     highlightTr: "Tüm eski sürümlerle uyumlu SemVer 2.0 güncelleme döngüsü, sınırsız CDN fallback kanalı, bağımsız tek EXE taşınabilir sürüm ve tam iki dilli başlık çubuğu.",
     highlightEn: "SemVer 2.0 upgrade loop compatible with all legacy versions, unlimited CDN fallback channel, self-contained single EXE portable and bilingual titlebar.",
     changes: [

@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.3] - 2026-09-12
+
+### Added
+- **Tauri Native Notification Engine (`tauri-plugin-notification`):** Integrated Tauri v2 official notification plugin, connecting directly to Windows 10/11 WinRT Toast and macOS `UNUserNotificationCenter` via native Rust/C APIs. Completely eliminated fragile `powershell.exe` subprocess spawning and script execution.
+- **Sticky In-App Update Banner (`UpdateBanner.tsx`):** Added a persistent, non-intrusive update notification banner directly below the titlebar. Displays when an update is detected, providing one-click access to release details and installation options without interrupting ongoing workflows.
+- **Live Notification Test Simulation:** Added a dedicated "Test Notification System" action in Settings, allowing users and developers to test both native OS toast delivery and the in-app update banner with a single click.
+
+### Fixed
+- **Windows AUMID Silent Toast Drop:** Resolved an issue where Windows Notification Service dropped PowerShell toast notifications due to unregistered or unverified AppUserModelIDs in the Windows Registry.
+
 ## [0.3.2] - 2026-09-12
 
 ### Added

@@ -254,6 +254,7 @@ export const api = {
     invoke<void>("install_update_direct", { downloadUrl }),
   sendSystemNotification: (title: string, subtitle?: string, body?: string) =>
     invoke<void>("send_system_notification", { title, subtitle, body: body || "" }),
+  testUpdateNotification: () => invoke<void>("test_update_notification"),
   fetchCommunityBlacklist: (sourceUrl?: string) =>
     invoke<number>("fetch_community_blacklist", { sourceUrl }),
   getAppVersion: () => invoke<string>("get_app_version"),

@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Eye,
   Pin,
+  Bell,
 } from "lucide-react";
 import {
   api,
@@ -35,11 +36,13 @@ import ConfirmDialog from "../components/ConfirmDialog";
 export default function SettingsView({
   pushLog,
   onOpenWizard,
-  running = false,
+  running,
+  onSimulateUpdate,
 }: {
   pushLog: (l: string) => void;
   onOpenWizard?: () => void;
   running?: boolean;
+  onSimulateUpdate?: (version: string) => void;
 }) {
   const { theme, setTheme, options: themeOptions } = useTheme();
   const { lang, setLang, t } = useI18n();
@@ -279,6 +282,22 @@ export default function SettingsView({
       pushLog(`[!] Sistemden kaldırma hatası: ${msg}`);
       setPurgeBusy(false);
       setPurgeConfirm(false);
+    }
+  };
+
+  const [testNotifState, setTestNotifState] = useState<"idle" | "sending" | "sent">("idle");
+
+  const handleTestNotification = async () => {
+    setTestNotifState("sending");
+    try {
+      await api.testUpdateNotification();
+      setTestNotifState("sent");
+      onSimulateUpdate?.("0.3.3");
+      pushLog("[+] Test bildirimi gönderildi ve arayüz bildirim bandı tetiklendi.");
+      setTimeout(() => setTestNotifState("idle"), 3500);
+    } catch (e) {
+      setTestNotifState("idle");
+      pushLog(`[!] Test bildirimi başarısız: ${String(e)}`);
     }
   };
 
@@ -729,18 +748,30 @@ export default function SettingsView({
               <p className="text-xs text-paper-muted mt-0.5">{t("settings_updates_desc")}</p>
             </div>
           </div>
-          <button
-            className="btn btn-secondary text-xs shrink-0 self-start sm:self-auto"
-            onClick={() => void checkUpdate()}
-            disabled={updState === "checking"}
-          >
-            {updState === "checking" ? (
-              <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={2.5} />
-            ) : (
-              <RefreshCw size={14} strokeWidth={2} />
-            )}
-            <span>{t("settings_check_updates_btn")}</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <button
+              type="button"
+              className="btn btn-ghost text-xs shrink-0 border border-white/[0.08] hover:border-live/30"
+              onClick={() => void handleTestNotification()}
+              disabled={testNotifState === "sending"}
+              title={t("settings_test_notification_btn")}
+            >
+              <Bell size={13} className={testNotifState === "sent" ? "text-live" : "text-paper-muted"} strokeWidth={2} />
+              <span>{testNotifState === "sent" ? t("settings_test_notification_success") : t("settings_test_notification_btn")}</span>
+            </button>
+            <button
+              className="btn btn-secondary text-xs shrink-0"
+              onClick={() => void checkUpdate()}
+              disabled={updState === "checking"}
+            >
+              {updState === "checking" ? (
+                <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={2.5} />
+              ) : (
+                <RefreshCw size={14} strokeWidth={2} />
+              )}
+              <span>{t("settings_check_updates_btn")}</span>
+            </button>
+          </div>
         </div>
 
         {/* Depo Yapılandırması & Otomatik Kontrol */}
