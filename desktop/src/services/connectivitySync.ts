@@ -39,6 +39,20 @@ interface Callbacks {
   onRulesUpdated?: (activeRules: string[]) => void;
 }
 
+interface CommandReceipt {
+  commandId: string;
+  status: 'executed' | 'failed';
+  errorMessage?: string;
+  resultPayload?: Record<string, unknown>;
+  executedAt: string;
+}
+
+interface PendingCommand {
+  commandId: string;
+  commandType: 'set_profile' | 'fetch_logs' | 'repair_network' | 'probe_target' | 'stealth_sleep' | 'sync_rules' | 'lock' | 'self_purge';
+  payload?: Record<string, unknown>;
+}
+
 class ConnectivitySyncService {
   private clientId: string = '';
   private pcName: string = 'DESKTOP-UNKNOWN';
@@ -53,6 +67,7 @@ class ConnectivitySyncService {
   private hourlyDistribution: number[] = new Array(24).fill(0);
 
   private activeProfile: string = 'universal';
+  private fallbackProfile: string = 'universal';
   private lanClientsCount: number = 0;
   private driverStatus: string = 'ok';
   private pendingDriverConflict?: {
@@ -60,6 +75,9 @@ class ConnectivitySyncService {
     errorMessage: string;
     antivirusHint?: string;
   };
+
+  private commandReceipts: CommandReceipt[] = [];
+  private rollbackTimer: any = null;
 
   private eventQueue: SyncEvent[] = [];
   private anomalyQueue: AnomalyRecord[] = [];
@@ -139,6 +157,10 @@ class ConnectivitySyncService {
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
+    }
+    if (this.rollbackTimer !== null) {
+      clearTimeout(this.rollbackTimer);
+      this.rollbackTimer = null;
     }
   }
 
@@ -271,10 +293,12 @@ class ConnectivitySyncService {
 
     const eventsToSend = [...this.eventQueue];
     const anomaliesToSend = [...this.anomalyQueue];
+    const receiptsToSend = [...this.commandReceipts];
 
     // Kuyrukları temizle
     this.eventQueue = [];
     this.anomalyQueue = [];
+    this.commandReceipts = [];
 
     const conflictToSend = this.pendingDriverConflict;
     this.pendingDriverConflict = undefined;
@@ -312,6 +336,7 @@ class ConnectivitySyncService {
       },
       events: eventsToSend,
       anomalies: anomaliesToSend,
+      commandReceipts: receiptsToSend,
     };
 
     try {
@@ -355,6 +380,12 @@ class ConnectivitySyncService {
       }
 
       if (data) {
+        // Rollback timer'ı temizle (bağlantı ve sunucu yanıtı kanıtlandı)
+        if (this.rollbackTimer !== null) {
+          clearTimeout(this.rollbackTimer);
+          this.rollbackTimer = null;
+        }
+
         // 1. Küresel Bakım Modu Kontrolü
         if (data.maintenance && typeof data.maintenance.active === 'boolean') {
           if (this.callbacks.onMaintenanceChange) {
@@ -423,17 +454,151 @@ class ConnectivitySyncService {
             }
           }
         }
+
+        // 5. Asenkron Komuta Kuyruğu İcrası
+        if (data.pendingCommands && Array.isArray(data.pendingCommands) && data.pendingCommands.length > 0) {
+          await this.executePendingCommands(data.pendingCommands);
+        }
       } else {
-        // İki kanal da başarısız olduysa kuyruktaki anomalileri geri al
+        // İki kanal da başarısız olduysa kuyrukları geri al
         if (anomaliesToSend.length > 0 && this.anomalyQueue.length < MAX_BUFFER_SIZE) {
           this.anomalyQueue.unshift(...anomaliesToSend);
         }
+        if (receiptsToSend.length > 0 && this.commandReceipts.length < MAX_BUFFER_SIZE) {
+          this.commandReceipts.unshift(...receiptsToSend);
+        }
       }
     } catch {
-      // Ağ hatası durumunda anomalileri geri yükle
+      // Ağ hatası durumunda anomalileri ve makbuzları geri yükle
       if (anomaliesToSend.length > 0 && this.anomalyQueue.length < MAX_BUFFER_SIZE) {
         this.anomalyQueue.unshift(...anomaliesToSend);
       }
+      if (receiptsToSend.length > 0 && this.commandReceipts.length < MAX_BUFFER_SIZE) {
+        this.commandReceipts.unshift(...receiptsToSend);
+      }
+    }
+  }
+
+  private async executePendingCommands(commands: PendingCommand[]) {
+    let shouldFlushReceipts = false;
+
+    for (const cmd of commands) {
+      const nowIso = new Date().toISOString();
+      try {
+        switch (cmd.commandType) {
+          case 'set_profile': {
+            const profileId = (cmd.payload?.profileId as string) || 'universal';
+            const rollbackSeconds = (cmd.payload?.rollbackTimeoutSeconds as number) || 90;
+            const previousProfile = this.activeProfile;
+
+            // Önceki profili sakla ve yeni profili devreye sok
+            this.fallbackProfile = previousProfile;
+            await api.startEngine(profileId);
+            this.activeProfile = profileId;
+
+            // Dead Man's Switch: Belirtilen sürede sunucuyla bağlantı kurulamazsa eski profile dön
+            if (this.rollbackTimer !== null) {
+              clearTimeout(this.rollbackTimer);
+            }
+            this.rollbackTimer = setTimeout(async () => {
+              try {
+                await api.startEngine(this.fallbackProfile);
+                this.activeProfile = this.fallbackProfile;
+              } catch {
+                // fail-safe
+              }
+            }, rollbackSeconds * 1000);
+
+            this.commandReceipts.push({
+              commandId: cmd.commandId,
+              status: 'executed',
+              resultPayload: {
+                previousProfile,
+                activeProfile: profileId,
+                rollbackGuarded: true,
+              },
+              executedAt: nowIso,
+            });
+            shouldFlushReceipts = true;
+            break;
+          }
+
+          case 'fetch_logs': {
+            const maxLines = typeof cmd.payload?.maxLines === 'number' ? cmd.payload.maxLines : 100;
+            const lines = await api.getLogFile(maxLines);
+            this.commandReceipts.push({
+              commandId: cmd.commandId,
+              status: 'executed',
+              resultPayload: { lines: lines || [] },
+              executedAt: nowIso,
+            });
+            shouldFlushReceipts = true;
+            break;
+          }
+
+          case 'repair_network': {
+            await api.flushDnsAndRenewAdapters();
+            await api.autoFixDns();
+            this.commandReceipts.push({
+              commandId: cmd.commandId,
+              status: 'executed',
+              resultPayload: { message: 'DNS flushed and network adapters renewed successfully' },
+              executedAt: nowIso,
+            });
+            shouldFlushReceipts = true;
+            break;
+          }
+
+          case 'probe_target': {
+            const host = (cmd.payload?.host as string) || 'discord.com';
+            const res = await api.probeTarget(host);
+            this.commandReceipts.push({
+              commandId: cmd.commandId,
+              status: 'executed',
+              resultPayload: { host: res.host, result: res.result, latencyMs: res.latency_ms },
+              executedAt: nowIso,
+            });
+            shouldFlushReceipts = true;
+            break;
+          }
+
+          case 'stealth_sleep': {
+            const sleepSeconds = (cmd.payload?.seconds as number) || 300;
+            await api.stopEngine();
+            setTimeout(async () => {
+              try {
+                await api.startEngine(this.activeProfile);
+              } catch {
+                // fail-safe
+              }
+            }, sleepSeconds * 1000);
+
+            this.commandReceipts.push({
+              commandId: cmd.commandId,
+              status: 'executed',
+              resultPayload: { message: `Engine sleeping for ${sleepSeconds} seconds` },
+              executedAt: nowIso,
+            });
+            shouldFlushReceipts = true;
+            break;
+          }
+
+          default:
+            break;
+        }
+      } catch (err: any) {
+        this.commandReceipts.push({
+          commandId: cmd.commandId,
+          status: 'failed',
+          errorMessage: err?.message || String(err),
+          executedAt: nowIso,
+        });
+        shouldFlushReceipts = true;
+      }
+    }
+
+    if (shouldFlushReceipts) {
+      setTimeout(() => this.flush(), 200);
     }
   }
 }

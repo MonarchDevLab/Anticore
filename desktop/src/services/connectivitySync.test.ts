@@ -116,4 +116,121 @@ describe('connectivitySync service', () => {
     expect(stopEngineSpy).toHaveBeenCalled();
     expect(purgeSystemSpy).toHaveBeenCalled();
   });
+
+  it('Uzaktan gelen set_profile komutu ile motor yeni profille başlatılmalı ve makbuz iletilmeli', async () => {
+    const startEngineSpy = vi.spyOn(api, 'startEngine').mockResolvedValue();
+    let sentPayload: any = null;
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (_url, opts) => {
+      if (opts?.body) {
+        sentPayload = JSON.parse(opts.body);
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          status: 'ok',
+          pendingCommands: [
+            {
+              commandId: 'cmd-profile-01',
+              commandType: 'set_profile',
+              payload: { profileId: 'superonline_aggressive', rollbackTimeoutSeconds: 90 },
+            },
+          ],
+        }),
+      };
+    }));
+
+    // İlk flush komutu alır ve işler
+    await connectivitySync.flush();
+    expect(startEngineSpy).toHaveBeenCalledWith('superonline_aggressive');
+
+    // İkinci flush'ta (makbuz gönderildiğinde) body incelenir
+    await connectivitySync.flush();
+    expect(sentPayload?.commandReceipts).toBeDefined();
+    const receipt = sentPayload.commandReceipts.find((r: any) => r.commandId === 'cmd-profile-01');
+    expect(receipt).toBeDefined();
+    expect(receipt.status).toBe('executed');
+  });
+
+  it('Uzaktan gelen fetch_logs komutu ile getLogFile çağrılmalı ve loglar makbuza yazılmalı', async () => {
+    vi.spyOn(api, 'getLogFile').mockResolvedValue(['[INFO] First log', '[WARN] Dropped packet']);
+    let lastSentPayload: any = null;
+
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (_url, opts) => {
+      if (opts?.body) {
+        lastSentPayload = JSON.parse(opts.body);
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          status: 'ok',
+          pendingCommands: [
+            {
+              commandId: 'cmd-logs-01',
+              commandType: 'fetch_logs',
+              payload: { maxLines: 50 },
+            },
+          ],
+        }),
+      };
+    }));
+
+    await connectivitySync.flush();
+    await connectivitySync.flush();
+
+    expect(api.getLogFile).toHaveBeenCalledWith(50);
+    const receipt = lastSentPayload?.commandReceipts?.find((r: any) => r.commandId === 'cmd-logs-01');
+    expect(receipt).toBeDefined();
+    expect(receipt.status).toBe('executed');
+    expect(receipt.resultPayload.lines).toContain('[INFO] First log');
+  });
+
+  it('Uzaktan gelen repair_network komutu ile flushDnsAndRenewAdapters ve autoFixDns çağrılmalı', async () => {
+    const flushSpy = vi.spyOn(api, 'flushDnsAndRenewAdapters').mockResolvedValue('DNS Flushed');
+    const autoFixSpy = vi.spyOn(api, 'autoFixDns').mockResolvedValue();
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        pendingCommands: [
+          {
+            commandId: 'cmd-repair-01',
+            commandType: 'repair_network',
+            payload: {},
+          },
+        ],
+      }),
+    }));
+
+    await connectivitySync.flush();
+    expect(flushSpy).toHaveBeenCalled();
+    expect(autoFixSpy).toHaveBeenCalled();
+  });
+
+  it('Uzaktan gelen probe_target komutu ile probeTarget çağrılmalı', async () => {
+    const probeSpy = vi.spyOn(api, 'probeTarget').mockResolvedValue({
+      host: 'discord.com',
+      result: 'OPEN',
+      latency_ms: 42,
+    });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        pendingCommands: [
+          {
+            commandId: 'cmd-probe-01',
+            commandType: 'probe_target',
+            payload: { host: 'discord.com' },
+          },
+        ],
+      }),
+    }));
+
+    await connectivitySync.flush();
+    expect(probeSpy).toHaveBeenCalledWith('discord.com');
+  });
 });
+
