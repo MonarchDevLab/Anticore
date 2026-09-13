@@ -323,7 +323,7 @@ fn is_detached_running(app: &AppHandle) -> bool {
 
     #[cfg(target_os = "macos")]
     {
-        let status = silent_command("kill").args(["-0", &pid.to_string()]).status();
+        let status = silent_command("ps").args(["-p", &pid.to_string()]).status();
         status.map(|s| s.success()).unwrap_or(false)
     }
 
@@ -567,7 +567,18 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     let log_path = data_dir.join("detached-startup.log");
     let log = std::fs::File::create(&log_path).map_err(|e| format!("Motor günlüğü açılamadı: {e}"))?;
     let error_log = log.try_clone().map_err(|e| e.to_string())?;
+
+    #[cfg(target_os = "macos")]
+    let mut cmd = if unsafe { libc::geteuid() } == 0 {
+        silent_command(&motor.to_string_lossy())
+    } else {
+        let mut c = silent_command("sudo");
+        c.arg("-n").arg(&motor.to_string_lossy());
+        c
+    };
+    #[cfg(not(target_os = "macos"))]
     let mut cmd = silent_command(&motor.to_string_lossy());
+
     cmd.current_dir(work_dir)
         .args(["run", "--profile", &profile_id, "--data-dir"])
         .arg(&data_dir)
@@ -588,8 +599,17 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
         }
     }
     if !ready {
-        child.kill().map_err(|e| format!("Yanıt vermeyen motor durdurulamadı: {e}"))?;
-        child.wait().map_err(|e| e.to_string())?;
+        #[cfg(target_os = "macos")]
+        if unsafe { libc::geteuid() } != 0 {
+            let _ = silent_command("sudo").args(["-n", "/bin/kill", "-9", &child.id().to_string()]).status();
+        } else {
+            let _ = child.kill();
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = child.kill();
+        }
+        let _ = child.wait();
         return Err("Motor 5 saniye içinde hazır olmadı; başlangıç iptal edildi.".into());
     }
 
@@ -605,9 +625,10 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     drop(child);
     app.emit(
         "log",
-        format!("[+] bağımsız motor başladı (profil={profile_id}) — panel kapansa da sürer"),
+        format!("[+] motor aktif (profil={profile_id})"),
     )
     .ok();
+    app.emit("status_changed", true).ok();
     Ok(())
 }
 
@@ -625,13 +646,22 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
 
     #[cfg(target_os = "macos")]
     {
-        let out = silent_command("kill").args(["-15", &pid.to_string()]).output()
-            .map_err(|e| format!("kill başarısız: {e}"))?;
+        let out = if unsafe { libc::geteuid() } == 0 {
+            silent_command("kill").args(["-15", &pid.to_string()]).output()
+        } else {
+            silent_command("sudo").args(["-n", "/bin/kill", "-15", &pid.to_string()]).output()
+        }.map_err(|e| format!("kill başarısız: {e}"))?;
+
         if !out.status.success() {
-            let _ = silent_command("kill").args(["-9", &pid.to_string()]).output();
+            let _ = if unsafe { libc::geteuid() } == 0 {
+                silent_command("kill").args(["-9", &pid.to_string()]).output()
+            } else {
+                silent_command("sudo").args(["-n", "/bin/kill", "-9", &pid.to_string()]).output()
+            };
         }
         let _ = std::fs::remove_file(&pid_file);
-        app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
+        app.emit("log", "[*] motor durduruldu".to_string()).ok();
+        app.emit("status_changed", false).ok();
         return Ok(());
     }
 
@@ -1052,6 +1082,16 @@ pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: St
     if modes.detached_running || (modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED")) {
         return Err("Servis veya bağımsız motor çalışıyor; panel motorunu başlatmadan önce durdurun.".into());
     }
+
+    #[cfg(target_os = "macos")]
+    {
+        if unsafe { libc::geteuid() } != 0 {
+            // macOS üzerinde GUI süreci standart kullanıcıdır (WebKit/WindowServer kısıtı).
+            // Ağ motoru root yetkisi gerektirdiğinden, sudoers yetkisiyle bağımsız CLI alt süreci başlatılır.
+            return detached_start(app, profile_id);
+        }
+    }
+
     let bl = load_blacklist(&app);
     let steps = resolve_steps(&app, &profile_id)?;
     let config = load_engine_config(&app);
@@ -1117,8 +1157,24 @@ pub fn is_running_as_admin() -> bool {
         IsUserAnAdmin() != 0
     }
     #[cfg(target_os = "macos")]
-    unsafe {
-        libc::geteuid() == 0
+    {
+        if unsafe { libc::geteuid() == 0 } {
+            return true;
+        }
+        // macOS üzerinde GUI süreci root (geteuid == 0) olamaz ve olmamalıdır (WebKit/WindowServer kısıtı).
+        // Yönetici yetkisi, /etc/sudoers.d/anticore kuralının varlığı ve parolasız sudo çalışabilirliği ile teyit edilir.
+        if std::path::Path::new("/etc/sudoers.d/anticore").exists() {
+            return true;
+        }
+        let check = std::process::Command::new("sudo")
+            .args(["-n", "true"])
+            .status();
+        if let Ok(st) = check {
+            if st.success() {
+                return true;
+            }
+        }
+        false
     }
     #[cfg(all(not(windows), not(target_os = "macos")))]
     {
@@ -1132,7 +1188,7 @@ pub fn check_is_admin() -> bool {
     is_running_as_admin()
 }
 
-/// Uygulamayı yönetici olarak yeniden başlatır (Windows'ta UAC, macOS'ta osascript ile).
+/// Uygulamayı yönetici olarak yeniden başlatır (Windows'ta UAC, macOS'ta parolasız sudoers yetkilendirmesi).
 #[tauri::command]
 pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
     #[cfg(windows)]
@@ -1157,31 +1213,28 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
     {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
         let exe_path = exe.to_string_lossy().to_string();
-        let app_path = "/Applications/Anticore.app/Contents/MacOS/Anticore";
-        let cli_path = "/Applications/Anticore.app/Contents/MacOS/anticore-cli";
 
-        let safe_exe_path = exe_path.replace(' ', "\\ ");
-        let safe_app_path = app_path.replace(' ', "\\ ");
-        let safe_cli_path = cli_path.replace(' ', "\\ ");
-
-        // Sudoers kuralı:
-        // ÖNEMLİ: sudo, /etc/sudoers.d altındaki dosya adlarında '.' (nokta) bulunan dosyaları
-        // (örn. com.monolithworks.anticore) yoksayar. Bu nedenle dosya adı kesinlikle 'anticore' olmalıdır.
-        let mut extra_defaults = String::new();
-        if safe_exe_path != safe_app_path {
-            extra_defaults = format!(" && echo 'Defaults!{} env_keep += \"HOME USER LOGNAME DISPLAY XPC_FLAGS\"' >> /etc/sudoers.d/anticore", safe_exe_path);
+        let mut cmd_list = String::from("/Applications/Anticore.app/Contents/MacOS/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl");
+        if let Ok(motor_path) = find_motor_exe(&app) {
+            let mp = motor_path.to_string_lossy().to_string();
+            if !mp.is_empty() && !cmd_list.contains(&mp) {
+                cmd_list.push_str(&format!(", {}", mp));
+            }
+        }
+        if !exe_path.is_empty() && !cmd_list.contains(&exe_path) {
+            cmd_list.push_str(&format!(", {}", exe_path));
         }
 
-        // GUI uygulaması do shell script içerisinden ASLA arka planda çalıştırılmamalıdır;
-        // çünkü do shell script ortamının WindowServer (Aqua) bağlantısı yoktur ve uygulama anında çöker.
+        // AppleScript: System Events KULLANILMAZ (TCC -1743 hatasını önler).
+        // İç tırnak sorunlarını ve kaçış hatalarını önlemek için doğrudan bash printf kullanılır.
+        // GUI süreci asla sonlandırılmaz; Cocoa/WebKit çökmesi önlenir.
         let script = format!(
-            "tell application \"System Events\" to activate\n\
-            do shell script \"mkdir -p /etc/sudoers.d && \
+            "do shell script \"mkdir -p /etc/sudoers.d && \
             rm -f /etc/sudoers.d/com.monolithworks.anticore && \
-            echo 'Defaults!{safe_app_path} env_keep += \\\"HOME USER LOGNAME DISPLAY XPC_FLAGS\\\"' > /etc/sudoers.d/anticore{extra_defaults} && \
-            echo 'ALL ALL=(ALL) NOPASSWD: {safe_app_path}, {safe_cli_path}, {safe_exe_path}, /usr/sbin/installer' >> /etc/sudoers.d/anticore && \
+            printf 'ALL ALL=(ALL) NOPASSWD: {}\\n' > /etc/sudoers.d/anticore && \
             chmod 440 /etc/sudoers.d/anticore && \
-            (grep -q 'sudoers.d' /etc/sudoers || echo '#includedir /private/etc/sudoers.d' >> /etc/sudoers)\" with administrator privileges"
+            (grep -q 'sudoers.d' /etc/sudoers || echo '#includedir /private/etc/sudoers.d' >> /etc/sudoers)\" with administrator privileges",
+            cmd_list
         );
 
         let status = std::process::Command::new("osascript")
@@ -1193,21 +1246,7 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
             return Err("Yönetici yetkisi verilmedi veya iptal edildi.".into());
         }
 
-        // Yetkilendirme başarılı oldu; şimdi mevcut GUI oturumundan uygulamayı root olarak başlat.
-        // Sudoers kuralı aktif olduğu için parola sorulmayacak, -E ile Aqua GUI oturumu korunacaktır.
-        let spawn_res = std::process::Command::new("sudo")
-            .arg("-E")
-            .arg(&exe_path)
-            .spawn();
-
-        if let Err(e) = spawn_res {
-            let _ = std::process::Command::new("open")
-                .args(["-n", &exe_path])
-                .spawn();
-            return Err(format!("Uygulama root olarak yeniden başlatılamadı ({e}). Lütfen Terminal'den 'sudo {exe_path}' komutunu çalıştırın."));
-        }
-
-        app.exit(0);
+        app.emit("log", "[+] macOS kalıcı yönetici izni başarıyla tanımlandı (/etc/sudoers.d/anticore).".to_string()).ok();
         Ok(())
     }
     #[cfg(all(not(windows), not(target_os = "macos")))]
@@ -1367,7 +1406,13 @@ Clear-DnsClientCache
             if trimmed.is_empty() || trimmed.starts_with('*') || trimmed.contains("denotes that a network service is disabled") {
                 continue;
             }
-            let mut cmd = std::process::Command::new("networksetup");
+            let mut cmd = if unsafe { libc::geteuid() } == 0 {
+                std::process::Command::new("networksetup")
+            } else {
+                let mut c = std::process::Command::new("sudo");
+                c.arg("-n").arg("/usr/sbin/networksetup");
+                c
+            };
             cmd.arg("-setdnsservers").arg(trimmed);
             for ip in &v4 {
                 cmd.arg(ip);
@@ -1431,9 +1476,14 @@ Clear-DnsClientCache
                 if trimmed.is_empty() || trimmed.starts_with('*') || trimmed.contains("denotes that a network service is disabled") {
                     continue;
                 }
-                let _ = std::process::Command::new("networksetup")
-                    .args(["-setdnsservers", trimmed, "empty"])
-                    .status();
+                let mut cmd = if unsafe { libc::geteuid() } == 0 {
+                    std::process::Command::new("networksetup")
+                } else {
+                    let mut c = std::process::Command::new("sudo");
+                    c.arg("-n").arg("/usr/sbin/networksetup");
+                    c
+                };
+                let _ = cmd.args(["-setdnsservers", trimmed, "empty"]).status();
             }
         }
         let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();

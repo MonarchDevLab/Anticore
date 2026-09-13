@@ -36,6 +36,7 @@ export default function App() {
   const togglePending = useRef(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
+  const [elevating, setElevating] = useState(false);
   const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.4");
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -448,17 +449,24 @@ export default function App() {
               {isAdminError && (
                 <button
                   type="button"
+                  disabled={elevating}
                   onClick={async () => {
+                    setElevating(true);
                     try {
                       await api.restartAsAdmin();
+                      setTopError(null);
+                      await api.startEngine(selectedProfile);
+                      setStatus(await api.getStatus());
                     } catch (err) {
                       setTopError(String(err));
+                    } finally {
+                      setElevating(false);
                     }
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-alert text-white font-bold text-[11px] flex items-center gap-1 hover:bg-alert/90 cursor-pointer shadow"
+                  className="px-2.5 py-1 rounded-lg bg-alert text-white font-bold text-[11px] flex items-center gap-1 hover:bg-alert/90 cursor-pointer shadow disabled:opacity-50"
                 >
                   <Shield size={12} />
-                  <span>{isMac ? t("dash_admin_btn_mac") : t("dash_admin_btn")}</span>
+                  <span>{elevating ? (lang === "tr" ? "Yetkilendiriliyor..." : "Elevating...") : (isMac ? t("dash_admin_btn_mac") : t("dash_admin_btn"))}</span>
                 </button>
               )}
               <button

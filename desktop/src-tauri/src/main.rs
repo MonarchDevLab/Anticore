@@ -53,52 +53,9 @@ fn main() {
         }
     }
 
-    // macOS altında sessiz root yükseltme: Eğer kullanıcı parolasız sudo yetkisine
-    // sahipse (/etc/sudoers.d/com.monolithworks.anticore), uygulama kendini
-    // kullanıcıya hiçbir parola sormadan anında root olarak yeniden başlatır.
-    #[cfg(target_os = "macos")]
-    {
-        if std::env::args().any(|a| a == "--check-root") {
-            if unsafe { libc::geteuid() == 0 } {
-                std::process::exit(0);
-            } else {
-                std::process::exit(1);
-            }
-        }
-
-        if unsafe { libc::geteuid() != 0 } {
-            let args: Vec<String> = std::env::args().collect();
-            if !args.iter().any(|a| a == "--no-elevate") {
-                let exe = if std::path::Path::new("/Applications/Anticore.app/Contents/MacOS/Anticore").exists() {
-                    std::path::PathBuf::from("/Applications/Anticore.app/Contents/MacOS/Anticore")
-                } else if let Ok(cur) = std::env::current_exe() {
-                    cur
-                } else {
-                    std::path::PathBuf::new()
-                };
-
-                if exe.exists() {
-                    let can_sudo = std::process::Command::new("sudo")
-                        .args(["-n", &exe.to_string_lossy(), "--check-root"])
-                        .status()
-                        .map(|s| s.success())
-                        .unwrap_or(false);
-
-                    if can_sudo {
-                        let forwarded_args: Vec<String> = args.iter().skip(1).cloned().collect();
-                        let spawn_res = std::process::Command::new("sudo")
-                            .arg("-E")
-                            .arg(&exe)
-                            .args(&forwarded_args)
-                            .spawn();
-                        if spawn_res.is_ok() {
-                            std::process::exit(0);
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // macOS altında GUI süreci (Tauri/WebKit/Cocoa) standart kullanıcı olarak çalışır;
+    // WindowServer ve WebKit kısıtları nedeniyle GUI asla root olarak başlatılmamalıdır.
+    // Ağ motoru (utun/pfctl), arayüzden parolasız sudo (-n) ile bağımsız alt süreç olarak yönetilir.
 
     match tauri::Builder::default()
         .manage(Engine::new())

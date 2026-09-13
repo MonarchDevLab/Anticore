@@ -181,6 +181,14 @@ jobs:
           fi
 
           if [ -d "$app_path" ]; then
+            bin_path="engine/target/${target}/release/anticore"
+            if [ ! -f "$bin_path" ]; then
+              bin_path="engine/target/release/anticore"
+            fi
+            if [ -f "$bin_path" ]; then
+              cp "$bin_path" "$app_path/Contents/MacOS/anticore-cli"
+              chmod +x "$app_path/Contents/MacOS/anticore-cli"
+            fi
             chmod +x scripts/pkg-scripts/postinstall
             chmod -R 755 "$app_path"
 

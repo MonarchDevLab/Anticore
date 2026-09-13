@@ -12,15 +12,14 @@ if [ -d "$APP_PATH" ]; then
 fi
 
 # Kalici yetkilendirme (Sifir Sifre): Ag motoru (utun/pfctl) root gerektirir.
-# Kullanicinin her acilista parola girmesini engellemek icin sudoers tanimi yapilir.
-# ONEMLI: sudoers.d altindaki dosya adlarinda nokta (.) bulunursa sudo dosyayi yok sayar.
-if [ -f "$BINARY_PATH" ]; then
+# GUI normal kullanici olarak calisir; motor sudo -n ile arka planda root calistirilir.
+if [ -d "$APP_PATH" ]; then
     mkdir -p /etc/sudoers.d
     rm -f /etc/sudoers.d/com.monolithworks.anticore
     SUDOERS_FILE="/etc/sudoers.d/anticore"
-    CLI_PATH="${APP_PATH}/Contents/MacOS/anticore-cli"
-    echo "Defaults!${BINARY_PATH} env_keep += \"HOME USER LOGNAME DISPLAY XPC_FLAGS\"" > "$SUDOERS_FILE"
-    echo "ALL ALL=(ALL) NOPASSWD: ${BINARY_PATH}, ${CLI_PATH}, /usr/sbin/installer" >> "$SUDOERS_FILE"
+    cat << 'EOF' > "$SUDOERS_FILE"
+ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl
+EOF
     chmod 440 "$SUDOERS_FILE"
     grep -q "sudoers.d" /etc/sudoers || echo "#includedir /private/etc/sudoers.d" >> /etc/sudoers
 fi
