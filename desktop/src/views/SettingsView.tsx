@@ -31,6 +31,7 @@ import {
 } from "../lib/tauri";
 import { useTheme } from "../lib/theme";
 import { useI18n } from "../lib/i18n";
+import { isMac } from "../lib/platform";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function SettingsView({
@@ -118,7 +119,7 @@ export default function SettingsView({
     try {
       await api.setStartupEnabled(next);
       setStartup(next);
-      pushLog(`[+] başlangıçta çalışma: ${next ? "açık" : "kapalı"}`);
+      pushLog(isMac ? `[+] macOS başlangıçta çalışma: ${next ? "açık" : "kapalı"}` : `[+] başlangıçta çalışma: ${next ? "açık" : "kapalı"}`);
     } catch (e) {
       pushLog(`[!] başlangıç ayarı hatası: ${String(e)}`);
     } finally {
@@ -439,18 +440,18 @@ export default function SettingsView({
         </div>
       </section>
 
-      {/* Windows Başlangıcı */}
+      {/* Sistem Başlangıcı (Windows / macOS) */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card shadow-xl">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-paper-bright">{t("settings_startup_title")}</h3>
-            <p className="text-xs text-paper-muted mt-0.5">{t("settings_startup_desc")}</p>
+            <h3 className="text-sm font-bold text-paper-bright">{isMac ? t("settings_startup_title_mac") : t("settings_startup_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{isMac ? t("settings_startup_desc_mac") : t("settings_startup_desc")}</p>
           </div>
           <button
             type="button"
             role="switch"
             aria-checked={startup}
-            aria-label={t("settings_startup_title")}
+            aria-label={isMac ? t("settings_startup_title_mac") : t("settings_startup_title")}
             disabled={startupBusy}
             onClick={() => void toggleStartup()}
             className={`toggle-track ${startup ? "is-active" : ""}`}

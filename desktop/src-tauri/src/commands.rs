@@ -2031,7 +2031,19 @@ pub fn get_startup_enabled() -> bool {
         .is_ok()
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+fn macos_launch_agent_path() -> Result<PathBuf, String> {
+    let home = std::env::var("HOME").map_err(|_| "HOME ortam değişkeni bulunamadı".to_string())?;
+    Ok(PathBuf::from(home).join("Library/LaunchAgents/com.monolithworks.anticore.plist"))
+}
+
+#[cfg(target_os = "macos")]
+#[tauri::command]
+pub fn get_startup_enabled() -> bool {
+    macos_launch_agent_path().map(|p| p.exists()).unwrap_or(false)
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
 #[tauri::command]
 pub fn get_startup_enabled() -> bool {
     false
@@ -2084,7 +2096,65 @@ pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> 
     Ok(())
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+#[tauri::command]
+pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let plist_path = macos_launch_agent_path()?;
+    if enabled {
+        if let Some(parent) = plist_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
+        let app_binary = if std::path::Path::new("/Applications/Anticore.app/Contents/MacOS/Anticore").exists() {
+            PathBuf::from("/Applications/Anticore.app/Contents/MacOS/Anticore")
+        } else {
+            std::env::current_exe().map_err(|e| format!("Uygulama yolu alınamadı: {e}"))?
+        };
+
+        let plist_content = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.monolithworks.anticore.launcher</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{}</string>
+        <string>--hidden</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>
+"#,
+            app_binary.to_string_lossy()
+        );
+
+        std::fs::write(&plist_path, plist_content)
+            .map_err(|e| format!("LaunchAgent dosyası oluşturulamadı: {e}"))?;
+
+        let _ = silent_command("launchctl")
+            .args(["load", "-w", &plist_path.to_string_lossy()])
+            .output();
+
+        app.emit("log", "[+] macOS başlangıcı etkinleştirildi (LaunchAgent)".to_string()).ok();
+    } else {
+        let _ = silent_command("launchctl")
+            .args(["unload", "-w", &plist_path.to_string_lossy()])
+            .output();
+
+        if plist_path.exists() {
+            let _ = std::fs::remove_file(&plist_path);
+        }
+        app.emit("log", "[-] macOS başlangıcı devre dışı bırakıldı".to_string()).ok();
+    }
+    Ok(())
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
 #[tauri::command]
 pub fn set_startup_enabled(_app: AppHandle, _enabled: bool) -> Result<(), String> {
     Err("Bu platformda başlangıç kaydı desteklenmiyor".into())
@@ -2357,7 +2427,7 @@ pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), 
     #[cfg(target_os = "macos")]
     {
         let cmd = format!(
-            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore /var/log/anticore.*' >/dev/null 2>&1 &",
+            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore ~/Library/LaunchAgents/com.monolithworks.anticore.plist /var/log/anticore.*' >/dev/null 2>&1 &",
             app_pid
         );
         let _ = silent_command("sh").args(["-c", &cmd]).spawn();
@@ -3239,10 +3309,65 @@ pub fn exit_app(app: AppHandle, engine: tauri::State<Engine>) {
 
 #[tauri::command]
 pub fn get_system_hostname() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(name) = std::env::var("COMPUTERNAME") {
+            let clean = name.trim().to_string();
+            if !clean.is_empty() {
+                return clean;
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(output) = std::process::Command::new("scutil").arg("--get").arg("ComputerName").output() {
+            if output.status.success() {
+                let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !name.is_empty() {
+                    return name;
+                }
+            }
+        }
+        if let Ok(output) = std::process::Command::new("hostname").output() {
+            if output.status.success() {
+                let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !name.is_empty() {
+                    return name;
+                }
+            }
+        }
+        return "MacBook".to_string();
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(name) = std::fs::read_to_string("/etc/hostname") {
+            let clean = name.trim().to_string();
+            if !clean.is_empty() {
+                return clean;
+            }
+        }
+        if let Ok(output) = std::process::Command::new("hostname").output() {
+            if output.status.success() {
+                let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !name.is_empty() {
+                    return name;
+                }
+            }
+        }
+    }
+
     std::env::var("COMPUTERNAME")
         .or_else(|_| std::env::var("HOSTNAME"))
-        .unwrap_or_else(|_| "DESKTOP-UNKNOWN".to_string())
+        .unwrap_or_else(|_| {
+            #[cfg(target_os = "macos")]
+            return "MacBook".to_string();
+            #[cfg(not(target_os = "macos"))]
+            return "DESKTOP-UNKNOWN".to_string();
+        })
 }
+
 
 #[tauri::command]
 pub fn send_telemetry_beacon(endpoint: Option<String>, payload: String) -> Result<String, String> {

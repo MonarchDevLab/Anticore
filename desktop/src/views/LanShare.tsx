@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { api, type LanInfoDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
+import { isMac } from "../lib/platform";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -88,7 +89,7 @@ export default function LanShare({ pushLog }: { pushLog: (l: string) => void }) 
   const openHotspot = async () => {
     try {
       await api.openHotspotSettings();
-      pushLog("[*] Windows Mobil Etkin Nokta ayarları açıldı");
+      pushLog(isMac ? "[*] macOS Paylaşım ayarları açıldı" : "[*] Windows Mobil Etkin Nokta ayarları açıldı");
     } catch (e) {
       setErrorMsg(String(e));
     }
@@ -333,8 +334,12 @@ export default function LanShare({ pushLog }: { pushLog: (l: string) => void }) 
               <Radio size={20} />
             </div>
             <div>
-              <h2 className="text-sm font-medium text-paper-bright">{t("lan_hotspot_card_title")}</h2>
-              <p className="text-xs text-paper-muted mt-1 max-w-xl">{t("lan_hotspot_card_desc")}</p>
+              <h2 className="text-sm font-medium text-paper-bright">
+                {isMac ? t("lan_hotspot_card_title_mac") : t("lan_hotspot_card_title")}
+              </h2>
+              <p className="text-xs text-paper-muted mt-1 max-w-xl">
+                {isMac ? t("lan_hotspot_card_desc_mac") : t("lan_hotspot_card_desc")}
+              </p>
             </div>
           </div>
 
@@ -343,7 +348,7 @@ export default function LanShare({ pushLog }: { pushLog: (l: string) => void }) 
             onClick={openHotspot}
             className="px-4 py-2 rounded-lg text-xs font-medium bg-paper-border/30 hover:bg-paper-border/50 text-paper-bright border border-paper-border/40 flex items-center gap-1.5 transition-colors shrink-0"
           >
-            <span>{t("lan_btn_open_hotspot")}</span>
+            <span>{isMac ? t("lan_btn_open_hotspot_mac") : t("lan_btn_open_hotspot")}</span>
             <ExternalLink size={13} />
           </button>
         </div>

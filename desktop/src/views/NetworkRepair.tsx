@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, LoaderCircle, Network, RefreshCw, RotateCcw, ShieldAlert, ShieldCheck, Wifi, Wrench } from "lucide-react";
 import { api, type AdapterDnsInfo, type DohStatusDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
+import { isMac } from "../lib/platform";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Guide from "../components/Guide";
 
@@ -264,15 +265,15 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         </p>
       </section>
 
-      {/* Windows Ağ Yığını & Winsock Onarımı */}
+      {/* Ağ Yığını & Paket Filtresi Onarımı */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
             <Wrench size={18} aria-hidden strokeWidth={2} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-paper-bright">{t("net_stack_title")}</h3>
-            <p className="text-xs text-paper-muted mt-0.5">{t("net_stack_desc")}</p>
+            <h3 className="text-sm font-bold text-paper-bright">{isMac ? t("net_stack_title_mac") : t("net_stack_title")}</h3>
+            <p className="text-xs text-paper-muted mt-0.5">{isMac ? t("net_stack_desc_mac") : t("net_stack_desc")}</p>
           </div>
         </div>
 
@@ -334,76 +335,78 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         )}
       </section>
 
-      {/* Windows DoH Registry */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
-        <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
-              <ShieldCheck size={18} aria-hidden strokeWidth={2} />
+      {/* Windows DoH Registry (Yalnızca Windows) */}
+      {!isMac && (
+        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+          <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+                <ShieldCheck size={18} aria-hidden strokeWidth={2} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-paper-bright">{t("net_doh_title")}</h3>
+                <p className="text-xs text-paper-muted mt-0.5">{t("net_doh_desc")}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-paper-bright">{t("net_doh_title")}</h3>
-              <p className="text-xs text-paper-muted mt-0.5">{t("net_doh_desc")}</p>
-            </div>
+            <span className={`badge ${dohStatus?.enabled ? "badge-live" : "badge-muted"}`}>
+              {dohStatus === null
+                ? "…"
+                : dohStatus.enabled
+                  ? t("net_doh_active")
+                  : t("net_doh_inactive")}
+            </span>
           </div>
-          <span className={`badge ${dohStatus?.enabled ? "badge-live" : "badge-muted"}`}>
-            {dohStatus === null
-              ? "…"
-              : dohStatus.enabled
-                ? t("net_doh_active")
-                : t("net_doh_inactive")}
-          </span>
-        </div>
 
-        <div className="flex flex-wrap gap-2.5 pt-1">
-          <button
-            className="btn btn-primary text-xs cursor-pointer"
-            onClick={async () => {
-              setBusy(true);
-              setErrorMessage(null);
-              setSuccessMessage(null);
-              try {
-                await api.applyDohRegistry();
-                pushLog("[+] DoH Registry anahtarı eklendi (EnableAutoDoh=2)");
-                setSuccessMessage(lang === "tr" ? "DoH kayıt defterine uygulandı (EnableAutoDoh=2) ve DNS önbelleği temizlendi" : "DoH applied to registry (EnableAutoDoh=2) and DNS cache flushed");
-                refreshDoh();
-              } catch (e) {
-                const err = String(e);
-                pushLog(`[!] DoH Registry hatası: ${err}`);
-                setErrorMessage(err);
-              } finally {
-                setBusy(false);
-              }
-            }}
-            disabled={busy}
-          >
-            {t("net_doh_apply_btn")}
-          </button>
-          <button
-            className="btn btn-secondary text-xs cursor-pointer"
-            onClick={async () => {
-              setBusy(true);
-              setErrorMessage(null);
-              setSuccessMessage(null);
-              try {
-                await api.resetDohRegistry();
-                pushLog("[-] DoH Registry anahtarı kaldırıldı ve DNS önbelleği temizlendi");
-                setSuccessMessage(lang === "tr" ? "DoH kayıt defterinden başarıyla kaldırıldı ve DNS önbelleği temizlendi" : "DoH removed from registry and DNS cache flushed");
-                refreshDoh();
-              } catch (e) {
-                const err = String(e);
-                pushLog(`[!] DoH sıfırlama hatası: ${err}`);
-                setErrorMessage(err);
-              } finally {
-                setBusy(false);
-              }
-            }}
-            disabled={busy}
-          >
-            {t("net_doh_reset_btn")}
-          </button>
-        </div>
-      </section>
+          <div className="flex flex-wrap gap-2.5 pt-1">
+            <button
+              className="btn btn-primary text-xs cursor-pointer"
+              onClick={async () => {
+                setBusy(true);
+                setErrorMessage(null);
+                setSuccessMessage(null);
+                try {
+                  await api.applyDohRegistry();
+                  pushLog("[+] DoH Registry anahtarı eklendi (EnableAutoDoh=2)");
+                  setSuccessMessage(lang === "tr" ? "DoH kayıt defterine uygulandı (EnableAutoDoh=2) ve DNS önbelleği temizlendi" : "DoH applied to registry (EnableAutoDoh=2) and DNS cache flushed");
+                  refreshDoh();
+                } catch (e) {
+                  const err = String(e);
+                  pushLog(`[!] DoH Registry hatası: ${err}`);
+                  setErrorMessage(err);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              disabled={busy}
+            >
+              {t("net_doh_apply_btn")}
+            </button>
+            <button
+              className="btn btn-secondary text-xs cursor-pointer"
+              onClick={async () => {
+                setBusy(true);
+                setErrorMessage(null);
+                setSuccessMessage(null);
+                try {
+                  await api.resetDohRegistry();
+                  pushLog("[-] DoH Registry anahtarı kaldırıldı ve DNS önbelleği temizlendi");
+                  setSuccessMessage(lang === "tr" ? "DoH kayıt defterinden başarıyla kaldırıldı ve DNS önbelleği temizlendi" : "DoH removed from registry and DNS cache flushed");
+                  refreshDoh();
+                } catch (e) {
+                  const err = String(e);
+                  pushLog(`[!] DoH sıfırlama hatası: ${err}`);
+                  setErrorMessage(err);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              disabled={busy}
+            >
+              {t("net_doh_reset_btn")}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Discord Özel Onarım Paketi */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
@@ -454,7 +457,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             : dialog === "reset"
             ? t("net_reset_confirm_body")
             : dialog === "reset-stack"
-            ? t("net_reset_stack_confirm_body")
+            ? (isMac ? t("net_reset_stack_confirm_body_mac") : t("net_reset_stack_confirm_body"))
             : dialog === "discord-repair"
             ? (lang === "tr"
                 ? "Discord uygulaması geçici olarak kapatılacak, güncelleme kilitleri ve DNS önbelleği temizlenecektir. Devam etmek istiyor musunuz?"

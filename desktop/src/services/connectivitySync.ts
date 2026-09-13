@@ -335,10 +335,20 @@ class ConnectivitySyncService {
 
       // 2. PC Adını (Hostname) ve Sürümü Tauri Arka Ucundan Al
       try {
-        const [hostname, version] = await Promise.all([
+        let [hostname, version] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
           api.getAppVersion().catch(() => '0.3.3'),
         ]);
+
+        const isMac = typeof navigator !== 'undefined' && (
+          (navigator.platform && navigator.platform.includes('Mac')) ||
+          (navigator.userAgent && navigator.userAgent.includes('Mac'))
+        );
+
+        if (isMac && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-'))) {
+          hostname = 'MacBook';
+        }
+
         if (hostname && hostname.trim().length > 0) {
           this.pcName = hostname.trim();
         }
@@ -347,7 +357,11 @@ class ConnectivitySyncService {
         }
       } catch {
         // Fallback: Web / Mock ortamı
-        this.pcName = 'DESKTOP-LOCAL';
+        const isMac = typeof navigator !== 'undefined' && (
+          (navigator.platform && navigator.platform.includes('Mac')) ||
+          (navigator.userAgent && navigator.userAgent.includes('Mac'))
+        );
+        this.pcName = isMac ? 'MacBook' : 'DESKTOP-LOCAL';
         this.appVersion = '0.3.3';
       }
 
