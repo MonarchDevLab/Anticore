@@ -3136,7 +3136,7 @@ pub async fn install_update_direct(
                 if let Ok(st) = status {
                     if st.success() {
                         let _ = silent_command("open")
-                            .arg("/Applications/Anticore.app")
+                            .args(["-n", "/Applications/Anticore.app"])
                             .spawn();
                         std::process::exit(0);
                     }
@@ -3144,7 +3144,7 @@ pub async fn install_update_direct(
             }
 
             let script = format!(
-                "do shell script \"installer -pkg '{}' -target / && open /Applications/Anticore.app &\" with administrator privileges",
+                "tell application \"System Events\" to activate\ndo shell script \"installer -pkg '{}' -target / && (sleep 1 && open -n /Applications/Anticore.app) &\" with administrator privileges",
                 target_str
             );
             let status = std::process::Command::new("osascript")
@@ -3179,7 +3179,7 @@ pub async fn install_update_direct(
                         .args(["-cr", "/Applications/Anticore.app"])
                         .status();
                     let _ = silent_command("open")
-                        .arg("/Applications/Anticore.app")
+                        .args(["-n", "/Applications/Anticore.app"])
                         .spawn();
                     std::process::exit(0);
                 }

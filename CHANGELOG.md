@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **macOS LaunchAgent Autostart Engine:** Integrated native LaunchAgent (`~/Library/LaunchAgents/com.monolithworks.anticore.plist`) for background startup on login.
 - **macOS HIG & Platform Parity:** Solved Apple design discrepancies with native top-left Traffic Lights, rounded hardware chassis, WebKit typography antialiasing, and macOS network stack repair parity.
 
+### Fixed
+- **Updater Double 'v' Prefix (`vv0.3.4`):** Sanitized version tags across native notifications, in-app update banner, and modal dialog to consistently display standard `v0.3.4`.
+- **macOS Installer Foreground Elevation & Instance Relaunch:** Enhanced AppleScript elevation with `tell application "System Events" to activate` preventing hidden password prompts, and enforced `-n` flag on `open` to guarantee reliable process relaunch.
+- **Repository Banner Asset (`banner.svg`):** Synchronized bottom feature specs version tag from legacy `v0.3.1` to `v0.3.4`.
+
 ## [0.3.3] - 2026-09-12
 
 ### Added

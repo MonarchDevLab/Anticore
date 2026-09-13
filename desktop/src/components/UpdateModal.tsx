@@ -174,10 +174,16 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
               <LoaderCircle size={32} className="animate-spin text-live mx-auto" strokeWidth={2.5} />
               <div>
                 <p className="text-xs font-bold text-paper-bright">
-                  {t("update_modal_downloading")}
+                  {progress && progress.total > 0 && progress.downloaded >= progress.total
+                    ? (lang === "tr" ? "Paket Sisteme Kuruluyor..." : "Installing Package...")
+                    : t("update_modal_downloading")}
                 </p>
                 <p className="text-xs text-paper-muted mt-1">
-                  {t("update_modal_installing_sub")}
+                  {progress && progress.total > 0 && progress.downloaded >= progress.total
+                    ? (lang === "tr"
+                        ? "Kurulum tamamlanıyor. İşletim sistemi yönetici parolası sorarsa lütfen onaylayın."
+                        : "Completing installation. Please approve if the system requests administrator privileges.")
+                    : t("update_modal_installing_sub")}
                 </p>
               </div>
 
