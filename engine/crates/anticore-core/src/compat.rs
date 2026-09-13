@@ -133,24 +133,15 @@ pub fn parse_sc_query_output(status_success: bool, output_text: &str) -> bool {
 }
 
 /// WinDivert sürücü ve DLL dosyalarının varlığını doğrular.
-/// Windows dışındaki platformlarda (macOS, Linux) WinDivert kullanılmadığı için daima true döner.
 pub fn check_windivert_files(search_paths: &[&Path]) -> bool {
-    #[cfg(not(target_os = "windows"))]
-    {
-        let _ = search_paths;
-        true
-    }
-    #[cfg(target_os = "windows")]
-    {
-        for base in search_paths {
-            let dll = base.join("WinDivert.dll");
-            let sys = base.join("WinDivert64.sys");
-            if dll.exists() && sys.exists() {
-                return true;
-            }
+    for base in search_paths {
+        let dll = base.join("WinDivert.dll");
+        let sys = base.join("WinDivert64.sys");
+        if dll.exists() && sys.exists() {
+            return true;
         }
-        false
     }
+    false
 }
 
 pub fn check_compatibility() -> CompatReport {
