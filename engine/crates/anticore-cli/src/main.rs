@@ -633,7 +633,7 @@ fn live_loop_macos(
             PacketDecision::Rewrite(segments) => {
                 let mut ok = true;
                 for seg in &segments {
-                    if !transport.send(seg, &meta) {
+                    if transport.send(seg, &meta).is_err() {
                         ok = false;
                         break;
                     }
