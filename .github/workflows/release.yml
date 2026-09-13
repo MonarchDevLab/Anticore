@@ -148,6 +148,20 @@ jobs:
           $zipPath = "dist-portable/Anticore_${ver}_x64-portable.zip"
           Compress-Archive -Path "$pDir/*" -DestinationPath $zipPath -CompressionLevel Optimal
           gh release upload $ref $zipPath --clobber
+
+          $manifest = @{
+            version = $ver
+            notes = "Anticore $ref — macOS Sudoers NOPASSWD root, LaunchAgent, build-aware updates ve coklu mimari paketleri."
+            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_x64-setup.exe" }
+              "windows-x86_64-nsis" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_x64-setup.exe" }
+              "darwin-aarch64" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_arm64.pkg" }
+              "darwin-x86_64" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_x64.pkg" }
+            }
+          } | ConvertTo-Json -Depth 5
+          Set-Content -Path "latest.json" -Value $manifest -Encoding UTF8
+          gh release upload $ref "latest.json" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
