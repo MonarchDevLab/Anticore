@@ -573,7 +573,7 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
         silent_command(&motor.to_string_lossy())
     } else {
         let mut c = silent_command("sudo");
-        c.arg("-n").arg(&motor.to_string_lossy());
+        c.arg("-n").arg(&motor);
         c
     };
     #[cfg(not(target_os = "macos"))]
@@ -1694,13 +1694,12 @@ $list | ConvertTo-Json -Compress
         if let Ok(output) = std::process::Command::new("networksetup").arg("-listallhardwareports").output() {
             let text = String::from_utf8_lossy(&output.stdout);
             let mut cur_port = String::new();
-            let mut cur_device = String::new();
             for line in text.lines() {
                 let trimmed = line.trim();
                 if let Some(rest) = trimmed.strip_prefix("Hardware Port:") {
                     cur_port = rest.trim().to_string();
                 } else if let Some(rest) = trimmed.strip_prefix("Device:") {
-                    cur_device = rest.trim().to_string();
+                    let cur_device = rest.trim().to_string();
                     if !cur_port.is_empty() && !cur_device.is_empty() {
                         let mut v4_servers = Vec::new();
                         if let Ok(dns_out) = std::process::Command::new("networksetup").args(["-getdnsservers", &cur_port]).output() {
@@ -2477,6 +2476,7 @@ pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), 
     }
 
     // 7. Kendi kendini kaldırma / ikili dosya silme betiğini arka planda başlat
+    #[cfg(windows)]
     let current_exe = std::env::current_exe().ok();
     let app_pid = std::process::id();
 
@@ -3612,7 +3612,6 @@ pub fn get_system_hostname() -> String {
                 }
             }
         }
-        return "MacBook".to_string();
     }
 
     #[cfg(target_os = "linux")]
