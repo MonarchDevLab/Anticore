@@ -3043,15 +3043,24 @@ pub async fn install_update_direct(
     let temp_dir = std::env::temp_dir();
 
     let is_portable_exe = is_portable && (download_url.ends_with("Anticore.exe") || (!download_url.ends_with("-setup.exe") && download_url.ends_with(".exe")));
-    let target_file_path = if is_portable_exe {
-        temp_dir.join("Anticore_New_Update.exe")
+
+    let pid = std::process::id();
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis();
+
+    let filename = if is_portable_exe {
+        format!("Anticore_New_Update_{}_{}.exe", pid, ts)
     } else if download_url.ends_with(".pkg") {
-        temp_dir.join("Anticore_Update.pkg")
+        format!("Anticore_Update_{}_{}.pkg", pid, ts)
     } else if download_url.ends_with(".dmg") {
-        temp_dir.join("Anticore_Update.dmg")
+        format!("Anticore_Update_{}_{}.dmg", pid, ts)
     } else {
-        temp_dir.join("Anticore_Update_Setup.exe")
+        format!("Anticore_Update_Setup_{}_{}.exe", pid, ts)
     };
+
+    let mut target_file_path = temp_dir.join(&filename);
 
     let resp = ureq::get(&download_url)
         .set("User-Agent", &format!("Anticore-Desktop/{}", APP_VERSION))
@@ -3064,8 +3073,25 @@ pub async fn install_update_direct(
         .unwrap_or(0);
 
     let mut reader = resp.into_reader();
-    let mut file = std::fs::File::create(&target_file_path)
-        .map_err(|e| format!("Geçici dosya oluşturulamadı: {e}"))?;
+    let mut file = match std::fs::File::create(&target_file_path) {
+        Ok(f) => f,
+        Err(e) => {
+            // temp_dir izin kısıtlamasına takıldıysa app_cache_dir'e geç
+            if let Ok(cache) = app.path().app_cache_dir() {
+                let _ = std::fs::create_dir_all(&cache);
+                let fallback = cache.join(&filename);
+                match std::fs::File::create(&fallback) {
+                    Ok(f) => {
+                        target_file_path = fallback;
+                        f
+                    }
+                    Err(e2) => return Err(format!("Geçici dosya oluşturulamadı (İzin hatası: {e} / {e2})")),
+                }
+            } else {
+                return Err(format!("Geçici dosya oluşturulamadı (İzin hatası: {e})"));
+            }
+        }
+    };
 
     let mut buffer = [0u8; 64 * 1024];
     let mut downloaded: u64 = 0;
@@ -3093,6 +3119,12 @@ pub async fn install_update_direct(
     }
 
     drop(file);
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(&target_file_path, std::fs::Permissions::from_mode(0o644));
+    }
 
     // Motoru ve çalışan alt servisleri zarifçe kapat
     let _ = prepare_for_update(app.clone(), engine);
@@ -3138,13 +3170,14 @@ pub async fn install_update_direct(
                         let _ = silent_command("open")
                             .args(["-n", "/Applications/Anticore.app"])
                             .spawn();
+                        let _ = std::fs::remove_file(&target_file_path);
                         std::process::exit(0);
                     }
                 }
             }
 
             let script = format!(
-                "tell application \"System Events\" to activate\ndo shell script \"installer -pkg '{}' -target / && (sleep 1 && open -n /Applications/Anticore.app) &\" with administrator privileges",
+                "tell application \"System Events\" to activate\ndo shell script \"installer -pkg '{}' -target /\" with administrator privileges",
                 target_str
             );
             let status = std::process::Command::new("osascript")
@@ -3154,12 +3187,16 @@ pub async fn install_update_direct(
 
             if let Ok(st) = status {
                 if st.success() {
+                    let _ = silent_command("open")
+                        .args(["-n", "/Applications/Anticore.app"])
+                        .spawn();
+                    let _ = std::fs::remove_file(&target_file_path);
                     std::process::exit(0);
                 }
             }
-            return Err("macOS güncelleme paketi kurulamadı veya izin reddedildi.".into());
+            return Err("macOS güncelleme paketi kurulamadı veya sistem yönetici yetkisi verilmedi.".into());
         } else if target_str.ends_with(".dmg") {
-            let mount_dir = temp_dir.join("anticore_dmg_mount");
+            let mount_dir = temp_dir.join(format!("anticore_dmg_mount_{}_{}", pid, ts));
             let _ = std::fs::create_dir_all(&mount_dir);
             let mount_str = mount_dir.to_string_lossy().to_string();
             let attach = silent_command("hdiutil")
@@ -3181,6 +3218,8 @@ pub async fn install_update_direct(
                     let _ = silent_command("open")
                         .args(["-n", "/Applications/Anticore.app"])
                         .spawn();
+                    let _ = std::fs::remove_file(&target_file_path);
+                    let _ = std::fs::remove_dir_all(&mount_dir);
                     std::process::exit(0);
                 }
             }
@@ -3522,6 +3561,194 @@ pub struct SystemHardwareTelemetryDto {
     pub network_interface: Option<String>,
     pub link_speed_mbps: Option<u32>,
     pub mtu: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SystemNetworkTopologyDto {
+    pub gateway_ip: Option<String>,
+    pub gateway_mac: Option<String>,
+    pub modem_vendor: Option<String>,
+    pub local_ip: Option<String>,
+    pub dns_servers: Vec<String>,
+    pub connection_medium: String,
+    pub wifi_ssid: Option<String>,
+    pub wifi_signal_pct: Option<u32>,
+}
+
+fn resolve_oui_vendor(mac: &str) -> Option<String> {
+    let clean = mac.to_uppercase().replace(['-', ':'], "");
+    if clean.len() < 6 {
+        return None;
+    }
+    let prefix = &clean[..6];
+    match prefix {
+        // Keenetic
+        "F835DD" | "18E829" | "E4186B" | "50FF20" | "28285D" | "704D7B" => Some("Keenetic".into()),
+        // Huawei
+        "001E10" | "E0247F" | "04F938" | "ACE87B" | "4846FB" | "707BE8" | "200889" | "A47174" | "F46BEF" => Some("Huawei".into()),
+        // ZTE
+        "CC2D83" | "A0ECF9" | "54A703" | "2C957F" | "8C7967" | "90671C" | "D46E5C" | "702E22" => Some("ZTE".into()),
+        // TP-Link
+        "984827" | "C006C3" | "50D4F7" | "14CC20" | "54AF97" | "704F57" | "E848B8" | "30DE4B" | "B04E26" => Some("TP-Link".into()),
+        // ASUS
+        "04D4C4" | "F07959" | "2C4D54" | "AC9E17" | "107B44" | "40167E" | "BCEE7B" | "086266" => Some("ASUS".into()),
+        // Zyxel
+        "0019CB" | "404A03" | "AC6462" | "BCF685" | "0023F8" | "5CE28C" | "F81897" => Some("Zyxel".into()),
+        // Sagemcom
+        "001C28" | "E894F6" | "7C03D8" | "DC0856" | "8048A5" | "74888B" => Some("Sagemcom".into()),
+        // Netgear
+        "204E7F" | "C40415" | "9C3DCF" | "288088" | "A00460" => Some("Netgear".into()),
+        // MikroTik
+        "488F5A" | "6C3B6B" | "B869F4" | "CC2DE0" | "D4CA6D" | "789A18" => Some("MikroTik".into()),
+        // Ubiquiti
+        "0418D6" | "24A43C" | "68D79A" | "788A20" | "B4FBE4" | "E063DA" => Some("Ubiquiti".into()),
+        // AVM FRITZ!Box
+        "00040E" | "3431C4" | "3810D5" | "74427F" | "DC396F" => Some("AVM FRITZ!Box".into()),
+        _ => None,
+    }
+}
+
+#[tauri::command]
+pub fn get_system_network_topology() -> SystemNetworkTopologyDto {
+    let mut dto = SystemNetworkTopologyDto {
+        gateway_ip: None,
+        gateway_mac: None,
+        modem_vendor: None,
+        local_ip: None,
+        dns_servers: Vec::new(),
+        connection_medium: "Ethernet".into(),
+        wifi_ssid: None,
+        wifi_signal_pct: None,
+    };
+
+    #[cfg(windows)]
+    {
+        let script = r#"
+            $r = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1 NextHop, InterfaceAlias;
+            if ($r) {
+                $gw = $r.NextHop;
+                $n = Get-NetNeighbor -IPAddress $gw -ErrorAction SilentlyContinue | Select-Object -First 1 LinkLayerAddress;
+                $ip = Get-NetIPAddress -InterfaceAlias $r.InterfaceAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 IPAddress;
+                $dns = (Get-DnsClientServerAddress -InterfaceAlias $r.InterfaceAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses;
+                [PSCustomObject]@{
+                    GatewayIp = $gw;
+                    GatewayMac = if ($n) { $n.LinkLayerAddress } else { $null };
+                    LocalIp = if ($ip) { $ip.IPAddress } else { $null };
+                    DnsServers = $dns;
+                } | ConvertTo-Json -Compress
+            }
+        "#;
+        let out = run_powershell(script);
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&out) {
+            if let Some(gw) = val.get("GatewayIp").and_then(|v| v.as_str()) {
+                if !gw.is_empty() && gw != "0.0.0.0" {
+                    dto.gateway_ip = Some(gw.to_string());
+                }
+            }
+            if let Some(mac) = val.get("GatewayMac").and_then(|v| v.as_str()) {
+                let trimmed = mac.trim().replace('-', ":").to_uppercase();
+                if !trimmed.is_empty() && trimmed != "00:00:00:00:00:00" {
+                    dto.modem_vendor = resolve_oui_vendor(&trimmed);
+                    dto.gateway_mac = Some(trimmed);
+                }
+            }
+            if let Some(lip) = val.get("LocalIp").and_then(|v| v.as_str()) {
+                if !lip.is_empty() {
+                    dto.local_ip = Some(lip.to_string());
+                }
+            }
+            if let Some(dns_arr) = val.get("DnsServers").and_then(|v| v.as_array()) {
+                for d in dns_arr {
+                    if let Some(s) = d.as_str() {
+                        if !s.is_empty() && !dto.dns_servers.contains(&s.to_string()) {
+                            dto.dns_servers.push(s.to_string());
+                        }
+                    }
+                }
+            }
+        }
+
+        let wlan_out = run_powershell("netsh wlan show interfaces");
+        if !wlan_out.is_empty() && wlan_out.contains("SSID") {
+            for line in wlan_out.lines() {
+                let trimmed = line.trim();
+                if (trimmed.starts_with("SSID") || trimmed.starts_with("BSSID")) && !trimmed.starts_with("BSSID") {
+                    let parts: Vec<&str> = trimmed.splitn(2, ':').collect();
+                    if parts.len() == 2 {
+                        let ssid = parts[1].trim();
+                        if !ssid.is_empty() && ssid != "None" {
+                            dto.wifi_ssid = Some(ssid.to_string());
+                            dto.connection_medium = "Wi-Fi".into();
+                        }
+                    }
+                } else if trimmed.starts_with("Signal") || trimmed.starts_with("Sinyal") {
+                    let parts: Vec<&str> = trimmed.splitn(2, ':').collect();
+                    if parts.len() == 2 {
+                        let pct_str = parts[1].replace('%', "").trim().to_string();
+                        if let Ok(pct) = pct_str.parse::<u32>() {
+                            dto.wifi_signal_pct = Some(pct);
+                            dto.connection_medium = "Wi-Fi".into();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(out) = silent_command("route").args(["-n", "get", "default"]).output() {
+            let txt = String::from_utf8_lossy(&out.stdout);
+            for line in txt.lines() {
+                let t = line.trim();
+                if t.starts_with("gateway:") {
+                    let gw = t.replace("gateway:", "").trim().to_string();
+                    if !gw.is_empty() {
+                        dto.gateway_ip = Some(gw.clone());
+                        if let Ok(arp_out) = silent_command("arp").args(["-n", &gw]).output() {
+                            let arp_txt = String::from_utf8_lossy(&arp_out.stdout);
+                            for part in arp_txt.split_whitespace() {
+                                if part.contains(':') && part.len() >= 11 {
+                                    let mac = part.to_uppercase();
+                                    dto.modem_vendor = resolve_oui_vendor(&mac);
+                                    dto.gateway_mac = Some(mac);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if t.starts_with("interface:") {
+                    let iface = t.replace("interface:", "").trim().to_string();
+                    if iface.starts_with("en0") {
+                        dto.connection_medium = "Wi-Fi".into();
+                    }
+                    if let Ok(ip_out) = silent_command("ipconfig").args(["getifaddr", &iface]).output() {
+                        let ip = String::from_utf8_lossy(&ip_out.stdout).trim().to_string();
+                        if !ip.is_empty() {
+                            dto.local_ip = Some(ip);
+                        }
+                    }
+                }
+            }
+        }
+        if let Ok(dns_out) = silent_command("scutil").args(["--dns"]).output() {
+            let txt = String::from_utf8_lossy(&dns_out.stdout);
+            for line in txt.lines() {
+                if line.contains("nameserver[") {
+                    let parts: Vec<&str> = line.split(':').collect();
+                    if parts.len() >= 2 {
+                        let ip = parts[1].trim().to_string();
+                        if !ip.is_empty() && !dto.dns_servers.contains(&ip) {
+                            dto.dns_servers.push(ip);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    dto
 }
 
 #[tauri::command]

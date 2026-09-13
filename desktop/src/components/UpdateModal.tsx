@@ -215,49 +215,73 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
                 <AlertTriangle size={16} strokeWidth={2} />
                 <span>{t("update_modal_error")}</span>
               </div>
-              <p className="text-xs text-paper-muted leading-relaxed">
+              <p className="text-xs text-paper-muted leading-relaxed font-mono bg-black/25 p-2 rounded-lg border border-white/[0.04]">
                 {errorMsg || t("update_modal_error_sub")}
               </p>
 
-              {/* GitHub Token / Yetkilendirme Seçeneği */}
-              <div className="pt-2 border-t border-white/[0.08]">
-                {!showTokenField ? (
-                  <button
-                    onClick={() => setShowTokenField(true)}
-                    className="flex items-center gap-1.5 text-[11px] text-paper-muted hover:text-live transition-colors cursor-pointer"
-                  >
-                    <KeyRound size={12} />
-                    <span>
-                      {lang === "tr"
-                        ? "Özel GitHub Yetki Tokenı (Personal Access Token) Tanımla"
-                        : "Define Custom GitHub Personal Access Token (PAT)"}
-                    </span>
-                  </button>
-                ) : (
-                  <div className="space-y-2 mt-2">
-                    <label className="text-[10px] text-paper-muted block">
-                      {lang === "tr"
-                        ? "GitHub PAT (repo okuma izinli):"
-                        : "GitHub PAT (read:repo scope):"}
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="password"
-                        value={tokenInput}
-                        onChange={(e) => setTokenInput(e.target.value)}
-                        placeholder="ghp_xxxxxxxxxxxx"
-                        className="input text-xs py-1 px-2.5 flex-1 font-mono"
-                      />
-                      <button
-                        onClick={handleSaveToken}
-                        className="btn btn-secondary text-xs py-1 px-3"
-                      >
-                        {lang === "tr" ? "Kaydet ve Dene" : "Save & Retry"}
-                      </button>
+              {/* OS Yetki / Permission Rehberi */}
+              {errorMsg && (errorMsg.includes("13") || errorMsg.toLowerCase().includes("permission denied") || errorMsg.toLowerCase().includes("izin")) && (
+                <div className="p-2.5 rounded-lg bg-live/10 border border-live/25 text-live text-[11px] leading-relaxed">
+                  <p className="font-bold mb-0.5">
+                    {lang === "tr" ? "İşletim Sistemi Yönetici Yetkisi Gereklidir" : "Operating System Admin Rights Required"}
+                  </p>
+                  <p className="text-paper-muted">
+                    {lang === "tr"
+                      ? "macOS sisteminde paket kurulumu ve dosya güncellemesi için yönetici izni gereklidir. Sistem şifre sorduysa lütfen onaylayın veya aşağıdaki butonla kurulum paketini (.pkg) doğrudan indirip çalıştırın."
+                      : "Administrator permissions are required to install update packages on macOS. Please approve the system authorization dialog or download and run the .pkg installer directly below."}
+                  </p>
+                </div>
+              )}
+
+              {/* GitHub API Rate Limit durumunda Token Seçeneği */}
+              {Boolean(
+                errorMsg &&
+                  (errorMsg.toLowerCase().includes("rate limit") ||
+                   errorMsg.includes("403") ||
+                   errorMsg.includes("401") ||
+                   errorMsg.toLowerCase().includes("bad credentials") ||
+                   errorMsg.toLowerCase().includes("unauthorized") ||
+                   showTokenField)
+              ) && (
+                <div className="pt-2 border-t border-white/[0.08]">
+                  {!showTokenField ? (
+                    <button
+                      onClick={() => setShowTokenField(true)}
+                      className="flex items-center gap-1.5 text-[11px] text-paper-muted hover:text-live transition-colors cursor-pointer"
+                    >
+                      <KeyRound size={12} />
+                      <span>
+                        {lang === "tr"
+                          ? "GitHub İstek Limiti (403): Özel Yetki Tokenı Tanımla"
+                          : "GitHub Rate Limit (403): Define Personal Access Token"}
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="space-y-2 mt-2">
+                      <label className="text-[10px] text-paper-muted block">
+                        {lang === "tr"
+                          ? "GitHub PAT (isteğe bağlı, yalnızca hız limiti durumunda):"
+                          : "GitHub PAT (optional, only needed for rate limit):"}
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="password"
+                          value={tokenInput}
+                          onChange={(e) => setTokenInput(e.target.value)}
+                          placeholder="ghp_xxxxxxxxxxxx"
+                          className="input text-xs py-1 px-2.5 flex-1 font-mono"
+                        />
+                        <button
+                          onClick={handleSaveToken}
+                          className="btn btn-secondary text-xs py-1 px-3"
+                        >
+                          {lang === "tr" ? "Kaydet ve Dene" : "Save & Retry"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -312,6 +312,16 @@ class ConnectivitySyncService {
   private isProbing: boolean = false;
   private domainHitsBuffer: Map<string, { hitCount: number; category: string; txBytes: number; rxBytes: number }> = new Map();
 
+  private cachedNetworkTopology?: {
+    gatewayIp: string | null;
+    gatewayMac: string | null;
+    modemVendor: string | null;
+    localIp: string | null;
+    dnsServers: string[];
+    connectionMedium: string;
+    wifiSsid: string | null;
+    wifiSignalPct: number | null;
+  };
   private cachedHardwareSpecs?: {
     cpuModel: string | null;
     gpuModel: string | null;
@@ -344,11 +354,25 @@ class ConnectivitySyncService {
 
       // 2. PC Adını, Sürümü ve %100 GERÇEK Donanım/Ağ Telemetrisini Yerel Arka Uçtan (Tauri) Al
       try {
-        let [hostname, version, nativeHw] = await Promise.all([
+        let [hostname, version, nativeHw, nativeTopology] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
           api.getAppVersion().catch(() => '0.3.4'),
           api.getSystemTelemetryHardware().catch(() => null),
+          typeof api.getSystemNetworkTopology === 'function' ? api.getSystemNetworkTopology().catch(() => null) : Promise.resolve(null),
         ]);
+
+        if (nativeTopology) {
+          this.cachedNetworkTopology = {
+            gatewayIp: nativeTopology.gateway_ip || null,
+            gatewayMac: nativeTopology.gateway_mac || null,
+            modemVendor: nativeTopology.modem_vendor || null,
+            localIp: nativeTopology.local_ip || null,
+            dnsServers: nativeTopology.dns_servers || [],
+            connectionMedium: nativeTopology.connection_medium || 'Ethernet',
+            wifiSsid: nativeTopology.wifi_ssid || null,
+            wifiSignalPct: nativeTopology.wifi_signal_pct ?? null,
+          };
+        }
 
         if (nativeHw) {
           this.cachedHardwareSpecs = {
@@ -864,6 +888,7 @@ class ConnectivitySyncService {
         networkInterface: this.cachedHardwareSpecs?.networkInterface || netQuality.networkInterface || null,
         packetDropPct: netQuality.packetDropPct,
       },
+      networkTopology: this.cachedNetworkTopology || null,
       censorshipFingerprint,
       session: {
         sessionId: this.sessionId,

@@ -217,6 +217,7 @@ fn main() {
             commands::exit_app,
             commands::get_system_hostname,
             commands::get_system_telemetry_hardware,
+            commands::get_system_network_topology,
             commands::send_telemetry_beacon,
             commands::drain_captured_domains,
             tray::get_tray_minimize,

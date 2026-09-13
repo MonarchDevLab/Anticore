@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { check as checkPluginUpdate } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { isMac } from "./platform";
 
 export interface Status {
   running: boolean;
@@ -242,6 +243,17 @@ export const api = {
       link_speed_mbps: number | null;
       mtu: number | null;
     }>("get_system_telemetry_hardware"),
+  getSystemNetworkTopology: () =>
+    invoke<{
+      gateway_ip: string | null;
+      gateway_mac: string | null;
+      modem_vendor: string | null;
+      local_ip: string | null;
+      dns_servers: string[];
+      connection_medium: string;
+      wifi_ssid: string | null;
+      wifi_signal_pct: number | null;
+    }>("get_system_network_topology"),
   sendTelemetryBeacon: (payload: string, endpoint?: string) =>
     invoke<string>("send_telemetry_beacon", { payload, endpoint }),
   drainCapturedDomains: () =>
@@ -318,6 +330,40 @@ export async function downloadAndInstallUpdate(
   fallbackDownloadUrl?: string | null,
   onProgress?: (downloadedBytes: number, totalBytes: number) => void,
 ): Promise<void> {
+  // macOS üzerinde Tauri Plugin Updater yerine doğrudan yerel Installer (.pkg) akışını kullan.
+  // Tauri updater unprivileged modda /Applications/Anticore.app üzerine yazmaya çalışarak
+  // "os error 13 (Permission denied)" hatası verir. Doğrudan kurulum ise macOS yönetici
+  // yetkisiyle installer motorunu çalıştırır ve temiz güncelleme sağlar.
+  if (isMac) {
+    let targetUrl = fallbackDownloadUrl;
+    if (!targetUrl) {
+      try {
+        const info = await api.checkUpdate();
+        targetUrl = info.download_url;
+      } catch (err) {
+        throw new Error(`Güncelleme bağlantısı alınamadı: ${err}`);
+      }
+    }
+
+    if (!targetUrl) {
+      throw new Error("macOS güncelleme paketi indirme bağlantısı bulunamadı.");
+    }
+
+    let unlisten: (() => void) | undefined;
+    if (onProgress) {
+      unlisten = await onUpdateDownloadProgress((p) => {
+        onProgress(p.downloaded, p.total);
+      });
+    }
+
+    try {
+      await api.installUpdateDirect(targetUrl);
+    } finally {
+      unlisten?.();
+    }
+    return;
+  }
+
   let directFallbackNeeded = false;
   let tauriErr: unknown = null;
 
