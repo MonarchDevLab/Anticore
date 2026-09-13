@@ -179,6 +179,7 @@ export default function App() {
     connectivitySync.recordPageView(view);
   }, [view]);
 
+  useEffect(() => {
     setLogs([
       isMac
         ? `[i] Anticore hazır — macOS ağ çekirdeği bekleniyor`

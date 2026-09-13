@@ -113,15 +113,15 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
               <ShieldAlert size={18} aria-hidden strokeWidth={2} />
             </div>
             <div>
-              <h3 className="font-bold text-amber-300">{t("net_admin_required_title")}</h3>
-              <p className="text-paper-muted mt-0.5">{t("net_admin_required_desc")}</p>
+              <h3 className="font-bold text-amber-300">{isMac ? t("net_admin_required_title_mac") : t("net_admin_required_title")}</h3>
+              <p className="text-paper-muted mt-0.5">{isMac ? t("net_admin_required_desc_mac") : t("net_admin_required_desc")}</p>
             </div>
           </div>
           <button
             onClick={() => void api.restartAsAdmin()}
             className="btn btn-primary text-xs shrink-0 whitespace-nowrap bg-amber-600 hover:bg-amber-500 border-amber-500/40 text-black font-semibold cursor-pointer"
           >
-            {t("net_admin_restart_btn")}
+            {isMac ? t("net_admin_restart_btn_mac") : t("net_admin_restart_btn")}
           </button>
         </div>
       )}

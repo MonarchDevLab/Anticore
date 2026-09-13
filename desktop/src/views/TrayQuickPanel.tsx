@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { api, onStatusChange, type Profile, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
+import { isMac } from "../lib/platform";
 
 export default function TrayQuickPanel() {
   const [status, setStatus] = useState<Status | null>(null);
@@ -330,12 +331,15 @@ export default function TrayQuickPanel() {
           </div>
           {(topError.toLowerCase().includes("yönetici") ||
             topError.toLowerCase().includes("admin") ||
+            topError.toLowerCase().includes("root") ||
+            topError.toLowerCase().includes("operation not permitted") ||
+            topError.toLowerCase().includes("utun") ||
             topError.toLowerCase().includes("windivert")) && (
             <button
               onClick={() => void api.restartAsAdmin()}
               className="px-2 py-0.5 rounded bg-alert text-paper-bright text-[10px] font-bold shrink-0 hover:brightness-110 cursor-pointer"
             >
-              UAC
+              {isMac ? "ROOT" : "UAC"}
             </button>
           )}
         </div>
