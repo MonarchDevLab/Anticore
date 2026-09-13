@@ -192,7 +192,13 @@ export default function Titlebar({
         <span className="text-xs uppercase tracking-wider text-paper-muted">
           {!status ? ( <span>{lang === "tr" ? "Durum doğrulanamadı" : "Status unverified"}</span> ) : running ? (
             <span className="text-paper-bright">
-              <strong className="text-live font-bold">{t("status_active")}</strong> · {status?.profile_id || selectedProfile}
+              <strong className="text-live font-bold">{t("status_active")}</strong> · {
+                status?.profile_id === "detached"
+                  ? (lang === "tr" ? "Bağımsız" : "Detached")
+                  : status?.profile_id === "service"
+                  ? (lang === "tr" ? "Servis" : "Service")
+                  : (status?.profile_id || selectedProfile)
+              }
             </span>
           ) : (
             <span className="text-red-400 font-medium">

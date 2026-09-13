@@ -107,8 +107,11 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
     try {
       const initial = await api.getStatus();
       const wasRunning = initial.running;
-      const restoreProfile = wasRunning ? initial.profile_id : null;
-      const compareProfile = initial.profile_id || localStorage.getItem(LAST_PROFILE_KEY) || "universal";
+      const cleanProfile = (initial.profile_id && initial.profile_id !== "detached" && initial.profile_id !== "service")
+        ? initial.profile_id
+        : null;
+      const restoreProfile = wasRunning ? cleanProfile : null;
+      const compareProfile = cleanProfile || localStorage.getItem(LAST_PROFILE_KEY) || "universal";
 
       try {
         if (wasRunning) {

@@ -336,13 +336,13 @@ fn is_detached_running(app: &AppHandle) -> bool {
     };
 
     #[cfg(target_os = "macos")]
-    {
+    let alive = {
         let status = silent_command("ps").args(["-p", &pid.to_string()]).status();
         status.map(|s| s.success()).unwrap_or(false)
-    }
+    };
 
     #[cfg(not(target_os = "macos"))]
-    {
+    let alive = {
         silent_command("tasklist")
             .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
             .output()
@@ -351,7 +351,13 @@ fn is_detached_running(app: &AppHandle) -> bool {
                 out.contains("anticore")
             })
             .unwrap_or(false)
+    };
+
+    if !alive {
+        let _ = std::fs::remove_file(&pid_file);
+        let _ = std::fs::remove_file(app_dir(app).join("detached-stats.json"));
     }
+    alive
 }
 
 #[tauri::command]
@@ -566,8 +572,9 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     if is_detached_running(&app) {
         return Err("Bağımsız motor zaten çalışıyor.".into());
     } else {
-        // Eski/ölü PID dosyasını temizle
+        // Eski/ölü PID ve istatistik dosyasını temizle
         let _ = std::fs::remove_file(app_dir(&app).join("detached.pid"));
+        let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
     }
     resolve_steps(&app, &profile_id)?;
     if get_setup_status(app.clone())?.service_installed {
@@ -636,6 +643,9 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
         let _ = child.wait();
         format!("Motor PID kaydı yazılamadı: {e}")
     })?;
+    if let Ok(mut lock) = app.state::<Engine>().profile_id.lock() {
+        *lock = profile_id.clone();
+    }
     drop(child);
     app.emit(
         "log",
@@ -674,6 +684,7 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
             };
         }
         let _ = std::fs::remove_file(&pid_file);
+        let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
         app.emit("log", "[*] motor durduruldu".to_string()).ok();
         app.emit("status_changed", false).ok();
         return Ok(());
@@ -688,6 +699,7 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
         let out_str = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
         if out.status.success() || out_str.contains("bulunamadı") || out_str.to_lowercase().contains("not found") {
             let _ = std::fs::remove_file(&pid_file);
+            let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
             app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
             Ok(())
         } else {
@@ -847,23 +859,77 @@ pub fn get_status(app: AppHandle, engine: tauri::State<Engine>) -> StatusDto {
         .map(|p| p.clone())
         .unwrap_or_else(|_| "universal".into());
 
-    let profile_id = if panel_running {
-        safe_profile
-    } else if service_running {
-        "service".into()
+    let (profile_id, seen, touched, pass, uptime) = if panel_running {
+        (
+            safe_profile,
+            engine.stats.packets_seen.load(Ordering::Relaxed),
+            engine.stats.packets_touched.load(Ordering::Relaxed),
+            engine.stats.passthrough.load(Ordering::Relaxed),
+            engine.uptime_sec(),
+        )
     } else if detached_running {
-        "detached".into()
+        let stats_file = app_dir(&app).join("detached-stats.json");
+        let (file_prof, s, t, p, u) = if let Ok(content) = std::fs::read_to_string(&stats_file) {
+            #[derive(Deserialize)]
+            struct DetachedStats {
+                profile_id: Option<String>,
+                packets_seen: Option<u64>,
+                packets_touched: Option<u64>,
+                passthrough: Option<u64>,
+                uptime_sec: Option<u64>,
+            }
+            if let Ok(parsed) = serde_json::from_str::<DetachedStats>(&content) {
+                (
+                    parsed.profile_id.filter(|p| !p.is_empty() && p != "detached"),
+                    parsed.packets_seen.unwrap_or(0),
+                    parsed.packets_touched.unwrap_or(0),
+                    parsed.passthrough.unwrap_or(0),
+                    parsed.uptime_sec.unwrap_or(0),
+                )
+            } else {
+                (None, 0, 0, 0, 0)
+            }
+        } else {
+            (None, 0, 0, 0, 0)
+        };
+        (file_prof.unwrap_or(safe_profile), s, t, p, u)
+    } else if service_running {
+        let stats_file = app_dir(&app).join("detached-stats.json");
+        let (file_prof, s, t, p, u) = if let Ok(content) = std::fs::read_to_string(&stats_file) {
+            #[derive(Deserialize)]
+            struct DetachedStats {
+                profile_id: Option<String>,
+                packets_seen: Option<u64>,
+                packets_touched: Option<u64>,
+                passthrough: Option<u64>,
+                uptime_sec: Option<u64>,
+            }
+            if let Ok(parsed) = serde_json::from_str::<DetachedStats>(&content) {
+                (
+                    parsed.profile_id.filter(|p| !p.is_empty() && p != "service"),
+                    parsed.packets_seen.unwrap_or(0),
+                    parsed.packets_touched.unwrap_or(0),
+                    parsed.passthrough.unwrap_or(0),
+                    parsed.uptime_sec.unwrap_or(0),
+                )
+            } else {
+                (None, 0, 0, 0, 0)
+            }
+        } else {
+            (None, 0, 0, 0, 0)
+        };
+        (file_prof.unwrap_or_else(|| "service".into()), s, t, p, u)
     } else {
-        safe_profile
+        (safe_profile, 0, 0, 0, 0)
     };
 
     StatusDto {
         running,
         profile_id,
-        packets_seen: engine.stats.packets_seen.load(Ordering::Relaxed),
-        packets_touched: engine.stats.packets_touched.load(Ordering::Relaxed),
-        passthrough: engine.stats.passthrough.load(Ordering::Relaxed),
-        uptime_sec: engine.uptime_sec(),
+        packets_seen: seen,
+        packets_touched: touched,
+        passthrough: pass,
+        uptime_sec: uptime,
     }
 }
 
@@ -4383,5 +4449,24 @@ mod tests {
         assert_eq!(ts2 - ts1, 300);
         let ts_invalid = parse_iso_timestamp("invalid-date");
         assert_eq!(ts_invalid, 0);
+    }
+
+    #[test]
+    fn test_detached_stats_deserialization() {
+        #[derive(Deserialize, Serialize)]
+        struct DetachedStats {
+            profile_id: Option<String>,
+            packets_seen: Option<u64>,
+            packets_touched: Option<u64>,
+            passthrough: Option<u64>,
+            uptime_sec: Option<u64>,
+        }
+        let json_str = r#"{"profile_id":"universal","packets_seen":150,"packets_touched":25,"passthrough":125,"uptime_sec":42}"#;
+        let parsed: DetachedStats = serde_json::from_str(json_str).unwrap();
+        assert_eq!(parsed.profile_id.as_deref(), Some("universal"));
+        assert_eq!(parsed.packets_seen, Some(150));
+        assert_eq!(parsed.packets_touched, Some(25));
+        assert_eq!(parsed.passthrough, Some(125));
+        assert_eq!(parsed.uptime_sec, Some(42));
     }
 }

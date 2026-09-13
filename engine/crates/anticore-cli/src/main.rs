@@ -186,6 +186,8 @@ fn cmd_run(args: &[String]) -> Result<(), String> {
             .ok()
             .and_then(|p| p.parent().map(|d| d.to_path_buf()));
         live_loop(
+            &opts.profile_id,
+            opts.data_dir.as_deref(),
             &steps,
             &bl,
             dll_dir.as_deref(),
@@ -198,6 +200,8 @@ fn cmd_run(args: &[String]) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
         live_loop_macos(
+            &opts.profile_id,
+            opts.data_dir.as_deref(),
             &steps,
             &bl,
             opts.pasif_savunma,
@@ -223,6 +227,8 @@ fn cmd_dry_run(args: &[String]) -> Result<(), String> {
 
 #[cfg(windows)]
 fn live_loop(
+    profile_id: &str,
+    data_dir: Option<&Path>,
     steps: &[Step],
     blacklist: &Blacklist,
     dll_dir: Option<&Path>,
@@ -232,6 +238,8 @@ fn live_loop(
     stop_flag: Option<&std::sync::atomic::AtomicBool>,
 ) -> Result<(), String> {
     use anticore_transport_win::{WinDivert, WINDIVERT_FLAG_DROP};
+    use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+    use std::sync::Arc;
 
     println!("[*] WinDivert yükleniyor... (yönetici hakları gerekir)");
     let wd = std::sync::Arc::new(WinDivert::open(
@@ -270,6 +278,64 @@ fn live_loop(
 
     println!("[+] aktif. Ctrl+C ile durdurun.");
 
+    let seen = Arc::new(AtomicU64::new(0));
+    let touched = Arc::new(AtomicU64::new(0));
+    let passthrough = Arc::new(AtomicU64::new(0));
+    let stop_sync = Arc::new(AtomicBool::new(false));
+
+    let sync_worker = data_dir.map(|dir| {
+        let stats_path = dir.join("detached-stats.json");
+        let tmp_path = dir.join("detached-stats.json.tmp");
+        let profile = profile_id.to_string();
+        let started_at = std::time::Instant::now();
+        let seen_c = seen.clone();
+        let touched_c = touched.clone();
+        let pass_c = passthrough.clone();
+        let stop_c = stop_sync.clone();
+
+        let initial_json = serde_json::json!({
+            "profile_id": profile,
+            "packets_seen": 0,
+            "packets_touched": 0,
+            "passthrough": 0,
+            "uptime_sec": 0
+        });
+        if let Ok(serialized) = serde_json::to_string(&initial_json) {
+            if std::fs::write(&tmp_path, &serialized).is_ok() {
+                let _ = std::fs::rename(&tmp_path, &stats_path);
+            }
+        }
+
+        std::thread::Builder::new().name("anticore-stats-sync".into()).spawn(move || {
+            while !stop_c.load(Ordering::Relaxed) {
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                if stop_c.load(Ordering::Relaxed) {
+                    break;
+                }
+                let s = seen_c.load(Ordering::Relaxed);
+                let t = touched_c.load(Ordering::Relaxed);
+                let p = pass_c.load(Ordering::Relaxed);
+                let uptime = started_at.elapsed().as_secs();
+
+                let json = serde_json::json!({
+                    "profile_id": profile,
+                    "packets_seen": s,
+                    "packets_touched": t,
+                    "passthrough": p,
+                    "uptime_sec": uptime
+                });
+
+                if let Ok(serialized) = serde_json::to_string(&json) {
+                    if std::fs::write(&tmp_path, &serialized).is_ok() {
+                        let _ = std::fs::rename(&tmp_path, &stats_path);
+                    }
+                }
+            }
+            let _ = std::fs::remove_file(&stats_path);
+            let _ = std::fs::remove_file(&tmp_path);
+        })
+    });
+
     let mut buf = vec![0u8; 65_535];
     let mut consecutive_errors = 0u32;
     loop {
@@ -279,6 +345,10 @@ fn live_loop(
             }
             consecutive_errors += 1;
             if consecutive_errors > 100 {
+                stop_sync.store(true, Ordering::Relaxed);
+                if let Some(Ok(w)) = sync_worker {
+                    let _ = w.join();
+                }
                 return Err("WinDivert sürücü bağlantısı koptu (ardışık 100 recv hatası)".into());
             }
             // Sürücü/handle geçici hata verdi: 100% CPU spin yerine kısa
@@ -287,17 +357,32 @@ fn live_loop(
             continue;
         };
         consecutive_errors = 0;
+        seen.fetch_add(1, Ordering::Relaxed);
         let raw = &buf[..n];
         match anticore_core::dispatch::decide_packet(raw, blacklist, steps) {
-            anticore_core::dispatch::PacketDecision::Passthrough(_) => {
+            anticore_core::dispatch::PacketDecision::Passthrough(reason) => {
                 let _ = wd.send(raw, &addr);
+                if matches!(reason, anticore_core::dispatch::PassthroughReason::TooLarge | anticore_core::dispatch::PassthroughReason::NotTargeted) {
+                    passthrough.fetch_add(1, Ordering::Relaxed);
+                }
             }
             anticore_core::dispatch::PacketDecision::Rewrite(segments) => {
+                let mut ok = true;
                 for seg in &segments {
-                    let _ = wd.send(seg, &addr);
+                    if !wd.send(seg, &addr) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if ok {
+                    touched.fetch_add(1, Ordering::Relaxed);
                 }
             }
         }
+    }
+    stop_sync.store(true, Ordering::Relaxed);
+    if let Some(Ok(w)) = sync_worker {
+        let _ = w.join();
     }
     Ok(())
 }
@@ -404,7 +489,7 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
         .ok()
         .and_then(|p| p.parent().map(|d| d.to_path_buf()));
 
-    let exit_code = match live_loop(&steps, &bl, dll_dir.as_deref(), args.pasif_savunma, args.quic_engelle, args.lan_share, Some(&SERVICE_STOP_FLAG)) {
+    let exit_code = match live_loop(&profile_id, Some(&data_dir), &steps, &bl, dll_dir.as_deref(), args.pasif_savunma, args.quic_engelle, args.lan_share, Some(&SERVICE_STOP_FLAG)) {
         Ok(()) => 0,
         Err(e) => {
             eprintln!("motor hatası: {e}");
@@ -427,14 +512,18 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
 
 #[cfg(target_os = "macos")]
 fn live_loop_macos(
+    profile_id: &str,
+    data_dir: Option<&Path>,
     steps: &[Step],
     blacklist: &Blacklist,
     pasif_savunma: bool,
     quic_engelle: bool,
 ) -> Result<(), String> {
-    use anticore_core::dispatch::{decide_packet, PacketDecision};
+    use anticore_core::dispatch::{decide_packet, PacketDecision, PassthroughReason};
     use anticore_core::transport::PacketTransport;
     use anticore_transport_macos::UtunTransport;
+    use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+    use std::sync::Arc;
 
     println!("[*] macOS utun ve pfctl motoru yükleniyor (root yetkisi gerekir)...");
     let transport = UtunTransport::open(pasif_savunma, quic_engelle)?;
@@ -448,26 +537,109 @@ fn live_loop_macos(
 
     println!("[+] aktif. Ctrl+C ile durdurun.");
 
+    let seen = Arc::new(AtomicU64::new(0));
+    let touched = Arc::new(AtomicU64::new(0));
+    let passthrough = Arc::new(AtomicU64::new(0));
+    let stop_sync = Arc::new(AtomicBool::new(false));
+
+    let sync_worker = data_dir.map(|dir| {
+        let stats_path = dir.join("detached-stats.json");
+        let tmp_path = dir.join("detached-stats.json.tmp");
+        let profile = profile_id.to_string();
+        let started_at = std::time::Instant::now();
+        let seen_c = seen.clone();
+        let touched_c = touched.clone();
+        let pass_c = passthrough.clone();
+        let stop_c = stop_sync.clone();
+
+        let initial_json = serde_json::json!({
+            "profile_id": profile,
+            "packets_seen": 0,
+            "packets_touched": 0,
+            "passthrough": 0,
+            "uptime_sec": 0
+        });
+        if let Ok(serialized) = serde_json::to_string(&initial_json) {
+            if std::fs::write(&tmp_path, &serialized).is_ok() {
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let _ = std::fs::set_permissions(&tmp_path, std::fs::Permissions::from_mode(0o666));
+                }
+                let _ = std::fs::rename(&tmp_path, &stats_path);
+            }
+        }
+
+        std::thread::Builder::new().name("anticore-stats-sync".into()).spawn(move || {
+            while !stop_c.load(Ordering::Relaxed) {
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                if stop_c.load(Ordering::Relaxed) {
+                    break;
+                }
+                let s = seen_c.load(Ordering::Relaxed);
+                let t = touched_c.load(Ordering::Relaxed);
+                let p = pass_c.load(Ordering::Relaxed);
+                let uptime = started_at.elapsed().as_secs();
+
+                let json = serde_json::json!({
+                    "profile_id": profile,
+                    "packets_seen": s,
+                    "packets_touched": t,
+                    "passthrough": p,
+                    "uptime_sec": uptime
+                });
+
+                if let Ok(serialized) = serde_json::to_string(&json) {
+                    if std::fs::write(&tmp_path, &serialized).is_ok() {
+                        #[cfg(unix)]
+                        {
+                            use std::os::unix::fs::PermissionsExt;
+                            let _ = std::fs::set_permissions(&tmp_path, std::fs::Permissions::from_mode(0o666));
+                        }
+                        let _ = std::fs::rename(&tmp_path, &stats_path);
+                    }
+                }
+            }
+            let _ = std::fs::remove_file(&stats_path);
+            let _ = std::fs::remove_file(&tmp_path);
+        })
+    });
+
     let mut buf = vec![0u8; 65_535];
     let mut consecutive_errors = 0u32;
     loop {
         let Some((n, meta)) = transport.recv(&mut buf) else {
             consecutive_errors += 1;
             if consecutive_errors > 100 {
+                stop_sync.store(true, Ordering::Relaxed);
+                if let Some(Ok(w)) = sync_worker {
+                    let _ = w.join();
+                }
                 return Err("utun arabirim bağlantısı koptu (ardışık 100 recv hatası)".into());
             }
             std::thread::sleep(std::time::Duration::from_millis(50));
             continue;
         };
         consecutive_errors = 0;
+        seen.fetch_add(1, Ordering::Relaxed);
         let raw = &buf[..n];
         match decide_packet(raw, blacklist, steps) {
-            PacketDecision::Passthrough(_) => {
+            PacketDecision::Passthrough(reason) => {
                 let _ = transport.send(raw, &meta);
+                if matches!(reason, PassthroughReason::TooLarge | PassthroughReason::NotTargeted) {
+                    passthrough.fetch_add(1, Ordering::Relaxed);
+                }
             }
             PacketDecision::Rewrite(segments) => {
+                let mut ok = true;
                 for seg in &segments {
-                    let _ = transport.send(seg, &meta);
+                    if !transport.send(seg, &meta) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if ok {
+                    touched.fetch_add(1, Ordering::Relaxed);
                 }
             }
         }

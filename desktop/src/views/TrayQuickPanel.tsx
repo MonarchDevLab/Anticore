@@ -101,7 +101,7 @@ export default function TrayQuickPanel() {
               setPps(currentTouched - lastTouchedRef.current);
             }
             lastTouchedRef.current = currentTouched;
-            if (s.profile_id && s.profile_id !== selectedProfile) {
+            if (s.profile_id && s.profile_id !== "detached" && s.profile_id !== "service" && s.profile_id !== selectedProfile) {
               setSelectedProfile(s.profile_id);
               localStorage.setItem("anticore_last_profile", s.profile_id);
             }
@@ -398,7 +398,13 @@ export default function TrayQuickPanel() {
             {running ? t("qp_engine_active") : t("qp_engine_passive")}
           </span>
           <span className="text-[10px] text-paper-muted mt-0.5 font-medium">
-            {running ? `${lang === "tr" ? "Profil" : "Profile"}: ${currentProfileObj?.name || selectedProfile}` : (lang === "tr" ? "Tıkla ve Güvenle Bağlan" : "Click to Connect Safely")}
+            {running ? `${lang === "tr" ? "Profil" : "Profile"}: ${
+              selectedProfile === "detached" || status?.profile_id === "detached"
+                ? (lang === "tr" ? "Bağımsız" : "Detached")
+                : selectedProfile === "service" || status?.profile_id === "service"
+                ? (lang === "tr" ? "Servis" : "Service")
+                : (currentProfileObj?.name || selectedProfile)
+            }` : (lang === "tr" ? "Tıkla ve Güvenle Bağlan" : "Click to Connect Safely")}
           </span>
         </button>
       </div>
@@ -417,7 +423,11 @@ export default function TrayQuickPanel() {
           <div className="flex items-center gap-2 min-w-0">
             <Shield size={13} className={running ? "text-live" : "text-paper-muted"} />
             <span className="font-semibold truncate text-paper-bright">
-              {currentProfileObj?.name || selectedProfile}
+              {selectedProfile === "detached" || status?.profile_id === "detached"
+                ? (lang === "tr" ? "Bağımsız" : "Detached")
+                : selectedProfile === "service" || status?.profile_id === "service"
+                ? (lang === "tr" ? "Servis" : "Service")
+                : (currentProfileObj?.name || selectedProfile)}
             </span>
           </div>
           <ChevronDown
