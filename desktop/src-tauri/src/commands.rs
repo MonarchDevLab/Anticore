@@ -1158,25 +1158,55 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
         let exe_path = exe.to_string_lossy().to_string();
         let app_path = "/Applications/Anticore.app/Contents/MacOS/Anticore";
-        
-        let sudoers_entries = if exe_path == app_path {
-            format!("ALL ALL=(ALL) NOPASSWD: {app_path}\n")
-        } else {
-            format!("ALL ALL=(ALL) NOPASSWD: {app_path}\nALL ALL=(ALL) NOPASSWD: {exe_path}\n")
-        };
+        let cli_path = "/Applications/Anticore.app/Contents/MacOS/anticore-cli";
 
+        let safe_exe_path = exe_path.replace(' ', "\\ ");
+        let safe_app_path = app_path.replace(' ', "\\ ");
+        let safe_cli_path = cli_path.replace(' ', "\\ ");
+
+        // Sudoers kuralı:
+        // ÖNEMLİ: sudo, /etc/sudoers.d altındaki dosya adlarında '.' (nokta) bulunan dosyaları
+        // (örn. com.monolithworks.anticore) yoksayar. Bu nedenle dosya adı kesinlikle 'anticore' olmalıdır.
+        let mut extra_defaults = String::new();
+        if safe_exe_path != safe_app_path {
+            extra_defaults = format!(" && echo 'Defaults!{} env_keep += \"HOME USER LOGNAME DISPLAY XPC_FLAGS\"' >> /etc/sudoers.d/anticore", safe_exe_path);
+        }
+
+        // GUI uygulaması do shell script içerisinden ASLA arka planda çalıştırılmamalıdır;
+        // çünkü do shell script ortamının WindowServer (Aqua) bağlantısı yoktur ve uygulama anında çöker.
         let script = format!(
-            "do shell script \"mkdir -p /etc/sudoers.d && printf '{}' > /etc/sudoers.d/com.monolithworks.anticore && chmod 440 /etc/sudoers.d/com.monolithworks.anticore && sudo '{}' >/dev/null 2>&1 &\" with administrator privileges",
-            sudoers_entries.replace('\n', "\\n"),
-            exe_path
+            "tell application \"System Events\" to activate\n\
+            do shell script \"mkdir -p /etc/sudoers.d && \
+            rm -f /etc/sudoers.d/com.monolithworks.anticore && \
+            echo 'Defaults!{safe_app_path} env_keep += \\\"HOME USER LOGNAME DISPLAY XPC_FLAGS\\\"' > /etc/sudoers.d/anticore{extra_defaults} && \
+            echo 'ALL ALL=(ALL) NOPASSWD: {safe_app_path}, {safe_cli_path}, {safe_exe_path}, /usr/sbin/installer' >> /etc/sudoers.d/anticore && \
+            chmod 440 /etc/sudoers.d/anticore && \
+            (grep -q 'sudoers.d' /etc/sudoers || echo '#includedir /private/etc/sudoers.d' >> /etc/sudoers)\" with administrator privileges"
         );
+
         let status = std::process::Command::new("osascript")
             .args(["-e", &script])
             .status()
             .map_err(|e| format!("Yönetici yetkisi yükseltilemedi: {e}"))?;
+
         if !status.success() {
             return Err("Yönetici yetkisi verilmedi veya iptal edildi.".into());
         }
+
+        // Yetkilendirme başarılı oldu; şimdi mevcut GUI oturumundan uygulamayı root olarak başlat.
+        // Sudoers kuralı aktif olduğu için parola sorulmayacak, -E ile Aqua GUI oturumu korunacaktır.
+        let spawn_res = std::process::Command::new("sudo")
+            .arg("-E")
+            .arg(&exe_path)
+            .spawn();
+
+        if let Err(e) = spawn_res {
+            let _ = std::process::Command::new("open")
+                .args(["-n", &exe_path])
+                .spawn();
+            return Err(format!("Uygulama root olarak yeniden başlatılamadı ({e}). Lütfen Terminal'den 'sudo {exe_path}' komutunu çalıştırın."));
+        }
+
         app.exit(0);
         Ok(())
     }
@@ -2437,7 +2467,7 @@ pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), 
     #[cfg(target_os = "macos")]
     {
         let cmd = format!(
-            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore ~/Library/LaunchAgents/com.monolithworks.anticore.plist /etc/sudoers.d/com.monolithworks.anticore /var/log/anticore.*' >/dev/null 2>&1 &",
+            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore ~/Library/LaunchAgents/com.monolithworks.anticore.plist /etc/sudoers.d/anticore /etc/sudoers.d/com.monolithworks.anticore /var/log/anticore.*' >/dev/null 2>&1 &",
             app_pid
         );
         let _ = silent_command("sh").args(["-c", &cmd]).spawn();

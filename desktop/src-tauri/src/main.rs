@@ -87,6 +87,7 @@ fn main() {
                     if can_sudo {
                         let forwarded_args: Vec<String> = args.iter().skip(1).cloned().collect();
                         let spawn_res = std::process::Command::new("sudo")
+                            .arg("-E")
                             .arg(&exe)
                             .args(&forwarded_args)
                             .spawn();

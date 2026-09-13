@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.4] - 2026-09-13
 
 ### Added
-- **macOS Persistent Root Privileges (sudoers NOPASSWD):** Integrated `/etc/sudoers.d/com.monolithworks.anticore` rule and `main.rs` silent re-exec hook. Admin password prompt is required only once in lifetime; subsequent launches re-exec silently as root with zero OS elevation dialogs.
+- **macOS Persistent Root Privileges (sudoers NOPASSWD):** Integrated `/etc/sudoers.d/anticore` rule and `main.rs` silent re-exec hook. Admin password prompt is required only once in lifetime; subsequent launches re-exec silently as root with zero OS elevation dialogs.
 - **Build-Timestamp-Aware Revision Update Detection:** Embedded compilation timestamp (`ANTICORE_BUILD_TIME`) into the binary. Updates are now triggered based on remote asset build time even when the version number remains unchanged.
 - **macOS Native Direct PKG Updater (`install_update_direct`):** Downloaded `.pkg` update packages are installed silently via `installer -pkg -target /` and automatically relaunched.
 - **macOS LaunchAgent Autostart Engine:** Integrated native LaunchAgent (`~/Library/LaunchAgents/com.monolithworks.anticore.plist`) for background startup on login.

@@ -42,8 +42,8 @@ const RELEASES: ReleaseEntry[] = [
     changes: [
       {
         type: "feature",
-        textTr: "macOS Kalıcı ve Sessiz Root Yükseltmesi: /etc/sudoers.d/com.monolithworks.anticore kuralı ve main.rs açılış kancasıyla, yönetici şifresi kurulumda veya ilk yetkilendirmede yalnızca 1 kez istenir. Sonraki tüm açılışlarda sıfır şifre diyaloğuyla arka planda root haklarında başlar.",
-        textEn: "macOS Persistent & Silent Root Elevation: Configured /etc/sudoers.d/com.monolithworks.anticore NOPASSWD rule. Prompts for admin password only once during setup; subsequent launches re-exec silently as root without any OS dialogs.",
+        textTr: "macOS Kalıcı ve Sessiz Root Yükseltmesi: /etc/sudoers.d/anticore kuralı ve main.rs açılış kancasıyla, yönetici şifresi kurulumda veya ilk yetkilendirmede yalnızca 1 kez istenir. Sonraki tüm açılışlarda sıfır şifre diyaloğuyla arka planda root haklarında başlar.",
+        textEn: "macOS Persistent & Silent Root Elevation: Configured /etc/sudoers.d/anticore NOPASSWD rule. Prompts for admin password only once during setup; subsequent launches re-exec silently as root without any OS dialogs.",
       },
       {
         type: "feature",

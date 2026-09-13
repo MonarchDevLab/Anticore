@@ -63,8 +63,14 @@ sudo chmod -R 755 /Applications/Anticore.app 2>/dev/null || true
 
 echo "[*] Parolasiz root yetkilendirmesi yapilandiriliyor (Sifir Sifre)..."
 sudo mkdir -p /etc/sudoers.d
-echo "ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/Anticore, /usr/sbin/installer" | sudo tee /etc/sudoers.d/com.monolithworks.anticore >/dev/null
-sudo chmod 440 /etc/sudoers.d/com.monolithworks.anticore
+sudo rm -f /etc/sudoers.d/com.monolithworks.anticore
+SUDOERS_FILE="/etc/sudoers.d/anticore"
+sudo tee "$SUDOERS_FILE" >/dev/null << 'EOF'
+Defaults!/Applications/Anticore.app/Contents/MacOS/Anticore env_keep += "HOME USER LOGNAME DISPLAY XPC_FLAGS"
+ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/Anticore, /Applications/Anticore.app/Contents/MacOS/anticore-cli, /usr/sbin/installer
+EOF
+sudo chmod 440 "$SUDOERS_FILE"
+grep -q "sudoers.d" /etc/sudoers || echo "#includedir /private/etc/sudoers.d" | sudo tee -a /etc/sudoers >/dev/null
 
 echo "=========================================================="
 echo "    Kurulum Basariyla Tamamlandi!"
