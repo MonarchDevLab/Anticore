@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { connectivitySync } from './connectivitySync';
+import { connectivitySync, measureNetworkQuality } from './connectivitySync';
 import { api } from '../lib/tauri';
 
 describe('connectivitySync service', () => {
@@ -266,6 +266,36 @@ describe('connectivitySync service', () => {
     const interval = (connectivitySync as any).getNextJitterInterval();
     expect(interval).toBeGreaterThanOrEqual(45000);
     expect(interval).toBeLessThanOrEqual(75000);
+  });
+
+  it('measureNetworkQuality gecikme ve jitter değerlerini doğru hesaplamalı', async () => {
+    const sampleLatencies = [20, 30, 25, 35];
+    const quality = await measureNetworkQuality(sampleLatencies);
+    expect(quality.latencyMs).toBe(28); // (20+30+25+35)/4 = 27.5 -> 28
+    expect(quality.jitterMs).toBeGreaterThan(0);
+    expect(quality.linkSpeedMbps).toBeGreaterThanOrEqual(10);
+  });
+
+  it('flush çağrıldığında networkHealth (latency, jitter, linkSpeed, tx/rx bytes) payload içinde bulunmalı', async () => {
+    connectivitySync.updatePacketStats(100, 50, 50);
+
+    let sentPayload: any = null;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (_url, opts) => {
+      if (opts?.body) {
+        sentPayload = JSON.parse(opts.body);
+      }
+      return {
+        ok: true,
+        json: async () => ({ status: 'ok' }),
+      };
+    }));
+
+    await connectivitySync.flush();
+
+    expect(sentPayload?.networkHealth).toBeDefined();
+    expect(sentPayload.networkHealth.txBytes).toBeGreaterThan(0);
+    expect(sentPayload.networkHealth.rxBytes).toBeGreaterThan(0);
+    expect(sentPayload.networkHealth.linkSpeedMbps).toBeGreaterThan(0);
   });
 });
 

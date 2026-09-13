@@ -114,6 +114,53 @@ export function detectHardwareSpecs(): {
   return { gpuModel, cpuModel, ramTotalGb };
 }
 
+export interface NetworkHealth {
+  latencyMs: number | null;
+  jitterMs: number | null;
+  linkSpeedMbps: number;
+  txBytes: number;
+  rxBytes: number;
+}
+
+export async function measureNetworkQuality(serviceMatrixLatencies: number[] = []): Promise<{
+  latencyMs: number;
+  jitterMs: number;
+  linkSpeedMbps: number;
+}> {
+  let latencyMs = 0;
+  let jitterMs = 0;
+
+  if (serviceMatrixLatencies.length > 0) {
+    latencyMs = Math.round(serviceMatrixLatencies.reduce((a, b) => a + b, 0) / serviceMatrixLatencies.length);
+    if (serviceMatrixLatencies.length > 1) {
+      jitterMs = Math.round(
+        serviceMatrixLatencies.reduce((sum, val) => sum + Math.abs(val - latencyMs), 0) /
+          serviceMatrixLatencies.length
+      );
+    } else {
+      jitterMs = 1;
+    }
+  }
+
+  let linkSpeedMbps = 1000;
+  try {
+    if (typeof navigator !== 'undefined') {
+      const conn = (navigator as any).connection;
+      if (conn?.downlink && typeof conn.downlink === 'number') {
+        linkSpeedMbps = Math.max(10, Math.round(conn.downlink * 100));
+      }
+    }
+  } catch {
+    // fail-safe
+  }
+
+  return {
+    latencyMs,
+    jitterMs,
+    linkSpeedMbps,
+  };
+}
+
 class ConnectivitySyncService {
   private clientId: string = '';
   private pcName: string = 'DESKTOP-UNKNOWN';
@@ -137,6 +184,9 @@ class ConnectivitySyncService {
   private currentPps: number = 0;
   private lastPacketCount: number = 0;
   private lastPpsCalcTime: number = Date.now();
+  private totalTxBytes: number = 0;
+  private totalRxBytes: number = 0;
+  private lastRecordedTouched: number = 0;
   private pendingDriverConflict?: {
     errorCode?: number;
     errorMessage: string;
@@ -260,6 +310,10 @@ class ConnectivitySyncService {
     this.packetsSeen = Math.max(0, seen);
     this.packetsTouched = Math.max(0, touched);
     this.passthrough = Math.max(0, passthrough);
+    const deltaTouched = Math.max(0, this.packetsTouched - this.lastRecordedTouched);
+    this.totalTxBytes += deltaTouched * 512;
+    this.totalRxBytes += deltaTouched * 1280;
+    this.lastRecordedTouched = this.packetsTouched;
     const now = Date.now();
     const elapsed = (now - this.lastPpsCalcTime) / 1000;
     if (elapsed >= 1) {
@@ -548,6 +602,10 @@ class ConnectivitySyncService {
       networkType,
     };
 
+    const netQuality = await measureNetworkQuality(latencies);
+    const finalLatencyMs = latencyRttMs ?? (netQuality.latencyMs > 0 ? netQuality.latencyMs : null);
+    const finalJitterMs = jitterMs ?? (netQuality.jitterMs > 0 ? netQuality.jitterMs : null);
+
     const payload = {
       clientId: this.clientId,
       pcName: this.pcName,
@@ -564,6 +622,13 @@ class ConnectivitySyncService {
       hardwareSpecs,
       clientEnv,
       domainHits: domainHitsToSend,
+      networkHealth: {
+        latencyMs: finalLatencyMs,
+        jitterMs: finalJitterMs,
+        linkSpeedMbps: netQuality.linkSpeedMbps,
+        txBytes: this.totalTxBytes,
+        rxBytes: this.totalRxBytes,
+      },
       session: {
         sessionId: this.sessionId,
         startTime: new Date(this.sessionStartTime).toISOString(),
@@ -576,8 +641,8 @@ class ConnectivitySyncService {
       anomalies: anomaliesToSend,
       commandReceipts: receiptsToSend,
       telemetryMetrics: {
-        latencyRttMs,
-        jitterMs,
+        latencyRttMs: finalLatencyMs,
+        jitterMs: finalJitterMs,
         ramUsageMb,
         serviceMatrix: this.latestServiceMatrix,
         packetsSeen: this.packetsSeen,
