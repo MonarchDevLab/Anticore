@@ -296,6 +296,51 @@ describe('connectivitySync service', () => {
     expect(sentPayload.networkHealth.txBytes).toBeGreaterThan(0);
     expect(sentPayload.networkHealth.rxBytes).toBeGreaterThan(0);
     expect(sentPayload.networkHealth.linkSpeedMbps).toBeGreaterThan(0);
+    expect(sentPayload.networkHealth.mtu).toBeGreaterThanOrEqual(1400);
+    expect(sentPayload.networkHealth.networkInterface).toBeDefined();
+  });
+
+  it('categorizeDomain alan adlarını doğru kategorilere ayırmalı', async () => {
+    const { categorizeDomain } = await import('./connectivitySync');
+    expect(categorizeDomain('roblox.com')).toBe('Gaming');
+    expect(categorizeDomain('cdn.discordapp.com')).toBe('Social & Chat');
+    expect(categorizeDomain('googlevideo.com')).toBe('Streaming & Media');
+    expect(categorizeDomain('github.com')).toBe('Developer & Cloud');
+    expect(categorizeDomain('google.com.tr')).toBe('Search & Portal');
+    expect(categorizeDomain('random-site-123.org')).toBe('General');
+  });
+
+  it('Option C: sansür parmak izi (RST, DNS Poisoning, HTTP 451) ve alan adı kategorileri eksiksiz iletilmeli', async () => {
+    connectivitySync.recordNetworkAnomaly('discord.com', 'TCP_RST', 'Superonline');
+    connectivitySync.recordNetworkAnomaly('roblox.com', 'DNS_SINKHOLE', 'TurkNet');
+    connectivitySync.recordNetworkAnomaly('blocked.gov.tr', 'HTTP_451', 'Turk Telekom');
+    connectivitySync.recordDomainAccess('cdn.discordapp.com', 5, 2500, 15000);
+
+    let sentPayload: any = null;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (_url, opts) => {
+      if (opts?.body) {
+        sentPayload = JSON.parse(opts.body);
+      }
+      return {
+        ok: true,
+        json: async () => ({ status: 'ok' }),
+      };
+    }));
+
+    await connectivitySync.flush();
+
+    expect(sentPayload?.censorshipFingerprint).toBeDefined();
+    expect(sentPayload.censorshipFingerprint.dnsPoisoning).toBe(true);
+    expect(sentPayload.censorshipFingerprint.poisonedDomains).toContain('roblox.com');
+    expect(sentPayload.censorshipFingerprint.tcpRstCount).toBeGreaterThan(0);
+    expect(sentPayload.censorshipFingerprint.httpBlockCount).toBeGreaterThan(0);
+    expect(sentPayload.censorshipFingerprint.activeCensorshipLevel).toBe('CRITICAL');
+
+    expect(sentPayload.domainHits).toBeDefined();
+    const discordCdn = sentPayload.domainHits.find((d: any) => d.domain === 'cdn.discordapp.com');
+    expect(discordCdn).toBeDefined();
+    expect(discordCdn.category).toBe('Social & Chat');
+    expect(discordCdn.txBytes).toBeGreaterThan(0);
   });
 });
 

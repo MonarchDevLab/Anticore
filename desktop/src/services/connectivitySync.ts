@@ -47,10 +47,80 @@ export interface ServiceProbeItem {
 
 const CRITICAL_PROBE_TARGETS = [
   { id: 'discord', host: 'discord.com' },
+  { id: 'discord_voice', host: 'rotterdam.discord.gg' },
   { id: 'roblox', host: 'roblox.com' },
+  { id: 'roblox_cdn', host: 'assetdelivery.roblox.com' },
   { id: 'youtube', host: 'youtube.com' },
+  { id: 'youtube_cdn', host: 'googlevideo.com' },
   { id: 'twitch', host: 'twitch.tv' },
+  { id: 'twitch_stream', host: 'usher.ttvnw.net' },
 ];
+
+export function categorizeDomain(domain: string): string {
+  if (!domain || typeof domain !== 'string') return 'General';
+  const d = domain.toLowerCase();
+  if (
+    d.includes('roblox') ||
+    d.includes('steam') ||
+    d.includes('epicgames') ||
+    d.includes('riotgames') ||
+    d.includes('valve') ||
+    d.includes('ea.com') ||
+    d.includes('blizzard') ||
+    d.includes('minecraft') ||
+    d.includes('ubisoft')
+  ) {
+    return 'Gaming';
+  }
+  if (
+    d.includes('discord') ||
+    d.includes('twitter') ||
+    d.includes('x.com') ||
+    d.includes('instagram') ||
+    d.includes('reddit') ||
+    d.includes('telegram') ||
+    d.includes('whatsapp') ||
+    d.includes('tiktok') ||
+    d.includes('facebook')
+  ) {
+    return 'Social & Chat';
+  }
+  if (
+    d.includes('youtube') ||
+    d.includes('googlevideo') ||
+    d.includes('ytimg') ||
+    d.includes('twitch') ||
+    d.includes('ttvnw') ||
+    d.includes('netflix') ||
+    d.includes('spotify') ||
+    d.includes('kick.com') ||
+    d.includes('vimeo')
+  ) {
+    return 'Streaming & Media';
+  }
+  if (
+    d.includes('github') ||
+    d.includes('gitlab') ||
+    d.includes('cloudflare') ||
+    d.includes('aws.') ||
+    d.includes('azure') ||
+    d.includes('stackoverflow') ||
+    d.includes('npmjs') ||
+    d.includes('docker')
+  ) {
+    return 'Developer & Cloud';
+  }
+  if (
+    d.includes('google') ||
+    d.includes('bing') ||
+    d.includes('yandex') ||
+    d.includes('duckduckgo') ||
+    d.includes('yahoo')
+  ) {
+    return 'Search & Portal';
+  }
+  return 'General';
+}
 
 interface CommandReceipt {
   commandId: string;
@@ -120,12 +190,23 @@ export interface NetworkHealth {
   linkSpeedMbps: number;
   txBytes: number;
   rxBytes: number;
+  mtu: number;
+  networkInterface: string;
+  packetDropPct: number;
 }
 
-export async function measureNetworkQuality(serviceMatrixLatencies: number[] = []): Promise<{
+export async function measureNetworkQuality(
+  serviceMatrixLatencies: number[] = [],
+  seenPackets: number = 0,
+  touchedPackets: number = 0,
+  passthroughPackets: number = 0
+): Promise<{
   latencyMs: number;
   jitterMs: number;
   linkSpeedMbps: number;
+  mtu: number;
+  networkInterface: string;
+  packetDropPct: number;
 }> {
   let latencyMs = 0;
   let jitterMs = 0;
@@ -143,21 +224,45 @@ export async function measureNetworkQuality(serviceMatrixLatencies: number[] = [
   }
 
   let linkSpeedMbps = 1000;
+  let networkInterface = 'Ethernet / LAN';
+  let mtu = 1500;
+
   try {
     if (typeof navigator !== 'undefined') {
       const conn = (navigator as any).connection;
       if (conn?.downlink && typeof conn.downlink === 'number') {
         linkSpeedMbps = Math.max(10, Math.round(conn.downlink * 100));
       }
+      if (conn?.type) {
+        if (conn.type === 'wifi') {
+          networkInterface = 'Wi-Fi 802.11ax/ac';
+          mtu = 1500;
+        } else if (conn.type === 'cellular') {
+          networkInterface = 'Cellular / 4G-5G';
+          mtu = 1420;
+        } else if (conn.type === 'ethernet') {
+          networkInterface = 'Ethernet GbE';
+          mtu = 1500;
+        }
+      }
     }
   } catch {
     // fail-safe
+  }
+
+  let packetDropPct = 0;
+  if (seenPackets > 0) {
+    const dropped = Math.max(0, seenPackets - touchedPackets - passthroughPackets);
+    packetDropPct = Math.round((dropped / seenPackets) * 1000) / 10;
   }
 
   return {
     latencyMs,
     jitterMs,
     linkSpeedMbps,
+    mtu,
+    networkInterface,
+    packetDropPct,
   };
 }
 
@@ -193,13 +298,19 @@ class ConnectivitySyncService {
     antivirusHint?: string;
   };
 
+  private tcpRstCount: number = 0;
+  private httpBlockCount: number = 0;
+  private isDnsPoisoned: boolean = false;
+  private poisonedDomains: string[] = [];
+  private driverQueueDrops: number = 0;
+
   private commandReceipts: CommandReceipt[] = [];
   private rollbackTimer: any = null;
   private latestServiceMatrix: Record<string, ServiceProbeItem> = {};
   private probeTimer: any = null;
   private jitterTimer: any = null;
   private isProbing: boolean = false;
-  private domainHitsBuffer: Map<string, number> = new Map();
+  private domainHitsBuffer: Map<string, { hitCount: number; category: string; txBytes: number; rxBytes: number }> = new Map();
 
   private eventQueue: SyncEvent[] = [];
   private anomalyQueue: AnomalyRecord[] = [];
@@ -380,7 +491,7 @@ class ConnectivitySyncService {
     }
   }
 
-  public recordDomainAccess(domain: string, hitCount: number = 1) {
+  public recordDomainAccess(domain: string, hitCount: number = 1, txBytes: number = 0, rxBytes: number = 0) {
     try {
       if (!domain || typeof domain !== 'string') return;
       const clean = domain
@@ -391,8 +502,19 @@ class ConnectivitySyncService {
         .split(':')[0];
       if (!clean || clean.length < 3 || clean.includes('localhost') || clean.includes('127.0.0.1')) return;
 
-      const current = this.domainHitsBuffer.get(clean) || 0;
-      this.domainHitsBuffer.set(clean, current + Math.max(1, hitCount));
+      const existing = this.domainHitsBuffer.get(clean) || {
+        hitCount: 0,
+        category: categorizeDomain(clean),
+        txBytes: 0,
+        rxBytes: 0,
+      };
+
+      this.domainHitsBuffer.set(clean, {
+        hitCount: existing.hitCount + Math.max(1, hitCount),
+        category: existing.category || categorizeDomain(clean),
+        txBytes: existing.txBytes + Math.max(0, txBytes || (hitCount * 512)),
+        rxBytes: existing.rxBytes + Math.max(0, rxBytes || (hitCount * 1280)),
+      });
     } catch {
       // fail-safe
     }
@@ -406,6 +528,17 @@ class ConnectivitySyncService {
     try {
       if (!domain || domain.trim().length === 0) return;
       const clean = domain.trim().toLowerCase();
+
+      if (interferenceType === 'TCP_RST') {
+        this.tcpRstCount++;
+      } else if (interferenceType === 'HTTP_451') {
+        this.httpBlockCount++;
+      } else if (interferenceType === 'DNS_SINKHOLE') {
+        this.isDnsPoisoned = true;
+        if (!this.poisonedDomains.includes(clean)) {
+          this.poisonedDomains.push(clean);
+        }
+      }
 
       // İlgili domain için erişim sayacını artır
       this.recordDomainAccess(clean, 1);
@@ -477,8 +610,18 @@ class ConnectivitySyncService {
             status = 'OPEN';
           } else if (resUpper.includes('RST') || resUpper.includes('RESET') || resUpper.includes('BLOCKED')) {
             status = 'BLOCKED_RST';
+            this.tcpRstCount++;
           } else if (resUpper.includes('TIMEOUT') || resUpper.includes('FILTER')) {
             status = 'FILTERED_TIMEOUT';
+          } else if (resUpper.includes('451') || resUpper.includes('TIB')) {
+            status = 'BLOCKED_RST';
+            this.httpBlockCount++;
+          } else if (resUpper.includes('SINKHOLE') || resUpper.includes('POISON')) {
+            status = 'BLOCKED_RST';
+            this.isDnsPoisoned = true;
+            if (!this.poisonedDomains.includes(target.host)) {
+              this.poisonedDomains.push(target.host);
+            }
           } else {
             status = 'ERROR';
           }
@@ -579,9 +722,21 @@ class ConnectivitySyncService {
       // fail-safe
     }
 
-    const domainHitsToSend: Array<{ domain: string; hitCount: number }> = [];
-    for (const [domain, hitCount] of this.domainHitsBuffer.entries()) {
-      domainHitsToSend.push({ domain, hitCount });
+    const domainHitsToSend: Array<{
+      domain: string;
+      category: string;
+      txBytes: number;
+      rxBytes: number;
+      hitCount: number;
+    }> = [];
+    for (const [domain, stats] of this.domainHitsBuffer.entries()) {
+      domainHitsToSend.push({
+        domain,
+        category: stats.category,
+        txBytes: stats.txBytes,
+        rxBytes: stats.rxBytes,
+        hitCount: stats.hitCount,
+      });
     }
     this.domainHitsBuffer.clear();
 
@@ -602,9 +757,36 @@ class ConnectivitySyncService {
       networkType,
     };
 
-    const netQuality = await measureNetworkQuality(latencies);
+    const netQuality = await measureNetworkQuality(
+      latencies,
+      this.packetsSeen,
+      this.packetsTouched,
+      this.passthrough
+    );
     const finalLatencyMs = latencyRttMs ?? (netQuality.latencyMs > 0 ? netQuality.latencyMs : null);
     const finalJitterMs = jitterMs ?? (netQuality.jitterMs > 0 ? netQuality.jitterMs : null);
+
+    let activeCensorshipLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+    if (this.isDnsPoisoned || this.tcpRstCount > 20 || this.httpBlockCount > 5) {
+      activeCensorshipLevel = 'CRITICAL';
+    } else if (this.tcpRstCount > 5 || this.httpBlockCount > 0) {
+      activeCensorshipLevel = 'HIGH';
+    } else if (this.tcpRstCount > 0) {
+      activeCensorshipLevel = 'MEDIUM';
+    }
+
+    const censorshipFingerprint = {
+      dnsPoisoning: this.isDnsPoisoned,
+      poisonedDomains: [...this.poisonedDomains],
+      tcpRstCount: this.tcpRstCount,
+      httpBlockCount: this.httpBlockCount,
+      activeCensorshipLevel,
+      details: {
+        lastProbedAt: new Date().toISOString(),
+      },
+    };
+
+    const windivertCpuPct = Math.min(100, Math.round((this.currentPps / 5000) * 100) / 10);
 
     const payload = {
       clientId: this.clientId,
@@ -628,7 +810,11 @@ class ConnectivitySyncService {
         linkSpeedMbps: netQuality.linkSpeedMbps,
         txBytes: this.totalTxBytes,
         rxBytes: this.totalRxBytes,
+        mtu: netQuality.mtu,
+        networkInterface: netQuality.networkInterface,
+        packetDropPct: netQuality.packetDropPct,
       },
+      censorshipFingerprint,
       session: {
         sessionId: this.sessionId,
         startTime: new Date(this.sessionStartTime).toISOString(),
@@ -649,6 +835,8 @@ class ConnectivitySyncService {
         packetsTouched: this.packetsTouched,
         passthrough: this.passthrough,
         pps: this.currentPps,
+        driverQueueDrops: this.driverQueueDrops,
+        windivertCpuPct,
       },
     };
 
