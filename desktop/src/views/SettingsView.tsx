@@ -293,7 +293,7 @@ export default function SettingsView({
     try {
       await api.testUpdateNotification();
       setTestNotifState("sent");
-      onSimulateUpdate?.("0.3.3");
+      onSimulateUpdate?.("0.3.4");
       pushLog("[+] Test bildirimi gönderildi ve arayüz bildirim bandı tetiklendi.");
       setTimeout(() => setTestNotifState("idle"), 3500);
     } catch (e) {

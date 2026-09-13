@@ -2694,7 +2694,7 @@ pub fn is_current_app_portable() -> bool {
     false
 }
 
-pub const APP_VERSION: &str = "0.3.3";
+pub const APP_VERSION: &str = "0.3.4";
 
 #[tauri::command]
 pub fn get_app_version() -> String {

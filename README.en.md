@@ -59,7 +59,7 @@
 
 ---
 
-## Download Options (v0.3.3)
+## Download Options (v0.3.4)
 
 All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
@@ -68,53 +68,53 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     <tr>
       <th width="33.3%" align="center">
         <img src="https://img.shields.io/badge/01-PORTABLE_ZIP-20ffa0?style=for-the-badge&labelColor=08090D" alt="Portable" /><br /><br />
-        <b>Portable Edition</b><br />
-        <sub>Most Popular • Zero Footprint</sub>
+        <b>Portable / Zero-Install</b><br />
+        <sub>Most Popular • Zero Registry</sub>
       </th>
       <th width="33.3%" align="center">
         <img src="https://img.shields.io/badge/02-SETUP_EXE-20f2ff?style=for-the-badge&labelColor=08090D" alt="Setup" /><br /><br />
         <b>Setup Installer</b><br />
-        <sub>Standard Users • Automated OTA</sub>
+        <sub>Standard Users • Automatic OTA</sub>
       </th>
       <th width="33.3%" align="center">
         <img src="https://img.shields.io/badge/03-ENTERPRISE_MSI-FFE600?style=for-the-badge&labelColor=08090D" alt="MSI" /><br /><br />
         <b>Enterprise Deployment</b><br />
-        <sub>SysAdmins • GPO &amp; Intune</sub>
+        <sub>System Admins • GPO &amp; Intune</sub>
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td align="center" valign="top">
-        Zero installation required. Extract the archive to any local folder or USB drive and run directly. Leaves zero registry footprints.
+        No installation required. Unpack to local directory or USB drive and run directly. Leaves zero trace on host system.
       </td>
       <td align="center" valign="top">
-        Includes desktop shortcut, Start Menu integration, and built-in background automatic updates directly via signed releases.
+        Includes desktop shortcut, Start Menu entry, and integrated background auto-updater support.
       </td>
       <td align="center" valign="top">
-        Dedicated enterprise deployment package designed for Active Directory, Microsoft Intune, and GPO silent bulk installation.
+        Silent corporate deployment package for Active Directory, Microsoft Intune, and Group Policy (GPO).
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <code>✓ Zero Registry Footprints</code>
+        <code>✓ Zero Registry Footprint</code>
       </td>
       <td align="center" valign="middle">
         <code>✓ Signed GitHub OTA Engine</code>
       </td>
       <td align="center" valign="middle">
-        <code>✓ Silent /qn Deployment Support</code>
+        <code>✓ Silent /qn Install Support</code>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.7_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.7_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.5_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.5_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -130,10 +130,10 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_ENGINE-anticore--cli.exe_(385_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_ENGINE-anticore--cli.exe_(385_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/ARCHIVE-GitHub_All_Releases-FFFFFF?style=flat-square&labelColor=08090D" alt="All Releases" /></a>
@@ -144,9 +144,9 @@ All distribution binaries are built cleanly, stripped of developer workstation p
 
 <br />
 
-### macOS Distribution & Setup (v0.3.3)
+### macOS Distribution & Setup (v0.3.4)
 
-Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) packages are architecturally separated for Apple Silicon and Intel hardware:
+For macOS (11.0 Big Sur and newer), the native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) packages are compiled natively per architecture:
 
 > [!TIP]
 > **Which Package Should I Download? (Apple Silicon or Intel?)**
@@ -159,13 +159,13 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
   <thead>
     <tr>
       <th width="50%" align="center">
-        <img src="https://img.shields.io/badge/NEW_MAC-APPLE_SILICON_(ARM64)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Apple Silicon ARM64" /><br /><br />
+        <img src="https://img.shields.io/badge/APPLE_SILICON-M1_%2F_M2_%2F_M3_%2F_M4-20ffa0?style=for-the-badge&labelColor=08090D" alt="Apple Silicon ARM64" /><br /><br />
         <b>Apple Silicon M-Series</b><br />
         <sub>M1 • M2 • M3 • M4 • M5 | macOS 11.0+</sub>
       </th>
       <th width="50%" align="center">
-        <img src="https://img.shields.io/badge/LEGACY_MAC-INTEL_(X86__64)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Intel x86_64" /><br /><br />
-        <b>Intel-Powered Mac</b><br />
+        <img src="https://img.shields.io/badge/INTEL_MAC-X86__64-20f2ff?style=for-the-badge&labelColor=08090D" alt="Intel x86_64" /><br /><br />
+        <b>Intel-Based Mac</b><br />
         <sub>Core i5 • Core i7 • Core i9 • Xeon | macOS 11.0+</sub>
       </th>
     </tr>
@@ -173,10 +173,10 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
   <tbody>
     <tr>
       <td align="center" valign="top">
-        Native 64-bit ARM build for Apple Silicon M-series chips. Zero emulation overhead, peak thermal efficiency, instant launch.
+        Native ARM64 compilation for Apple Silicon M-series chips. Maximum energy efficiency, zero emulation latency, instant response.
       </td>
       <td align="center" valign="top">
-        Native x86_64 build for Intel-based Macs. Runs directly on bare hardware without requiring Rosetta 2 translation.
+        Direct x86_64 build for Intel-based Mac models. Runs natively on 64-bit Intel hardware without Rosetta 2 translation.
       </td>
     </tr>
     <tr>
@@ -189,34 +189,34 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download PKG ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_arm64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download PKG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download PKG Intel x64" /></a>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="Download DMG ARM64" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="Download DMG Intel x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download PKG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="Download DMG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="Download DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli-macos-arm64-0.3.3.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli-macos-x64-0.3.3.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/anticore-cli-macos-arm64-0.3.4.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/anticore-cli-macos-x64-0.3.4.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
       </td>
     </tr>
     <tr>
@@ -241,10 +241,10 @@ Download and install the native `.pkg` package via Terminal using macOS built-in
 
 ```bash
 # Apple Silicon Mac (M1 / M2 / M3 / M4)
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg && sudo installer -pkg Anticore_0.3.3_arm64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_arm64.pkg && sudo installer -pkg Anticore_0.3.4_arm64.pkg -target /
 
 # Intel-Based Mac
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg && sudo installer -pkg Anticore_0.3.3_x64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64.pkg && sudo installer -pkg Anticore_0.3.4_x64.pkg -target /
 ```
 
 > [!IMPORTANT]

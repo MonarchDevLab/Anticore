@@ -59,7 +59,7 @@
 
 ---
 
-## İndirme Seçenekleri (v0.3.3)
+## İndirme Seçenekleri (v0.3.4)
 
 Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arındırılmış (Zero Leakage) ve Minisign ile doğrulanmıştır.
 
@@ -68,53 +68,31 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
     <tr>
       <th width="33.3%" align="center">
         <img src="https://img.shields.io/badge/01-PORTABLE_ZIP-20ffa0?style=for-the-badge&labelColor=08090D" alt="Portable" /><br /><br />
-        <b>Taşınabilir Sürüm</b><br />
-        <sub>En Çok Tercih Edilen • Kayıtsız</sub>
+        <b>Taşınabilir / Kurulumsuz</b><br />
+        <small>USB bellek veya doğrudan klasörden çalıştırma. Yönetici haklarıyla anında çalışır; kayıt defterine dokunmaz.</small>
       </th>
       <th width="33.3%" align="center">
-        <img src="https://img.shields.io/badge/02-SETUP_EXE-20f2ff?style=for-the-badge&labelColor=08090D" alt="Setup" /><br /><br />
-        <b>Kurulum Paketi</b><br />
-        <sub>Standart Kullanıcı • Otomatik OTA</sub>
+        <img src="https://img.shields.io/badge/02-SETUP_EXE-20f2ff?style=for-the-badge&labelColor=08090D" alt="Setup EXE" /><br /><br />
+        <b>NSIS Standart Kurulum</b><br />
+        <small>Başlat menüsü kısayolu, masaüstü ikonu, otomatik güncelleme entegrasyonu ve temiz kaldırma desteği.</small>
       </th>
       <th width="33.3%" align="center">
-        <img src="https://img.shields.io/badge/03-ENTERPRISE_MSI-FFE600?style=for-the-badge&labelColor=08090D" alt="MSI" /><br /><br />
-        <b>Kurumsal Dağıtım</b><br />
-        <sub>Sistem Yöneticileri • GPO &amp; Intune</sub>
+        <img src="https://img.shields.io/badge/03-MSI_ENTERPRISE-FFE600?style=for-the-badge&labelColor=08090D" alt="MSI Enterprise" /><br /><br />
+        <b>Kurumsal Dağıtım Paketi</b><br />
+        <small>Active Directory GPO, Microsoft Intune ve SCCM üzerinden sessiz (silent) toplu şirket dağıtımı.</small>
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td align="center" valign="top">
-        Kurulum gerektirmez. Arşivi yerel klasöre veya USB diske çıkartıp doğrudan çalıştırın. Sistemde hiçbir kayıt bırakmaz.
-      </td>
-      <td align="center" valign="top">
-        Masaüstü kısayolu, Başlat menüsü entegrasyonu ve arka planda çalışan dahili otomatik güncelleme desteği sunar.
-      </td>
-      <td align="center" valign="top">
-        Active Directory, Microsoft Intune veya GPO üzerinden çoklu bilgisayara sessiz ve merkezi kurumsal kurulum paketi.
-      </td>
-    </tr>
-    <tr>
       <td align="center" valign="middle">
-        <code>✓ Sıfır Kayıt Defteri İzi</code>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64-portable.zip"><img src="https://img.shields.io/badge/INDIR_.ZIP-6.7_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <code>✓ İmzalı GitHub OTA Motoru</code>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.5_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <code>✓ Sessiz /qn Kurulum Desteği</code>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64-portable.zip"><img src="https://img.shields.io/badge/INDIR_.ZIP-6.7_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir ZIP" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.5_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir EXE" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -130,10 +108,10 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTOR-anticore--cli.exe_(385_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTOR-anticore--cli.exe_(385_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/AR%C5%9E%C4%B0V-GitHub_T%C3%BCm_S%C3%BCr%C3%BCmler-FFFFFF?style=flat-square&labelColor=08090D" alt="Tüm Sürümler" /></a>
@@ -144,7 +122,7 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
 
 <br />
 
-### macOS Dağıtım İstasyonu (v0.3.3)
+### macOS Dağıtım İstasyonu (v0.3.4)
 
 macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve üst menü çubuğu Hızlı Panel (`quick-panel`) paketleri mimarilerine göre ayrıştırılmıştır:
 
@@ -159,64 +137,48 @@ macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve 
   <thead>
     <tr>
       <th width="50%" align="center">
-        <img src="https://img.shields.io/badge/YEN%C4%B0_MAC-APPLE_SILICON_(ARM64)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Apple Silicon ARM64" /><br /><br />
-        <b>Apple Silicon M-Serisi</b><br />
-        <sub>M1 • M2 • M3 • M4 • M5 | macOS 11.0+</sub>
+        <img src="https://img.shields.io/badge/APPLE_SILICON-M1_%2F_M2_%2F_M3_%2F_M4-20ffa0?style=for-the-badge&labelColor=08090D" alt="Apple Silicon" /><br /><br />
+        <b>Apple Silicon (arm64 / aarch64)</b><br />
+        <small>Tüm M-serisi Mac'ler için yerel ARM64 derlemesi. Maksimum enerji verimliliği ve donanım hızlandırmalı paket işleme.</small>
       </th>
       <th width="50%" align="center">
-        <img src="https://img.shields.io/badge/ESK%C4%B0_MAC-INTEL_(X86__64)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Intel x86_64" /><br /><br />
-        <b>Intel Tabanlı Mac</b><br />
-        <sub>Core i5 • Core i7 • Core i9 • Xeon | macOS 11.0+</sub>
+        <img src="https://img.shields.io/badge/INTEL_MAC-x86__64-20f2ff?style=for-the-badge&labelColor=08090D" alt="Intel Mac" /><br /><br />
+        <b>Intel Tabanlı Mac (x86_64)</b><br />
+        <small>Intel Core işlemcili Mac modelleri için optimize edilmiş 64-bit saf x64 ikili paketi.</small>
       </th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td align="center" valign="top">
-        Apple Silicon M-serisi çipler için yerel ARM64 derlemesi. Maksimum enerji verimliliği, sıfır emülasyon gecikmesi, anında tepki.
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_arm64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir PKG ARM64" /></a>
       </td>
-      <td align="center" valign="top">
-        Eski nesil Intel Mac modelleri için doğrudan x86_64 derlemesi. Rosetta 2 çevirisi olmadan doğal x64 donanım performansı.
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir PKG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <code>✓ Native ARM64 (Rosetta Gerektirmez)</code>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_aarch64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="İndir DMG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <code>✓ Native x86_64 (Tüm Intel Mac'ler)</code>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir PKG ARM64" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir PKG Intel x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="İndir DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_aarch64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="İndir DMG ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="İndir DMG Intel x64" /></a>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli-macos-arm64-0.3.3.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/anticore-cli-macos-arm64-0.3.4.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli-macos-x64-0.3.3.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/anticore-cli-macos-x64-0.3.4.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
       </td>
     </tr>
     <tr>
@@ -241,10 +203,10 @@ Paketi Terminal üzerinden doğrudan indirip macOS yerel yükleyicisiyle kurmak 
 
 ```bash
 # Apple Silicon Mac (M1 / M2 / M3 / M4)
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg && sudo installer -pkg Anticore_0.3.3_arm64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_arm64.pkg && sudo installer -pkg Anticore_0.3.4_arm64.pkg -target /
 
 # Intel Tabanlı Mac
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg && sudo installer -pkg Anticore_0.3.3_x64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anticore_0.3.4_x64.pkg && sudo installer -pkg Anticore_0.3.4_x64.pkg -target /
 ```
 
 > [!IMPORTANT]

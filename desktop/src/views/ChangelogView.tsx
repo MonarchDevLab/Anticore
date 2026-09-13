@@ -32,11 +32,47 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.3.4",
+    titleTr: "macOS Kalıcı Root İzni (sudoers), LaunchAgent Başlangıcı ve Derleme Tabanlı Güncelleme",
+    titleEn: "macOS Persistent Root Privileges (sudoers), LaunchAgent Autostart & Build-Aware Updates",
+    date: "13 Eylül 2026",
+    isLatest: true,
+    highlightTr: "macOS ortamında tekrarlayan şifre diyaloglarının sudoers NOPASSWD ile çözülmesi, yerel LaunchAgent başlangıç motoru, derleme zaman damgalı otomatik revizyon tespiti ve tek tıkla doğrudan PKG güncelleme yükleyicisi.",
+    highlightEn: "Elimination of repetitive macOS admin prompts via sudoers NOPASSWD, native LaunchAgent autostart, build-timestamp-aware revision update detection, and one-click direct PKG updater.",
+    changes: [
+      {
+        type: "feature",
+        textTr: "macOS Kalıcı ve Sessiz Root Yükseltmesi: /etc/sudoers.d/com.monolithworks.anticore kuralı ve main.rs açılış kancasıyla, yönetici şifresi kurulumda veya ilk yetkilendirmede yalnızca 1 kez istenir. Sonraki tüm açılışlarda sıfır şifre diyaloğuyla arka planda root haklarında başlar.",
+        textEn: "macOS Persistent & Silent Root Elevation: Configured /etc/sudoers.d/com.monolithworks.anticore NOPASSWD rule. Prompts for admin password only once during setup; subsequent launches re-exec silently as root without any OS dialogs.",
+      },
+      {
+        type: "feature",
+        textTr: "Derleme Zamanı (Build-Aware) Tabanlı Güncelleme Tespiti: İkili dosyaya derleme zaman damgası (ANTICORE_BUILD_TIME) gömüldü. Sürüm numarası aynı kalsa bile uzak depodaki yeni yapılar revizyon olarak algılanır ve kullanıcılara bildirim iletilir.",
+        textEn: "Build-Timestamp-Aware Update Detection: Embedded compilation timestamp (ANTICORE_BUILD_TIME). Even without SemVer bumps, newer CI/CD revisions are detected and presented to users.",
+      },
+      {
+        type: "feature",
+        textTr: "macOS Doğrudan PKG/DMG Güncelleme Kurulumu: İndirilen güncelleme paketleri macOS üzerinde installer komutuyla doğrudan kurularak uygulama kesintisiz yeniden başlatılır.",
+        textEn: "macOS Direct PKG/DMG Update Installer: Downloaded update packages are installed directly via macOS installer utility and automatically relaunched.",
+      },
+      {
+        type: "feature",
+        textTr: "macOS Yerel LaunchAgent Başlangıcı: ~/Library/LaunchAgents entegrasyonuyla sistem başlangıcında arka planda sessizce başlatma seçeneği getirildi.",
+        textEn: "macOS Native LaunchAgent Autostart: Added native ~/Library/LaunchAgents integration to autostart Anticore in the background on user login.",
+      },
+      {
+        type: "feature",
+        textTr: "macOS HIG Standartları & Platform Paritesi: Sol üst Traffic Lights pencere kontrolleri, donanım pencere şasisi, WebKit antialiasing optimizasyonu ve macOS Ağ Onarımı (dscacheutil / pfctl) terminolojisi tamamlandı.",
+        textEn: "macOS HIG Standards & Platform Parity: Top-left traffic lights window controls, rounded hardware chassis, WebKit antialiasing, and macOS network repair (dscacheutil / pfctl) parity.",
+      },
+    ],
+  },
+  {
     version: "v0.3.3",
     titleTr: "Kesintisiz Yerel Bildirim Motoru, Arayüz Bildirim Bandı & Anlık Simülasyon Testi",
     titleEn: "Seamless Native Notification Engine, In-App Update Banner & Instant Test Simulation",
     date: "12 Eylül 2026",
-    isLatest: true,
+    isLatest: false,
     highlightTr: "Tauri v2 yerel bildirim motoru entegrasyonu, başlık altında sabit UpdateBanner bildirim bandı, PowerShell bağımlılığının kaldırılması ve Ayarlar ekranında anlık bildirim testi.",
     highlightEn: "Tauri v2 native notification plugin integration, sticky in-app UpdateBanner, elimination of fragile PowerShell toast scripts, and live notification testing in Settings.",
     changes: [

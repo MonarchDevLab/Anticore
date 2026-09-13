@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "anticore-cli"
-version = "0.3.1"
+version = "0.3.4"
 dependencies = [
  "anticore-core",
  "anticore-transport-macos",
@@ -16,7 +16,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-core"
-version = "0.3.1"
+version = "0.3.4"
 dependencies = [
  "serde",
  "serde_json",
@@ -25,7 +25,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-transport-macos"
-version = "0.3.1"
+version = "0.3.4"
 dependencies = [
  "anticore-core",
  "libc",
@@ -33,7 +33,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-transport-win"
-version = "0.3.1"
+version = "0.3.4"
 dependencies = [
  "anticore-core",
 ]
