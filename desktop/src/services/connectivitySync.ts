@@ -83,6 +83,12 @@ class ConnectivitySyncService {
   private fallbackProfile: string = 'universal';
   private lanClientsCount: number = 0;
   private driverStatus: string = 'ok';
+  private packetsSeen: number = 0;
+  private packetsTouched: number = 0;
+  private passthrough: number = 0;
+  private currentPps: number = 0;
+  private lastPacketCount: number = 0;
+  private lastPpsCalcTime: number = Date.now();
   private pendingDriverConflict?: {
     errorCode?: number;
     errorMessage: string;
@@ -194,7 +200,24 @@ class ConnectivitySyncService {
   }
 
   public setEngineRunning(running: boolean) {
+    const changed = this.isEngineRunning !== running;
     this.isEngineRunning = running;
+    if (changed) {
+      setTimeout(() => this.flush(), 300);
+    }
+  }
+
+  public updatePacketStats(seen: number, touched: number, passthrough: number) {
+    this.packetsSeen = Math.max(0, seen);
+    this.packetsTouched = Math.max(0, touched);
+    this.passthrough = Math.max(0, passthrough);
+    const now = Date.now();
+    const elapsed = (now - this.lastPpsCalcTime) / 1000;
+    if (elapsed >= 1) {
+      this.currentPps = Math.max(0, Math.round((this.packetsTouched - this.lastPacketCount) / elapsed));
+      this.lastPacketCount = this.packetsTouched;
+      this.lastPpsCalcTime = now;
+    }
   }
 
   public setActiveProfile(profile: string) {
@@ -460,6 +483,10 @@ class ConnectivitySyncService {
         jitterMs,
         ramUsageMb,
         serviceMatrix: this.latestServiceMatrix,
+        packetsSeen: this.packetsSeen,
+        packetsTouched: this.packetsTouched,
+        passthrough: this.passthrough,
+        pps: this.currentPps,
       },
     };
 
@@ -585,20 +612,32 @@ class ConnectivitySyncService {
         }
       } else {
         // İki kanal da başarısız olduysa kuyrukları geri al
+        if (eventsToSend.length > 0 && this.eventQueue.length < MAX_BUFFER_SIZE) {
+          this.eventQueue.unshift(...eventsToSend);
+        }
         if (anomaliesToSend.length > 0 && this.anomalyQueue.length < MAX_BUFFER_SIZE) {
           this.anomalyQueue.unshift(...anomaliesToSend);
         }
         if (receiptsToSend.length > 0 && this.commandReceipts.length < MAX_BUFFER_SIZE) {
           this.commandReceipts.unshift(...receiptsToSend);
         }
+        if (conflictToSend && !this.pendingDriverConflict) {
+          this.pendingDriverConflict = conflictToSend;
+        }
       }
     } catch {
-      // Ağ hatası durumunda anomalileri ve makbuzları geri yükle
+      // Ağ hatası durumunda kuyrukları geri yükle
+      if (eventsToSend.length > 0 && this.eventQueue.length < MAX_BUFFER_SIZE) {
+        this.eventQueue.unshift(...eventsToSend);
+      }
       if (anomaliesToSend.length > 0 && this.anomalyQueue.length < MAX_BUFFER_SIZE) {
         this.anomalyQueue.unshift(...anomaliesToSend);
       }
       if (receiptsToSend.length > 0 && this.commandReceipts.length < MAX_BUFFER_SIZE) {
         this.commandReceipts.unshift(...receiptsToSend);
+      }
+      if (conflictToSend && !this.pendingDriverConflict) {
+        this.pendingDriverConflict = conflictToSend;
       }
     }
   }

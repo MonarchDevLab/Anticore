@@ -192,7 +192,10 @@ export default function App() {
         })]);
         if (alive) {
           setStatus(next);
-          if (next) connectivitySync.setEngineRunning(next.running);
+          if (next) {
+            connectivitySync.setEngineRunning(next.running);
+            connectivitySync.updatePacketStats(next.packets_seen, next.packets_touched, next.passthrough);
+          }
         }
       } catch {
         if (alive) setStatus(null);
