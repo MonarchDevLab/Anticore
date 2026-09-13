@@ -9,7 +9,7 @@ on:
       release_tag:
         description: 'Mevcut release etiketi (örn: v0.3.4)'
         required: false
-        default: 'v0.3.4'
+        default: 'v0.3.5'
 
 jobs:
   publish:
@@ -152,7 +152,7 @@ jobs:
 
           $manifest = @{
             version = $ver
-            notes = "Anticore $ref — macOS Sudoers NOPASSWD root, LaunchAgent, build-aware updates ve coklu mimari paketleri."
+            notes = "Anticore $ref — Yasakli video sitelerinde siyah ekran onarimi (69+ CDN), QUIC engelleme, ag paylasimi (LAN proxy), macOS kalici yetkilendirme ve coklu mimari paketleri."
             pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
             platforms = @{
               "windows-x86_64" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_x64-setup.exe" }
@@ -188,6 +188,8 @@ jobs:
             if [ -f "$bin_path" ]; then
               cp "$bin_path" "$app_path/Contents/MacOS/anticore-cli"
               chmod +x "$app_path/Contents/MacOS/anticore-cli"
+              cp "$bin_path" "$app_path/Contents/Resources/anticore-cli"
+              chmod +x "$app_path/Contents/Resources/anticore-cli"
             fi
             chmod +x scripts/pkg-scripts/postinstall
             chmod -R 755 "$app_path"

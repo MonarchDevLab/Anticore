@@ -32,11 +32,51 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.3.5",
+    titleTr: "Yasaklı Sitelerde Video Oynatıcı Siyah Ekran Çözümü (69+ CDN), Ağ Paylaşımı (LAN Proxy) ve macOS Ayrık Root Mimarisi",
+    titleEn: "Video Player Black Screen Fix for Blocked Sites (69+ CDNs), LAN Proxy Overhaul & macOS Unprivileged GUI Separation",
+    date: "14 Eylül 2026",
+    isLatest: true,
+    highlightTr: "Yetişkin ve kısıtlı video akış sitelerinde video oynatıcıların siyah ekranda kalma sorununun 69 yeni medya CDN'i, akıllı auto-heal ve QUIC engellemesiyle kökten çözülmesi, mobil ve harici cihazlar için tam donanımlı LAN Proxy paylaşımı, macOS üzerinde pencere kapanmalarını önleyen bağımsız root motor mimarisi.",
+    highlightEn: "Permanent fix for video player black screen issues across streaming platforms via 69 new CDNs, auto-healing and QUIC blocking, feature-complete LAN Proxy sharing with captive portal support, and unprivileged GUI architecture preventing crashes on macOS.",
+    changes: [
+      {
+        type: "feature",
+        textTr: "69+ Yeni Medya & Oynatıcı CDN Alan Adı: Pornhub, XVideos, XHamster, SpankBang, Stripchat, Chaturbate, Eporner ve topluluk platformlarının video dağıtım, HLS manifest ve oynatıcı script CDN alan adları çekirdek hedef listesine eklendi.",
+        textEn: "69+ New Media & Player CDN Domains: Streaming, HLS manifest, and player script CDNs for major video and adult platforms were integrated directly into the core target list.",
+      },
+      {
+        type: "fix",
+        textTr: "QUIC (UDP 443) ve Pasif Savunma Varsayılanları: Video CDN'lerine bağlanan tarayıcıların UDP zaman aşımına takılmasını önlemek için QUIC engelleme ve sahte ISP TCP RST paketlerini düşüren pasif savunma varsayılan olarak zorunlu kılındı.",
+        textEn: "Enforced QUIC (UDP 443) Blocking & Passive Defense: Eliminated browser UDP hanging on video CDNs by dropping UDP 443 and discarding ISP-injected fake TCP RST packets by default.",
+      },
+      {
+        type: "feature",
+        textTr: "Akıllı Otomatik Onarma (Auto-Heal): Mevcut kurulumlardaki kullanıcıya özel alan adları korunarak eksik çekirdek ve medya CDN alan adları yerel blacklist.txt dosyasına otomatik eklendi; Siteler sekmesine tek tıkla senkronizasyon ve 'Yetişkin & Video CDN' filtre hapı eklendi.",
+        textEn: "Smart Blacklist Auto-Healing: Automatically detects and appends missing core CDN targets to existing local blacklist.txt without overwriting user custom domains; added one-click sync and 'Adult & Video CDN' filter pill.",
+      },
+      {
+        type: "feature",
+        textTr: "Ağ Paylaşımı (LAN Proxy) Kapsamlı Onarımı: Mobil cihazların Wi-Fi proxy'sine bağlandığında 'İnternet Yok' uyarısı almasını önleyen düz HTTP captive portal desteği, GET / ve /status anlık bağlantı doğrulama sayfası, Windows Güvenlik Duvarı kural otomasyonu ve fiziksel MAC/üretici tespiti eklendi.",
+        textEn: "LAN Proxy Overhaul: Added plain HTTP captive portal support preventing 'No Internet' flags on mobile devices, live GET /status verification page, automated Windows Defender firewall rules, and connected device physical MAC/OUI vendor resolution.",
+      },
+      {
+        type: "fix",
+        textTr: "macOS Yetkisiz GUI ↔ Root CLI Motoru Ayrımı: macOS Aqua/WebKit kısıtlarından kaynaklanan pencere kapanması ve AppleScript TCC (-1743) hataları giderildi; arayüz unprivileged olarak sabitlenip motor arka planda sudoers NOPASSWD ile bağımsız alt süreç olarak bağlandı.",
+        textEn: "macOS Unprivileged GUI ↔ Root Engine Separation: Resolved WindowServer process termination and AppleScript TCC (-1743) errors by decoupling the unprivileged GUI from the background root CLI engine.",
+      },
+      {
+        type: "perf",
+        textTr: "Dashboard Konsol Sadeleştirmesi: Kontrol konsolu başlığındaki kalabalık üst etiket ve rozetler kaldırılarak daha odaklı ve minimalist bir tasarım sağlandı.",
+        textEn: "Dashboard Header Cleanup: Removed redundant eyebrow labels and badges from the main console header for a cleaner, high-focus interface.",
+      },
+    ],
+  },
+  {
     version: "v0.3.4",
     titleTr: "macOS Kalıcı Root İzni (sudoers), LaunchAgent Başlangıcı ve Derleme Tabanlı Güncelleme",
     titleEn: "macOS Persistent Root Privileges (sudoers), LaunchAgent Autostart & Build-Aware Updates",
     date: "13 Eylül 2026",
-    isLatest: true,
     highlightTr: "macOS ortamında tekrarlayan şifre diyaloglarının sudoers NOPASSWD ile çözülmesi, yerel LaunchAgent başlangıç motoru, derleme zaman damgalı otomatik revizyon tespiti ve tek tıkla doğrudan PKG güncelleme yükleyicisi.",
     highlightEn: "Elimination of repetitive macOS admin prompts via sudoers NOPASSWD, native LaunchAgent autostart, build-timestamp-aware revision update detection, and one-click direct PKG updater.",
     changes: [

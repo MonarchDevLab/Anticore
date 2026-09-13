@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.5] - 2026-09-14
+
+### Added
+- **69+ Media & Video Player CDN Targets:** Added extensive video streaming, HLS manifest, and player script CDNs (`phncdn.com`, `xvideos-cdn.com`, `xhcdn.com`, `sb-cd.com`, `stripcdn.com`, `eporner-cdn.com` etc.) to the core target list, completely resolving the video player black screen issue on blocked and adult streaming platforms.
+- **Smart Blacklist Auto-Healing (`load_blacklist` & `sync_default_blacklist`):** Preserves existing user-added domains while automatically appending missing core CDN targets to `%APPDATA%\com.anticore.desktop\blacklist.txt`. Added one-click sync button and "Adult & Video CDN" filter pill in Sites view.
+- **LAN Proxy Overhaul (`lan_share.rs` & `proxy.rs`):** Enabled plain HTTP proxying and captive portal compatibility (`captive.apple.com`, `connectivitycheck.gstatic.com`), added a live `http://<ip>:10808/` & `/status` diagnostic page, automated Windows Defender firewall rule configuration, and real-time connected device MAC/vendor tracking.
+- **macOS Unprivileged GUI & Root CLI Separation:** Decoupled the unprivileged Tauri GUI from the root engine to prevent macOS WindowServer/WebKit process termination (`_RegisterApplication() FAILED`). The engine runs in the background as a standalone CLI process via `sudo -n`.
+
+### Fixed
+- **QUIC (UDP 443) Hanging & False RST Tears:** Enforced `quic_engelle: true` and `pasif_savunma: true` by default, forcing browsers directly into TCP TLS 1.3 DPI splitting without UDP 443 timeout hanging.
+- **macOS AppleScript Elevation & Sudoers Wildcards:** Fixed TCC `-1743` error and inner quotation syntax errors in AppleScript elevation, and expanded sudoers rule to cover both `/Applications/Anticore.app/Contents/MacOS/*` and `Contents/Resources/*`.
+- **Dashboard Header Hierarchy:** Streamlined console header by removing redundant eyebrow labels and local processing badges.
+
 ## [0.3.4] - 2026-09-13
 
 ### Added
