@@ -3510,6 +3510,159 @@ pub fn get_system_hostname() -> String {
 }
 
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SystemHardwareTelemetryDto {
+    pub cpu_model: Option<String>,
+    pub gpu_model: Option<String>,
+    pub ram_total_gb: Option<u32>,
+    pub network_interface: Option<String>,
+    pub link_speed_mbps: Option<u32>,
+    pub mtu: Option<u32>,
+}
+
+#[tauri::command]
+pub fn get_system_telemetry_hardware() -> SystemHardwareTelemetryDto {
+    let mut dto = SystemHardwareTelemetryDto {
+        cpu_model: None,
+        gpu_model: None,
+        ram_total_gb: None,
+        network_interface: None,
+        link_speed_mbps: None,
+        mtu: None,
+    };
+
+    #[cfg(windows)]
+    {
+        // 1. CPU: HKLM Registry ProcessorNameString
+        if let Ok(key) = windows_registry::LOCAL_MACHINE.open("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0") {
+            if let Ok(cpu) = key.get_string("ProcessorNameString") {
+                let trimmed = cpu.trim();
+                if !trimmed.is_empty() {
+                    dto.cpu_model = Some(trimmed.to_string());
+                }
+            }
+        }
+
+        // 2. GPU: VideoController class registry
+        let gpu_class = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}";
+        let mut candidates = Vec::new();
+        for sub in &["0000", "0001", "0002", "0003"] {
+            let path = format!("{gpu_class}\\{sub}");
+            if let Ok(key) = windows_registry::LOCAL_MACHINE.open(&path) {
+                if let Ok(desc) = key.get_string("DriverDesc") {
+                    let d = desc.trim().to_string();
+                    let d_lower = d.to_lowercase();
+                    if !d.is_empty() && !d_lower.contains("basic") && !d_lower.contains("virtual") && !d_lower.contains("remoting") {
+                        candidates.push(d);
+                    }
+                }
+            }
+        }
+        if let Some(discrete) = candidates.iter().find(|c| c.contains("NVIDIA") || c.contains("RTX") || c.contains("GTX") || c.contains("Radeon")) {
+            dto.gpu_model = Some(discrete.clone());
+        } else if let Some(first) = candidates.first() {
+            dto.gpu_model = Some(first.clone());
+        }
+
+        // 3. RAM: GlobalMemoryStatusEx (0ms native Win32 API)
+        #[repr(C)]
+        struct MemoryStatusEx {
+            length: u32,
+            memory_load: u32,
+            total_phys: u64,
+            avail_phys: u64,
+            total_page_file: u64,
+            avail_page_file: u64,
+            total_virtual: u64,
+            avail_virtual: u64,
+            avail_extended_virtual: u64,
+        }
+        extern "system" {
+            fn GlobalMemoryStatusEx(stat: *mut MemoryStatusEx) -> i32;
+        }
+        let mut stat = MemoryStatusEx {
+            length: std::mem::size_of::<MemoryStatusEx>() as u32,
+            memory_load: 0,
+            total_phys: 0,
+            avail_phys: 0,
+            total_page_file: 0,
+            avail_page_file: 0,
+            total_virtual: 0,
+            avail_virtual: 0,
+            avail_extended_virtual: 0,
+        };
+        let ok = unsafe { GlobalMemoryStatusEx(&mut stat) };
+        if ok != 0 && stat.total_phys > 0 {
+            let gb = (stat.total_phys as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u32;
+            dto.ram_total_gb = Some(gb);
+        }
+
+        // 4. Ağ Adaptörü & MTU & Link Hızı
+        let net_cmd = "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1 Name, InterfaceDescription, LinkSpeed, MtuSize | ConvertTo-Json -Compress";
+        let net_output = run_powershell(net_cmd);
+        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&net_output) {
+            let name = parsed.get("Name").and_then(|v| v.as_str()).unwrap_or("");
+            let desc = parsed.get("InterfaceDescription").and_then(|v| v.as_str()).unwrap_or("");
+            if !name.is_empty() || !desc.is_empty() {
+                dto.network_interface = Some(format!("{name} ({desc})").trim().to_string());
+            }
+            if let Some(mtu) = parsed.get("MtuSize").and_then(|v| v.as_u64()) {
+                dto.mtu = Some(mtu as u32);
+            }
+            if let Some(speed_str) = parsed.get("LinkSpeed").and_then(|v| v.as_str()) {
+                if speed_str.contains("Gbps") {
+                    let num: f64 = speed_str.replace("Gbps", "").trim().parse().unwrap_or(1.0);
+                    dto.link_speed_mbps = Some((num * 1000.0) as u32);
+                } else if speed_str.contains("Mbps") {
+                    let num: u32 = speed_str.replace("Mbps", "").trim().parse().unwrap_or(100);
+                    dto.link_speed_mbps = Some(num);
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(out) = silent_command("sysctl").args(["-n", "machdep.cpu.brand_string"]).output() {
+            let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !s.is_empty() {
+                dto.cpu_model = Some(s);
+            }
+        }
+        if dto.cpu_model.is_none() {
+            if let Ok(out) = silent_command("sysctl").args(["-n", "hw.model"]).output() {
+                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !s.is_empty() {
+                    dto.cpu_model = Some(format!("Apple Silicon ({s})"));
+                }
+            }
+        }
+        if let Ok(out) = silent_command("system_profiler").args(["SPDisplaysDataType"]).output() {
+            let txt = String::from_utf8_lossy(&out.stdout);
+            for line in txt.lines() {
+                if line.contains("Chipset Model:") {
+                    let model = line.replace("Chipset Model:", "").trim().to_string();
+                    if !model.is_empty() {
+                        dto.gpu_model = Some(model);
+                        break;
+                    }
+                }
+            }
+        }
+        if let Ok(out) = silent_command("sysctl").args(["-n", "hw.memsize"]).output() {
+            if let Ok(bytes) = String::from_utf8_lossy(&out.stdout).trim().parse::<u64>() {
+                let gb = (bytes as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u32;
+                dto.ram_total_gb = Some(gb);
+            }
+        }
+        dto.network_interface = Some("Wi-Fi / en0".into());
+        dto.mtu = Some(1500);
+        dto.link_speed_mbps = Some(1000);
+    }
+
+    dto
+}
+
 #[tauri::command]
 pub fn send_telemetry_beacon(endpoint: Option<String>, payload: String) -> Result<String, String> {
     let target_url = endpoint.unwrap_or_else(|| "https://anticore.monolithworks.com.tr/api/v1/telemetry/beacon".to_string());

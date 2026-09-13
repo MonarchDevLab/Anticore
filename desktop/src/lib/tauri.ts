@@ -233,6 +233,15 @@ export const api = {
   factoryReset: () => invoke<void>("factory_reset"),
   purgeSystem: () => invoke<void>("purge_system"),
   getSystemHostname: () => invoke<string>("get_system_hostname"),
+  getSystemTelemetryHardware: () =>
+    invoke<{
+      cpu_model: string | null;
+      gpu_model: string | null;
+      ram_total_gb: number | null;
+      network_interface: string | null;
+      link_speed_mbps: number | null;
+      mtu: number | null;
+    }>("get_system_telemetry_hardware"),
   sendTelemetryBeacon: (payload: string, endpoint?: string) =>
     invoke<string>("send_telemetry_beacon", { payload, endpoint }),
   getTrayMinimize: () => invoke<boolean>("get_tray_minimize"),

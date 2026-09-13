@@ -201,21 +201,21 @@ export async function measureNetworkQuality(
   touchedPackets: number = 0,
   passthroughPackets: number = 0
 ): Promise<{
-  latencyMs: number;
-  jitterMs: number;
+  latencyMs: number | null;
+  jitterMs: number | null;
   linkSpeedMbps: number;
   mtu: number;
   networkInterface: string;
   packetDropPct: number;
 }> {
-  let latencyMs = 0;
-  let jitterMs = 0;
+  let latencyMs: number | null = null;
+  let jitterMs: number | null = null;
 
   if (serviceMatrixLatencies.length > 0) {
     latencyMs = Math.round(serviceMatrixLatencies.reduce((a, b) => a + b, 0) / serviceMatrixLatencies.length);
     if (serviceMatrixLatencies.length > 1) {
       jitterMs = Math.round(
-        serviceMatrixLatencies.reduce((sum, val) => sum + Math.abs(val - latencyMs), 0) /
+        serviceMatrixLatencies.reduce((sum, val) => sum + Math.abs(val - (latencyMs || 0)), 0) /
           serviceMatrixLatencies.length
       );
     } else {
@@ -223,9 +223,9 @@ export async function measureNetworkQuality(
     }
   }
 
-  let linkSpeedMbps = 1000;
-  let networkInterface = 'Ethernet / LAN';
-  let mtu = 1500;
+  let linkSpeedMbps: number = 1000;
+  let networkInterface: string = 'Ethernet / LAN';
+  let mtu: number = 1500;
 
   try {
     if (typeof navigator !== 'undefined') {
@@ -312,6 +312,15 @@ class ConnectivitySyncService {
   private isProbing: boolean = false;
   private domainHitsBuffer: Map<string, { hitCount: number; category: string; txBytes: number; rxBytes: number }> = new Map();
 
+  private cachedHardwareSpecs?: {
+    cpuModel: string | null;
+    gpuModel: string | null;
+    ramTotalGb: number | null;
+    networkInterface: string | null;
+    linkSpeedMbps: number | null;
+    mtu: number | null;
+  };
+
   private eventQueue: SyncEvent[] = [];
   private anomalyQueue: AnomalyRecord[] = [];
   private callbacks: Callbacks = {};
@@ -333,12 +342,24 @@ class ConnectivitySyncService {
       this.clientId = cid;
       this.sessionId = 'ses-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
 
-      // 2. PC Adını (Hostname) ve Sürümü Tauri Arka Ucundan Al
+      // 2. PC Adını, Sürümü ve %100 GERÇEK Donanım/Ağ Telemetrisini Yerel Arka Uçtan (Tauri) Al
       try {
-        let [hostname, version] = await Promise.all([
+        let [hostname, version, nativeHw] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
           api.getAppVersion().catch(() => '0.3.4'),
+          api.getSystemTelemetryHardware().catch(() => null),
         ]);
+
+        if (nativeHw) {
+          this.cachedHardwareSpecs = {
+            cpuModel: nativeHw.cpu_model || null,
+            gpuModel: nativeHw.gpu_model || null,
+            ramTotalGb: nativeHw.ram_total_gb || null,
+            networkInterface: nativeHw.network_interface || null,
+            linkSpeedMbps: nativeHw.link_speed_mbps || null,
+            mtu: nativeHw.mtu || null,
+          };
+        }
 
         const isMac = typeof navigator !== 'undefined' && (
           (navigator.platform && navigator.platform.includes('Mac')) ||
@@ -376,7 +397,7 @@ class ConnectivitySyncService {
       this.scheduleNextTick();
 
       // 5.1 Canlı Servis Erişim Yoklaması (Probe Matrix: Discord, Roblox, YouTube, Twitch)
-      setTimeout(() => this.runServiceProbeMatrix(), 8000);
+      setTimeout(() => this.runServiceProbeMatrix(), 1000);
       this.probeTimer = window.setInterval(() => {
         this.runServiceProbeMatrix();
       }, 300000);
@@ -659,6 +680,7 @@ class ConnectivitySyncService {
       // fail-safe
     } finally {
       this.isProbing = false;
+      setTimeout(() => this.flush(), 200);
     }
   }
 
@@ -754,7 +776,12 @@ class ConnectivitySyncService {
     }
     this.domainHitsBuffer.clear();
 
-    const hardwareSpecs = detectHardwareSpecs();
+    const fallbackHw = detectHardwareSpecs();
+    const hardwareSpecs = {
+      cpuModel: this.cachedHardwareSpecs?.cpuModel || fallbackHw.cpuModel,
+      gpuModel: this.cachedHardwareSpecs?.gpuModel || fallbackHw.gpuModel,
+      ramTotalGb: this.cachedHardwareSpecs?.ramTotalGb || fallbackHw.ramTotalGb,
+    };
 
     let networkType = 'ethernet';
     try {
@@ -777,8 +804,8 @@ class ConnectivitySyncService {
       this.packetsTouched,
       this.passthrough
     );
-    const finalLatencyMs = latencyRttMs ?? (netQuality.latencyMs > 0 ? netQuality.latencyMs : null);
-    const finalJitterMs = jitterMs ?? (netQuality.jitterMs > 0 ? netQuality.jitterMs : null);
+    const finalLatencyMs = latencyRttMs ?? (netQuality.latencyMs !== null && netQuality.latencyMs > 0 ? netQuality.latencyMs : null);
+    const finalJitterMs = jitterMs ?? (netQuality.jitterMs !== null && netQuality.jitterMs > 0 ? netQuality.jitterMs : null);
 
     let activeCensorshipLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
     if (this.isDnsPoisoned || this.tcpRstCount > 20 || this.httpBlockCount > 5) {
@@ -821,11 +848,11 @@ class ConnectivitySyncService {
       networkHealth: {
         latencyMs: finalLatencyMs,
         jitterMs: finalJitterMs,
-        linkSpeedMbps: netQuality.linkSpeedMbps,
+        linkSpeedMbps: this.cachedHardwareSpecs?.linkSpeedMbps ?? netQuality.linkSpeedMbps ?? null,
         txBytes: this.totalTxBytes,
         rxBytes: this.totalRxBytes,
-        mtu: netQuality.mtu,
-        networkInterface: netQuality.networkInterface,
+        mtu: this.cachedHardwareSpecs?.mtu ?? netQuality.mtu ?? null,
+        networkInterface: this.cachedHardwareSpecs?.networkInterface || netQuality.networkInterface || null,
         packetDropPct: netQuality.packetDropPct,
       },
       censorshipFingerprint,

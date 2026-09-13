@@ -216,6 +216,7 @@ fn main() {
             commands::prepare_for_update,
             commands::exit_app,
             commands::get_system_hostname,
+            commands::get_system_telemetry_hardware,
             commands::send_telemetry_beacon,
             tray::get_tray_minimize,
             tray::set_tray_minimize,
