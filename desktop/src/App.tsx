@@ -37,7 +37,7 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
   const [elevating, setElevating] = useState(false);
-  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.4");
+  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.5");
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -214,7 +214,7 @@ export default function App() {
       onUpdateBroadcast: (update) => {
         if (!update || !update.version) return;
         void api.getAppVersion().then((ver) => {
-          const effectiveCurrent = (ver || currentAppVersion || "0.3.4").trim().replace(/^v+/i, "");
+          const effectiveCurrent = (ver || currentAppVersion || "0.3.5").trim().replace(/^v+/i, "");
           const candidateVer = update.version.trim().replace(/^v+/i, "");
           if (isNewerVersion(effectiveCurrent, candidateVer)) {
             setUpdateAvailable(candidateVer);

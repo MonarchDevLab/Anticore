@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Mevcut release etiketi (örn: v0.3.4)'
+        description: 'Mevcut release etiketi (örn: v0.3.5)'
         required: false
         default: 'v0.3.5'
 
@@ -39,7 +39,7 @@ jobs:
           if [[ "${GITHUB_REF}" != refs/tags/* ]]; then
             TAG="${{ github.event.inputs.release_tag }}"
             if [ -z "$TAG" ]; then
-              TAG="v0.3.4"
+              TAG="v0.3.5"
             fi
           fi
           echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"

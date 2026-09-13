@@ -274,7 +274,7 @@ export async function measureNetworkQuality(
 class ConnectivitySyncService {
   private clientId: string = '';
   private pcName: string = 'DESKTOP-UNKNOWN';
-  private appVersion: string = '0.3.4';
+  private appVersion: string = '0.3.5';
   private sessionId: string = '';
   private sessionStartTime: number = Date.now();
   private durationSeconds: number = 0;
@@ -375,7 +375,7 @@ class ConnectivitySyncService {
       try {
         let [hostname, version, nativeHw, nativeTopology] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
-          api.getAppVersion().catch(() => '0.3.4'),
+          api.getAppVersion().catch(() => '0.3.5'),
           api.getSystemTelemetryHardware().catch(() => null),
           typeof api.getSystemNetworkTopology === 'function' ? api.getSystemNetworkTopology().catch(() => null) : Promise.resolve(null),
         ]);
@@ -427,7 +427,7 @@ class ConnectivitySyncService {
           (navigator.userAgent && navigator.userAgent.includes('Mac'))
         );
         this.pcName = isMac ? 'MacBook' : 'DESKTOP-LOCAL';
-        this.appVersion = '0.3.4';
+        this.appVersion = '0.3.5';
       }
 
       // 3. Mevcut Saati İşle
@@ -934,7 +934,7 @@ class ConnectivitySyncService {
       osVersion: getCleanOs(),
       cpuArch: 'x64',
       screenRes: `${window.screen.width}x${window.screen.height}`,
-      appVersion: this.appVersion || '0.3.4',
+      appVersion: this.appVersion || '0.3.5',
       isAutostart: false,
       activeProfile: this.activeProfile,
       lanClientsCount: this.lanClientsCount,

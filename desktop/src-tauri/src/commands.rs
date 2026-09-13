@@ -2845,7 +2845,7 @@ pub fn is_current_app_portable() -> bool {
     false
 }
 
-pub const APP_VERSION: &str = "0.3.4";
+pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tauri::command]
 pub fn get_app_version() -> String {
