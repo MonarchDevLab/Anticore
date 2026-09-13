@@ -155,6 +155,14 @@ macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve 
 >    - **Çip (Chip):** `Apple M1`, `M2`, `M3`, `M4` veya daha yenisi yazıyorsa &rarr; **Apple Silicon (ARM64)** paketini indirin.
 >    - **İşlemci (Processor):** `Intel Core i5`, `i7`, `i9` veya `Intel Xeon` yazıyorsa &rarr; **Intel (x64)** paketini indirin.
 
+> [!IMPORTANT]
+> **macOS "Hasar Görmüş Olduğu İçin Açılamıyor" Uyarısı (Apple Gatekeeper Karantinası):**
+> Apple, ticari geliştirici sertifikası ($99/yıl) içermeyen tüm açık kaynak DMG ve uygulamalara otomatik olarak `com.apple.quarantine` etiketi yapıştırır ve yanıltıcı olarak "hasar görmüş" uyarısı verir. Dosya fiziksel olarak kesinlikle hasarlı değildir. Engeli kaldırmak için Mac Terminal'inde şu komutu çalıştırmanız yeterlidir:
+> ```bash
+> sudo xattr -cr /Applications/Anticore.app
+> ```
+> *(Eğer DMG dosyasının kendisi açılmıyorsa: `xattr -cr ~/Downloads/Anticore*.dmg`)*
+
 <table width="100%" align="center">
   <thead>
     <tr>
