@@ -911,14 +911,36 @@ pub fn get_blacklist(app: AppHandle) -> Vec<String> {
     let bl = load_blacklist(&app);
     let mut v: Vec<String> = bl.iter().cloned().collect();
     
-    let priorities = ["discord.com", "roblox.com", "wattpad.com", "pastebin.com", "eksisozluk.com"];
+    let priorities = [
+        "discord.com",
+        "roblox.com",
+        "wattpad.com",
+        "eksisozluk.com",
+        "imgur.com",
+        "pastebin.com",
+        "archive.org",
+        "proton.me",
+        "mullvad.net",
+        "steamcommunity.com",
+        "kick.com",
+    ];
     
     v.sort_by(|a, b| {
-        let p_a = priorities.iter().position(|&p| a.ends_with(p)).unwrap_or(usize::MAX);
-        let p_b = priorities.iter().position(|&p| b.ends_with(p)).unwrap_or(usize::MAX);
-        
-        if p_a != p_b {
-            p_a.cmp(&p_b)
+        let rank = |s: &str| -> (usize, usize) {
+            for (idx, &p) in priorities.iter().enumerate() {
+                if s.eq_ignore_ascii_case(p) {
+                    return (0, idx);
+                }
+                if s.ends_with(p) || s.ends_with(&format!(".{p}")) {
+                    return (1, idx);
+                }
+            }
+            (2, usize::MAX)
+        };
+        let r_a = rank(a);
+        let r_b = rank(b);
+        if r_a != r_b {
+            r_a.cmp(&r_b)
         } else {
             a.cmp(b)
         }

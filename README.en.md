@@ -59,7 +59,7 @@
 
 ---
 
-## Download Options (v0.3.2)
+## Download Options (v0.3.3)
 
 All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
@@ -108,13 +108,13 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.2_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.5_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64-portable.zip"><img src="https://img.shields.io/badge/DOWNLOAD_.ZIP-6.7_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.2_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.4_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.5_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore_0.3.2_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.3_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -130,10 +130,10 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(15.7_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/latest/download/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_ENGINE-anticore--cli.exe_(384_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_ENGINE-anticore--cli.exe_(385_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/ARCHIVE-GitHub_All_Releases-FFFFFF?style=flat-square&labelColor=08090D" alt="All Releases" /></a>
@@ -144,7 +144,7 @@ All distribution binaries are built cleanly, stripped of developer workstation p
 
 <br />
 
-### macOS Distribution & Setup (v0.3.1)
+### macOS Distribution & Setup (v0.3.3)
 
 Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) packages are architecturally separated for Apple Silicon and Intel hardware:
 
@@ -154,6 +154,14 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
 > 2. Inspect the specifications:
 >    - **Chip:** Displays `Apple M1`, `M2`, `M3`, `M4` or newer &rarr; Download **Apple Silicon (ARM64)**.
 >    - **Processor:** Displays `Intel Core i5`, `i7`, `i9` or `Intel Xeon` &rarr; Download **Intel (x64)**.
+
+> [!IMPORTANT]
+> **macOS "Is Damaged and Can't Be Opened" Prompt (Apple Gatekeeper Quarantine):**
+> Apple automatically attaches a `com.apple.quarantine` attribute to open-source applications downloaded outside the App Store that do not use an enterprise paid certificate ($99/year), showing a misleading "damaged" dialog. The binary is completely intact and safe. To clear the quarantine flag, run this single command in Mac Terminal:
+> ```bash
+> sudo xattr -cr /Applications/Anticore.app
+> ```
+> *(If the DMG file itself refuses to mount: `xattr -cr ~/Downloads/Anticore*.dmg`)*
 
 <table width="100%" align="center">
   <thead>
@@ -189,26 +197,26 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_0.3.1_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Apple_Silicon)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download DMG ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Apple_Silicon)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download DMG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_0.3.1_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Intel)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download DMG Intel x64" /></a>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Intel)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/anticore-cli-macos-arm64-0.3.1.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.1/anticore-cli-macos-x64-0.3.1.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli-macos-arm64-0.3.3.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/anticore-cli-macos-x64-0.3.3.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
       </td>
     </tr>
     <tr>
@@ -225,15 +233,17 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
 
 | Package File | Size | SHA-256 Checksum |
 |---|:---:|---|
-| `Anticore_0.3.1_x64-portable.zip` | 6.3 MB | `40E92F9135E92586FD518AE4581E48D10A5FB365AC9593D02E396868354EF935` |
-| `Anticore_0.3.1_x64-setup.exe` | 4.4 MB | `FB4F4C31E3B5B5F1FEA7D88F62ECE3267486DDDD75FEDEB0329980D40299631D` |
-| `Anticore_0.3.1_x64_en-US.msi` | 6.1 MB | `7614447CF05BF3E8D7C312EC99D388999E5887CA0C2CEA7EAC42A63556335B85` |
-| `Anticore.exe` | 15.6 MB | `057C65D8C6CD6A878C5472767D8A7CC6539386A1DD52B7D58F0DC229994817A6` |
-| `anticore-cli.exe` | 384 KB | `16F6313E63250869267FC2BEF58AA99AACD6AAF56D52CE5AB1177DA8C9255E9D` |
+| `Anticore_0.3.3_x64-portable.zip` | 6.7 MB | `8433A3CE2F71F4FD9BA8DD2127B94CE62B018A482FF969B9C49928C6DDC9499A` |
+| `Anticore_0.3.3_x64-setup.exe` | 4.5 MB | `A785F285FF76FE1ED6D6EE8EC4F3677CAB133A0D3826ACB967EDC19F9F9F524A` |
+| `Anticore_0.3.3_x64_en-US.msi` | 6.5 MB | `9C8713017006120B63A9C214EBBA827A1C36C995D6ADF09E65B819192FE2DBBE` |
+| `Anticore.exe` | 16.6 MB | `4D7AEE3B870CE1C804762845E2D33312A1DFDD1E053994A100CE9D784C5992DB` |
+| `anticore-cli.exe` | 385 KB | `8BAF91276F13FB59922AE361EA8AB3737ABF7AE91C439AF2C1C1BD2C4B4F49F0` |
+| `Anticore_0.3.3_aarch64.dmg` | 6.7 MB | `B4CA9A4A2904EFC82EBF76DA1C02A2BAD0D973EE3BE55D6702A2668A2393764A` |
+| `Anticore_0.3.3_x64.dmg` | 6.9 MB | `CDB811EB77515122C99F2220A8CB39C7D586EEB6363D41AEF96B61922011CA4E` |
 
 ```powershell
 # Verify downloaded package via PowerShell:
-Get-FileHash .\Anticore_0.3.1_x64-portable.zip -Algorithm SHA256
+Get-FileHash .\Anticore_0.3.3_x64-portable.zip -Algorithm SHA256
 ```
 </details>
 
