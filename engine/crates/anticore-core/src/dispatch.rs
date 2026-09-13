@@ -23,15 +23,11 @@ pub fn capture_filter(steps: &[Step]) -> String {
     capture_filter_with_options(steps, false)
 }
 
-/// Mobil Etkin Nokta (Hotspot / Forwarding) seçeneğiyle genişletilmiş filtre.
-pub fn capture_filter_with_options(steps: &[Step], allow_forward: bool) -> String {
-    let direction = if allow_forward {
-        "(outbound or forward)"
-    } else {
-        "outbound"
-    };
+/// Mobil Etkin Nokta (Hotspot / Forwarding) ve standart çıkış trafiği filtresi.
+/// WinDivert NETWORK katmanında tüm giden ve yönlendirilen paketler 'outbound' olarak işlenir.
+pub fn capture_filter_with_options(steps: &[Step], _allow_forward: bool) -> String {
     let base = format!(
-        "{direction} and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80) and tcp.PayloadLength <= {MAX_INSPECT_PAYLOAD}"
+        "outbound and tcp and !loopback and !impostor and (tcp.DstPort == 443 or tcp.DstPort == 80) and tcp.PayloadLength <= {MAX_INSPECT_PAYLOAD}"
     );
     if steps.iter().any(|step| matches!(step, Step::WindowSize { .. })) {
         return base;
