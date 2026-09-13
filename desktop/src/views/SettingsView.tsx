@@ -32,6 +32,7 @@ import {
 import { useTheme } from "../lib/theme";
 import { useI18n } from "../lib/i18n";
 import { isMac } from "../lib/platform";
+import { isNewerVersion } from "../lib/version";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function SettingsView({
@@ -310,9 +311,11 @@ export default function SettingsView({
       pushLog(`[*] GitHub güncellemeleri denetleniyor: ${repoInput}...`);
       const token = localStorage.getItem("anticore_gh_token") || undefined;
       const info = await api.checkUpdate(repoInput.trim(), token);
-      setUpdInfo(info);
+      const reallyHasUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
+      const safeInfo = { ...info, has_update: reallyHasUpdate };
+      setUpdInfo(safeInfo);
       setUpdState("done");
-      if (info.has_update) {
+      if (safeInfo.has_update) {
         pushLog(`[+] Yeni güncelleme bulundu.`);
       } else {
         pushLog(`[i] Sistem güncel.`);

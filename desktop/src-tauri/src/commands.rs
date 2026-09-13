@@ -2718,9 +2718,11 @@ struct GhAsset {
     name: String,
     browser_download_url: String,
     #[serde(default)]
+    #[allow(dead_code)]
     updated_at: Option<String>,
 }
 
+#[allow(dead_code)]
 fn parse_iso_timestamp(s: &str) -> u64 {
     chrono::DateTime::parse_from_rfc3339(s)
         .map(|dt| dt.timestamp().max(0) as u64)
@@ -2800,33 +2802,14 @@ pub fn check_update(
         req = req.set("Authorization", &format!("Bearer {}", tok.trim()));
     }
 
-    let local_build_time: u64 = option_env!("ANTICORE_BUILD_TIME")
-        .and_then(|s| s.parse::<u64>().ok())
-        .unwrap_or(0);
-
     let api_result = req.call();
 
     // 1. Birincil Yol: GitHub Releases REST API
     if let Ok(resp) = api_result {
         if let Ok(parsed) = resp.into_json::<GhRelease>() {
             let latest_tag = parsed.tag_name.unwrap_or_default();
-            let is_semver_newer = is_newer_version(current_ver, &latest_tag);
-
-            let clean = |s: &str| s.trim().trim_start_matches('v').to_string();
-            let is_same_version = clean(current_ver) == clean(&latest_tag);
-
-            let mut remote_timestamp = parsed.published_at.as_deref().map(parse_iso_timestamp).unwrap_or(0);
-            for a in &parsed.assets {
-                if let Some(ref upd) = a.updated_at {
-                    let ts = parse_iso_timestamp(upd);
-                    if ts > remote_timestamp {
-                        remote_timestamp = ts;
-                    }
-                }
-            }
-
-            let is_newer_build = local_build_time > 0 && remote_timestamp > (local_build_time + 120);
-            let has_update = is_semver_newer || (is_same_version && is_newer_build);
+            let clean_tag = latest_tag.trim().trim_start_matches('v').to_string();
+            let has_update = is_newer_version(current_ver, &clean_tag);
             let is_portable = is_current_app_portable();
 
             let mut setup_url = None;
@@ -2890,18 +2873,8 @@ pub fn check_update(
                 }
             };
 
-            let clean_tag = latest_tag.trim().trim_start_matches('v');
-            let display_version = if is_same_version && is_newer_build {
-                format!("{clean_tag} (Revizyon)")
-            } else {
-                clean_tag.to_string()
-            };
-
-            let release_title = if is_same_version && is_newer_build {
-                format!("Anticore v{clean_tag} (Güncelleme Paketi)")
-            } else {
-                format!("Anticore v{clean_tag}")
-            };
+            let display_version = clean_tag.clone();
+            let release_title = format!("Anticore v{clean_tag}");
 
             if has_update {
                 trigger_update_notification(&app, &display_version, &release_title);
@@ -2935,27 +2908,21 @@ pub fn check_update(
     if let Ok(resp) = cdn_resp {
         if let Ok(latest_meta) = resp.into_json::<LatestJson>() {
             let latest_version = latest_meta.version.unwrap_or_default();
-            let is_semver_newer = is_newer_version(current_ver, &latest_version);
-
-            let clean = |s: &str| s.trim().trim_start_matches('v').to_string();
-            let is_same_version = clean(current_ver) == clean(&latest_version);
-
-            let remote_timestamp = latest_meta.pub_date.as_deref().map(parse_iso_timestamp).unwrap_or(0);
-            let is_newer_build = local_build_time > 0 && remote_timestamp > (local_build_time + 120);
-            let has_update = is_semver_newer || (is_same_version && is_newer_build);
+            let clean_ver = latest_version.trim().trim_start_matches('v').to_string();
+            let has_update = is_newer_version(current_ver, &clean_ver);
             let is_portable = is_current_app_portable();
 
             let setup_url = Some(format!(
-                "https://github.com/{}/releases/download/v{}/Anticore_{}_x64-setup.exe",
-                repo.trim(), latest_version, latest_version
+                "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-setup.exe",
+                repo.trim()
             ));
             let portable_exe_url = Some(format!(
-                "https://github.com/{}/releases/download/v{}/Anticore.exe",
-                repo.trim(), latest_version
+                "https://github.com/{}/releases/download/v{clean_ver}/Anticore.exe",
+                repo.trim()
             ));
             let portable_zip_url = Some(format!(
-                "https://github.com/{}/releases/download/v{}/Anticore_{}_x64-portable.zip",
-                repo.trim(), latest_version, latest_version
+                "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-portable.zip",
+                repo.trim()
             ));
 
             let download_url = {
@@ -2989,18 +2956,8 @@ pub fn check_update(
                 }
             };
 
-            let clean_ver = latest_version.trim().trim_start_matches('v');
-            let display_version = if is_same_version && is_newer_build {
-                format!("{clean_ver} (Revizyon)")
-            } else {
-                clean_ver.to_string()
-            };
-
-            let release_title = if is_same_version && is_newer_build {
-                format!("Anticore v{clean_ver} (Güncelleme Paketi)")
-            } else {
-                format!("Anticore v{clean_ver}")
-            };
+            let display_version = clean_ver.clone();
+            let release_title = format!("Anticore v{clean_ver}");
 
             if has_update {
                 trigger_update_notification(&app, &display_version, &release_title);
@@ -3013,7 +2970,7 @@ pub fn check_update(
                 latest_version: display_version,
                 release_name: release_title,
                 release_notes,
-                html_url: format!("https://github.com/{repo}/releases/tag/v{latest_version}"),
+                html_url: format!("https://github.com/{repo}/releases/tag/v{clean_ver}"),
                 download_url,
                 setup_url,
                 portable_exe_url,

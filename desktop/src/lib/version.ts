@@ -10,6 +10,7 @@ export function isNewerVersion(current: string, remote: string): boolean {
   const clean = (s: string) => s.trim().replace(/^v+/i, '');
   const parseParts = (s: string): number[] => {
     return clean(s)
+      .replace(/\s*\(.*?\)/g, '')
       .split(/[-+]/)[0]
       .split('.')
       .map((p) => parseInt(p, 10))

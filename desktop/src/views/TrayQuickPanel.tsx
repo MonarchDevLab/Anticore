@@ -19,6 +19,7 @@ import {
 import { api, onStatusChange, type Profile, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import { isMac } from "../lib/platform";
+import { isNewerVersion } from "../lib/version";
 
 export default function TrayQuickPanel() {
   const [status, setStatus] = useState<Status | null>(null);
@@ -74,9 +75,13 @@ export default function TrayQuickPanel() {
     void api.listProfiles().then(setProfiles).catch(() => {});
     void api.getAppVersion().then(setAppVersion).catch(() => {});
     void api.checkUpdate().then((info) => {
-      if (info.has_update) {
+      const reallyHasUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
+      if (reallyHasUpdate) {
         setUpdateAvailable(true);
         setUpdateInfo({ version: info.latest_version, downloadUrl: info.download_url });
+      } else {
+        setUpdateAvailable(false);
+        setUpdateInfo(null);
       }
     }).catch(() => {});
   }, []);

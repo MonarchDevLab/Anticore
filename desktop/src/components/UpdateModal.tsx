@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api, downloadAndInstallUpdate, type UpdateInfoDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
+import { isNewerVersion } from "../lib/version";
 
 interface Props {
   open: boolean;
@@ -37,8 +38,10 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
       const repo = localStorage.getItem("anticore_github_repo") || undefined;
       const token = overrideToken ?? (localStorage.getItem("anticore_gh_token") || undefined);
       const info = await api.checkUpdate(repo, token);
-      setUpdateInfo(info);
-      if (info.has_update) {
+      const reallyHasUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
+      const safeInfo = { ...info, has_update: reallyHasUpdate };
+      setUpdateInfo(safeInfo);
+      if (reallyHasUpdate) {
         setStatus("available");
         onUpdateDetected?.(true);
       } else {

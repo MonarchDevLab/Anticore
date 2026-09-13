@@ -211,7 +211,8 @@ export default function App() {
       void api
         .checkUpdate(repo, token)
         .then((info) => {
-          if (info.has_update) {
+          const hasSemverUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
+          if (hasSemverUpdate) {
             const cleanVer = info.latest_version.trim().replace(/^v+/i, "");
             setUpdateAvailable(cleanVer);
             setBannerDismissed(false);
@@ -221,6 +222,8 @@ export default function App() {
               "Yeni Güncelleme",
               "Yeni sürüm yayınlandı. Güncellemek için tıklayın."
             ).catch(() => {});
+          } else {
+            setUpdateAvailable(null);
           }
         })
         .catch((err) => {

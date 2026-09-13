@@ -17,6 +17,9 @@ describe('isNewerVersion SemVer Comparison', () => {
     expect(isNewerVersion('v0.3.4', '0.3.4')).toBe(false);
     expect(isNewerVersion('v0.3.4', 'v0.3.4')).toBe(false);
     expect(isNewerVersion('0.3.1.1', '0.3.1.1')).toBe(false);
+    expect(isNewerVersion('0.3.4', '0.3.4 (Revizyon)')).toBe(false);
+    expect(isNewerVersion('0.3.4 (Revizyon)', '0.3.4')).toBe(false);
+    expect(isNewerVersion('v0.3.4', 'v0.3.4 (Revizyon)')).toBe(false);
   });
 
   it('Daha yeni sürümler için true dönmeli', () => {
