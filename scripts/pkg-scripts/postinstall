@@ -16,7 +16,7 @@ fi
 if [ -f "$BINARY_PATH" ]; then
     mkdir -p /etc/sudoers.d
     SUDOERS_FILE="/etc/sudoers.d/com.monolithworks.anticore"
-    echo "ALL ALL=(ALL) NOPASSWD: ${BINARY_PATH}" > "$SUDOERS_FILE"
+    echo "ALL ALL=(ALL) NOPASSWD: ${BINARY_PATH}, /usr/sbin/installer" > "$SUDOERS_FILE"
     chmod 440 "$SUDOERS_FILE"
 fi
 

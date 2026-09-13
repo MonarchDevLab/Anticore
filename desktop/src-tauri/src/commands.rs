@@ -3160,6 +3160,7 @@ pub async fn install_update_direct(
     {
         let target_str = target_file_path.to_string_lossy().to_string();
         if target_str.ends_with(".pkg") {
+            // 1. Kademe: Süreç zaten root ise doğrudan çalıştır
             let is_root = unsafe { libc::geteuid() == 0 };
             if is_root {
                 let status = silent_command("installer")
@@ -3176,6 +3177,21 @@ pub async fn install_update_direct(
                 }
             }
 
+            // 2. Kademe: Parolasız sudo yetkisi varsa (/etc/sudoers.d/com.monolithworks.anticore) sıfır diyalogla kur
+            let sudo_st = silent_command("sudo")
+                .args(["-n", "installer", "-pkg", &target_str, "-target", "/"])
+                .status();
+            if let Ok(st) = sudo_st {
+                if st.success() {
+                    let _ = silent_command("open")
+                        .args(["-n", "/Applications/Anticore.app"])
+                        .spawn();
+                    let _ = std::fs::remove_file(&target_file_path);
+                    std::process::exit(0);
+                }
+            }
+
+            // 3. Kademe: Henüz sudoers kuralı yoksa yerel macOS Touch ID / Yönetici Parolası istemiyle kur
             let script = format!(
                 "tell application \"System Events\" to activate\ndo shell script \"installer -pkg '{}' -target /\" with administrator privileges",
                 target_str
@@ -3206,24 +3222,56 @@ pub async fn install_update_direct(
             if let Ok(st) = attach {
                 if st.success() {
                     let source_app = mount_dir.join("Anticore.app");
-                    let _ = silent_command("cp")
-                        .args(["-R", &source_app.to_string_lossy(), "/Applications/"])
-                        .status();
+                    let src_str = source_app.to_string_lossy().to_string();
+
+                    // Standart kopyalama dene
+                    let mut copied = silent_command("cp")
+                        .args(["-R", &src_str, "/Applications/"])
+                        .status()
+                        .map(|s| s.success())
+                        .unwrap_or(false);
+
+                    // Başarısız olursa parolasız sudo dene
+                    if !copied {
+                        copied = silent_command("sudo")
+                            .args(["-n", "cp", "-R", &src_str, "/Applications/"])
+                            .status()
+                            .map(|s| s.success())
+                            .unwrap_or(false);
+                    }
+
+                    // Hâlâ başarısızsa osascript ile yetkili kopyalama dene
+                    if !copied {
+                        let cp_script = format!(
+                            "tell application \"System Events\" to activate\ndo shell script \"cp -R '{}' /Applications/\" with administrator privileges",
+                            src_str
+                        );
+                        copied = std::process::Command::new("osascript")
+                            .arg("-e")
+                            .arg(&cp_script)
+                            .status()
+                            .map(|s| s.success())
+                            .unwrap_or(false);
+                    }
+
                     let _ = silent_command("hdiutil")
                         .args(["detach", &mount_str, "-quiet"])
                         .status();
-                    let _ = silent_command("xattr")
-                        .args(["-cr", "/Applications/Anticore.app"])
-                        .status();
-                    let _ = silent_command("open")
-                        .args(["-n", "/Applications/Anticore.app"])
-                        .spawn();
-                    let _ = std::fs::remove_file(&target_file_path);
-                    let _ = std::fs::remove_dir_all(&mount_dir);
-                    std::process::exit(0);
+
+                    if copied {
+                        let _ = silent_command("xattr")
+                            .args(["-cr", "/Applications/Anticore.app"])
+                            .status();
+                        let _ = silent_command("open")
+                            .args(["-n", "/Applications/Anticore.app"])
+                            .spawn();
+                        let _ = std::fs::remove_file(&target_file_path);
+                        let _ = std::fs::remove_dir_all(&mount_dir);
+                        std::process::exit(0);
+                    }
                 }
             }
-            return Err("macOS DMG güncelleme paketi açılamadı.".into());
+            return Err("macOS DMG güncelleme paketi açılamadı veya kopyalanamadı.".into());
         } else {
             return Err("Desteklenmeyen macOS güncelleme paketi formatı.".into());
         }

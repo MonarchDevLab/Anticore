@@ -63,7 +63,7 @@ sudo chmod -R 755 /Applications/Anticore.app 2>/dev/null || true
 
 echo "[*] Parolasiz root yetkilendirmesi yapilandiriliyor (Sifir Sifre)..."
 sudo mkdir -p /etc/sudoers.d
-echo "ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/Anticore" | sudo tee /etc/sudoers.d/com.monolithworks.anticore >/dev/null
+echo "ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/Anticore, /usr/sbin/installer" | sudo tee /etc/sudoers.d/com.monolithworks.anticore >/dev/null
 sudo chmod 440 /etc/sudoers.d/com.monolithworks.anticore
 
 echo "=========================================================="
