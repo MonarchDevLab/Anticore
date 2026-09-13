@@ -18,7 +18,7 @@ if [ -d "$APP_PATH" ]; then
     rm -f /etc/sudoers.d/com.monolithworks.anticore
     SUDOERS_FILE="/etc/sudoers.d/anticore"
     cat << 'EOF' > "$SUDOERS_FILE"
-ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl
+ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/*, /Applications/Anticore.app/Contents/Resources/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl
 EOF
     chmod 440 "$SUDOERS_FILE"
     grep -q "sudoers.d" /etc/sudoers || echo "#includedir /private/etc/sudoers.d" >> /etc/sudoers

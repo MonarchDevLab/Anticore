@@ -66,7 +66,7 @@ sudo mkdir -p /etc/sudoers.d
 sudo rm -f /etc/sudoers.d/com.monolithworks.anticore
 SUDOERS_FILE="/etc/sudoers.d/anticore"
 sudo tee "$SUDOERS_FILE" >/dev/null << 'EOF'
-ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl
+ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/*, /Applications/Anticore.app/Contents/Resources/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl
 EOF
 sudo chmod 440 "$SUDOERS_FILE"
 grep -q "sudoers.d" /etc/sudoers || echo "#includedir /private/etc/sudoers.d" | sudo tee -a /etc/sudoers >/dev/null

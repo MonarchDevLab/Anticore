@@ -178,6 +178,7 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
             candidates.push(dir.join("anticore"));
             if let Some(bundle_dir) = dir.parent() {
                 candidates.push(bundle_dir.join("Resources").join("anticore-cli"));
+                candidates.push(bundle_dir.join("Resources").join("anticore-cli.exe"));
                 candidates.push(bundle_dir.join("Resources").join("anticore"));
             }
             if let Some(parent) = dir.parent() {
@@ -1284,7 +1285,7 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
         let exe_path = exe.to_string_lossy().to_string();
 
-        let mut cmd_list = String::from("/Applications/Anticore.app/Contents/MacOS/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl");
+        let mut cmd_list = String::from("/Applications/Anticore.app/Contents/MacOS/*, /Applications/Anticore.app/Contents/Resources/*, /usr/sbin/installer, /bin/kill, /usr/sbin/networksetup, /sbin/pfctl");
         if let Ok(motor_path) = find_motor_exe(&app) {
             let mp = motor_path.to_string_lossy().to_string();
             if !mp.is_empty() && !cmd_list.contains(&mp) {

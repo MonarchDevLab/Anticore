@@ -260,7 +260,7 @@ curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anti
 
 > [!NOTE]
 > **macOS Network Interception & Root Privileges:**
-> Due to macOS kernel architecture, low-level packet capture and tunnel rerouting (`utun` virtual interface and `pfctl` rules) require root (`Administrator`) privileges. When running as a standard user, click the **"Restart as Administrator"** button displayed in the red banner to elevate privileges seamlessly with Touch ID / password prompt, or launch directly from Terminal via `sudo /Applications/Anticore.app/Contents/MacOS/Anticore &`.
+> Due to macOS kernel architecture, low-level packet capture and tunnel rerouting (`utun` virtual interface and `pfctl` rules) require root (`Administrator`) privileges. When running as a standard user, click the **"Grant Persistent Admin Privileges"** button displayed in the banner to configure passwordless execution with Touch ID / password prompt, or launch the background engine directly from Terminal via `sudo /Applications/Anticore.app/Contents/MacOS/anticore-cli run &`.
 
 <details>
 <summary><b>SHA-256 Checksums & Package Integrity (Click to Expand)</b></summary>

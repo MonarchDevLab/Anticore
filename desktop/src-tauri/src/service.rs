@@ -397,7 +397,7 @@ impl Engine {
         let captured_domains_ref = self.captured_domains.clone();
 
         if unsafe { libc::geteuid() } != 0 {
-            return Err("macOS üzerinde ağ motoru (utun/pfctl) ROOT (yönetici) yetkisi gerektirir. Lütfen uygulamayı 'Yönetici Olarak Yeniden Başlat' butonuna basarak açın veya Terminal'den 'sudo /Applications/Anticore.app/Contents/MacOS/Anticore' ile çalıştırın.".into());
+            return Err("macOS üzerinde ağ motoru (utun/pfctl) ROOT (yönetici) yetkisi gerektirir. Lütfen panel üzerinden 'Kalıcı Yönetici İzni Ver' butonuna tıklayın veya Terminal'den 'sudo /Applications/Anticore.app/Contents/MacOS/anticore-cli run' ile çalıştırın.".into());
         }
 
         let transport = Arc::new(UtunTransport::open(config.pasif_savunma, config.quic_engelle)?);
