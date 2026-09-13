@@ -346,6 +346,10 @@ impl Engine {
         let started_at = self.started_at.clone();
         let profile_id = profile_id.to_string();
 
+        if unsafe { libc::geteuid() } != 0 {
+            return Err("macOS üzerinde ağ motoru (utun/pfctl) ROOT (yönetici) yetkisi gerektirir. Lütfen uygulamayı 'Yönetici Olarak Yeniden Başlat' butonuna basarak açın veya Terminal'den 'sudo /Applications/Anticore.app/Contents/MacOS/Anticore' ile çalıştırın.".into());
+        }
+
         let transport = Arc::new(UtunTransport::open(config.pasif_savunma, config.quic_engelle)?);
         *self.active_transport_macos.lock().unwrap() = Some(transport.clone());
         let active_transport = self.active_transport_macos.clone();

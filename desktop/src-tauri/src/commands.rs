@@ -1110,13 +1110,17 @@ extern "system" {
     fn IsUserAnAdmin() -> i32;
 }
 
-/// Uygulamanın Windows yönetici (Administrator) yetkileriyle çalışıp çalışmadığını test eder.
+/// Uygulamanın Windows yönetici (Administrator) veya macOS root yetkileriyle çalışıp çalışmadığını test eder.
 pub fn is_running_as_admin() -> bool {
     #[cfg(windows)]
     unsafe {
         IsUserAnAdmin() != 0
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    unsafe {
+        libc::geteuid() == 0
+    }
+    #[cfg(all(not(windows), not(target_os = "macos")))]
     {
         true
     }
@@ -1128,25 +1132,49 @@ pub fn check_is_admin() -> bool {
     is_running_as_admin()
 }
 
-/// Uygulamayı yönetici olarak yeniden başlatır (WinDivert sürücüsü için şart).
+/// Uygulamayı yönetici olarak yeniden başlatır (Windows'ta UAC, macOS'ta osascript ile).
 #[tauri::command]
 pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
-    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let exe_str = exe.to_string_lossy().replace('\'', "''");
-    let script = format!(
-        "try {{ Start-Process -FilePath '{}' -Verb RunAs -ErrorAction Stop }} catch {{ exit 1 }}",
-        exe_str
-    );
-    let status = silent_command("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
-        .status()
-        .map_err(|e| format!("yükseltme başlatılamadı: {e}"))?;
-    if !status.success() {
-        return Err("Yükseltme onaylanmadı veya iptal edildi".into());
+    #[cfg(windows)]
+    {
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_str = exe.to_string_lossy().replace('\'', "''");
+        let script = format!(
+            "try {{ Start-Process -FilePath '{}' -Verb RunAs -ErrorAction Stop }} catch {{ exit 1 }}",
+            exe_str
+        );
+        let status = silent_command("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .status()
+            .map_err(|e| format!("yükseltme başlatılamadı: {e}"))?;
+        if !status.success() {
+            return Err("Yükseltme onaylanmadı veya iptal edildi".into());
+        }
+        app.exit(0);
+        Ok(())
     }
-    // Yeni (yönetici) örnek açıldı; bu örneği kapat
-    app.exit(0);
-    Ok(())
+    #[cfg(target_os = "macos")]
+    {
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let script = format!(
+            "do shell script \"'{}' >/dev/null 2>&1 &\" with administrator privileges",
+            exe.to_string_lossy()
+        );
+        let status = std::process::Command::new("osascript")
+            .args(["-e", &script])
+            .status()
+            .map_err(|e| format!("Yönetici yetkisi yükseltilemedi: {e}"))?;
+        if !status.success() {
+            return Err("Yönetici yetkisi verilmedi veya iptal edildi.".into());
+        }
+        app.exit(0);
+        Ok(())
+    }
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        let _ = app;
+        Ok(())
+    }
 }
 
 // ---------- test (probe) ----------
@@ -1839,7 +1867,15 @@ pub fn check_compatibility(app: AppHandle) -> anticore_core::compat::CompatRepor
 
 #[tauri::command]
 pub fn repair_driver_files(app: AppHandle) -> Result<bool, String> {
-    Ok(ensure_windivert_files(Some(&app)))
+    #[cfg(not(windows))]
+    {
+        let _ = app;
+        Ok(true)
+    }
+    #[cfg(windows)]
+    {
+        Ok(ensure_windivert_files(Some(&app)))
+    }
 }
 
 #[tauri::command]

@@ -287,6 +287,10 @@ export default function App() {
         const isAdminError =
           (lower.includes("yönetici") ||
             lower.includes("admin") ||
+            lower.includes("root") ||
+            lower.includes("operation not permitted") ||
+            lower.includes("permission denied") ||
+            lower.includes("eperm") ||
             lower.includes("hakları") ||
             lower.includes("privilege") ||
             lower.includes("access denied")) &&

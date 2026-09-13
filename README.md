@@ -258,6 +258,10 @@ curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anti
 >   sudo xattr -cr /Applications/Anticore.app
 >   ```
 
+> [!NOTE]
+> **macOS Ağ Yönlendirme ve Yönetici (Root) Yetkisi:**
+> macOS işletim sistemi yapısı gereği, ağ paketlerinin filtrelenmesi ve yerel tünel yönlendirmesi (`utun` arayüzü ve `pfctl` kuralları) yönetici (`root`) yetkisi gerektirir. Uygulama standart kullanıcı olarak açıldığında motoru başlatmak istediğinizde beliren **"Yönetici Olarak Yeniden Başlat"** butonuna basarak Touch ID / şifrenizle tek tıkla onay verebilir veya Terminal üzerinden doğrudan `sudo /Applications/Anticore.app/Contents/MacOS/Anticore &` komutuyla çalıştırabilirsiniz.
+
 <details>
 <summary><b>SHA-256 Paket Bütünlük Özetleri (Tıklayıp Genişletin)</b></summary>
 <br />

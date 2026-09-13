@@ -133,15 +133,24 @@ pub fn parse_sc_query_output(status_success: bool, output_text: &str) -> bool {
 }
 
 /// WinDivert sürücü ve DLL dosyalarının varlığını doğrular.
+/// Windows dışındaki platformlarda (macOS, Linux) WinDivert kullanılmadığı için daima true döner.
 pub fn check_windivert_files(search_paths: &[&Path]) -> bool {
-    for base in search_paths {
-        let dll = base.join("WinDivert.dll");
-        let sys = base.join("WinDivert64.sys");
-        if dll.exists() && sys.exists() {
-            return true;
-        }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = search_paths;
+        true
     }
-    false
+    #[cfg(target_os = "windows")]
+    {
+        for base in search_paths {
+            let dll = base.join("WinDivert.dll");
+            let sys = base.join("WinDivert64.sys");
+            if dll.exists() && sys.exists() {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 pub fn check_compatibility() -> CompatReport {
@@ -152,48 +161,57 @@ pub fn check_compatibility() -> CompatReport {
         windivert_ok: false,
     };
 
-    // 1. Process Check (Penceresiz sessiz komut)
-    if let Ok(output) = silent_cmd("tasklist").args(["/FO", "CSV", "/NH"]).output() {
-        let tasklist = String::from_utf8_lossy(&output.stdout);
-        let (avs, vpns) = parse_tasklist_output(&tasklist);
-        report.av_detected = avs;
-        report.vpn_detected = vpns;
+    #[cfg(not(target_os = "windows"))]
+    {
+        // macOS / Linux üzerinde WinDivert sürücüsü aranmaz, yerel çekirdek mekanizmaları kullanılır.
+        report.windivert_ok = true;
+        return report;
     }
 
-    // 2. Legacy Services Check (Penceresiz sessiz komut)
-    for srv in KNOWN_LEGACY_SERVICES {
-        if let Ok(output) = silent_cmd("sc").args(["query", srv]).output() {
-            let out = String::from_utf8_lossy(&output.stdout);
-            if parse_sc_query_output(output.status.success(), &out) {
-                report.legacy_services.push(srv.to_string());
+    #[cfg(target_os = "windows")]
+    {
+        // 1. Process Check (Penceresiz sessiz komut)
+        if let Ok(output) = silent_cmd("tasklist").args(["/FO", "CSV", "/NH"]).output() {
+            let tasklist = String::from_utf8_lossy(&output.stdout);
+            let (avs, vpns) = parse_tasklist_output(&tasklist);
+            report.av_detected = avs;
+            report.vpn_detected = vpns;
+        }
+
+        // 2. Legacy Services Check (Penceresiz sessiz komut)
+        for srv in KNOWN_LEGACY_SERVICES {
+            if let Ok(output) = silent_cmd("sc").args(["query", srv]).output() {
+                let out = String::from_utf8_lossy(&output.stdout);
+                if parse_sc_query_output(output.status.success(), &out) {
+                    report.legacy_services.push(srv.to_string());
+                }
             }
         }
-    }
 
-
-    // 3. WinDivert Files Check
-    let mut search_paths = Vec::new();
-    if let Ok(cur) = std::env::current_dir() {
-        search_paths.push(cur.join("bin"));
-        search_paths.push(cur.join("vendor").join("windows"));
-        search_paths.push(cur.clone());
-    }
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(parent) = exe.parent() {
-            search_paths.push(parent.join("bin"));
-            search_paths.push(parent.join("vendor").join("windows"));
-            search_paths.push(parent.to_path_buf());
-            if let Some(pp) = parent.parent() {
-                search_paths.push(pp.join("bin"));
-                search_paths.push(pp.join("vendor").join("windows"));
-                search_paths.push(pp.to_path_buf());
+        // 3. WinDivert Files Check
+        let mut search_paths = Vec::new();
+        if let Ok(cur) = std::env::current_dir() {
+            search_paths.push(cur.join("bin"));
+            search_paths.push(cur.join("vendor").join("windows"));
+            search_paths.push(cur.clone());
+        }
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(parent) = exe.parent() {
+                search_paths.push(parent.join("bin"));
+                search_paths.push(parent.join("vendor").join("windows"));
+                search_paths.push(parent.to_path_buf());
+                if let Some(pp) = parent.parent() {
+                    search_paths.push(pp.join("bin"));
+                    search_paths.push(pp.join("vendor").join("windows"));
+                    search_paths.push(pp.to_path_buf());
+                }
             }
         }
-    }
-    let paths_ref: Vec<&Path> = search_paths.iter().map(|p| p.as_path()).collect();
-    report.windivert_ok = check_windivert_files(&paths_ref);
+        let paths_ref: Vec<&Path> = search_paths.iter().map(|p| p.as_path()).collect();
+        report.windivert_ok = check_windivert_files(&paths_ref);
 
-    report
+        report
+    }
 }
 
 #[cfg(test)]

@@ -63,6 +63,10 @@ sudo chmod -R 755 /Applications/Anticore.app 2>/dev/null || true
 
 echo "=========================================================="
 echo "    Kurulum Basariyla Tamamlandi!"
-echo "    Uygulama baslatiliyor..."
+echo "=========================================================="
+echo "[+] macOS Ag Motoru (utun/pfctl) paketleri yonlendirmek icin root yetkisi gerektirir."
+echo "[+] Uygulama acildiginda ekranda beliren 'Yonetici Olarak Baslat' butonunu onaylayabilir,"
+echo "[+] veya dogrudan Terminal'den su komutla baslatabilirsiniz:"
+echo "    sudo /Applications/Anticore.app/Contents/MacOS/Anticore &"
 echo "=========================================================="
 open /Applications/Anticore.app
