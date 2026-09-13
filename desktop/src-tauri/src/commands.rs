@@ -2861,15 +2861,8 @@ pub fn check_update(
                 }
                 #[cfg(not(target_os = "macos"))]
                 {
-                    if is_portable {
-                        portable_exe_url.clone()
-                            .or_else(|| portable_zip_url.clone())
-                            .or_else(|| setup_url.clone())
-                    } else {
-                        setup_url.clone()
-                            .or_else(|| portable_zip_url.clone())
-                            .or_else(|| portable_exe_url.clone())
-                    }
+                    setup_url.clone()
+                        .or_else(|| portable_exe_url.clone())
                 }
             };
 
@@ -2948,11 +2941,8 @@ pub fn check_update(
                 }
                 #[cfg(not(target_os = "macos"))]
                 {
-                    if is_portable {
-                        portable_exe_url.clone()
-                    } else {
-                        setup_url.clone()
-                    }
+                    setup_url.clone()
+                        .or_else(|| portable_exe_url.clone())
                 }
             };
 
@@ -2994,6 +2984,10 @@ pub async fn install_update_direct(
 
     if !download_url.starts_with("http://") && !download_url.starts_with("https://") {
         return Err("Geçersiz indirme bağlantısı".into());
+    }
+
+    if download_url.ends_with(".zip") {
+        return Err("Taşınabilir ZIP arşivleri doğrudan güncellenemez. Lütfen Kurulum Paketi (.exe) kullanın veya Ayarlar menüsünden manuel indirin.".into());
     }
 
     let is_portable = is_current_app_portable();
@@ -3106,6 +3100,18 @@ pub async fn install_update_direct(
 
             std::process::exit(0);
         } else {
+            // İndirilen dosyanın geçerli bir Windows PE (MZ) yürütülebilir dosyası olduğunu doğrula.
+            // Bozuk indirme, 404 HTML yanıtı veya .zip dosyalarının çalıştırılmasını ve 16-bit sistem hatasını engeller.
+            use std::io::Read;
+            let mut magic = [0u8; 2];
+            if let Ok(mut f) = std::fs::File::open(&target_file_path) {
+                let _ = f.read_exact(&mut magic);
+            }
+            if magic != [b'M', b'Z'] {
+                let _ = std::fs::remove_file(&target_file_path);
+                return Err("İndirilen güncelleme paketi geçerli bir Windows yürütülebilir dosyası (.exe) değil. İndirme bozulmuş veya bağlantı hatalı olabilir.".into());
+            }
+
             let _ = silent_command(target_file_path.to_str().unwrap_or_default())
                 .spawn();
 
@@ -3555,6 +3561,53 @@ pub fn get_system_hostname() -> String {
             #[cfg(not(target_os = "macos"))]
             return "DESKTOP-UNKNOWN".to_string();
         })
+}
+
+#[tauri::command]
+pub fn get_machine_id() -> String {
+    #[cfg(windows)]
+    {
+        if let Ok(key) = windows_registry::LOCAL_MACHINE.open("SOFTWARE\\Microsoft\\Cryptography") {
+            if let Ok(guid) = key.get_string("MachineGuid") {
+                let clean = guid.trim().to_string();
+                if !clean.is_empty() {
+                    return clean;
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(output) = std::process::Command::new("ioreg")
+            .args(["-rd1", "-c", "IOPlatformExpertDevice"])
+            .output()
+        {
+            let txt = String::from_utf8_lossy(&output.stdout);
+            for line in txt.lines() {
+                if line.contains("IOPlatformUUID") {
+                    if let Some(uuid) = line.split('"').nth(3) {
+                        let clean = uuid.trim().to_string();
+                        if !clean.is_empty() {
+                            return clean;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(id) = std::fs::read_to_string("/etc/machine-id") {
+            let clean = id.trim().to_string();
+            if !clean.is_empty() {
+                return clean;
+            }
+        }
+    }
+
+    String::new()
 }
 
 

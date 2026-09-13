@@ -216,6 +216,7 @@ fn main() {
             commands::prepare_for_update,
             commands::exit_app,
             commands::get_system_hostname,
+            commands::get_machine_id,
             commands::get_system_telemetry_hardware,
             commands::get_system_network_topology,
             commands::send_telemetry_beacon,

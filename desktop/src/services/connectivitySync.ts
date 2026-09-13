@@ -344,8 +344,21 @@ class ConnectivitySyncService {
     this.initialized = true;
 
     try {
-      // 1. Kalıcı Client ID Al veya Üret
+      // 1. Kalıcı Deterministik Client ID Al veya Üret (Donanım GUID Destekli)
       let cid = localStorage.getItem('__ac_sync_cid');
+      try {
+        const machineGuid = typeof api.getMachineId === 'function' ? await api.getMachineId().catch(() => '') : '';
+        if (machineGuid && machineGuid.trim().length > 0) {
+          const cleanGuid = machineGuid.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (cleanGuid.length >= 8) {
+            cid = 'ac-' + cleanGuid.substring(0, 16);
+            localStorage.setItem('__ac_sync_cid', cid);
+          }
+        }
+      } catch {
+        // Rust API yoksa veya test ortamındaysa localStorage ile devam et
+      }
+
       if (!cid) {
         cid = 'ac-' + Math.random().toString(36).substring(2, 12) + '-' + Date.now().toString(36);
         localStorage.setItem('__ac_sync_cid', cid);

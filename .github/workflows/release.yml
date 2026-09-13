@@ -148,6 +148,7 @@ jobs:
           $zipPath = "dist-portable/Anticore_${ver}_x64-portable.zip"
           Compress-Archive -Path "$pDir/*" -DestinationPath $zipPath -CompressionLevel Optimal
           gh release upload $ref $zipPath --clobber
+          gh release upload $ref "$pDir/Anticore.exe" --clobber
 
           $manifest = @{
             version = $ver

@@ -234,6 +234,7 @@ export const api = {
   factoryReset: () => invoke<void>("factory_reset"),
   purgeSystem: () => invoke<void>("purge_system"),
   getSystemHostname: () => invoke<string>("get_system_hostname"),
+  getMachineId: () => invoke<string>("get_machine_id"),
   getSystemTelemetryHardware: () =>
     invoke<{
       cpu_model: string | null;
