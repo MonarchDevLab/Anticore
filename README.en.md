@@ -155,14 +155,6 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
 >    - **Chip:** Displays `Apple M1`, `M2`, `M3`, `M4` or newer &rarr; Download **Apple Silicon (ARM64)**.
 >    - **Processor:** Displays `Intel Core i5`, `i7`, `i9` or `Intel Xeon` &rarr; Download **Intel (x64)**.
 
-> [!IMPORTANT]
-> **macOS "Is Damaged and Can't Be Opened" Prompt (Apple Gatekeeper Quarantine):**
-> Apple automatically attaches a `com.apple.quarantine` attribute to open-source applications downloaded outside the App Store that do not use an enterprise paid certificate ($99/year), showing a misleading "damaged" dialog. The binary is completely intact and safe. To clear the quarantine flag, run this single command in Mac Terminal:
-> ```bash
-> sudo xattr -cr /Applications/Anticore.app
-> ```
-> *(If the DMG file itself refuses to mount: `xattr -cr ~/Downloads/Anticore*.dmg`)*
-
 <table width="100%" align="center">
   <thead>
     <tr>
@@ -197,10 +189,18 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Apple_Silicon)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download DMG ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download PKG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Intel)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download DMG Intel x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download PKG Intel x64" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="Download DMG ARM64" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="Download DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
@@ -226,6 +226,37 @@ Native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) pac
     </tr>
   </tbody>
 </table>
+
+#### macOS Terminal & One-Liner Fast Installation Options (CLI)
+
+##### Method 1 — One-Liner Automated Install (Recommended)
+Open Terminal and run the following command. It will detect your Mac's hardware architecture, pull the latest release, clear quarantine attributes, and launch the app:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/scripts/macos-quick-install.sh | bash
+```
+
+##### Method 2 — Direct PKG Installer Commands
+Download and install the native `.pkg` package via Terminal using macOS built-in installer:
+
+```bash
+# Apple Silicon Mac (M1 / M2 / M3 / M4)
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg && sudo installer -pkg Anticore_0.3.3_arm64.pkg -target /
+
+# Intel-Based Mac
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg && sudo installer -pkg Anticore_0.3.3_x64.pkg -target /
+```
+
+> [!IMPORTANT]
+> **Why Does macOS Say "Anticore Is Damaged and Should Be Moved to the Trash"?**
+> Apple automatically flags downloads without a commercial Apple Developer certificate ($99/year) with `com.apple.quarantine`, showing a misleading "damaged" dialog. The binary is completely intact and safe.
+> 
+> - **Option A (Recommended — Use .pkg):** Download the **`.pkg`** installer above or use the Terminal command. The `.pkg` installer clears quarantine attributes automatically upon install.
+> - **Option B (System Settings — Zero Terminal):** After trying to open the app once, go to `System Settings` > `Privacy & Security`. Scroll down and click **[Open Anyway]** next to `"Anticore" was blocked`.
+> - **Option C (Terminal Quarantine Bypass):**
+>   ```bash
+>   sudo xattr -cr /Applications/Anticore.app
+>   ```
 
 <details>
 <summary><b>SHA-256 Checksums & Package Integrity (Click to Expand)</b></summary>

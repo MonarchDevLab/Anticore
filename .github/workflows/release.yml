@@ -151,6 +151,37 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: macOS Kurulum Paketi (.pkg) Üret ve Yükle
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          ref="${{ env.RELEASE_TAG }}"
+          ver="${ref#v}"
+          arch="${{ matrix.arch }}"
+          target="${{ matrix.target }}"
+
+          app_path="desktop/src-tauri/target/${target}/release/bundle/macos/Anticore.app"
+          if [ ! -d "$app_path" ]; then
+            app_path="desktop/src-tauri/target/release/bundle/macos/Anticore.app"
+          fi
+
+          if [ -d "$app_path" ]; then
+            chmod +x scripts/pkg-scripts/postinstall
+            chmod -R 755 "$app_path"
+
+            pkg_name="Anticore_${ver}_${arch}.pkg"
+            pkgbuild --component "$app_path" \
+                     --install-location /Applications \
+                     --scripts scripts/pkg-scripts \
+                     "$pkg_name"
+
+            gh release upload "$ref" "$pkg_name" --clobber
+          else
+            echo "UYARI: $app_path bulunamadı, .pkg üretimi atlandı."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: macOS Bağımsız CLI ve Daemon Paketini Hazırla ve Yükle
         if: matrix.platform == 'macos-latest'
         shell: bash

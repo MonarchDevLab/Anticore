@@ -1,0 +1,13 @@
+#!/bin/sh
+# Anticore macOS Post-Install Hook
+# Monolith Works (c) 2026
+# Automatically removes Gatekeeper quarantine attributes and sets executable permissions.
+
+APP_PATH="/Applications/Anticore.app"
+
+if [ -d "$APP_PATH" ]; then
+    xattr -cr "$APP_PATH" 2>/dev/null || true
+    chmod -R 755 "$APP_PATH" 2>/dev/null || true
+fi
+
+exit 0

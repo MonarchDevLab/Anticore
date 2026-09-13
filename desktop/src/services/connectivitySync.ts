@@ -533,6 +533,21 @@ class ConnectivitySyncService {
 
     const hardwareSpecs = detectHardwareSpecs();
 
+    let networkType = 'ethernet';
+    try {
+      if (typeof navigator !== 'undefined' && (navigator as any).connection) {
+        networkType = (navigator as any).connection.effectiveType || (navigator as any).connection.type || 'ethernet';
+      }
+    } catch {
+      // fail-safe
+    }
+
+    const clientEnv = {
+      locale: typeof navigator !== 'undefined' ? navigator.language : 'tr-TR',
+      timeZone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'Europe/Istanbul',
+      networkType,
+    };
+
     const payload = {
       clientId: this.clientId,
       pcName: this.pcName,
@@ -547,6 +562,7 @@ class ConnectivitySyncService {
       driverStatus: this.driverStatus,
       driverConflict: conflictToSend,
       hardwareSpecs,
+      clientEnv,
       domainHits: domainHitsToSend,
       session: {
         sessionId: this.sessionId,

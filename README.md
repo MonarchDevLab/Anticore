@@ -155,14 +155,6 @@ macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve 
 >    - **Çip (Chip):** `Apple M1`, `M2`, `M3`, `M4` veya daha yenisi yazıyorsa &rarr; **Apple Silicon (ARM64)** paketini indirin.
 >    - **İşlemci (Processor):** `Intel Core i5`, `i7`, `i9` veya `Intel Xeon` yazıyorsa &rarr; **Intel (x64)** paketini indirin.
 
-> [!IMPORTANT]
-> **macOS "Hasar Görmüş Olduğu İçin Açılamıyor" Uyarısı (Apple Gatekeeper Karantinası):**
-> Apple, ticari geliştirici sertifikası ($99/yıl) içermeyen tüm açık kaynak DMG ve uygulamalara otomatik olarak `com.apple.quarantine` etiketi yapıştırır ve yanıltıcı olarak "hasar görmüş" uyarısı verir. Dosya fiziksel olarak kesinlikle hasarlı değildir. Engeli kaldırmak için Mac Terminal'inde şu komutu çalıştırmanız yeterlidir:
-> ```bash
-> sudo xattr -cr /Applications/Anticore.app
-> ```
-> *(Eğer DMG dosyasının kendisi açılmıyorsa: `xattr -cr ~/Downloads/Anticore*.dmg`)*
-
 <table width="100%" align="center">
   <thead>
     <tr>
@@ -197,10 +189,18 @@ macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve 
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_aarch64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-ARM64_(Apple_Silicon)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir DMG ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir PKG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-x64_(Intel)-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir DMG Intel x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir PKG Intel x64" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_aarch64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="İndir DMG ARM64" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="İndir DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
@@ -226,6 +226,37 @@ macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve 
     </tr>
   </tbody>
 </table>
+
+#### macOS Terminal ile Hızlı Kurulum Seçenekleri (Kod ile Yükleme)
+
+##### Yöntem 1 — Tek Satırda Otomatik Kurulum (Önerilen)
+Terminal uygulamasını açıp aşağıdaki komutu yapıştırın. Sistem mimarinizi otomatik algılar, doğru paketi çeker, karantinayı kaldırır ve uygulamayı başlatır:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/scripts/macos-quick-install.sh | bash
+```
+
+##### Yöntem 2 — Doğrudan PKG Installer Komutları
+Paketi Terminal üzerinden doğrudan indirip macOS yerel yükleyicisiyle kurmak için:
+
+```bash
+# Apple Silicon Mac (M1 / M2 / M3 / M4)
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_arm64.pkg && sudo installer -pkg Anticore_0.3.3_arm64.pkg -target /
+
+# Intel Tabanlı Mac
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.3/Anticore_0.3.3_x64.pkg && sudo installer -pkg Anticore_0.3.3_x64.pkg -target /
+```
+
+> [!IMPORTANT]
+> **macOS "Hasar Görmüş Olduğu İçin Çöpe Taşıyın" Uyarısı Neden Çıkar ve Nasıl Aşılır?**
+> Apple, ticari geliştirici sertifikası ($99/yıl) içermeyen tüm açık kaynak DMG ve uygulamalara `com.apple.quarantine` etiketi koyar ve kullanıcıları lisanslı mağazaya yönlendirmek amacıyla yanıltıcı olarak "hasar görmüş" uyarısı verir. Dosya fiziksel olarak kesinlikle hasarlı değildir.
+> 
+> - **Çözüm A (Önerilen — .pkg Kullanımı):** Yukarıdaki **`.pkg`** paketini indirin veya Terminal komutunu çalıştırın. `.pkg` yükleyicisi karantinayı arka planda otomatik temizler.
+> - **Çözüm B (Sistem Ayarları — Terminalsiz):** DMG'den uygulamayı açmaya çalıştıktan sonra `Sistem Ayarları` > `Gizlilik ve Güvenlik` bölümüne gidin. Sayfanın altındaki `"Anticore" engellendi` uyarısının yanındaki **[Yine de Aç] (Open Anyway)** butonuna tıklayın.
+> - **Çözüm C (Terminal ile Karantina Temizliği):**
+>   ```bash
+>   sudo xattr -cr /Applications/Anticore.app
+>   ```
 
 <details>
 <summary><b>SHA-256 Paket Bütünlük Özetleri (Tıklayıp Genişletin)</b></summary>
