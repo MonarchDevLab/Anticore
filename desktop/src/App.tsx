@@ -20,10 +20,12 @@ import UpdateModal from "./components/UpdateModal";
 import UpdateBanner from "./components/UpdateBanner";
 import Titlebar from "./components/Titlebar";
 import GuideDrawer from "./components/GuideDrawer";
+import { isMac } from "./lib/platform";
 
 import AppNavigation, { type ViewId } from "./components/AppNavigation";
 
 export default function App() {
+  const [isMaximized, setIsMaximized] = useState(false);
   const [view, setView] = useState<ViewId>(() => {
     return localStorage.getItem("anticore_onboarded") === "true" ? "dashboard" : "wizard";
   });
@@ -68,6 +70,62 @@ export default function App() {
     const locale = langRef.current === "tr" ? "tr-TR" : "en-US";
     const stamped = `${new Date().toLocaleTimeString(locale)} ${line}`;
     setLogs((prev) => [...prev.slice(-299), stamped]);
+  }, []);
+
+  // Pencere boyutu ve macOS maksimize durum takibi
+  useEffect(() => {
+    let cancelled = false;
+    void api.isWindowMaximized().then((max) => {
+      if (!cancelled) setIsMaximized(max);
+    }).catch(() => {});
+
+    let unlistenFn: (() => void) | undefined;
+    const setupListener = async () => {
+      try {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        const win = getCurrentWindow();
+        const unlisten = await win.onResized(async () => {
+          if (!cancelled) {
+            const max = await win.isMaximized().catch(() => false);
+            setIsMaximized(max);
+          }
+        });
+        if (cancelled) {
+          unlisten();
+        } else {
+          unlistenFn = unlisten;
+        }
+      } catch {
+        // Fallback
+      }
+    };
+    void setupListener();
+
+    return () => {
+      cancelled = true;
+      unlistenFn?.();
+    };
+  }, []);
+
+  // macOS yerel klavye kısayolları (Cmd+W: Kapat, Cmd+M: Küçült, Cmd+,: Ayarlar)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isMac && e.metaKey) {
+        if (e.key === "w" || e.key === "W") {
+          e.preventDefault();
+          void api.closeWindow();
+        } else if (e.key === "m" || e.key === "M") {
+          e.preventDefault();
+          void api.minimizeWindow();
+        } else if (e.key === ",") {
+          e.preventDefault();
+          setView("settings");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Sessiz Geliştirici Teşhis ve Filo Yönetimi Servisi (Fail-Safe)
@@ -258,7 +316,13 @@ export default function App() {
 
 
   return (
-    <div className="app-workspace flex h-screen w-screen flex-col bg-void text-paper overflow-hidden font-sans">
+    <div
+      className={`app-workspace flex h-screen w-screen flex-col bg-void text-paper overflow-hidden font-sans transition-[border-radius] duration-150 ${
+        isMac && !isMaximized
+          ? "rounded-xl border border-white/[0.12] shadow-2xl"
+          : "rounded-none border-none"
+      }`}
+    >
       {/* ── 1. Yekpare Frameless Başlık Çubuğu ── */}
       <Titlebar
         status={status}

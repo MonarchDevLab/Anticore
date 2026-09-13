@@ -6,7 +6,12 @@
   --workspace-grid: color-mix(in srgb, var(--color-paper-muted) 6%, transparent);
 }
 html.light { --workspace-accent: var(--color-live-dim); --workspace-on-accent: var(--color-surface-card); }
-.app-workspace { isolation: isolate; }
+.app-workspace {
+  isolation: isolate;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 .app-workspace .workspace-titlebar { background: var(--color-void); }
 .app-workspace .workspace-titlebar button { color: var(--color-paper-muted); }
 .app-workspace .workspace-titlebar button:hover { color: var(--color-paper); }

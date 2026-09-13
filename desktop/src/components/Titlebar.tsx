@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, ShieldAlert, Minus, Square, X, ArrowDownCircle, HelpCircle, Palette, Globe } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Minus, Square, X, Plus, ArrowDownCircle, HelpCircle, Palette, Globe } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useI18n } from "../lib/i18n";
+import { isMac } from "../lib/platform";
 import { api, type Status } from "../lib/tauri";
 
 interface Props {
@@ -117,24 +118,65 @@ export default function Titlebar({
   return (
     <header
       data-tauri-drag-region
-      className="workspace-titlebar h-12 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono"
+      onDoubleClick={handleToggleMaximize}
+      className="workspace-titlebar h-12 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono cursor-default"
     >
-      {/* Sol: Logo */}
-      <div className="flex items-center gap-2.5 pointer-events-none">
-        <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all ${
-          running
-            ? "border-live/40 bg-live/15 text-live"
-            : "border-red-500/40 bg-red-500/15 text-red-400"
-        }`}>
-          {running ? <ShieldCheck size={13} strokeWidth={2.5} /> : <ShieldAlert size={13} strokeWidth={2.5} />}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-bold tracking-widest text-paper-bright text-xs">
-            ANTICORE
-          </span>
-          <span className="text-[10px] font-mono text-paper-muted font-semibold bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08]">
-            v{appVersion}
-          </span>
+      {/* Sol: macOS Traffic Lights + Logo VEYA Sadece Logo (Windows) */}
+      <div className="flex items-center gap-3">
+        {isMac && (
+          <div className="flex items-center gap-2 group pr-1">
+            {/* Kırmızı - Kapat */}
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label={lang === "tr" ? "Pencereyi Kapat" : "Close Window"}
+              title={lang === "tr" ? "Kapat" : "Close"}
+              className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
+            >
+              <X size={8} strokeWidth={3} className="text-[#4c0000] opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+            {/* Sarı - Simge Durumuna Küçült */}
+            <button
+              type="button"
+              onClick={handleMinimize}
+              aria-label={lang === "tr" ? "Küçült" : "Minimize Window"}
+              title={lang === "tr" ? "Küçült" : "Minimize"}
+              className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
+            >
+              <Minus size={8} strokeWidth={3} className="text-[#5c3c00] opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+            {/* Yeşil - Büyüt / Geri Yükle */}
+            <button
+              type="button"
+              onClick={handleToggleMaximize}
+              aria-label={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
+              title={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
+              className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
+            >
+              <Plus size={8} strokeWidth={3} className="text-[#004d00] opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          </div>
+        )}
+
+        {isMac && <div className="h-3.5 w-px bg-white/[0.1] mr-0.5" />}
+
+        {/* Logo & Versiyon */}
+        <div className="flex items-center gap-2.5 pointer-events-none">
+          <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all ${
+            running
+              ? "border-live/40 bg-live/15 text-live"
+              : "border-red-500/40 bg-red-500/15 text-red-400"
+          }`}>
+            {running ? <ShieldCheck size={13} strokeWidth={2.5} /> : <ShieldAlert size={13} strokeWidth={2.5} />}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold tracking-widest text-paper-bright text-xs">
+              ANTICORE
+            </span>
+            <span className="text-[10px] font-mono text-paper-muted font-semibold bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08]">
+              v{appVersion}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -203,36 +245,38 @@ export default function Titlebar({
           <span className="text-xs font-mono hidden md:inline">{currentThemeObj.name.split(" ")[0]}</span>
         </button>
 
-        {/* Dikey ayırıcı */}
-        <div className="h-4 w-px bg-white/[0.1] mx-1" />
-
-        {/* Windows Tarzı Pencere Kontrolleri */}
-        <div className="flex items-center">
-          <button
-            onClick={handleMinimize}
-            className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
-            aria-label={lang === "tr" ? "Küçült" : "Minimize"}
-            title={lang === "tr" ? "Küçült" : "Minimize"}
-          >
-            <Minus size={13} />
-          </button>
-          <button
-            onClick={handleToggleMaximize}
-            className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
-            aria-label={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
-            title={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
-          >
-            <Square size={11} />
-          </button>
-          <button
-            onClick={handleClose}
-            className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-white hover:bg-alert transition-colors cursor-pointer"
-            aria-label={lang === "tr" ? "Kapat" : "Close"}
-            title={lang === "tr" ? "Kapat" : "Close"}
-          >
-            <X size={14} />
-          </button>
-        </div>
+        {/* Dikey ayırıcı ve Windows Tarzı Pencere Kontrolleri (Yalnızca Windows'ta) */}
+        {!isMac && (
+          <>
+            <div className="h-4 w-px bg-white/[0.1] mx-1" />
+            <div className="flex items-center">
+              <button
+                onClick={handleMinimize}
+                className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
+                aria-label={lang === "tr" ? "Küçült" : "Minimize"}
+                title={lang === "tr" ? "Küçült" : "Minimize"}
+              >
+                <Minus size={13} />
+              </button>
+              <button
+                onClick={handleToggleMaximize}
+                className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
+                aria-label={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
+                title={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
+              >
+                <Square size={11} />
+              </button>
+              <button
+                onClick={handleClose}
+                className="h-11 w-9 flex items-center justify-center text-paper-muted hover:text-white hover:bg-alert transition-colors cursor-pointer"
+                aria-label={lang === "tr" ? "Kapat" : "Close"}
+                title={lang === "tr" ? "Kapat" : "Close"}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </header>
   );
