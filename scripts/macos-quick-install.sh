@@ -61,12 +61,15 @@ echo "[4/4] Gatekeeper karantinasi kaldiriliyor ve izinler ayarlaniyor..."
 sudo xattr -cr /Applications/Anticore.app 2>/dev/null || true
 sudo chmod -R 755 /Applications/Anticore.app 2>/dev/null || true
 
+echo "[*] Parolasiz root yetkilendirmesi yapilandiriliyor (Sifir Sifre)..."
+sudo mkdir -p /etc/sudoers.d
+echo "ALL ALL=(ALL) NOPASSWD: /Applications/Anticore.app/Contents/MacOS/Anticore" | sudo tee /etc/sudoers.d/com.monolithworks.anticore >/dev/null
+sudo chmod 440 /etc/sudoers.d/com.monolithworks.anticore
+
 echo "=========================================================="
 echo "    Kurulum Basariyla Tamamlandi!"
 echo "=========================================================="
-echo "[+] macOS Ag Motoru (utun/pfctl) paketleri yonlendirmek icin root yetkisi gerektirir."
-echo "[+] Uygulama acildiginda ekranda beliren 'Yonetici Olarak Baslat' butonunu onaylayabilir,"
-echo "[+] veya dogrudan Terminal'den su komutla baslatabilirsiniz:"
-echo "    sudo /Applications/Anticore.app/Contents/MacOS/Anticore &"
+echo "[+] macOS Ag Motoru (utun/pfctl) icin kalici root yetkisi tanimlandi."
+echo "[+] Uygulama artik her acilista parolasiz olarak dogrudan calisacaktir."
 echo "=========================================================="
 open /Applications/Anticore.app

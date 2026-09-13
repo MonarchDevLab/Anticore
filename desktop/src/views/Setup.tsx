@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { api, type Profile, type SetupStatus } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
+import { isMac } from "../lib/platform";
 import Guide from "../components/Guide";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
@@ -123,9 +124,13 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
                 {t("privilege_required_title")}
               </div>
               <div className="text-xs text-paper-muted mt-0.5">
-                {lang === "tr"
-                  ? "Sistem servisi kurmak veya arka planda bağımsız Çekirdek çalıştırmak için Yönetici / root yetkisi gereklidir."
-                  : "Administrator / root privileges are required to install a system service or run a detached engine."}
+                {isMac
+                  ? (lang === "tr"
+                      ? "Sistem servisi kurmak veya arka planda bağımsız Çekirdek çalıştırmak için macOS yetkili (root) izni gereklidir."
+                      : "Elevated (root) privileges are required on macOS to install a system service or run a detached engine.")
+                  : (lang === "tr"
+                      ? "Sistem servisi kurmak veya arka planda bağımsız Çekirdek çalıştırmak için Yönetici / root yetkisi gereklidir."
+                      : "Administrator / root privileges are required to install a system service or run a detached engine.")}
               </div>
             </div>
           </div>
@@ -141,7 +146,7 @@ export default function Setup({ pushLog }: { pushLog: (l: string) => void }) {
             className="btn btn-primary px-3.5 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer shrink-0 self-end sm:self-center"
           >
             <Shield size={14} />
-            <span>{t("dash_admin_btn")}</span>
+            <span>{isMac ? t("dash_admin_btn_mac") : t("dash_admin_btn")}</span>
           </button>
         </div>
       )}

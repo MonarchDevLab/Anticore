@@ -1,4 +1,12 @@
 fn main() {
+    let build_time = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    println!("cargo:rustc-env=ANTICORE_BUILD_TIME={}", build_time);
+    println!("cargo:rerun-if-changed=src");
+    println!("cargo:rerun-if-changed=Cargo.toml");
+
     #[cfg(windows)]
     {
         let mut windows = tauri_build::WindowsAttributes::new();

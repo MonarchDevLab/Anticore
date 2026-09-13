@@ -56,6 +56,7 @@ dependencies = [
  "anticore-core",
  "anticore-transport-macos",
  "anticore-transport-win",
+ "chrono",
  "libc",
  "semver",
  "serde",

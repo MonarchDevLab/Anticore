@@ -24,6 +24,7 @@ tauri-plugin-single-instance = "2"
 tauri-plugin-notification = "2"
 ureq = { version = "2", features = ["json"] }
 semver = "1"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 url = "2"
 
 [target.'cfg(windows)'.dependencies]

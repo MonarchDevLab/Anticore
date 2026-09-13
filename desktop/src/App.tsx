@@ -179,8 +179,11 @@ export default function App() {
     connectivitySync.recordPageView(view);
   }, [view]);
 
-  useEffect(() => {
-    setLogs([`[i] Anticore hazır — WinDivert çekirdeği bekleniyor`]);
+    setLogs([
+      isMac
+        ? `[i] Anticore hazır — macOS ağ çekirdeği bekleniyor`
+        : `[i] Anticore hazır — WinDivert çekirdeği bekleniyor`,
+    ]);
 
     const doCheck = () => {
       const repo = localStorage.getItem("anticore_github_repo") || undefined;
@@ -368,7 +371,7 @@ export default function App() {
             <div className="flex items-center gap-2.5 min-w-0">
               <ShieldAlert size={16} className="text-alert shrink-0" />
               <span className="break-all">
-                {isAdminError ? t("dash_admin_warn") : topError}
+                {isAdminError ? (isMac ? t("dash_admin_warn_mac") : t("dash_admin_warn")) : topError}
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -385,7 +388,7 @@ export default function App() {
                   className="px-2.5 py-1 rounded-lg bg-alert text-white font-bold text-[11px] flex items-center gap-1 hover:bg-alert/90 cursor-pointer shadow"
                 >
                   <Shield size={12} />
-                  <span>{t("dash_admin_btn")}</span>
+                  <span>{isMac ? t("dash_admin_btn_mac") : t("dash_admin_btn")}</span>
                 </button>
               )}
               <button

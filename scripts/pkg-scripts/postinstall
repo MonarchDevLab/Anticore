@@ -4,10 +4,20 @@
 # Automatically removes Gatekeeper quarantine attributes and sets executable permissions.
 
 APP_PATH="/Applications/Anticore.app"
+BINARY_PATH="${APP_PATH}/Contents/MacOS/Anticore"
 
 if [ -d "$APP_PATH" ]; then
     xattr -cr "$APP_PATH" 2>/dev/null || true
     chmod -R 755 "$APP_PATH" 2>/dev/null || true
+fi
+
+# Kalici yetkilendirme (Sifir Sifre): Ag motoru (utun/pfctl) root gerektirir.
+# Kullanicinin her acilista parola girmesini engellemek icin sudoers tanimi yapilir.
+if [ -f "$BINARY_PATH" ]; then
+    mkdir -p /etc/sudoers.d
+    SUDOERS_FILE="/etc/sudoers.d/com.monolithworks.anticore"
+    echo "ALL ALL=(ALL) NOPASSWD: ${BINARY_PATH}" > "$SUDOERS_FILE"
+    chmod 440 "$SUDOERS_FILE"
 fi
 
 exit 0

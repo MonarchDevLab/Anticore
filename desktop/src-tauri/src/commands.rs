@@ -1156,9 +1156,19 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_path = exe.to_string_lossy().to_string();
+        let app_path = "/Applications/Anticore.app/Contents/MacOS/Anticore";
+        
+        let sudoers_entries = if exe_path == app_path {
+            format!("ALL ALL=(ALL) NOPASSWD: {app_path}\n")
+        } else {
+            format!("ALL ALL=(ALL) NOPASSWD: {app_path}\nALL ALL=(ALL) NOPASSWD: {exe_path}\n")
+        };
+
         let script = format!(
-            "do shell script \"'{}' >/dev/null 2>&1 &\" with administrator privileges",
-            exe.to_string_lossy()
+            "do shell script \"mkdir -p /etc/sudoers.d && printf '{}' > /etc/sudoers.d/com.monolithworks.anticore && chmod 440 /etc/sudoers.d/com.monolithworks.anticore && sudo '{}' >/dev/null 2>&1 &\" with administrator privileges",
+            sudoers_entries.replace('\n', "\\n"),
+            exe_path
         );
         let status = std::process::Command::new("osascript")
             .args(["-e", &script])
@@ -2427,7 +2437,7 @@ pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), 
     #[cfg(target_os = "macos")]
     {
         let cmd = format!(
-            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore ~/Library/LaunchAgents/com.monolithworks.anticore.plist /var/log/anticore.*' >/dev/null 2>&1 &",
+            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore ~/Library/LaunchAgents/com.monolithworks.anticore.plist /etc/sudoers.d/com.monolithworks.anticore /var/log/anticore.*' >/dev/null 2>&1 &",
             app_pid
         );
         let _ = silent_command("sh").args(["-c", &cmd]).spawn();
@@ -2707,6 +2717,14 @@ pub fn open_browser_url(app: AppHandle, url: String) -> Result<(), String> {
 struct GhAsset {
     name: String,
     browser_download_url: String,
+    #[serde(default)]
+    updated_at: Option<String>,
+}
+
+fn parse_iso_timestamp(s: &str) -> u64 {
+    chrono::DateTime::parse_from_rfc3339(s)
+        .map(|dt| dt.timestamp().max(0) as u64)
+        .unwrap_or(0)
 }
 
 #[derive(Deserialize)]
@@ -2780,13 +2798,33 @@ pub fn check_update(
         req = req.set("Authorization", &format!("Bearer {}", tok.trim()));
     }
 
+    let local_build_time: u64 = option_env!("ANTICORE_BUILD_TIME")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+
     let api_result = req.call();
 
     // 1. Birincil Yol: GitHub Releases REST API
     if let Ok(resp) = api_result {
         if let Ok(parsed) = resp.into_json::<GhRelease>() {
             let latest_tag = parsed.tag_name.unwrap_or_default();
-            let has_update = is_newer_version(current_ver, &latest_tag);
+            let is_semver_newer = is_newer_version(current_ver, &latest_tag);
+
+            let clean = |s: &str| s.trim().trim_start_matches('v').to_string();
+            let is_same_version = clean(current_ver) == clean(&latest_tag);
+
+            let mut remote_timestamp = parsed.published_at.as_deref().map(parse_iso_timestamp).unwrap_or(0);
+            for a in &parsed.assets {
+                if let Some(ref upd) = a.updated_at {
+                    let ts = parse_iso_timestamp(upd);
+                    if ts > remote_timestamp {
+                        remote_timestamp = ts;
+                    }
+                }
+            }
+
+            let is_newer_build = local_build_time > 0 && remote_timestamp > (local_build_time + 120);
+            let has_update = is_semver_newer || (is_same_version && is_newer_build);
             let is_portable = is_current_app_portable();
 
             let mut setup_url = None;
@@ -2815,7 +2853,9 @@ pub fn check_update(
                             .assets
                             .iter()
                             .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                            .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg"))
+                            .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".pkg"))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg")))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".pkg")))
                             .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
                             .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
                             .map(|a| a.browser_download_url.clone())
@@ -2826,7 +2866,9 @@ pub fn check_update(
                             .assets
                             .iter()
                             .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                            .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg"))
+                            .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".pkg"))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg")))
+                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".pkg")))
                             .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
                             .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
                             .map(|a| a.browser_download_url.clone())
@@ -2846,17 +2888,28 @@ pub fn check_update(
                 }
             };
 
-            let release_title = parsed.name.clone().unwrap_or_else(|| "Yeni Sürüm".into());
+            let display_version = if is_same_version && is_newer_build {
+                format!("{latest_tag} (Revizyon)")
+            } else {
+                latest_tag.clone()
+            };
+
+            let release_title = if is_same_version && is_newer_build {
+                format!("{} (Güncelleme Paketi)", parsed.name.clone().unwrap_or_else(|| "Yeni Yapı".into()))
+            } else {
+                parsed.name.clone().unwrap_or_else(|| "Yeni Sürüm".into())
+            };
+
             if has_update {
-                trigger_update_notification(&app, &latest_tag, &release_title);
+                trigger_update_notification(&app, &display_version, &release_title);
             }
 
             let release_notes = strip_emojis(&parsed.body.unwrap_or_default());
             return Ok(UpdateInfoDto {
                 has_update,
                 current_version: current_ver.to_string(),
-                latest_version: latest_tag,
-                release_name: parsed.name.unwrap_or_default(),
+                latest_version: display_version,
+                release_name: release_title,
                 release_notes,
                 html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
                 download_url,
@@ -2879,7 +2932,14 @@ pub fn check_update(
     if let Ok(resp) = cdn_resp {
         if let Ok(latest_meta) = resp.into_json::<LatestJson>() {
             let latest_version = latest_meta.version.unwrap_or_default();
-            let has_update = is_newer_version(current_ver, &latest_version);
+            let is_semver_newer = is_newer_version(current_ver, &latest_version);
+
+            let clean = |s: &str| s.trim().trim_start_matches('v').to_string();
+            let is_same_version = clean(current_ver) == clean(&latest_version);
+
+            let remote_timestamp = latest_meta.pub_date.as_deref().map(parse_iso_timestamp).unwrap_or(0);
+            let is_newer_build = local_build_time > 0 && remote_timestamp > (local_build_time + 120);
+            let has_update = is_semver_newer || (is_same_version && is_newer_build);
             let is_portable = is_current_app_portable();
 
             let setup_url = Some(format!(
@@ -2926,16 +2986,27 @@ pub fn check_update(
                 }
             };
 
-            let release_title = format!("Anticore v{latest_version}");
+            let display_version = if is_same_version && is_newer_build {
+                format!("{latest_version} (Revizyon)")
+            } else {
+                latest_version.clone()
+            };
+
+            let release_title = if is_same_version && is_newer_build {
+                format!("Anticore v{latest_version} (Güncelleme Paketi)")
+            } else {
+                format!("Anticore v{latest_version}")
+            };
+
             if has_update {
-                trigger_update_notification(&app, &latest_version, &release_title);
+                trigger_update_notification(&app, &display_version, &release_title);
             }
 
             let release_notes = strip_emojis(&latest_meta.notes.unwrap_or_default());
             return Ok(UpdateInfoDto {
                 has_update,
                 current_version: current_ver.to_string(),
-                latest_version: latest_version.clone(),
+                latest_version: display_version,
                 release_name: release_title,
                 release_notes,
                 html_url: format!("https://github.com/{repo}/releases/tag/v{latest_version}"),
@@ -2970,6 +3041,10 @@ pub async fn install_update_direct(
     let is_portable_exe = is_portable && (download_url.ends_with("Anticore.exe") || (!download_url.ends_with("-setup.exe") && download_url.ends_with(".exe")));
     let target_file_path = if is_portable_exe {
         temp_dir.join("Anticore_New_Update.exe")
+    } else if download_url.ends_with(".pkg") {
+        temp_dir.join("Anticore_Update.pkg")
+    } else if download_url.ends_with(".dmg") {
+        temp_dir.join("Anticore_Update.dmg")
     } else {
         temp_dir.join("Anticore_Update_Setup.exe")
     };
@@ -3045,9 +3120,75 @@ pub async fn install_update_direct(
         }
     }
 
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
     {
-        return Err("Doğrudan kurulum şu anda yalnızca Windows ortamında desteklenmektedir.".into());
+        let target_str = target_file_path.to_string_lossy().to_string();
+        if target_str.ends_with(".pkg") {
+            let is_root = unsafe { libc::geteuid() == 0 };
+            if is_root {
+                let status = silent_command("installer")
+                    .args(["-pkg", &target_str, "-target", "/"])
+                    .status();
+                if let Ok(st) = status {
+                    if st.success() {
+                        let _ = silent_command("open")
+                            .arg("/Applications/Anticore.app")
+                            .spawn();
+                        std::process::exit(0);
+                    }
+                }
+            }
+
+            let script = format!(
+                "do shell script \"installer -pkg '{}' -target / && open /Applications/Anticore.app &\" with administrator privileges",
+                target_str
+            );
+            let status = std::process::Command::new("osascript")
+                .arg("-e")
+                .arg(&script)
+                .status();
+
+            if let Ok(st) = status {
+                if st.success() {
+                    std::process::exit(0);
+                }
+            }
+            return Err("macOS güncelleme paketi kurulamadı veya izin reddedildi.".into());
+        } else if target_str.ends_with(".dmg") {
+            let mount_dir = temp_dir.join("anticore_dmg_mount");
+            let _ = std::fs::create_dir_all(&mount_dir);
+            let mount_str = mount_dir.to_string_lossy().to_string();
+            let attach = silent_command("hdiutil")
+                .args(["attach", &target_str, "-mountpoint", &mount_str, "-nobrowse", "-quiet"])
+                .status();
+
+            if let Ok(st) = attach {
+                if st.success() {
+                    let source_app = mount_dir.join("Anticore.app");
+                    let _ = silent_command("cp")
+                        .args(["-R", &source_app.to_string_lossy(), "/Applications/"])
+                        .status();
+                    let _ = silent_command("hdiutil")
+                        .args(["detach", &mount_str, "-quiet"])
+                        .status();
+                    let _ = silent_command("xattr")
+                        .args(["-cr", "/Applications/Anticore.app"])
+                        .status();
+                    let _ = silent_command("open")
+                        .arg("/Applications/Anticore.app")
+                        .spawn();
+                    std::process::exit(0);
+                }
+            }
+            return Err("macOS DMG güncelleme paketi açılamadı.".into());
+        } else {
+            return Err("Desteklenmeyen macOS güncelleme paketi formatı.".into());
+        }
+    }
+
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        return Err("Doğrudan kurulum şu anda bu platformda desteklenmemektedir.".into());
     }
 
     #[allow(unreachable_code)]
@@ -3534,5 +3675,15 @@ mod tests {
         let input = "#### 🍏 macOS Paketleri (Apple Silicon) 🖥️ 🪟 Windows ⚡ ⚙ ⭐";
         let output = strip_emojis(input);
         assert_eq!(output.trim(), "####  macOS Paketleri (Apple Silicon)   Windows");
+    }
+
+    #[test]
+    fn test_parse_iso_timestamp() {
+        let ts1 = parse_iso_timestamp("2026-09-13T12:00:00Z");
+        assert!(ts1 > 0);
+        let ts2 = parse_iso_timestamp("2026-09-13T12:05:00Z");
+        assert_eq!(ts2 - ts1, 300);
+        let ts_invalid = parse_iso_timestamp("invalid-date");
+        assert_eq!(ts_invalid, 0);
     }
 }
