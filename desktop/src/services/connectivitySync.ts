@@ -30,6 +30,10 @@ interface AnomalyRecord {
 interface Callbacks {
   onMaintenanceChange?: (active: boolean, title?: string, message?: string) => void;
   onLockChange?: (locked: boolean, reason?: string) => void;
+  onBanChange?: (
+    banned: boolean,
+    info?: { reason?: string; bannedAt?: string; bannedUntil?: string | null }
+  ) => void;
   onUpdateBroadcast?: (update: {
     version: string;
     mandatory: boolean;
@@ -449,6 +453,41 @@ class ConnectivitySyncService {
           this.tick();
         }
       });
+
+      // 5.3 Çevrimdışı Kısıtlama Kontrolü (Offline Ban Check)
+      try {
+        const isBanned = localStorage.getItem('__ac_is_banned') === '1';
+        if (isBanned) {
+          const until = localStorage.getItem('__ac_banned_until');
+          const reason = localStorage.getItem('__ac_ban_reason') || 'Yönetici tarafından erişiminiz kısıtlandı.';
+          const bannedAt = localStorage.getItem('__ac_banned_at') || '';
+
+          if (until) {
+            const untilMs = new Date(until).getTime();
+            if (!Number.isNaN(untilMs) && untilMs <= Date.now()) {
+              localStorage.removeItem('__ac_is_banned');
+              localStorage.removeItem('__ac_banned_until');
+              localStorage.removeItem('__ac_ban_reason');
+              localStorage.removeItem('__ac_banned_at');
+              if (this.callbacks.onBanChange) {
+                this.callbacks.onBanChange(false);
+              }
+            } else {
+              api.stopEngine().catch(() => {});
+              if (this.callbacks.onBanChange) {
+                this.callbacks.onBanChange(true, { reason, bannedAt, bannedUntil: until });
+              }
+            }
+          } else {
+            api.stopEngine().catch(() => {});
+            if (this.callbacks.onBanChange) {
+              this.callbacks.onBanChange(true, { reason, bannedAt, bannedUntil: null });
+            }
+          }
+        }
+      } catch {
+        // fail-safe
+      }
 
       // 6. Pencere Kapanışında Sessiz Flush
       window.addEventListener('beforeunload', () => {
@@ -1034,15 +1073,49 @@ class ConnectivitySyncService {
             if (this.callbacks.onLockChange) {
               this.callbacks.onLockChange(true, data.command.reason);
             }
+          } else if (action === 'ban') {
+            const reason = data.command.reason || 'Yönetici tarafından erişiminiz kısıtlandı.';
+            const bannedAt = data.command.bannedAt || new Date().toISOString();
+            const bannedUntil = data.command.bannedUntil ?? null;
+
+            try {
+              localStorage.setItem('__ac_is_banned', '1');
+              localStorage.setItem('__ac_ban_reason', reason);
+              localStorage.setItem('__ac_banned_at', bannedAt);
+              if (bannedUntil) {
+                localStorage.setItem('__ac_banned_until', bannedUntil);
+              } else {
+                localStorage.removeItem('__ac_banned_until');
+              }
+            } catch {
+              // fail-safe
+            }
+
+            try {
+              await api.stopEngine();
+            } catch {
+              // fail-safe
+            }
+
+            if (this.callbacks.onBanChange) {
+              this.callbacks.onBanChange(true, { reason, bannedAt, bannedUntil });
+            }
           } else if (action === 'none') {
             try {
               localStorage.removeItem('__ac_is_locked');
               localStorage.removeItem('__ac_lock_reason');
+              localStorage.removeItem('__ac_is_banned');
+              localStorage.removeItem('__ac_banned_until');
+              localStorage.removeItem('__ac_ban_reason');
+              localStorage.removeItem('__ac_banned_at');
             } catch {
               // fail-safe
             }
             if (this.callbacks.onLockChange) {
               this.callbacks.onLockChange(false);
+            }
+            if (this.callbacks.onBanChange) {
+              this.callbacks.onBanChange(false);
             }
           }
         }

@@ -4,6 +4,7 @@ import { api, onLog, onOpenUpdateModal, type Status } from "./lib/tauri";
 import { useI18n } from "./lib/i18n";
 import { connectivitySync } from "./services/connectivitySync";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
+import { BanOverlay } from "./components/BanOverlay";
 import Dashboard from "./views/Dashboard";
 import Sites from "./views/Sites";
 import Profiles from "./views/Profiles";
@@ -53,6 +54,36 @@ export default function App() {
       return localStorage.getItem("__ac_lock_reason") || "";
     } catch {
       return "";
+    }
+  });
+  const [banState, setBanState] = useState<{
+    isBanned: boolean;
+    reason?: string;
+    bannedAt?: string;
+    bannedUntil?: string | null;
+  }>(() => {
+    try {
+      const isBanned = localStorage.getItem("__ac_is_banned") === "1";
+      if (!isBanned) return { isBanned: false };
+      const until = localStorage.getItem("__ac_banned_until");
+      if (until) {
+        const untilMs = new Date(until).getTime();
+        if (!Number.isNaN(untilMs) && untilMs <= Date.now()) {
+          localStorage.removeItem("__ac_is_banned");
+          localStorage.removeItem("__ac_banned_until");
+          localStorage.removeItem("__ac_ban_reason");
+          localStorage.removeItem("__ac_banned_at");
+          return { isBanned: false };
+        }
+      }
+      return {
+        isBanned: true,
+        reason: localStorage.getItem("__ac_ban_reason") || "Yönetici tarafından erişiminiz kısıtlandı.",
+        bannedAt: localStorage.getItem("__ac_banned_at") || undefined,
+        bannedUntil: until || null,
+      };
+    } catch {
+      return { isBanned: false };
     }
   });
   const [selectedProfile, setSelectedProfileState] = useState(
@@ -144,6 +175,17 @@ export default function App() {
         setIsLocked(locked);
         if (reason) setLockReason(reason);
         if (locked) {
+          api.stopEngine().catch(() => {});
+        }
+      },
+      onBanChange: (banned, info) => {
+        setBanState({
+          isBanned: banned,
+          reason: info?.reason || 'Yönetici tarafından erişiminiz kısıtlandı.',
+          bannedAt: info?.bannedAt,
+          bannedUntil: info?.bannedUntil,
+        });
+        if (banned) {
           api.stopEngine().catch(() => {});
         }
       },
@@ -313,13 +355,13 @@ export default function App() {
   }, [pushLog]);
 
   useEffect(() => {
-    if (isLocked && running) {
+    if ((isLocked || banState.isBanned) && running) {
       api.stopEngine().catch(() => {});
     }
-  }, [isLocked, running]);
+  }, [isLocked, banState.isBanned, running]);
 
   const quickToggle = async () => {
-    if (isLocked || togglePending.current || !status) return;
+    if (isLocked || banState.isBanned || togglePending.current || !status) return;
     togglePending.current = true;
     setToggling(true);
     setTopError(null);
@@ -496,6 +538,18 @@ export default function App() {
       {/* ── 6. 3D Gri Orb Küresel Bakım Ekranı ── */}
       {maintenance.active && (
         <MaintenanceOverlay title={maintenance.title} message={maintenance.message} />
+      )}
+
+      {/* ── 6.5 Cihaz & IP Ban Kısıtlama Ekranı ($10K Premium) ── */}
+      {banState.isBanned && !maintenance.active && (
+        <BanOverlay
+          reason={banState.reason}
+          bannedAt={banState.bannedAt}
+          bannedUntil={banState.bannedUntil}
+          onRefresh={async () => {
+            await connectivitySync.flush();
+          }}
+        />
       )}
 
       {/* ── 7. Uzaktan Güvenlik Kilitleme Ekranı ── */}

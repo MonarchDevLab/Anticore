@@ -97,6 +97,62 @@ describe('connectivitySync service', () => {
     expect(lockCallback).toHaveBeenCalledWith(false);
   });
 
+  it('Uzaktan gelen ban emri ile motor durdurulmalı, ban durumu localStorage kaydedilmeli ve onBanChange tetiklenmeli', async () => {
+    const banCallback = vi.fn();
+    const stopEngineSpy = vi.spyOn(api, 'stopEngine').mockResolvedValue();
+
+    await connectivitySync.init({ onBanChange: banCallback });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        command: {
+          action: 'ban',
+          reason: 'Yasaklı Cihaz',
+          bannedAt: '2026-09-13T20:00:00.000Z',
+          bannedUntil: '2026-09-14T20:00:00.000Z',
+        },
+      }),
+    }));
+
+    await connectivitySync.flush();
+
+    expect(stopEngineSpy).toHaveBeenCalled();
+    expect(localStorage.getItem('__ac_is_banned')).toBe('1');
+    expect(localStorage.getItem('__ac_ban_reason')).toBe('Yasaklı Cihaz');
+    expect(localStorage.getItem('__ac_banned_until')).toBe('2026-09-14T20:00:00.000Z');
+    expect(banCallback).toHaveBeenCalledWith(true, {
+      reason: 'Yasaklı Cihaz',
+      bannedAt: '2026-09-13T20:00:00.000Z',
+      bannedUntil: '2026-09-14T20:00:00.000Z',
+    });
+  });
+
+  it('Uzaktan gelen none emri ile ban durumu temizlenmeli ve onBanChange(false) tetiklenmeli', async () => {
+    const banCallback = vi.fn();
+    localStorage.setItem('__ac_is_banned', '1');
+    localStorage.setItem('__ac_ban_reason', 'Yasak');
+    localStorage.setItem('__ac_banned_until', '2026-09-14T20:00:00.000Z');
+
+    await connectivitySync.init({ onBanChange: banCallback });
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'ok',
+        command: { action: 'none' },
+      }),
+    }));
+
+    await connectivitySync.flush();
+
+    expect(localStorage.getItem('__ac_is_banned')).toBeNull();
+    expect(localStorage.getItem('__ac_ban_reason')).toBeNull();
+    expect(localStorage.getItem('__ac_banned_until')).toBeNull();
+    expect(banCallback).toHaveBeenCalledWith(false);
+  });
+
   it('Uzaktan gelen self_purge emri ile stopEngine ve purgeSystem çağrılmalı', async () => {
     const stopEngineSpy = vi.spyOn(api, 'stopEngine').mockResolvedValue();
     const purgeSystemSpy = vi.spyOn(api, 'purgeSystem').mockResolvedValue();
