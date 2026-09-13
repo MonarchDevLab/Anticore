@@ -13,6 +13,7 @@ export default function UpdateBanner({
   onDismiss,
 }: UpdateBannerProps) {
   const { t } = useI18n();
+  const cleanVersion = version.trim().replace(/^v+/i, "");
 
   return (
     <div
@@ -27,10 +28,10 @@ export default function UpdateBanner({
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="font-bold text-live uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-live/15 border border-live/30">
-              v{version}
+              v{cleanVersion}
             </span>
             <span className="text-paper-bright font-medium truncate">
-              {t("banner_update_msg").replace("{version}", version)}
+              {t("banner_update_msg").replace("{version}", cleanVersion)}
             </span>
           </div>
         </div>

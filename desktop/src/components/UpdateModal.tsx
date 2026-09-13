@@ -153,7 +153,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
                     {lang === "tr" ? "Yeni Sürüm" : "New Version"}
                   </span>
                   <span className="text-xs font-mono font-bold text-live px-2 py-0.5 rounded bg-live/10 border border-live/20">
-                    {updateInfo.latest_version}
+                    v{updateInfo.latest_version.trim().replace(/^v+/i, "")}
                   </span>
                 </div>
                 {updateInfo.release_name && (

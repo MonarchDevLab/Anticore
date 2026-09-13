@@ -193,11 +193,12 @@ export default function App() {
         .checkUpdate(repo, token)
         .then((info) => {
           if (info.has_update) {
-            setUpdateAvailable(info.latest_version);
+            const cleanVer = info.latest_version.trim().replace(/^v+/i, "");
+            setUpdateAvailable(cleanVer);
             setBannerDismissed(false);
-            pushLog(`[+] Yeni sürüm tespit edildi: v${info.latest_version} (${info.release_name || "Anticore"})`);
+            pushLog(`[+] Yeni sürüm tespit edildi: v${cleanVer} (${info.release_name || "Anticore"})`);
             void api.sendSystemNotification(
-              `Anticore v${info.latest_version} Hazır`,
+              `Anticore v${cleanVer} Hazır`,
               "Yeni Güncelleme",
               "Yeni sürüm yayınlandı. Güncellemek için tıklayın."
             ).catch(() => {});

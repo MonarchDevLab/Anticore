@@ -2727,6 +2727,7 @@ fn parse_iso_timestamp(s: &str) -> u64 {
         .unwrap_or(0)
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct GhRelease {
     tag_name: Option<String>,
@@ -2754,12 +2755,13 @@ struct LatestJson {
     platforms: std::collections::HashMap<String, LatestJsonPlatform>,
 }
 
-fn trigger_update_notification(app: &AppHandle, tag: &str, title: &str) {
+fn trigger_update_notification(app: &AppHandle, tag: &str, _title: &str) {
     use std::sync::atomic::{AtomicBool, Ordering};
     static UPDATE_NOTIFIED: AtomicBool = AtomicBool::new(false);
     if !UPDATE_NOTIFIED.swap(true, Ordering::SeqCst) {
         use tauri_plugin_notification::NotificationExt;
-        let notif_body = format!("Anticore {} ({}) hazır! İndirmek veya güncellemek için tıklayın.", tag, title);
+        let clean = tag.trim().trim_start_matches('v');
+        let notif_body = format!("Anticore v{} hazır! İndirmek veya güncellemek için tıklayın.", clean);
         let _ = app
             .notification()
             .builder()
@@ -2888,16 +2890,17 @@ pub fn check_update(
                 }
             };
 
+            let clean_tag = latest_tag.trim().trim_start_matches('v');
             let display_version = if is_same_version && is_newer_build {
-                format!("{latest_tag} (Revizyon)")
+                format!("{clean_tag} (Revizyon)")
             } else {
-                latest_tag.clone()
+                clean_tag.to_string()
             };
 
             let release_title = if is_same_version && is_newer_build {
-                format!("{} (Güncelleme Paketi)", parsed.name.clone().unwrap_or_else(|| "Yeni Yapı".into()))
+                format!("Anticore v{clean_tag} (Güncelleme Paketi)")
             } else {
-                parsed.name.clone().unwrap_or_else(|| "Yeni Sürüm".into())
+                format!("Anticore v{clean_tag}")
             };
 
             if has_update {
@@ -2986,16 +2989,17 @@ pub fn check_update(
                 }
             };
 
+            let clean_ver = latest_version.trim().trim_start_matches('v');
             let display_version = if is_same_version && is_newer_build {
-                format!("{latest_version} (Revizyon)")
+                format!("{clean_ver} (Revizyon)")
             } else {
-                latest_version.clone()
+                clean_ver.to_string()
             };
 
             let release_title = if is_same_version && is_newer_build {
-                format!("Anticore v{latest_version} (Güncelleme Paketi)")
+                format!("Anticore v{clean_ver} (Güncelleme Paketi)")
             } else {
-                format!("Anticore v{latest_version}")
+                format!("Anticore v{clean_ver}")
             };
 
             if has_update {
