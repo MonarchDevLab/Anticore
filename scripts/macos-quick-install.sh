@@ -72,4 +72,4 @@ echo "=========================================================="
 echo "[+] macOS Ag Motoru (utun/pfctl) icin kalici root yetkisi tanimlandi."
 echo "[+] Uygulama artik her acilista parolasiz olarak dogrudan calisacaktir."
 echo "=========================================================="
-open /Applications/Anticore.app
+open -n /Applications/Anticore.app
