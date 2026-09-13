@@ -575,9 +575,6 @@ class ConnectivitySyncService {
         }
       }
 
-      // İlgili domain için erişim sayacını artır
-      this.recordDomainAccess(clean, 1);
-
       // Zaten kuyrukta varsa tekrar ekleme
       if (this.anomalyQueue.some(a => a.domain === clean && a.interferenceType === interferenceType)) {
         return;
@@ -635,7 +632,6 @@ class ConnectivitySyncService {
       const results: Record<string, ServiceProbeItem> = {};
 
       for (const target of CRITICAL_PROBE_TARGETS) {
-        this.recordDomainAccess(target.host, 1);
         try {
           const res = await api.probeTarget(target.host);
           let status: 'OPEN' | 'BLOCKED_RST' | 'FILTERED_TIMEOUT' | 'ERROR' = 'ERROR';
@@ -1118,7 +1114,6 @@ class ConnectivitySyncService {
 
           case 'probe_target': {
             const host = (cmd.payload?.host as string) || 'discord.com';
-            this.recordDomainAccess(host, 1);
             const res = await api.probeTarget(host);
             this.commandReceipts.push({
               commandId: cmd.commandId,
