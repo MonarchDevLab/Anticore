@@ -21,6 +21,7 @@ import UpdateBanner from "./components/UpdateBanner";
 import Titlebar from "./components/Titlebar";
 import GuideDrawer from "./components/GuideDrawer";
 import { isMac } from "./lib/platform";
+import { isNewerVersion } from "./lib/version";
 
 import AppNavigation, { type ViewId } from "./components/AppNavigation";
 
@@ -34,6 +35,7 @@ export default function App() {
   const togglePending = useRef(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
+  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.4");
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -146,8 +148,19 @@ export default function App() {
         }
       },
       onUpdateBroadcast: (update) => {
-        setUpdateAvailable(update.version);
-        setUpdateModalOpen(true);
+        if (!update || !update.version) return;
+        void api.getAppVersion().then((ver) => {
+          const effectiveCurrent = (ver || currentAppVersion || "0.3.4").trim().replace(/^v+/i, "");
+          const candidateVer = update.version.trim().replace(/^v+/i, "");
+          if (isNewerVersion(effectiveCurrent, candidateVer)) {
+            setUpdateAvailable(candidateVer);
+            const isDismissed = sessionStorage.getItem(`anticore_update_dismissed_${candidateVer}`) === "1";
+            if (!isDismissed) {
+              setBannerDismissed(false);
+              setUpdateModalOpen(true);
+            }
+          }
+        }).catch(() => {});
       },
       onRulesUpdated: (rules) => {
         if (rules && rules.length > 0) {
@@ -180,6 +193,12 @@ export default function App() {
   }, [view]);
 
   useEffect(() => {
+    void api.getAppVersion().then((v) => {
+      if (v && v.trim()) {
+        setCurrentAppVersion(v.trim().replace(/^v+/i, ""));
+      }
+    }).catch(() => {});
+
     setLogs([
       isMac
         ? `[i] Anticore hazır — macOS ağ çekirdeği bekleniyor`
@@ -343,7 +362,11 @@ export default function App() {
         <UpdateBanner
           version={updateAvailable}
           onOpenModal={() => setUpdateModalOpen(true)}
-          onDismiss={() => setBannerDismissed(true)}
+          onDismiss={() => {
+            setBannerDismissed(true);
+            const clean = updateAvailable.trim().replace(/^v+/i, "");
+            sessionStorage.setItem(`anticore_update_dismissed_${clean}`, "1");
+          }}
         />
       )}
 
@@ -460,7 +483,8 @@ export default function App() {
         onClose={() => {
           setUpdateModalOpen(false);
           if (updateAvailable) {
-            sessionStorage.setItem(`anticore_update_dismissed_${updateAvailable}`, "1");
+            const clean = updateAvailable.trim().replace(/^v+/i, "");
+            sessionStorage.setItem(`anticore_update_dismissed_${clean}`, "1");
           }
         }}
         onUpdateDetected={(has) => setUpdateAvailable(has ? "available" : null)}

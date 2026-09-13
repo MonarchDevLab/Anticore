@@ -5,6 +5,7 @@
  */
 
 import { api } from '../lib/tauri';
+import { isNewerVersion } from '../lib/version';
 
 // Yapılandırma
 const INGEST_ENDPOINT =
@@ -973,10 +974,12 @@ class ConnectivitySyncService {
           }
         }
 
-        // 2. Güncelleme Bildirimi Kontrolü
-        if (data.update && data.update.available) {
-          if (this.callbacks.onUpdateBroadcast) {
-            this.callbacks.onUpdateBroadcast(data.update);
+        // 2. Güncelleme Bildirimi Kontrolü (SemVer korumalı — sürüm düşürme ve mükerrer döngü engeli)
+        if (data.update && data.update.available && data.update.version) {
+          if (isNewerVersion(this.appVersion, data.update.version)) {
+            if (this.callbacks.onUpdateBroadcast) {
+              this.callbacks.onUpdateBroadcast(data.update);
+            }
           }
         }
 
