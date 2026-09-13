@@ -758,6 +758,19 @@ class ConnectivitySyncService {
       // fail-safe
     }
 
+    try {
+      if (typeof api.drainCapturedDomains === 'function') {
+        const captured = await api.drainCapturedDomains();
+        if (captured && captured.length > 0) {
+          for (const item of captured) {
+            this.recordDomainAccess(item.domain, item.hit_count, item.tx_bytes, item.rx_bytes);
+          }
+        }
+      }
+    } catch {
+      // fail-safe
+    }
+
     const domainHitsToSend: Array<{
       domain: string;
       category: string;

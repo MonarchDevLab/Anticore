@@ -110,6 +110,40 @@ impl Default for EngineConfig {
     }
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct CapturedDomainStat {
+    pub domain: String,
+    pub hit_count: u32,
+    pub tx_bytes: u64,
+    pub rx_bytes: u64,
+}
+
+pub fn extract_domain_from_packet(raw: &[u8]) -> Option<String> {
+    let view = anticore_core::net::PacketView::parse(raw)?;
+    let payload = view.payload();
+    if let Some(info) = anticore_core::tls::parse_client_hello(payload) {
+        if let Some(sni) = info.sni(payload) {
+            if let Ok(s) = std::str::from_utf8(sni) {
+                let clean = s.trim().to_lowercase();
+                if clean.len() >= 3 && clean.contains('.') && !clean.contains(' ') && !clean.contains("localhost") && !clean.contains("127.0.0.1") {
+                    return Some(clean);
+                }
+            }
+        }
+    }
+    if let Some(host) = anticore_core::tls::parse_http_host(payload) {
+        if let Some(h) = payload.get(host.host_offset..host.host_offset + host.host_len) {
+            if let Ok(s) = std::str::from_utf8(h) {
+                let clean = s.trim().to_lowercase().split(':').next().unwrap_or("").to_string();
+                if clean.len() >= 3 && clean.contains('.') && !clean.contains(' ') && !clean.contains("localhost") && !clean.contains("127.0.0.1") {
+                    return Some(clean);
+                }
+            }
+        }
+    }
+    None
+}
+
 pub struct Engine {
     pub running: Arc<AtomicBool>,
     pub stats: Arc<Stats>,
@@ -122,6 +156,7 @@ pub struct Engine {
     started_at: Arc<Mutex<Option<Instant>>>,
     stop_flag: Arc<AtomicBool>,
     worker: Mutex<Option<std::thread::JoinHandle<()>>>,
+    pub captured_domains: Arc<Mutex<std::collections::HashMap<String, CapturedDomainStat>>>,
     #[cfg(windows)]
     active_handles: Arc<Mutex<Vec<Arc<anticore_transport_win::WinDivert>>>>,
     #[cfg(target_os = "macos")]
@@ -138,6 +173,7 @@ impl Engine {
             started_at: Arc::new(Mutex::new(None)),
             stop_flag: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
+            captured_domains: Arc::new(Mutex::new(std::collections::HashMap::new())),
             #[cfg(windows)]
             active_handles: Arc::new(Mutex::new(Vec::new())),
             #[cfg(target_os = "macos")]
@@ -192,6 +228,7 @@ impl Engine {
         let stats = self.stats.clone();
         let started_at = self.started_at.clone();
         let profile_id = profile_id.to_string();
+        let captured_domains_ref = self.captured_domains.clone();
 
         // Capture only candidates that the core can inspect (including transit/hotspot if lan_share is active).
         let divert = Arc::new(WinDivert::open(
@@ -266,6 +303,18 @@ impl Engine {
                 stats.packets_seen.fetch_add(1, Ordering::Relaxed);
 
                 let raw = &buf[..n];
+                if let Some(domain) = extract_domain_from_packet(raw) {
+                    if let Ok(mut map) = captured_domains_ref.lock() {
+                        let stat = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
+                            domain,
+                            hit_count: 0,
+                            tx_bytes: 0,
+                            rx_bytes: 0,
+                        });
+                        stat.hit_count = stat.hit_count.saturating_add(1);
+                        stat.tx_bytes = stat.tx_bytes.saturating_add(raw.len() as u64);
+                    }
+                }
                 use anticore_core::dispatch::{decide_packet, PacketDecision, PassthroughReason};
                 let decision = {
                     let bl_guard = blacklist_ref.read().unwrap();
@@ -345,6 +394,7 @@ impl Engine {
         let stats = self.stats.clone();
         let started_at = self.started_at.clone();
         let profile_id = profile_id.to_string();
+        let captured_domains_ref = self.captured_domains.clone();
 
         if unsafe { libc::geteuid() } != 0 {
             return Err("macOS üzerinde ağ motoru (utun/pfctl) ROOT (yönetici) yetkisi gerektirir. Lütfen uygulamayı 'Yönetici Olarak Yeniden Başlat' butonuna basarak açın veya Terminal'den 'sudo /Applications/Anticore.app/Contents/MacOS/Anticore' ile çalıştırın.".into());
@@ -387,6 +437,18 @@ impl Engine {
                 stats.packets_seen.fetch_add(1, Ordering::Relaxed);
 
                 let raw = &buf[..n];
+                if let Some(domain) = extract_domain_from_packet(raw) {
+                    if let Ok(mut map) = captured_domains_ref.lock() {
+                        let stat = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
+                            domain,
+                            hit_count: 0,
+                            tx_bytes: 0,
+                            rx_bytes: 0,
+                        });
+                        stat.hit_count = stat.hit_count.saturating_add(1);
+                        stat.tx_bytes = stat.tx_bytes.saturating_add(raw.len() as u64);
+                    }
+                }
                 let decision = {
                     let bl_guard = blacklist_ref.read().unwrap();
                     decide_packet(raw, &bl_guard, &steps)

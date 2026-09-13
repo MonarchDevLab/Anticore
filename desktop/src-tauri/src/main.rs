@@ -218,6 +218,7 @@ fn main() {
             commands::get_system_hostname,
             commands::get_system_telemetry_hardware,
             commands::send_telemetry_beacon,
+            commands::drain_captured_domains,
             tray::get_tray_minimize,
             tray::set_tray_minimize,
             tray::get_show_tray_icon,

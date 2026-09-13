@@ -3681,6 +3681,16 @@ pub fn send_telemetry_beacon(endpoint: Option<String>, payload: String) -> Resul
     Ok(body)
 }
 
+#[tauri::command]
+pub fn drain_captured_domains(engine: tauri::State<Engine>) -> Vec<crate::service::CapturedDomainStat> {
+    if let Ok(mut map) = engine.captured_domains.lock() {
+        let items: Vec<crate::service::CapturedDomainStat> = map.values().cloned().collect();
+        map.clear();
+        items
+    } else {
+        Vec::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
