@@ -120,9 +120,22 @@ pub fn set_engine_config(app: AppHandle, config: EngineConfigDto) -> Result<(), 
 }
 
 pub(crate) fn save_engine_config_internal(app: &AppHandle, config: &crate::service::EngineConfig) -> Result<(), String> {
+    #[derive(serde::Serialize)]
+    struct StoredConfig {
+        pasif_savunma: bool,
+        quic_engelle: bool,
+        lan_share: bool,
+        defense_migrated: bool,
+    }
+    let payload = StoredConfig {
+        pasif_savunma: config.pasif_savunma,
+        quic_engelle: config.quic_engelle,
+        lan_share: config.lan_share,
+        defense_migrated: true,
+    };
     std::fs::write(
         config_path(app),
-        serde_json::to_string_pretty(config).map_err(|e| e.to_string())?,
+        serde_json::to_string_pretty(&payload).map_err(|e| e.to_string())?,
     )
     .map_err(|e| format!("kaydedilemedi: {e}"))
 }
@@ -712,25 +725,82 @@ pub(crate) fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfi
         }
         return defaults;
     };
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Serialize)]
     struct Raw {
         pasif_savunma: Option<bool>,
         quic_engelle: Option<bool>,
         lan_share: Option<bool>,
+        defense_migrated: Option<bool>,
     }
     match serde_json::from_str::<Raw>(&text) {
-        Ok(r) => crate::service::EngineConfig {
-            pasif_savunma: r.pasif_savunma.unwrap_or(defaults.pasif_savunma),
-            quic_engelle: r.quic_engelle.unwrap_or(defaults.quic_engelle),
-            lan_share: r.lan_share.unwrap_or(defaults.lan_share),
-        },
+        Ok(r) => {
+            let migrated = r.defense_migrated.unwrap_or(false);
+            let mut cfg = crate::service::EngineConfig {
+                pasif_savunma: r.pasif_savunma.unwrap_or(defaults.pasif_savunma),
+                quic_engelle: r.quic_engelle.unwrap_or(defaults.quic_engelle),
+                lan_share: r.lan_share.unwrap_or(defaults.lan_share),
+            };
+            if !migrated {
+                // Eski sürümlerde pasif_savunma ve quic_engelle false kalmış kurulumlarda
+                // video/oynatıcı karadeliklerini ve RST kesintilerini önlemek için etkinleştir
+                cfg.pasif_savunma = true;
+                cfg.quic_engelle = true;
+                let updated = Raw {
+                    pasif_savunma: Some(cfg.pasif_savunma),
+                    quic_engelle: Some(cfg.quic_engelle),
+                    lan_share: Some(cfg.lan_share),
+                    defense_migrated: Some(true),
+                };
+                if let Ok(serialized) = serde_json::to_string_pretty(&updated) {
+                    let _ = std::fs::write(&p, serialized);
+                }
+            }
+            cfg
+        }
         Err(_) => defaults,
     }
 }
 
 fn load_blacklist(app: &AppHandle) -> anticore_core::config::Blacklist {
-    anticore_core::config::Blacklist::from_file(&blacklist_path(app))
-        .unwrap_or_else(|_| anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST))
+    let p = blacklist_path(app);
+    if !p.exists() {
+        let _ = std::fs::write(&p, anticore_core::config::DEFAULT_BLACKLIST);
+        return anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST);
+    }
+
+    let Ok(text) = std::fs::read_to_string(&p) else {
+        return anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST);
+    };
+
+    let current_bl = anticore_core::config::Blacklist::from_lines(&text);
+    let default_bl = anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST);
+
+    // Mevcut listede yer almayan yeni varsayılan ve video/medya CDN alan adlarını tespit et
+    let mut missing = Vec::new();
+    for d in default_bl.iter() {
+        if !current_bl.matches(d.as_bytes()) {
+            missing.push(d.clone());
+        }
+    }
+
+    if !missing.is_empty() {
+        missing.sort();
+        let mut updated_text = text;
+        if !updated_text.ends_with('\n') {
+            updated_text.push('\n');
+        }
+        updated_text.push_str("\n# --- Güncellenen Çekirdek Varsayılanlar & Medya CDN'leri ---\n");
+        for d in &missing {
+            updated_text.push_str(d);
+            updated_text.push('\n');
+        }
+        if std::fs::write(&p, &updated_text).is_ok() {
+            app.emit("log", format!("[+] {} eksik çekirdek ve medya CDN hedefi listeye otomatik eklendi", missing.len())).ok();
+            return anticore_core::config::Blacklist::from_lines(&updated_text);
+        }
+    }
+
+    current_bl
 }
 
 fn load_custom_profiles(app: &AppHandle) -> Vec<ProfileDto> {
@@ -3420,6 +3490,45 @@ pub fn fetch_community_blacklist(app: AppHandle, engine: tauri::State<Engine>, s
         format!("[+] Topluluk listesinden {} yeni alan adı içe aktarıldı", added_count),
     )
     .ok();
+
+    Ok(added_count)
+}
+
+/// Varsayılan hedef listesindeki (DEFAULT_BLACKLIST) eksik alan adlarını ve
+/// video/medya CDN'lerini mevcut kullanıcı listesine birleştirir.
+#[tauri::command]
+pub fn sync_default_blacklist(app: AppHandle, engine: tauri::State<Engine>) -> Result<usize, String> {
+    let p = blacklist_path(&app);
+    let existing_text = std::fs::read_to_string(&p).unwrap_or_default();
+    let current_bl = anticore_core::config::Blacklist::from_lines(&existing_text);
+    let default_bl = anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST);
+
+    let mut missing = Vec::new();
+    for d in default_bl.iter() {
+        if !current_bl.matches(d.as_bytes()) {
+            missing.push(d.clone());
+        }
+    }
+
+    let added_count = missing.len();
+    if added_count > 0 {
+        missing.sort();
+        let mut updated_text = existing_text;
+        if !updated_text.ends_with('\n') {
+            updated_text.push('\n');
+        }
+        updated_text.push_str("\n# --- Güncellenen Çekirdek Varsayılanlar & Medya CDN'leri ---\n");
+        for d in &missing {
+            updated_text.push_str(d);
+            updated_text.push('\n');
+        }
+        std::fs::write(&p, &updated_text)
+            .map_err(|e| format!("Hedef listesi kaydedilemedi: {e}"))?;
+
+        let new_bl = anticore_core::config::Blacklist::from_lines(&updated_text);
+        engine.update_blacklist(new_bl);
+        app.emit("log", format!("[+] {added_count} eksik çekirdek ve medya CDN hedefi listeye eklendi")).ok();
+    }
 
     Ok(added_count)
 }

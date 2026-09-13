@@ -163,6 +163,7 @@ fn main() {
             commands::send_system_notification,
             commands::test_update_notification,
             commands::fetch_community_blacklist,
+            commands::sync_default_blacklist,
             commands::get_app_version,
             commands::open_browser_url,
             commands::window_close,

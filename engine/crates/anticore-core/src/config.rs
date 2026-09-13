@@ -163,13 +163,93 @@ amerikaninsesi.com
 artigercek.com
 habersol.org.tr
 
-# --- Yetişkin & Kısıtlı İçerik ---
+# --- Yetişkin & Kısıtlı İçerik ve Video CDN'leri ---
 pornhub.com
+phncdn.com
+phprcdn.com
+rncdn7.com
+pornhubpremium.com
+modelhub.com
+trafficjunky.com
+trafficjunky.net
+ptncdn.com
+brazzers.com
+brazzers-cdn.com
+realitykings.com
+mofos.com
+babes.com
+
 xvideos.com
+xvideos2.com
+xvideos3.com
+xvideos-cdn.com
+xv-cdn.com
+xvideos.es
+static-assets-xv.com
+
 xnxx.com
+xnxx2.com
+xnxx3.com
+xnxx-cdn.com
+xnxx.tv
+
+xhamster.com
+xhamster2.com
+xhamster3.com
+xhamsterlive.com
+xhamster.desi
+xhcdn.com
+
 redtube.com
+redtube.net
+rdtcdn.com
 youporn.com
+ypncdn.com
+youporn.ph
+
+spankbang.com
+spankbang.party
+sb-cd.com
+
+stripchat.com
+stripcdn.com
+strpcdn.com
+
+chaturbate.com
+cbimg.org
+
+eporner.com
+eporner-cdn.com
+
+beeg.com
+tube8.com
+porn.com
+hqporner.com
+heavy-r.com
+motherless.com
+bravotube.net
+erome.com
+erome-cdn.com
+
 onlyfans.com
+of-media.com
+onlyfans-media.com
+fansly.com
+fanslycdn.com
+coomer.party
+coomer.su
+kemono.party
+kemono.su
+
+rule34.xxx
+rule34.paheal.net
+e-hentai.org
+exhentai.org
+nhentai.net
+gelbooru.com
+danbooru.donmai.us
+civitai.com
+civitai.work
 "#;
 
 
@@ -187,10 +267,49 @@ mod tests {
     fn suffix_matching_includes_subdomains() {
         let bl = Blacklist::from_lines("discord.com\n");
         assert!(bl.matches(b"discord.com"));
+        assert!(bl.matches(b"cdn.discordapp.com") == false); // farklı kök
         assert!(bl.matches(b"cdn.discord.com"));
         assert!(bl.matches(b"a.b.c.discord.com"));
         assert!(!bl.matches(b"notdiscord.com"));
         assert!(!bl.matches(b"discord.com.evil.tld")); // son ek değil, ön ek tuzağı
+    }
+
+    #[test]
+    fn video_cdn_matching_covers_streaming_subdomains() {
+        let bl = Blacklist::from_lines(DEFAULT_BLACKLIST);
+        // Pornhub & MindGeek video CDNs
+        assert!(bl.matches(b"pornhub.com"));
+        assert!(bl.matches(b"www.pornhub.com"));
+        assert!(bl.matches(b"phncdn.com"));
+        assert!(bl.matches(b"ci.phncdn.com"));
+        assert!(bl.matches(b"ev.phncdn.com"));
+        assert!(bl.matches(b"ei.phncdn.com"));
+        assert!(bl.matches(b"di.phncdn.com"));
+        assert!(bl.matches(b"ev.phncdn.com.lds.rncdn7.com"));
+        assert!(bl.matches(b"rncdn7.com"));
+
+        // XVideos & XNXX video CDNs
+        assert!(bl.matches(b"xvideos.com"));
+        assert!(bl.matches(b"xvideos-cdn.com"));
+        assert!(bl.matches(b"cdn77-vid.xvideos-cdn.com"));
+        assert!(bl.matches(b"img-egc.xvideos-cdn.com"));
+        assert!(bl.matches(b"xv-cdn.com"));
+        assert!(bl.matches(b"hls.xv-cdn.com"));
+        assert!(bl.matches(b"xnxx.com"));
+        assert!(bl.matches(b"xnxx-cdn.com"));
+
+        // XHamster & Stripchat & SpankBang CDNs
+        assert!(bl.matches(b"xhamster.com"));
+        assert!(bl.matches(b"xhcdn.com"));
+        assert!(bl.matches(b"ic-vt-n0.xhcdn.com"));
+        assert!(bl.matches(b"spankbang.com"));
+        assert!(bl.matches(b"sb-cd.com"));
+        assert!(bl.matches(b"sp.sb-cd.com"));
+        assert!(bl.matches(b"stripchat.com"));
+        assert!(bl.matches(b"stripcdn.com"));
+        assert!(bl.matches(b"img.stripcdn.com"));
+        assert!(bl.matches(b"eporner.com"));
+        assert!(bl.matches(b"eporner-cdn.com"));
     }
 
     #[test]

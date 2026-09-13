@@ -10,6 +10,7 @@ import {
   Upload,
   CloudDownload,
   Check,
+  RefreshCw,
   X,
 } from "lucide-react";
 import { api } from "../lib/tauri";
@@ -26,7 +27,31 @@ const PRESET_GROUPS = [
       "wattpad.com", "pastebin.com", "imgur.com", "archive.org", "archive.is",
       "kick.com", "twitch.tv", "patreon.com",
       "instagram.com", "cdninstagram.com", "x.com", "twitter.com", "twimg.com",
-      "threads.net", "reddit.com"
+      "threads.net", "reddit.com",
+      "pornhub.com", "phncdn.com", "xvideos.com", "xvideos-cdn.com", "xv-cdn.com",
+      "xnxx.com", "xnxx-cdn.com", "xhamster.com", "xhcdn.com", "redtube.com", "rdtcdn.com",
+      "youporn.com", "ypncdn.com", "spankbang.com", "sb-cd.com", "stripchat.com", "stripcdn.com",
+      "eporner.com", "onlyfans.com"
+    ],
+  },
+  {
+    id: "adult-media",
+    label: "Yetişkin & Video CDN Akışı",
+    domains: [
+      "pornhub.com", "phncdn.com", "phprcdn.com", "rncdn7.com", "pornhubpremium.com", "modelhub.com",
+      "xvideos.com", "xvideos2.com", "xvideos3.com", "xvideos-cdn.com", "xv-cdn.com", "static-assets-xv.com",
+      "xnxx.com", "xnxx2.com", "xnxx3.com", "xnxx-cdn.com", "xnxx.tv",
+      "xhamster.com", "xhamster2.com", "xhamster3.com", "xhamsterlive.com", "xhamster.desi", "xhcdn.com",
+      "redtube.com", "redtube.net", "rdtcdn.com", "youporn.com", "ypncdn.com", "youporn.ph",
+      "spankbang.com", "spankbang.party", "sb-cd.com",
+      "stripchat.com", "stripcdn.com", "strpcdn.com",
+      "chaturbate.com", "cbimg.org",
+      "eporner.com", "eporner-cdn.com",
+      "beeg.com", "tube8.com", "porn.com", "hqporner.com", "heavy-r.com", "motherless.com",
+      "bravotube.net", "erome.com", "erome-cdn.com",
+      "onlyfans.com", "of-media.com", "onlyfans-media.com", "fansly.com", "fanslycdn.com",
+      "coomer.party", "coomer.su", "kemono.party", "kemono.su",
+      "rule34.xxx", "rule34.paheal.net", "e-hentai.org", "exhentai.org", "nhentai.net", "gelbooru.com"
     ],
   },
   {
@@ -78,6 +103,8 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
   const [fetchBusy, setFetchBusy] = useState(false);
   const [fetchMsg, setFetchMsg] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [defaultSyncBusy, setDefaultSyncBusy] = useState(false);
+  const [defaultSyncMsg, setDefaultSyncMsg] = useState<string | null>(null);
 
   const refresh = () =>
     void api.getBlacklist().then((s) => {
@@ -97,6 +124,29 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
       isMounted = false;
     };
   }, []);
+
+  const syncDefaultList = async () => {
+    setDefaultSyncBusy(true);
+    setDefaultSyncMsg(null);
+    try {
+      pushLog("[*] Çekirdek varsayılanlar ve medya CDN hedefleri taranıyor...");
+      const count = await api.syncDefaultBlacklist();
+      if (count > 0) {
+        setDefaultSyncMsg(`+${count} yeni çekirdek ve medya CDN alanı eklendi!`);
+        pushLog(`[+] ${count} eksik çekirdek ve medya CDN hedefi listeye eklendi`);
+      } else {
+        setDefaultSyncMsg("Tüm çekirdek ve medya CDN hedefleri zaten tam ve güncel.");
+        pushLog("[i] Çekirdek liste tam ve güncel.");
+      }
+      refresh();
+      setTimeout(() => setDefaultSyncMsg(null), 6000);
+    } catch (err) {
+      const msg = String(err);
+      pushLog(`[!] Varsayılan senkronizasyon hatası: ${msg}`);
+    } finally {
+      setDefaultSyncBusy(false);
+    }
+  };
 
   const syncCommunityList = async () => {
     setFetchBusy(true);
@@ -290,6 +340,12 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           <p className="text-[11px] text-paper-muted">
             {t("sites_community_list_desc")}
           </p>
+          {defaultSyncMsg && (
+            <p className="text-xs font-bold text-live flex items-center gap-1.5 pt-1">
+              <Check size={13} />
+              <span>{defaultSyncMsg}</span>
+            </p>
+          )}
           {fetchMsg && (
             <p className="text-xs font-bold text-live flex items-center gap-1.5 pt-1">
               <Check size={13} />
@@ -303,18 +359,33 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
             </p>
           )}
         </div>
-        <button
-          onClick={syncCommunityList}
-          disabled={fetchBusy}
-          className="btn btn-secondary !py-2 !px-4 text-xs font-bold text-live border-live/30 hover:bg-live/15 shrink-0 self-start sm:self-auto cursor-pointer"
-        >
-          {fetchBusy ? (
-            <LoaderCircle size={14} className="animate-spin" />
-          ) : (
-            <CloudDownload size={14} />
-          )}
-          <span>{fetchBusy ? t("sites_community_list_downloading") : t("sites_community_list_btn")}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
+          <button
+            onClick={syncDefaultList}
+            disabled={defaultSyncBusy || fetchBusy}
+            className="btn btn-secondary !py-2 !px-3 text-xs font-bold text-paper hover:text-live border-white/[0.12] hover:border-live/30 shrink-0 cursor-pointer flex items-center gap-1.5"
+            title="Anticore yerleşik hedef listesindeki eksik video CDN ve servisleri listeye ekler"
+          >
+            {defaultSyncBusy ? (
+              <LoaderCircle size={14} className="animate-spin text-live" />
+            ) : (
+              <RefreshCw size={14} className="text-live" />
+            )}
+            <span>{t("sites_sync_defaults_btn")}</span>
+          </button>
+          <button
+            onClick={syncCommunityList}
+            disabled={fetchBusy || defaultSyncBusy}
+            className="btn btn-secondary !py-2 !px-3 text-xs font-bold text-live border-live/30 hover:bg-live/15 shrink-0 cursor-pointer flex items-center gap-1.5"
+          >
+            {fetchBusy ? (
+              <LoaderCircle size={14} className="animate-spin" />
+            ) : (
+              <CloudDownload size={14} />
+            )}
+            <span>{fetchBusy ? t("sites_community_list_downloading") : t("sites_community_list_btn")}</span>
+          </button>
+        </div>
       </div>
 
       {/* Domain Ekleme Formu */}
@@ -442,6 +513,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
           {[
             { id: "all", label: t("sites_filter_all") },
             { id: "tr-core", label: t("sites_filter_tr_mega") },
+            { id: "adult-media", label: t("sites_filter_adult_media") },
             { id: "discord-roblox", label: t("sites_filter_discord") },
             { id: "vpn-privacy", label: t("sites_filter_vpn") },
             { id: "sohbet", label: t("sites_filter_chat") },

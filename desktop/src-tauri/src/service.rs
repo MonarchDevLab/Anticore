@@ -103,8 +103,8 @@ pub struct EngineConfig {
 impl Default for EngineConfig {
     fn default() -> Self {
         Self {
-            pasif_savunma: false,
-            quic_engelle: false,
+            pasif_savunma: true,
+            quic_engelle: true,
             lan_share: false,
         }
     }

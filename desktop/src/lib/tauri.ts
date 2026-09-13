@@ -296,6 +296,7 @@ export const api = {
   testUpdateNotification: () => invoke<void>("test_update_notification"),
   fetchCommunityBlacklist: (sourceUrl?: string) =>
     invoke<number>("fetch_community_blacklist", { sourceUrl }),
+  syncDefaultBlacklist: () => invoke<number>("sync_default_blacklist"),
   getAppVersion: () => invoke<string>("get_app_version"),
   openBrowserUrl: (url: string) => invoke<void>("open_browser_url", { url }),
   closeWindow: () => invoke<void>("window_close"),
