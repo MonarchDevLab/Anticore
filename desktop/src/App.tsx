@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ShieldAlert, Shield, X, Lock } from "lucide-react";
+import { ShieldAlert, Shield, X, Lock, RotateCw } from "lucide-react";
 import { api, onLog, onOpenUpdateModal, type Status } from "./lib/tauri";
 import { useI18n } from "./lib/i18n";
 import { connectivitySync } from "./services/connectivitySync";
@@ -94,6 +94,27 @@ export default function App() {
     setSelectedProfileState(id);
     localStorage.setItem("anticore_last_profile", id);
   }, []);
+
+  const [checkingLock, setCheckingLock] = useState(false);
+  const handleCheckLock = useCallback(async () => {
+    if (checkingLock) return;
+    setCheckingLock(true);
+    try {
+      await connectivitySync.flush();
+    } finally {
+      setTimeout(() => setCheckingLock(false), 600);
+    }
+  }, [checkingLock]);
+
+  // Kilitliyken veya kısıtlıyken her 2.5 saniyede bir otomatik denetle (anında kilit açma)
+  useEffect(() => {
+    if (!isLocked && !banState.isBanned) return;
+    const interval = setInterval(() => {
+      connectivitySync.flush().catch(() => {});
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isLocked, banState.isBanned]);
+
   const seq = useRef(0);
   const { lang, t } = useI18n();
   const langRef = useRef(lang);
@@ -560,17 +581,40 @@ export default function App() {
         />
       )}
 
-      {/* ── 7. Uzaktan Güvenlik Kilitleme Ekranı ── */}
+      {/* ── 7. Uzaktan Güvenlik Kilitleme Ekranı ($10K Premium) ── */}
       {isLocked && !maintenance.active && (
         <div className="fixed inset-0 z-[9998] bg-[#020617]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none font-mono">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-4 relative">
             <Lock className="w-8 h-8 text-amber-400" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full animate-ping opacity-75" />
           </div>
           <h2 className="text-lg font-bold text-white uppercase tracking-wider mb-2">ERİŞİM ASKIYA ALINDI</h2>
-          <p className="text-xs text-slate-400 max-w-sm mb-4">
+          <p className="text-xs text-slate-400 max-w-sm mb-5 leading-relaxed">
             {lockReason || "Yetkisiz kullanım veya güvenlik ihlali nedeniyle uygulama geçici olarak durduruldu."}
           </p>
-          <span className="text-[10px] text-slate-500">Anticore Güvenlik Sistemi</span>
+
+          <div className="flex items-center gap-2.5 mb-4">
+            <button
+              onClick={handleCheckLock}
+              disabled={checkingLock}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${checkingLock ? 'animate-spin' : ''}`} />
+              <span>{checkingLock ? 'Kontrol Ediliyor...' : 'Kilidi Kontrol Et'}</span>
+            </button>
+            <button
+              onClick={() => api.closeWindow()}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition-all cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Uygulamayı Kapat</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>Yönetici kilidi kaldırdığında saniyeler içinde otomatik açılır</span>
+          </div>
         </div>
       )}
     </div>

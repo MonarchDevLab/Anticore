@@ -3692,6 +3692,7 @@ pub fn get_machine_id() -> String {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SystemHardwareTelemetryDto {
+    pub os_version: Option<String>,
     pub cpu_model: Option<String>,
     pub gpu_model: Option<String>,
     pub ram_total_gb: Option<u32>,
@@ -3891,6 +3892,7 @@ pub fn get_system_network_topology() -> SystemNetworkTopologyDto {
 #[tauri::command]
 pub fn get_system_telemetry_hardware() -> SystemHardwareTelemetryDto {
     let mut dto = SystemHardwareTelemetryDto {
+        os_version: None,
         cpu_model: None,
         gpu_model: None,
         ram_total_gb: None,
@@ -3901,6 +3903,55 @@ pub fn get_system_telemetry_hardware() -> SystemHardwareTelemetryDto {
 
     #[cfg(windows)]
     {
+        // 0. OS Sürümü: HKLM SOFTWARE\Microsoft\Windows NT\CurrentVersion
+        if let Ok(key) = windows_registry::LOCAL_MACHINE.open("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion") {
+            let product_name = key.get_string("ProductName").unwrap_or_default();
+            let display_version = key.get_string("DisplayVersion").unwrap_or_default();
+            let current_build_str = key.get_string("CurrentBuild").unwrap_or_default();
+            let ubr = key.get_u32("UBR").unwrap_or(0);
+
+            let build_num: u32 = current_build_str.parse().unwrap_or(0);
+            let os_family = if build_num >= 22000 {
+                "Windows 11"
+            } else if build_num > 0 {
+                "Windows 10"
+            } else if product_name.to_lowercase().contains("windows 11") {
+                "Windows 11"
+            } else {
+                "Windows 10"
+            };
+
+            let edition = if product_name.to_lowercase().contains("pro") {
+                "Pro"
+            } else if product_name.to_lowercase().contains("home") {
+                "Home"
+            } else if product_name.to_lowercase().contains("enterprise") {
+                "Enterprise"
+            } else if product_name.to_lowercase().contains("education") {
+                "Education"
+            } else {
+                ""
+            };
+
+            let mut full_os = if !edition.is_empty() {
+                format!("{os_family} {edition}")
+            } else {
+                os_family.to_string()
+            };
+
+            if !display_version.is_empty() {
+                full_os = format!("{full_os} {display_version}");
+            }
+            if build_num > 0 {
+                if ubr > 0 {
+                    full_os = format!("{full_os} (Build {build_num}.{ubr})");
+                } else {
+                    full_os = format!("{full_os} (Build {build_num})");
+                }
+            }
+            dto.os_version = Some(full_os);
+        }
+
         // 1. CPU: HKLM Registry ProcessorNameString
         if let Ok(key) = windows_registry::LOCAL_MACHINE.open("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0") {
             if let Ok(cpu) = key.get_string("ProcessorNameString") {
@@ -3991,6 +4042,12 @@ pub fn get_system_telemetry_hardware() -> SystemHardwareTelemetryDto {
 
     #[cfg(target_os = "macos")]
     {
+        if let Ok(out) = silent_command("sw_vers").args(["-productVersion"]).output() {
+            let ver = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !ver.is_empty() {
+                dto.os_version = Some(format!("macOS {ver}"));
+            }
+        }
         if let Ok(out) = silent_command("sysctl").args(["-n", "machdep.cpu.brand_string"]).output() {
             let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
             if !s.is_empty() {

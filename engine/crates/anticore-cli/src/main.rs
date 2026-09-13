@@ -79,6 +79,7 @@ struct RunOpts {
     data_dir: Option<PathBuf>,
     pasif_savunma: bool,
     quic_engelle: bool,
+    lan_share: bool,
 }
 
 fn parse_run_opts(args: &[String]) -> Result<RunOpts, String> {
@@ -87,6 +88,7 @@ fn parse_run_opts(args: &[String]) -> Result<RunOpts, String> {
         data_dir: None,
         pasif_savunma: false,
         quic_engelle: false,
+        lan_share: false,
     };
     let mut it = args.iter();
     while let Some(a) = it.next() {
@@ -97,6 +99,8 @@ fn parse_run_opts(args: &[String]) -> Result<RunOpts, String> {
             "--no-pasif-savunma" => o.pasif_savunma = false,
             "--quic-engelle" | "-q" => o.quic_engelle = true,
             "--no-quic-engelle" => o.quic_engelle = false,
+            "--lan-share" | "--hotspot" => o.lan_share = true,
+            "--no-lan-share" => o.lan_share = false,
             other => return Err(format!("bilinmeyen seçenek: {other}")),
         }
     }
@@ -106,6 +110,7 @@ fn parse_run_opts(args: &[String]) -> Result<RunOpts, String> {
             struct RawConfig {
                 pasif_savunma: Option<bool>,
                 quic_engelle: Option<bool>,
+                lan_share: Option<bool>,
             }
             if let Ok(raw) = serde_json::from_str::<RawConfig>(&text) {
                 if let Some(p) = raw.pasif_savunma {
@@ -113,6 +118,9 @@ fn parse_run_opts(args: &[String]) -> Result<RunOpts, String> {
                 }
                 if let Some(q) = raw.quic_engelle {
                     o.quic_engelle = q;
+                }
+                if let Some(l) = raw.lan_share {
+                    o.lan_share = l;
                 }
             }
         }
@@ -163,12 +171,13 @@ fn cmd_run(args: &[String]) -> Result<(), String> {
     let bl = load_blacklist_from(opts.data_dir.as_deref());
 
     println!(
-        "[*] profil={} adım={} blacklist={} pasif_savunma={} quic_engelle={}",
+        "[*] profil={} adım={} blacklist={} pasif_savunma={} quic_engelle={} lan_share={}",
         opts.profile_id,
         steps.len(),
         bl.len(),
         opts.pasif_savunma,
-        opts.quic_engelle
+        opts.quic_engelle,
+        opts.lan_share
     );
 
     #[cfg(windows)]
@@ -182,6 +191,7 @@ fn cmd_run(args: &[String]) -> Result<(), String> {
             dll_dir.as_deref(),
             opts.pasif_savunma,
             opts.quic_engelle,
+            opts.lan_share,
             None,
         )
     }
@@ -218,13 +228,14 @@ fn live_loop(
     dll_dir: Option<&Path>,
     pasif_savunma: bool,
     quic_engelle: bool,
+    lan_share: bool,
     stop_flag: Option<&std::sync::atomic::AtomicBool>,
 ) -> Result<(), String> {
     use anticore_transport_win::{WinDivert, WINDIVERT_FLAG_DROP};
 
     println!("[*] WinDivert yükleniyor... (yönetici hakları gerekir)");
     let wd = std::sync::Arc::new(WinDivert::open(
-        &anticore_core::dispatch::capture_filter(steps),
+        &anticore_core::dispatch::capture_filter_with_options(steps, lan_share),
         dll_dir,
     )?);
 
@@ -298,6 +309,7 @@ struct ServiceArgs {
     data_dir: PathBuf,
     pasif_savunma: bool,
     quic_engelle: bool,
+    lan_share: bool,
 }
 
 #[cfg(windows)]
@@ -331,6 +343,7 @@ fn cmd_service_run(args: &[String]) -> Result<(), String> {
         data_dir,
         pasif_savunma: opts.pasif_savunma,
         quic_engelle: opts.quic_engelle,
+        lan_share: opts.lan_share,
     });
 
     service_dispatcher::start(SERVICE_NAME, ffi_service_main)
@@ -376,6 +389,7 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
         data_dir: std::env::temp_dir(),
         pasif_savunma: false,
         quic_engelle: false,
+        lan_share: false,
     });
     let (profile_id, data_dir) = (args.profile_id, args.data_dir);
 
@@ -390,7 +404,7 @@ fn service_main_impl(_args: Vec<std::ffi::OsString>) {
         .ok()
         .and_then(|p| p.parent().map(|d| d.to_path_buf()));
 
-    let exit_code = match live_loop(&steps, &bl, dll_dir.as_deref(), args.pasif_savunma, args.quic_engelle, Some(&SERVICE_STOP_FLAG)) {
+    let exit_code = match live_loop(&steps, &bl, dll_dir.as_deref(), args.pasif_savunma, args.quic_engelle, args.lan_share, Some(&SERVICE_STOP_FLAG)) {
         Ok(()) => 0,
         Err(e) => {
             eprintln!("motor hatası: {e}");

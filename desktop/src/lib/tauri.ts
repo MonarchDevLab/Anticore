@@ -118,6 +118,18 @@ export interface EngineConfig {
   lan_share: boolean;
 }
 
+export interface ConnectedClientDto {
+  ip: string;
+  mac: string | null;
+  vendor: string;
+  device_type: string;
+  active_streams: number;
+  total_requests: number;
+  bytes_transferred: number;
+  last_seen_secs_ago: number;
+  last_target: string | null;
+}
+
 export interface LanInfoDto {
   local_ip: string;
   proxy_port: number;
@@ -127,6 +139,8 @@ export interface LanInfoDto {
   total_connections: number;
   bytes_transferred: number;
   pac_url: string;
+  firewall_allowed: boolean;
+  connected_devices: ConnectedClientDto[];
 }
 
 export interface SetupStatus {
@@ -237,6 +251,7 @@ export const api = {
   getMachineId: () => invoke<string>("get_machine_id"),
   getSystemTelemetryHardware: () =>
     invoke<{
+      os_version?: string | null;
       cpu_model: string | null;
       gpu_model: string | null;
       ram_total_gb: number | null;
@@ -297,6 +312,7 @@ export const api = {
   openHotspotSettings: () => invoke<void>("open_hotspot_settings"),
   setLanShareHotspotMode: (enabled: boolean) =>
     invoke<void>("set_lan_share_hotspot_mode", { enabled }),
+  allowFirewallLanProxy: () => invoke<boolean>("allow_firewall_lan_proxy"),
 };
 
 export function onLog(cb: (line: string) => void): Promise<() => void> {

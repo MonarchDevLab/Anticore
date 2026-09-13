@@ -190,6 +190,7 @@ fn main() {
             lan_share::stop_lan_proxy,
             lan_share::open_hotspot_settings,
             lan_share::set_lan_share_hotspot_mode,
+            lan_share::allow_firewall_lan_proxy,
         ])
         .run(tauri::generate_context!())
     {

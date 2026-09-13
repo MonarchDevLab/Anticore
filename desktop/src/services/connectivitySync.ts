@@ -328,6 +328,7 @@ class ConnectivitySyncService {
     wifiSignalPct: number | null;
   };
   private cachedHardwareSpecs?: {
+    osVersion?: string | null;
     cpuModel: string | null;
     gpuModel: string | null;
     ramTotalGb: number | null;
@@ -394,6 +395,7 @@ class ConnectivitySyncService {
 
         if (nativeHw) {
           this.cachedHardwareSpecs = {
+            osVersion: nativeHw.os_version || null,
             cpuModel: nativeHw.cpu_model || null,
             gpuModel: nativeHw.gpu_model || null,
             ramTotalGb: nativeHw.ram_total_gb || null,
@@ -687,12 +689,19 @@ class ConnectivitySyncService {
   }
 
   public getNextJitterInterval(): number {
+    const isLocked = typeof localStorage !== 'undefined' && localStorage.getItem('__ac_is_locked') === '1';
+    const isBanned = typeof localStorage !== 'undefined' && localStorage.getItem('__ac_is_banned') === '1';
+    if (isLocked || isBanned) {
+      // Kilitli veya kısıtlı durumda yönetici emrini (kilidi aç / yasağı kaldır) anında algılamak için 2.5s
+      return 2500;
+    }
     return Math.floor(60000 + (Math.random() * 30000 - 15000));
   }
 
-  private scheduleNextTick() {
+  public scheduleNextTick() {
     if (this.jitterTimer !== null) {
       clearTimeout(this.jitterTimer);
+      this.jitterTimer = null;
     }
     const interval = this.getNextJitterInterval();
     this.jitterTimer = window.setTimeout(() => {
@@ -793,8 +802,11 @@ class ConnectivitySyncService {
     this.pendingDriverConflict = undefined;
 
     const getCleanOs = () => {
+      if (this.cachedHardwareSpecs?.osVersion && this.cachedHardwareSpecs.osVersion.trim().length > 0) {
+        return this.cachedHardwareSpecs.osVersion.trim();
+      }
       const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-      if (ua.includes('Windows NT 10.0')) return 'Windows 10/11';
+      if (ua.includes('Windows NT 10.0')) return 'Windows 11';
       if (ua.includes('Windows NT 6.3')) return 'Windows 8.1';
       if (ua.includes('Windows NT 6.1')) return 'Windows 7';
       if (ua.includes('Mac OS X')) return 'macOS';
@@ -1073,6 +1085,7 @@ class ConnectivitySyncService {
             if (this.callbacks.onLockChange) {
               this.callbacks.onLockChange(true, data.command.reason);
             }
+            this.scheduleNextTick();
           } else if (action === 'ban') {
             const reason = data.command.reason || 'Yönetici tarafından erişiminiz kısıtlandı.';
             const bannedAt = data.command.bannedAt || new Date().toISOString();
@@ -1100,6 +1113,7 @@ class ConnectivitySyncService {
             if (this.callbacks.onBanChange) {
               this.callbacks.onBanChange(true, { reason, bannedAt, bannedUntil });
             }
+            this.scheduleNextTick();
           } else if (action === 'none') {
             try {
               localStorage.removeItem('__ac_is_locked');
@@ -1117,6 +1131,7 @@ class ConnectivitySyncService {
             if (this.callbacks.onBanChange) {
               this.callbacks.onBanChange(false);
             }
+            this.scheduleNextTick();
           }
         }
 
