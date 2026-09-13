@@ -27,7 +27,7 @@
 <table width="100%" align="center">
   <tr>
     <td width="25%" align="center">
-      <a href="#indirme-seçenekleri-v031"><img src="https://img.shields.io/badge/01-DAĞITIM_PAKETLERİ-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Dağıtım Paketleri" /></a>
+      <a href="#indirme-seçenekleri-v034"><img src="https://img.shields.io/badge/01-DAĞITIM_PAKETLERİ-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Dağıtım Paketleri" /></a>
     </td>
     <td width="25%" align="center">
       <a href="#anticore-nedir-ve-ne-değildir"><img src="https://img.shields.io/badge/02-TEMEL_MİMARİ-20f2ff?style=for-the-badge&labelColor=08090D" alt="02 Temel Mimari" /></a>
@@ -230,17 +230,17 @@ curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.4/Anti
 
 | Paket Dosyası | Boyut | SHA-256 Kriptografik Özeti |
 |---|:---:|---|
-| `Anticore_0.3.3_x64-portable.zip` | 6.7 MB | `8433A3CE2F71F4FD9BA8DD2127B94CE62B018A482FF969B9C49928C6DDC9499A` |
-| `Anticore_0.3.3_x64-setup.exe` | 4.5 MB | `A785F285FF76FE1ED6D6EE8EC4F3677CAB133A0D3826ACB967EDC19F9F9F524A` |
-| `Anticore_0.3.3_x64_en-US.msi` | 6.5 MB | `9C8713017006120B63A9C214EBBA827A1C36C995D6ADF09E65B819192FE2DBBE` |
-| `Anticore.exe` | 16.6 MB | `4D7AEE3B870CE1C804762845E2D33312A1DFDD1E053994A100CE9D784C5992DB` |
-| `anticore-cli.exe` | 385 KB | `8BAF91276F13FB59922AE361EA8AB3737ABF7AE91C439AF2C1C1BD2C4B4F49F0` |
-| `Anticore_0.3.3_aarch64.dmg` | 6.7 MB | `B4CA9A4A2904EFC82EBF76DA1C02A2BAD0D973EE3BE55D6702A2668A2393764A` |
-| `Anticore_0.3.3_x64.dmg` | 6.9 MB | `CDB811EB77515122C99F2220A8CB39C7D586EEB6363D41AEF96B61922011CA4E` |
+| `Anticore_0.3.4_x64-portable.zip` | 6.7 MB | `E2FD3D30CFC50C0695CD970933AD7EA41255A69FBBA8E7884B8137CC31378427` |
+| `Anticore_0.3.4_x64-setup.exe` | 4.6 MB | `001569B33F01B21DA3B677E74EAC7D5CBF7886C1ED3268A805D26B94A800938A` |
+| `Anticore_0.3.4_x64_en-US.msi` | 6.5 MB | `FADD6910F6C0305A03D9809C8D9E36168386481F931BA796BCBFCC52E0068DA7` |
+| `Anticore_0.3.4_arm64.pkg` | 6.2 MB | `BBBB64A74EC132871A4B15A05F7F20601B6F4DD9C61F3B74E9B354EEC8AE7DEA` |
+| `Anticore_0.3.4_aarch64.dmg` | 6.7 MB | `68065B5DC8EA94E7560919298B3C35B99A2C7A8FD9CFE8103D0864819EEC8E0F` |
+| `Anticore_0.3.4_x64.pkg` | 6.4 MB | `D5AF7BFFBFEC8CDAD73BC6135A52B1CAD2D09096A4CB5F0D7B80228E6769A1D1` |
+| `Anticore_0.3.4_x64.dmg` | 6.9 MB | `7E981726AFFB8E79157804DCEB4DC2C6881476F84FDA9D07516F27CA77778AC9` |
 
 ```powershell
 # İndirdiğiniz paketi PowerShell ile doğrulamak için:
-Get-FileHash .\Anticore_0.3.3_x64-portable.zip -Algorithm SHA256
+Get-FileHash .\Anticore_0.3.4_x64-portable.zip -Algorithm SHA256
 ```
 </details>
 
@@ -477,7 +477,7 @@ flowchart TD
         TCPIP["Windows Ağ Yığını (TCP/IP)"]
     end
 
-    subgraph AnticoreEngine["ANTICORE v0.3.3 (Rust Çekirdeği)"]
+    subgraph AnticoreEngine["ANTICORE v0.3.4 (Rust Çekirdeği)"]
         WD["WinDivert Çekirdek Sürücüsü"]
         Check{"Hedef Alan Adı\nKara Listede mi?"}
         Manip["Cerrahi TLS SNI Bölme\n+ Düşük TTL Sahte Paket (TTL=4)"]
@@ -676,7 +676,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
       <th width="19%" align="center">GoodbyeDPI</th>
       <th width="19%" align="center">SplitWire</th>
       <th width="19%" align="center">
-        <img src="https://img.shields.io/badge/ANTICORE-v0.3.3-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore v0.3.3" />
+        <img src="https://img.shields.io/badge/ANTICORE-v0.3.4-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore v0.3.4" />
       </th>
     </tr>
   </thead>
@@ -785,7 +785,7 @@ Ana uygulama penceresini açmadan, Windows görev çubuğunun sağ alt köşesin
   <thead>
     <tr>
       <th width="50%" align="left">
-        <img src="https://img.shields.io/badge/TRAY_KOKP%C4%B0T-ANTICORE_v0.3.3_CANLI_KOMUTA-161b22?style=flat-square" alt="Tray Cockpit" />
+        <img src="https://img.shields.io/badge/TRAY_KOKP%C4%B0T-ANTICORE_v0.3.4_CANLI_KOMUTA-161b22?style=flat-square" alt="Tray Cockpit" />
       </th>
       <th width="50%" align="right">
         <img src="https://img.shields.io/badge/MOTOR-KORUMA_AKT%C4%B0F-20ffa0?style=flat-square&labelColor=08090D" alt="Durum Aktif" /> &nbsp;
@@ -944,7 +944,7 @@ Resmi GitHub Releases sayfasından indirdiğiniz kurulum ve taşınabilir paketl
     <tr>
       <td colspan="2">
         <b>Doğrulama Komutu (PowerShell / Bash):</b><br />
-        <code>minisign -Vm Anticore_0.3.3_x64-setup.exe -p anticore.key.pub</code>
+        <code>minisign -Vm Anticore_0.3.4_x64-setup.exe -p anticore.key.pub</code>
       </td>
     </tr>
   </tbody>
