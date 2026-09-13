@@ -13,6 +13,7 @@ import { api, onBlockcheckProgress, type BlockcheckProgress, type BlockcheckResu
 import { useI18n } from "../lib/i18n";
 import EmptyState from "../components/EmptyState";
 import Guide from "../components/Guide";
+import { connectivitySync } from "../services/connectivitySync";
 
 interface Row extends ProbeDto {
   id: number;
@@ -68,8 +69,10 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
 
   const runSingle = async () => {
     setBusy(true);
+    const target = host.trim();
+    connectivitySync.recordDomainAccess(target);
     try {
-      const res = await api.probeTarget(host.trim());
+      const res = await api.probeTarget(target);
       setRows((prev) => [{ ...res, id: nextId() }, ...prev]);
       pushLog(`[*] sonda: ${res.host} → ${res.result} (${res.latency_ms ?? "-"} ms)`);
     } catch (e) {
@@ -83,6 +86,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
     setBatchBusy(true);
     try {
       for (const target of BATCH_TARGETS) {
+        connectivitySync.recordDomainAccess(target);
         const res = await api.probeTarget(target);
         setRows((prev) => [{ ...res, id: nextId() }, ...prev]);
         pushLog(`[*] toplu: ${res.host} → ${res.result} (${res.latency_ms ?? "-"} ms)`);
@@ -97,6 +101,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
   const runComparison = async () => {
     const target = host.trim();
     if (!target.includes(".")) return;
+    connectivitySync.recordDomainAccess(target);
     setCompareBusy(true);
     setCompareResult(null);
     try {

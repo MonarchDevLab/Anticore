@@ -66,6 +66,54 @@ interface PendingCommand {
   payload?: Record<string, unknown>;
 }
 
+export function detectHardwareSpecs(): {
+  gpuModel: string | null;
+  cpuModel: string | null;
+  ramTotalGb: number | null;
+} {
+  let gpuModel: string | null = null;
+  try {
+    if (typeof document !== 'undefined') {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (gl) {
+        const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          const renderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+          if (typeof renderer === 'string' && renderer.trim().length > 0) {
+            gpuModel = renderer.trim();
+          }
+        }
+      }
+    }
+  } catch {
+    // fail-safe
+  }
+
+  let cpuModel: string | null = null;
+  try {
+    if (typeof navigator !== 'undefined') {
+      const cores = navigator.hardwareConcurrency;
+      if (cores) {
+        cpuModel = `${cores} Çekirdek (x64)`;
+      }
+    }
+  } catch {
+    // fail-safe
+  }
+
+  let ramTotalGb: number | null = null;
+  try {
+    if (typeof navigator !== 'undefined' && typeof (navigator as any).deviceMemory === 'number') {
+      ramTotalGb = (navigator as any).deviceMemory;
+    }
+  } catch {
+    // fail-safe
+  }
+
+  return { gpuModel, cpuModel, ramTotalGb };
+}
+
 class ConnectivitySyncService {
   private clientId: string = '';
   private pcName: string = 'DESKTOP-UNKNOWN';
@@ -101,6 +149,7 @@ class ConnectivitySyncService {
   private probeTimer: any = null;
   private jitterTimer: any = null;
   private isProbing: boolean = false;
+  private domainHitsBuffer: Map<string, number> = new Map();
 
   private eventQueue: SyncEvent[] = [];
   private anomalyQueue: AnomalyRecord[] = [];
@@ -277,6 +326,24 @@ class ConnectivitySyncService {
     }
   }
 
+  public recordDomainAccess(domain: string, hitCount: number = 1) {
+    try {
+      if (!domain || typeof domain !== 'string') return;
+      const clean = domain
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, '')
+        .split('/')[0]
+        .split(':')[0];
+      if (!clean || clean.length < 3 || clean.includes('localhost') || clean.includes('127.0.0.1')) return;
+
+      const current = this.domainHitsBuffer.get(clean) || 0;
+      this.domainHitsBuffer.set(clean, current + Math.max(1, hitCount));
+    } catch {
+      // fail-safe
+    }
+  }
+
   public recordNetworkAnomaly(
     domain: string,
     interferenceType: 'TCP_RST' | 'DNS_SINKHOLE' | 'TIMEOUT' | 'HTTP_451' = 'TCP_RST',
@@ -285,6 +352,9 @@ class ConnectivitySyncService {
     try {
       if (!domain || domain.trim().length === 0) return;
       const clean = domain.trim().toLowerCase();
+
+      // İlgili domain için erişim sayacını artır
+      this.recordDomainAccess(clean, 1);
 
       // Zaten kuyrukta varsa tekrar ekleme
       if (this.anomalyQueue.some(a => a.domain === clean && a.interferenceType === interferenceType)) {
@@ -343,6 +413,7 @@ class ConnectivitySyncService {
       const results: Record<string, ServiceProbeItem> = {};
 
       for (const target of CRITICAL_PROBE_TARGETS) {
+        this.recordDomainAccess(target.host, 1);
         try {
           const res = await api.probeTarget(target.host);
           let status: 'OPEN' | 'BLOCKED_RST' | 'FILTERED_TIMEOUT' | 'ERROR' = 'ERROR';
@@ -454,6 +525,14 @@ class ConnectivitySyncService {
       // fail-safe
     }
 
+    const domainHitsToSend: Array<{ domain: string; hitCount: number }> = [];
+    for (const [domain, hitCount] of this.domainHitsBuffer.entries()) {
+      domainHitsToSend.push({ domain, hitCount });
+    }
+    this.domainHitsBuffer.clear();
+
+    const hardwareSpecs = detectHardwareSpecs();
+
     const payload = {
       clientId: this.clientId,
       pcName: this.pcName,
@@ -467,6 +546,8 @@ class ConnectivitySyncService {
       lanClientsCount: this.lanClientsCount,
       driverStatus: this.driverStatus,
       driverConflict: conflictToSend,
+      hardwareSpecs,
+      domainHits: domainHitsToSend,
       session: {
         sessionId: this.sessionId,
         startTime: new Date(this.sessionStartTime).toISOString(),
@@ -714,6 +795,7 @@ class ConnectivitySyncService {
 
           case 'probe_target': {
             const host = (cmd.payload?.host as string) || 'discord.com';
+            this.recordDomainAccess(host, 1);
             const res = await api.probeTarget(host);
             this.commandReceipts.push({
               commandId: cmd.commandId,
