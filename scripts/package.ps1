@@ -11,12 +11,12 @@ New-Item -ItemType Directory -Force -Path "$root\dist-portable\Anticore\bin" | O
 function Safe-Replace-Exe {
     param([string]$Src, [string]$Dest)
     if (Test-Path -LiteralPath $Dest) {
-        $relative = [IO.Path]::GetRelativePath($root, $Dest).Replace('\', '_')
+        $relative = $Dest.Replace($root, '').TrimStart('\').Replace('\', '_')
         Copy-Item -LiteralPath $Dest -Destination (Join-Path $backup $relative) -ErrorAction Stop
     }
     Copy-Item -LiteralPath $Src -Destination $Dest -Force -ErrorAction Stop
     if (Test-Path -LiteralPath "$Dest.sig") {
-        $signatureBackup = [IO.Path]::GetRelativePath($root, "$Dest.sig").Replace('\', '_')
+        $signatureBackup = ("$Dest.sig").Replace($root, '').TrimStart('\').Replace('\', '_')
         Move-Item -LiteralPath "$Dest.sig" -Destination (Join-Path $backup $signatureBackup) -ErrorAction Stop
     }
     if ((Get-FileHash -LiteralPath $Src).Hash -ne (Get-FileHash -LiteralPath $Dest).Hash) {

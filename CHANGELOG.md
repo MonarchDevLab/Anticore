@@ -6,11 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.6] - 2026-09-15
+
+### Added
+- **Integrated Support & Feedback Center (`SupportView.tsx`):** Added a dedicated support view situated between Setup and Settings in the sidebar, allowing users to submit bug reports, connectivity blockers, and feature suggestions with optional anonymized diagnostic telemetry.
+- **5-Language Global Localization:** Integrated full dictionary translations for Russian (`ru`), German (`de`), and French (`fr`) alongside existing Turkish (`tr`) and English (`en`), with quick language switchers in the titlebar and settings.
+- **LAN Proxy Secure DNS Fallback:** Enhanced LAN proxy routing with Cloudflare (`1.1.1.1`) and Google (`8.8.8.8`) UDP 53 public resolver fallback, eliminating ISP DNS poisoning on connected mobile devices and gaming consoles.
+
+### Fixed
+- **Update Loop & Version Fallback Desynchronization:** Hardened SemVer comparison and eliminated false-positive update notifications and modal re-prompts caused by stale local version fallbacks.
+- **Navigation Visual Hierarchy & Operational Focus:** Streamlined interface layout by removing developer-only log views, upgrading connection shortcuts into a responsive 2-column grid.
+
 ## [0.3.5] - 2026-09-14
 
 ### Added
-- **69+ Media & Video Player CDN Targets:** Added extensive video streaming, HLS manifest, and player script CDNs (`phncdn.com`, `xvideos-cdn.com`, `xhcdn.com`, `sb-cd.com`, `stripcdn.com`, `eporner-cdn.com` etc.) to the core target list, completely resolving the video player black screen issue on blocked and adult streaming platforms.
-- **Smart Blacklist Auto-Healing (`load_blacklist` & `sync_default_blacklist`):** Preserves existing user-added domains while automatically appending missing core CDN targets to `%APPDATA%\com.anticore.desktop\blacklist.txt`. Added one-click sync button and "Adult & Video CDN" filter pill in Sites view.
+- **69+ Media & Video Player CDN Targets:** Added extensive video streaming, HLS manifest, and player script CDNs to the core target list, completely resolving player black screen issues across restricted streaming platforms.
+- **Smart Blacklist Auto-Healing (`load_blacklist` & `sync_default_blacklist`):** Preserves existing user-added domains while automatically appending missing core CDN targets to `%APPDATA%\com.anticore.desktop\blacklist.txt`. Added one-click sync button and "Media CDN" filter option in Sites view.
 - **LAN Proxy Overhaul (`lan_share.rs` & `proxy.rs`):** Enabled plain HTTP proxying and captive portal compatibility (`captive.apple.com`, `connectivitycheck.gstatic.com`), added a live `http://<ip>:10808/` & `/status` diagnostic page, automated Windows Defender firewall rule configuration, and real-time connected device MAC/vendor tracking.
 - **macOS Unprivileged GUI & Root CLI Separation:** Decoupled the unprivileged Tauri GUI from the root engine to prevent macOS WindowServer/WebKit process termination (`_RegisterApplication() FAILED`). The engine runs in the background as a standalone CLI process via `sudo -n`.
 

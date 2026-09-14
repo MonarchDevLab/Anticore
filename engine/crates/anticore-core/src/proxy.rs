@@ -268,6 +268,111 @@ async fn handle_client_inner(
     }
 }
 
+/// Hedefe bağlanırken yerel sistem DNS zehirlemesine (0.0.0.0 vb.) karşı güvenli genel DNS yedekli bağlantı kurucu.
+async fn connect_target(host: &str, port: u16) -> Result<TcpStream, Box<dyn std::error::Error + Send + Sync>> {
+    // 1. IP ise doğrudan bağlan
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        return Ok(TcpStream::connect((ip, port)).await?);
+    }
+
+    // 2. Sistem DNS çözümlemesini dene
+    if let Ok(mut addrs) = tokio::net::lookup_host((host, port)).await {
+        if let Some(addr) = addrs.next() {
+            let ip = addr.ip();
+            if !ip.is_unspecified() && !ip.is_loopback() {
+                if let Ok(stream) = TcpStream::connect(addr).await {
+                    return Ok(stream);
+                }
+            }
+        }
+    }
+
+    // 3. Sistem DNS başarısız veya 0.0.0.0 zehirlenmesi varsa: Güvenli genel DNS (1.1.1.1 / 8.8.8.8) sorgula
+    if let Some(resolved_ip) = resolve_via_public_dns(host).await {
+        if let Ok(stream) = TcpStream::connect((resolved_ip, port)).await {
+            return Ok(stream);
+        }
+    }
+
+    // 4. Son deneme
+    Ok(TcpStream::connect((host, port)).await?)
+}
+
+/// Cloudflare (1.1.1.1) veya Google (8.8.8.8) UDP 53 üzerinden A kaydı çözümleyici
+async fn resolve_via_public_dns(host: &str) -> Option<IpAddr> {
+    for server in &["1.1.1.1:53", "8.8.8.8:53", "1.0.0.1:53"] {
+        if let Ok(ip) = query_dns_udp(host, server).await {
+            return Some(ip);
+        }
+    }
+    None
+}
+
+async fn query_dns_udp(host: &str, dns_server: &str) -> Result<IpAddr, Box<dyn std::error::Error + Send + Sync>> {
+    let mut query = Vec::with_capacity(64);
+    query.extend_from_slice(&[0x13, 0x37, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+    for label in host.split('.') {
+        if label.is_empty() || label.len() > 63 {
+            return Err("Geçersiz alan adı parçası".into());
+        }
+        query.push(label.len() as u8);
+        query.extend_from_slice(label.as_bytes());
+    }
+    query.push(0x00);
+    query.extend_from_slice(&[0x00, 0x01, 0x00, 0x01]);
+
+    let socket = tokio::net::UdpSocket::bind("0.0.0.0:0").await?;
+    socket.connect(dns_server).await?;
+    socket.send(&query).await?;
+
+    let mut buf = [0u8; 512];
+    let n = tokio::time::timeout(tokio::time::Duration::from_millis(1500), socket.recv(&mut buf)).await??;
+    if n < 12 {
+        return Err("DNS yanıtı çok kısa".into());
+    }
+
+    let ancount = u16::from_be_bytes([buf[6], buf[7]]);
+    if ancount == 0 {
+        return Err("DNS yanıtında adres yok".into());
+    }
+
+    let mut idx = 12;
+    while idx < n && buf[idx] != 0 {
+        idx += 1 + buf[idx] as usize;
+    }
+    idx += 5; // 0x00 + type (2) + class (2)
+
+    for _ in 0..ancount {
+        if idx + 10 > n {
+            break;
+        }
+        if buf[idx] & 0xc0 == 0xc0 {
+            idx += 2;
+        } else {
+            while idx < n && buf[idx] != 0 {
+                idx += 1 + buf[idx] as usize;
+            }
+            idx += 1;
+        }
+        if idx + 10 > n {
+            break;
+        }
+        let rtype = u16::from_be_bytes([buf[idx], buf[idx + 1]]);
+        let rdlength = u16::from_be_bytes([buf[idx + 8], buf[idx + 9]]) as usize;
+        idx += 10;
+        if rtype == 1 && rdlength == 4 && idx + 4 <= n {
+            let ip = std::net::Ipv4Addr::new(buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]);
+            if !ip.is_unspecified() && !ip.is_loopback() {
+                return Ok(IpAddr::V4(ip));
+            }
+        }
+        idx += rdlength;
+    }
+
+    Err("Geçerli IPv4 adresi bulunamadı".into())
+}
+
 /// RFC 1928 SOCKS5 El Sıkışması ve Tünelleme
 async fn handle_socks5(
     stream: &mut TcpStream,
@@ -323,8 +428,8 @@ async fn handle_socks5(
 
     let target_port = stream.read_u16().await?;
 
-    // Hedef sunucuya yerel sistem üzerinden bağlan
-    let outbound = match tokio::net::TcpStream::connect((target_host.as_str(), target_port)).await {
+    // Hedef sunucuya güvenli DNS ve yerel sistem üzerinden bağlan
+    let outbound = match connect_target(&target_host, target_port).await {
         Ok(s) => s,
         Err(_) => {
             stream.write_all(&[0x05, 0x05, 0x00, 0x01, 0, 0, 0, 0, 0, 0]).await?;
@@ -436,8 +541,8 @@ async fn handle_http(
             (target, 443)
         };
 
-        // Hedefe yerel makineden bağlan
-        let outbound = match tokio::net::TcpStream::connect((host, port)).await {
+        // Hedefe yerel makineden güvenli DNS yedekli bağlan
+        let outbound = match connect_target(host, port).await {
             Ok(s) => s,
             Err(_) => {
                 stream.write_all(b"HTTP/1.1 502 Bad Gateway\r\n\r\n").await?;
@@ -498,8 +603,8 @@ async fn handle_http(
             (h, p_num, uri.to_string())
         };
 
-        // Hedefe yerel makineden bağlan
-        let mut outbound = match tokio::net::TcpStream::connect((target_host.as_str(), target_port)).await {
+        // Hedefe yerel makineden güvenli DNS yedekli bağlan
+        let mut outbound = match connect_target(&target_host, target_port).await {
             Ok(s) => s,
             Err(_) => {
                 stream.write_all(b"HTTP/1.1 502 Bad Gateway\r\n\r\n").await?;

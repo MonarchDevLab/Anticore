@@ -6,7 +6,7 @@
 set -euo pipefail
 
 REPO="MonarchDevLab/Anticore"
-FALLBACK_TAG="v0.3.5"
+FALLBACK_TAG="v0.3.6"
 
 echo "=========================================================="
 echo "    ANTICORE - macOS Hizli Kurulum Motoru"
