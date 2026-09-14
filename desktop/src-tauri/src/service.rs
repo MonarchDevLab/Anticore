@@ -5,6 +5,9 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use std::path::Path;
+use lru::LruCache;
+use std::num::NonZeroUsize;
+use crate::process::resolve_socket_info;
 #[cfg(target_os = "macos")]
 use anticore_core::transport::PacketTransport;
 
@@ -113,20 +116,23 @@ impl Default for EngineConfig {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CapturedDomainStat {
     pub domain: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub process_name: Option<String>,
     pub hit_count: u32,
     pub tx_bytes: u64,
     pub rx_bytes: u64,
 }
 
-pub fn extract_domain_from_packet(raw: &[u8]) -> Option<String> {
+pub fn extract_domain_from_packet(raw: &[u8]) -> Option<(String, u16)> {
     let view = anticore_core::net::PacketView::parse(raw)?;
+    let port = view.src_port();
     let payload = view.payload();
     if let Some(info) = anticore_core::tls::parse_client_hello(payload) {
         if let Some(sni) = info.sni(payload) {
             if let Ok(s) = std::str::from_utf8(sni) {
                 let clean = s.trim().to_lowercase();
                 if clean.len() >= 3 && clean.contains('.') && !clean.contains(' ') && !clean.contains("localhost") && !clean.contains("127.0.0.1") {
-                    return Some(clean);
+                    return Some((clean, port));
                 }
             }
         }
@@ -136,7 +142,7 @@ pub fn extract_domain_from_packet(raw: &[u8]) -> Option<String> {
             if let Ok(s) = std::str::from_utf8(h) {
                 let clean = s.trim().to_lowercase().split(':').next().unwrap_or("").to_string();
                 if clean.len() >= 3 && clean.contains('.') && !clean.contains(' ') && !clean.contains("localhost") && !clean.contains("127.0.0.1") {
-                    return Some(clean);
+                    return Some((clean, port));
                 }
             }
         }
@@ -284,6 +290,8 @@ impl Engine {
             on_log(format!(
                 "[+] motor aktif | profil={profile_id} | {initial_count} hedef domain",
             ));
+            let my_pid = std::process::id();
+            let mut pid_cache: LruCache<u16, (u32, Option<String>)> = LruCache::new(NonZeroUsize::new(1000).unwrap());
             let mut buf = vec![0u8; 65_535];
             let mut consecutive_recv_errors = 0u32;
             loop {
@@ -303,16 +311,34 @@ impl Engine {
                 stats.packets_seen.fetch_add(1, Ordering::Relaxed);
 
                 let raw = &buf[..n];
-                if let Some(domain) = extract_domain_from_packet(raw) {
-                    if let Ok(mut map) = captured_domains_ref.lock() {
-                        let stat = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
-                            domain,
-                            hit_count: 0,
-                            tx_bytes: 0,
-                            rx_bytes: 0,
-                        });
-                        stat.hit_count = stat.hit_count.saturating_add(1);
-                        stat.tx_bytes = stat.tx_bytes.saturating_add(raw.len() as u64);
+                if let Some((domain, port)) = extract_domain_from_packet(raw) {
+                    let (pid, process_name) = if let Some((pid, name)) = pid_cache.get(&port) {
+                        (*pid, name.clone())
+                    } else if let Some((pid, name)) = resolve_socket_info(port) {
+                        pid_cache.put(port, (pid, name.clone()));
+                        (pid, name)
+                    } else {
+                        (0, None)
+                    };
+
+                    // Kendi ürettiğimiz probe ve telemetri trafiğini KESİNLİKLE tampona alma
+                    let is_self = pid == my_pid || process_name.as_deref().map(|n| n.to_lowercase().contains("anticore")).unwrap_or(false);
+                    if !is_self {
+                        if let Ok(mut map) = captured_domains_ref.lock() {
+                            let stat = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
+                                domain,
+                                process_name: process_name.clone(),
+                                hit_count: 0,
+                                tx_bytes: 0,
+                                rx_bytes: 0,
+                            });
+                            // Update process name if we didn't have one before
+                            if stat.process_name.is_none() && process_name.is_some() {
+                                stat.process_name = process_name;
+                            }
+                            stat.hit_count = stat.hit_count.saturating_add(1);
+                            stat.tx_bytes = stat.tx_bytes.saturating_add(raw.len() as u64);
+                        }
                     }
                 }
                 use anticore_core::dispatch::{decide_packet, PacketDecision, PassthroughReason};

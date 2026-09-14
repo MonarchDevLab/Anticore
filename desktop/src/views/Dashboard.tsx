@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Activity, ArrowRight, ArrowUpRight, Clock3, Layers, TriangleAlert, Wrench } from "lucide-react";
-import { api, STEP_LABELS, type Status } from "../lib/tauri";
+import { Activity, ArrowRight, Clock3, Layers, TriangleAlert, Wrench } from "lucide-react";
+import { api, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import type { ViewId } from "../components/AppNavigation";
 import { connectionCopy } from "../features/connection/copy";
@@ -21,11 +21,10 @@ function uptime(seconds: number) {
   return `${h}:${m}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
 }
 
-export default function Dashboard({ status, running, logs, selectedProfile, onSelectedProfileChange, onNavigate, busy, onToggle }: Props) {
+export default function Dashboard({ status, running, logs: _logs, selectedProfile, onSelectedProfileChange, onNavigate, busy, onToggle }: Props) {
   const { lang } = useI18n();
   const copy = connectionCopy[lang];
   const data = useConnectionData();
-  const profile = data.profiles.find((item) => item.id === selectedProfile);
   useEffect(() => {
     if (status?.running && data.profiles.some((item) => item.id === status.profile_id)) onSelectedProfileChange(status.profile_id);
     else if (data.profiles.length && !data.profiles.some((item) => item.id === selectedProfile)) onSelectedProfileChange(data.profiles[0].id);
@@ -69,13 +68,11 @@ export default function Dashboard({ status, running, logs, selectedProfile, onSe
       </div>
       <ConnectionTargets hosts={data.hosts} session={`${known}:${running}:${status?.profile_id}`} copy={copy} onManage={() => onNavigate("sites")} />
       <div className="operations-footer">
-      <section className="workspace-panel recent-events"><div className="panel-heading"><h2>{copy.logs}</h2><button className="workspace-text-button" onClick={() => onNavigate("logs")}>{copy.allLogs}<ArrowUpRight size={15} /></button></div><ul>{logs.length ? logs.slice(-3).reverse().map((line, index) => <li key={`${index}-${line}`}><span className="event-marker" /><span>{line}</span></li>) : <li>{copy.noLogs}</li>}</ul></section>
-      <div className="connection-shortcuts">
-        <button onClick={() => onNavigate("test")}><span className="shortcut-icon"><Activity size={20} /></span><span><strong>{copy.diagnostics}</strong><small>{copy.diagnosticsHint}</small></span><ArrowRight size={18} /></button>
-        <button onClick={() => onNavigate("network")}><span className="shortcut-icon"><Wrench size={20} /></span><span><strong>{copy.repair}</strong><small>{copy.repairHint}</small></span><ArrowRight size={18} /></button>
+        <div className="connection-shortcuts">
+          <button onClick={() => onNavigate("test")}><span className="shortcut-icon"><Activity size={20} /></span><span><strong>{copy.diagnostics}</strong><small>{copy.diagnosticsHint}</small></span><ArrowRight size={18} /></button>
+          <button onClick={() => onNavigate("network")}><span className="shortcut-icon"><Wrench size={20} /></span><span><strong>{copy.repair}</strong><small>{copy.repairHint}</small></span><ArrowRight size={18} /></button>
+        </div>
       </div>
-      </div>
-      {profile && <details className="profile-details"><summary>{copy.details}<span>{profile.steps.length}</span></summary><ol>{profile.steps.map((step, index) => <li key={index}><span>{index + 1}</span>{lang === "tr" ? STEP_LABELS[step.type] : step.type.replaceAll("_", " ")}</li>)}</ol></details>}
     </div>
   );
 }

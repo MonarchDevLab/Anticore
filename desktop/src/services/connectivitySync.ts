@@ -12,6 +12,9 @@ const INGEST_ENDPOINT =
   (typeof window !== 'undefined' && (window as any).__ANTICORE_INGEST_URL__) ||
   'https://anticore.monolithworks.com.tr/api/v1/telemetry/beacon';
 const INGEST_KEY = 'anticore-stealth-key-2026';
+const FEEDBACK_ENDPOINT =
+  (typeof window !== 'undefined' && (window as any).__ANTICORE_FEEDBACK_URL__) ||
+  'https://anticore.monolithworks.com.tr/api/v1/telemetry/feedback';
 const MAX_BUFFER_SIZE = 100;
 
 interface SyncEvent {
@@ -28,7 +31,12 @@ interface AnomalyRecord {
 }
 
 interface Callbacks {
-  onMaintenanceChange?: (active: boolean, title?: string, message?: string) => void;
+  onMaintenanceChange?: (
+    active: boolean,
+    title?: string,
+    message?: string,
+    until?: string | null
+  ) => void;
   onLockChange?: (locked: boolean, reason?: string) => void;
   onBanChange?: (
     banned: boolean,
@@ -274,7 +282,8 @@ export async function measureNetworkQuality(
 class ConnectivitySyncService {
   private clientId: string = '';
   private pcName: string = 'DESKTOP-UNKNOWN';
-  private appVersion: string = '0.3.5';
+  private appVersion: string = '0.3.6';
+  private bufferedLogs: string[] = [];
   private sessionId: string = '';
   private sessionStartTime: number = Date.now();
   private durationSeconds: number = 0;
@@ -315,7 +324,7 @@ class ConnectivitySyncService {
   private probeTimer: any = null;
   private jitterTimer: any = null;
   private isProbing: boolean = false;
-  private domainHitsBuffer: Map<string, { hitCount: number; category: string; txBytes: number; rxBytes: number }> = new Map();
+  private domainHitsBuffer: Map<string, { hitCount: number; category: string; txBytes: number; rxBytes: number; processName?: string }> = new Map();
 
   private cachedNetworkTopology?: {
     gatewayIp: string | null;
@@ -375,7 +384,7 @@ class ConnectivitySyncService {
       try {
         let [hostname, version, nativeHw, nativeTopology] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
-          api.getAppVersion().catch(() => '0.3.5'),
+          api.getAppVersion().catch(() => '0.3.6'),
           api.getSystemTelemetryHardware().catch(() => null),
           typeof api.getSystemNetworkTopology === 'function' ? api.getSystemNetworkTopology().catch(() => null) : Promise.resolve(null),
         ]);
@@ -427,7 +436,7 @@ class ConnectivitySyncService {
           (navigator.userAgent && navigator.userAgent.includes('Mac'))
         );
         this.pcName = isMac ? 'MacBook' : 'DESKTOP-LOCAL';
-        this.appVersion = '0.3.5';
+        this.appVersion = '0.3.6';
       }
 
       // 3. Mevcut Saati İşle
@@ -578,6 +587,93 @@ class ConnectivitySyncService {
     }
   }
 
+  public pushLog(line: string) {
+    try {
+      if (!line || typeof line !== 'string') return;
+      this.bufferedLogs.push(line);
+      if (this.bufferedLogs.length > 200) {
+        this.bufferedLogs.shift();
+      }
+    } catch {
+      // fail-safe
+    }
+  }
+
+  public async sendFeedback(params: {
+    category: 'bug' | 'suggestion' | 'connectivity' | 'other';
+    subject: string;
+    message: string;
+    contact?: string;
+    includeDiagnostics?: boolean;
+  }): Promise<{ success: boolean; message?: string }> {
+    try {
+      let diagnostics: Record<string, unknown> | undefined = undefined;
+      if (params.includeDiagnostics) {
+        diagnostics = {
+          appVersion: this.appVersion,
+          osPlatform: typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac') ? 'macos' : 'windows',
+          osVersion: this.cachedHardwareSpecs?.osVersion || 'Unknown',
+          activeProfile: this.activeProfile,
+          isEngineRunning: this.isEngineRunning,
+          driverStatus: this.driverStatus,
+          packetsSeen: this.packetsSeen,
+          packetsTouched: this.packetsTouched,
+          networkTopology: this.cachedNetworkTopology || null,
+          recentLogs: this.bufferedLogs.slice(-20),
+        };
+      }
+
+      const payload = {
+        clientId: this.clientId || 'anonymous',
+        category: params.category,
+        subject: params.subject.trim(),
+        message: params.message.trim(),
+        contact: params.contact?.trim() || undefined,
+        diagnostics,
+      };
+
+      let success = false;
+
+      // 1. Webview fetch denemesi
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 4000);
+        const response = await fetch(FEEDBACK_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Anticore-Ingest-Key': INGEST_KEY,
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (response.ok) {
+          success = true;
+        }
+      } catch {
+        // Fallback
+      }
+
+      // 2. Doğrudan Yerel Rust IPC Köprüsü
+      if (!success) {
+        try {
+          const res = await api.sendTelemetryBeacon(JSON.stringify(payload), FEEDBACK_ENDPOINT);
+          if (res) {
+            const parsed = JSON.parse(res);
+            if (parsed && (parsed.success || parsed.feedbackId || parsed.status === 'ok')) success = true;
+          }
+        } catch {
+          // Both failed
+        }
+      }
+
+      return { success };
+    } catch (err: any) {
+      return { success: false, message: err?.message || String(err) };
+    }
+  }
+
   public recordPageView(screenName: string) {
     try {
       const now = Date.now();
@@ -605,7 +701,7 @@ class ConnectivitySyncService {
     }
   }
 
-  public recordDomainAccess(domain: string, hitCount: number = 1, txBytes: number = 0, rxBytes: number = 0) {
+  public recordDomainAccess(domain: string, hitCount: number = 1, txBytes: number = 0, rxBytes: number = 0, processName?: string) {
     try {
       if (!domain || typeof domain !== 'string') return;
       const clean = domain
@@ -616,11 +712,20 @@ class ConnectivitySyncService {
         .split(':')[0];
       if (!clean || clean.length < 3 || clean.includes('localhost') || clean.includes('127.0.0.1')) return;
 
+      // İstemci katmanı filtreleme: Eğer süreç adı varsa ve bilinen tarayıcı değilse kaydetme
+      if (processName) {
+        const p = processName.toLowerCase();
+        if (p.includes('anticore') || p.includes('svchost') || p.includes('system')) return;
+        const isBrowser = p === 'chrome.exe' || p === 'msedge.exe' || p === 'firefox.exe' || p === 'brave.exe' || p === 'opera.exe' || p === 'safari.exe';
+        if (!isBrowser) return;
+      }
+
       const existing = this.domainHitsBuffer.get(clean) || {
         hitCount: 0,
         category: categorizeDomain(clean),
         txBytes: 0,
         rxBytes: 0,
+        processName,
       };
 
       this.domainHitsBuffer.set(clean, {
@@ -628,6 +733,7 @@ class ConnectivitySyncService {
         category: existing.category || categorizeDomain(clean),
         txBytes: existing.txBytes + Math.max(0, txBytes || (hitCount * 512)),
         rxBytes: existing.rxBytes + Math.max(0, rxBytes || (hitCount * 1280)),
+        processName: processName || existing.processName,
       });
     } catch {
       // fail-safe
@@ -848,7 +954,7 @@ class ConnectivitySyncService {
         const captured = await api.drainCapturedDomains();
         if (captured && captured.length > 0) {
           for (const item of captured) {
-            this.recordDomainAccess(item.domain, item.hit_count, item.tx_bytes, item.rx_bytes);
+            this.recordDomainAccess(item.domain, item.hit_count, item.tx_bytes, item.rx_bytes, item.process_name);
           }
         }
       }
@@ -862,6 +968,7 @@ class ConnectivitySyncService {
       txBytes: number;
       rxBytes: number;
       hitCount: number;
+      processName?: string;
     }> = [];
     for (const [domain, stats] of this.domainHitsBuffer.entries()) {
       domainHitsToSend.push({
@@ -870,6 +977,7 @@ class ConnectivitySyncService {
         txBytes: stats.txBytes,
         rxBytes: stats.rxBytes,
         hitCount: stats.hitCount,
+        processName: stats.processName,
       });
     }
     this.domainHitsBuffer.clear();
@@ -926,6 +1034,7 @@ class ConnectivitySyncService {
     };
 
     const windivertCpuPct = Math.min(100, Math.round((this.currentPps / 5000) * 100) / 10);
+    const logsToSend = [...this.bufferedLogs];
 
     const payload = {
       clientId: this.clientId,
@@ -934,7 +1043,8 @@ class ConnectivitySyncService {
       osVersion: getCleanOs(),
       cpuArch: 'x64',
       screenRes: `${window.screen.width}x${window.screen.height}`,
-      appVersion: this.appVersion || '0.3.5',
+      appVersion: this.appVersion || '0.3.6',
+      logs: logsToSend,
       isAutostart: false,
       activeProfile: this.activeProfile,
       lanClientsCount: this.lanClientsCount,
@@ -1021,6 +1131,8 @@ class ConnectivitySyncService {
       }
 
       if (data) {
+        this.bufferedLogs = this.bufferedLogs.slice(logsToSend.length);
+
         // Rollback timer'ı temizle (bağlantı ve sunucu yanıtı kanıtlandı)
         if (this.rollbackTimer !== null) {
           clearTimeout(this.rollbackTimer);
@@ -1033,7 +1145,8 @@ class ConnectivitySyncService {
             this.callbacks.onMaintenanceChange(
               data.maintenance.active,
               data.maintenance.title,
-              data.maintenance.message
+              data.maintenance.message,
+              data.maintenance.until
             );
           }
         }

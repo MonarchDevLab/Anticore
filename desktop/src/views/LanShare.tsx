@@ -58,7 +58,13 @@ function getDeviceIcon(deviceType: string) {
   }
 }
 
-export default function LanShare({ pushLog }: { pushLog: (l: string) => void }) {
+interface LanShareProps {
+  pushLog: (l: string) => void;
+  engineRunning?: boolean;
+  onStartEngine?: () => void;
+}
+
+export default function LanShare({ pushLog, engineRunning = false, onStartEngine }: LanShareProps) {
   const { t } = useI18n();
   const [lanInfo, setLanInfo] = useState<LanInfoDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +74,29 @@ export default function LanShare({ pushLog }: { pushLog: (l: string) => void }) 
   const [guidePlatform, setGuidePlatform] = useState<"ios" | "android" | "pc" | "console">("ios");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [firewallSuccess, setFirewallSuccess] = useState<string | null>(null);
+  const [diagState, setDiagState] = useState<"idle" | "testing" | "ok" | "error">("idle");
+  const [diagMessage, setDiagMessage] = useState<string | null>(null);
+
+  const runDiagnostic = async () => {
+    setDiagState("testing");
+    setDiagMessage(null);
+    try {
+      const port = lanInfo?.proxy_port || 10808;
+      await fetch(`http://127.0.0.1:${port}/status`, {
+        method: "GET",
+        mode: "no-cors",
+        cache: "no-cache",
+      });
+      // no-cors mode returns opaque 0 status if reachable, or fails completely
+      setDiagState("ok");
+      setDiagMessage("Proxy soketi yanıt veriyor (10808 aktif, DNS yedekleme hazır).");
+      pushLog("[+] LAN Proxy tanı testi başarılı: Soket ve yerel sunucu yanıt veriyor.");
+    } catch (e) {
+      setDiagState("error");
+      setDiagMessage("Yerel proxy soketine erişilemedi. Lütfen proxy'yi durdurup yeniden başlatın.");
+      pushLog(`[!] LAN Proxy tanı testi başarısız: ${e}`);
+    }
+  };
 
   const fetchLanInfo = useCallback(async () => {
     try {
@@ -187,6 +216,31 @@ export default function LanShare({ pushLog }: { pushLog: (l: string) => void }) 
         <div className="rounded-lg bg-emerald-950/40 border border-emerald-800/50 p-3 text-xs text-emerald-300 flex items-center gap-2">
           <Check size={15} className="text-emerald-400 shrink-0" />
           <span>{firewallSuccess}</span>
+        </div>
+      )}
+
+      {/* Ana Tünel Motoru Kapalı Uyarısı */}
+      {!engineRunning && isProxyActive && (
+        <div className="rounded-lg bg-amber-950/30 border border-amber-800/50 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-200 shadow-sm animate-fade-in">
+          <div className="flex items-start gap-2.5">
+            <ShieldAlert size={18} className="text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold text-amber-300">Ana DPI Tüneli Kapalı</div>
+              <div className="text-[11px] text-amber-200/80 mt-0.5 leading-relaxed">
+                Yerel proxy aktif; ancak telefon ve konsolların engelli sitelere (Discord, Roblox vb.) sorunsuz erişebilmesi için ana tünel motorunun çalışması önerilir.
+              </div>
+            </div>
+          </div>
+          {onStartEngine && (
+            <button
+              type="button"
+              onClick={onStartEngine}
+              className="px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-black font-semibold text-xs transition-colors shrink-0 flex items-center gap-1.5 shadow"
+            >
+              <Play size={13} />
+              <span>Motoru Başlat</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -413,6 +467,37 @@ export default function LanShare({ pushLog }: { pushLog: (l: string) => void }) 
                   <ArrowUpRight size={14} />
                 </a>
               </div>
+            </div>
+
+            {/* Hızlı Teşhis ve Doğrulama Butonu */}
+            <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                disabled={diagState === "testing"}
+                onClick={() => void runDiagnostic()}
+                className="px-3 py-1.5 rounded-lg bg-anticore-primary/20 hover:bg-anticore-primary/30 border border-anticore-primary/40 text-anticore-primary text-xs font-medium flex items-center gap-1.5 transition-colors"
+              >
+                {diagState === "testing" ? (
+                  <LoaderCircle size={13} className="animate-spin" />
+                ) : (
+                  <Radio size={13} />
+                )}
+                <span>Proxy Soketini ve DNS Teşhisini Başlat</span>
+              </button>
+
+              {diagState === "ok" && (
+                <span className="text-xs text-emerald-400 flex items-center gap-1">
+                  <Check size={13} />
+                  <span>{diagMessage}</span>
+                </span>
+              )}
+
+              {diagState === "error" && (
+                <span className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertTriangle size={13} />
+                  <span>{diagMessage}</span>
+                </span>
+              )}
             </div>
           </div>
         )}

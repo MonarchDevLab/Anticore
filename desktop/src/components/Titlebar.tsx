@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, ShieldAlert, Minus, Square, X, Plus, ArrowDownCircle, HelpCircle, Palette, Globe } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Minus, Square, X, Plus, ArrowDownCircle, HelpCircle, Palette, Globe, Check } from "lucide-react";
 import { useTheme } from "../lib/theme";
-import { useI18n } from "../lib/i18n";
+import { useI18n, type Language } from "../lib/i18n";
 import { isMac } from "../lib/platform";
 import { api, type Status } from "../lib/tauri";
+
+const LANGUAGES: { code: Language; label: string; name: string }[] = [
+  { code: "tr", label: "TR", name: "Türkçe" },
+  { code: "en", label: "EN", name: "English" },
+  { code: "ru", label: "RU", name: "Русский" },
+  { code: "de", label: "DE", name: "Deutsch" },
+  { code: "fr", label: "FR", name: "Français" },
+];
 
 interface Props {
   status: Status | null;
@@ -25,7 +33,8 @@ export default function Titlebar({
   const { theme, setTheme, options } = useTheme();
   const { lang, setLang, t } = useI18n();
   const [isMaximized, setIsMaximized] = useState(false);
-  const [appVersion, setAppVersion] = useState<string>("0.3.5");
+  const [appVersion, setAppVersion] = useState<string>("0.3.6");
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   // Tauri window instance lazy-loader (fallback)
   const getWindow = async () => {
@@ -231,15 +240,50 @@ export default function Titlebar({
           <HelpCircle size={14} />
         </button>
 
-        {/* Dil Değiştirici */}
-        <button
-          onClick={() => setLang(lang === "tr" ? "en" : "tr")}
-          className="h-11 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors text-xs font-bold cursor-pointer"
-          title="Dili Değiştir / Switch Language"
-        >
-          <Globe size={12} />
-          <span>{lang.toUpperCase()}</span>
-        </button>
+        {/* Dil Değiştirici (5 Dil Popover) */}
+        <div className="relative">
+          <button
+            onClick={() => setLangMenuOpen((v) => !v)}
+            className={`h-11 px-2 flex items-center gap-1.5 rounded transition-all text-xs font-bold cursor-pointer ${
+              langMenuOpen
+                ? "text-live bg-live/10 border border-live/30"
+                : "text-paper-muted hover:text-paper-bright hover:bg-white/[0.06]"
+            }`}
+            title="Dili Değiştir / Select Language"
+          >
+            <Globe size={13} className={langMenuOpen ? "text-live" : "text-paper-muted"} />
+            <span className="font-mono">{lang.toUpperCase()}</span>
+          </button>
+
+          {langMenuOpen && (
+            <div className="absolute right-0 top-12 mt-1 w-36 rounded-xl bg-[#0e1218] border border-white/[0.12] shadow-2xl p-1 z-[100] backdrop-blur-md">
+              {LANGUAGES.map((item) => (
+                <button
+                  key={item.code}
+                  onClick={() => {
+                    setLang(item.code);
+                    setLangMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                    lang === item.code
+                      ? "bg-live/15 text-live font-bold"
+                      : "text-paper-muted hover:text-paper-bright hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`px-1 py-0.2 rounded text-[10px] font-mono font-bold ${
+                      lang === item.code ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"
+                    }`}>
+                      {item.label}
+                    </span>
+                    <span>{item.name}</span>
+                  </div>
+                  {lang === item.code && <Check size={13} className="text-live" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Tema Değiştirici (5 Donanım Teması) */}
         <button

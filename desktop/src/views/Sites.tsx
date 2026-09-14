@@ -36,7 +36,7 @@ const PRESET_GROUPS = [
   },
   {
     id: "adult-media",
-    label: "Yetişkin & Video CDN Akışı",
+    label: "Medya & Video Akış CDN Paketi",
     domains: [
       "pornhub.com", "phncdn.com", "phprcdn.com", "rncdn7.com", "pornhubpremium.com", "modelhub.com",
       "xvideos.com", "xvideos2.com", "xvideos3.com", "xvideos-cdn.com", "xv-cdn.com", "static-assets-xv.com",

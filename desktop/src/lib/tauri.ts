@@ -273,7 +273,7 @@ export const api = {
   sendTelemetryBeacon: (payload: string, endpoint?: string) =>
     invoke<string>("send_telemetry_beacon", { payload, endpoint }),
   drainCapturedDomains: () =>
-    invoke<Array<{ domain: string; hit_count: number; tx_bytes: number; rx_bytes: number }>>("drain_captured_domains"),
+    invoke<Array<{ domain: string; hit_count: number; tx_bytes: number; rx_bytes: number; process_name?: string }>>("drain_captured_domains"),
   getTrayMinimize: () => invoke<boolean>("get_tray_minimize"),
   setTrayMinimize: (enabled: boolean) => invoke<void>("set_tray_minimize", { enabled }),
   getShowTrayIcon: () => invoke<boolean>("get_show_tray_icon"),

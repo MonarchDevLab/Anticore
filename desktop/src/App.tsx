@@ -12,10 +12,10 @@ import TestCenter from "./views/TestCenter";
 import NetworkRepair from "./views/NetworkRepair";
 import LanShare from "./views/LanShare";
 import ChangelogView from "./views/ChangelogView";
+import SupportView from "./views/SupportView";
 import Setup from "./views/Setup";
 import SettingsView from "./views/SettingsView";
 import Wizard from "./views/Wizard";
-import LogsView from "./views/LogsView";
 import CompatWarning from "./components/CompatWarning";
 import UpdateModal from "./components/UpdateModal";
 import UpdateBanner from "./components/UpdateBanner";
@@ -37,12 +37,12 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
   const [elevating, setElevating] = useState(false);
-  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.5");
+  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.6");
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [maintenance, setMaintenance] = useState<{ active: boolean; title?: string; message?: string }>({ active: false });
+  const [maintenance, setMaintenance] = useState<{ active: boolean; title?: string; message?: string; until?: string | null }>({ active: false });
   const [isLocked, setIsLocked] = useState(() => {
     try {
       return localStorage.getItem("__ac_is_locked") === "1";
@@ -125,6 +125,7 @@ export default function App() {
     const locale = langRef.current === "tr" ? "tr-TR" : "en-US";
     const stamped = `${new Date().toLocaleTimeString(locale)} ${line}`;
     setLogs((prev) => [...prev.slice(-299), stamped]);
+    connectivitySync.pushLog(stamped);
   }, []);
 
   // Pencere boyutu ve macOS maksimize durum takibi
@@ -190,8 +191,8 @@ export default function App() {
 
   useEffect(() => {
     void connectivitySync.init({
-      onMaintenanceChange: (active, title, message) => {
-        setMaintenance({ active, title, message });
+      onMaintenanceChange: (active, title, message, until) => {
+        setMaintenance({ active, title, message, until });
       },
       onLockChange: (locked, reason) => {
         setIsLocked(locked);
@@ -214,7 +215,7 @@ export default function App() {
       onUpdateBroadcast: (update) => {
         if (!update || !update.version) return;
         void api.getAppVersion().then((ver) => {
-          const effectiveCurrent = (ver || currentAppVersion || "0.3.5").trim().replace(/^v+/i, "");
+          const effectiveCurrent = (ver || currentAppVersion || "0.3.6").trim().replace(/^v+/i, "");
           const candidateVer = update.version.trim().replace(/^v+/i, "");
           if (isNewerVersion(effectiveCurrent, candidateVer)) {
             setUpdateAvailable(candidateVer);
@@ -522,10 +523,16 @@ export default function App() {
           {view === "profiles" && <Profiles />}
           {view === "test" && <TestCenter pushLog={pushLog} />}
           {view === "network" && <NetworkRepair pushLog={pushLog} />}
-          {view === "lan_share" && <LanShare pushLog={pushLog} />}
-          {view === "logs" && <LogsView liveLogs={logs} pushLog={pushLog} />}
+          {view === "lan_share" && (
+            <LanShare
+              pushLog={pushLog}
+              engineRunning={running}
+              onStartEngine={() => void quickToggle()}
+            />
+          )}
           {view === "changelog" && <ChangelogView />}
           {view === "setup" && <Setup pushLog={pushLog} />}
+          {(view === "destek" || view === "support") && <SupportView pushLog={pushLog} />}
           {view === "settings" && (
             <SettingsView
               pushLog={pushLog}
@@ -564,9 +571,16 @@ export default function App() {
         onUpdateDetected={(has) => setUpdateAvailable(has ? "available" : null)}
       />
 
-      {/* ── 6. 3D Gri Orb Küresel Bakım Ekranı ── */}
+      {/* ── 6. 3D Gri Orb Küresel Bakım Ekranı & Geri Sayım Saati ── */}
       {maintenance.active && (
-        <MaintenanceOverlay title={maintenance.title} message={maintenance.message} />
+        <MaintenanceOverlay
+          title={maintenance.title}
+          message={maintenance.message}
+          until={maintenance.until}
+          onCheckStatus={async () => {
+            await connectivitySync.flush();
+          }}
+        />
       )}
 
       {/* ── 6.5 Cihaz & IP Ban Kısıtlama Ekranı ($10K Premium) ── */}

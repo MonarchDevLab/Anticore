@@ -5,6 +5,7 @@ mod commands;
 pub mod lan_share;
 pub mod net_teardown;
 mod service;
+pub mod process;
 mod tray;
 
 use service::Engine;

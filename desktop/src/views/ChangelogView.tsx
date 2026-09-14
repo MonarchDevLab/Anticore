@@ -32,18 +32,54 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
-    version: "v0.3.5",
-    titleTr: "Yasaklı Sitelerde Video Oynatıcı Siyah Ekran Çözümü (69+ CDN), Ağ Paylaşımı (LAN Proxy) ve macOS Ayrık Root Mimarisi",
-    titleEn: "Video Player Black Screen Fix for Blocked Sites (69+ CDNs), LAN Proxy Overhaul & macOS Unprivileged GUI Separation",
-    date: "14 Eylül 2026",
+    version: "v0.3.6",
+    titleTr: "Entegre Destek Merkezi, 5 Dilli Yerelleştirme, LAN Proxy Güvenli DNS ve Performans Optimizasyonu",
+    titleEn: "Integrated Support Center, 5-Language Localization, LAN Proxy Secure DNS & Performance Optimization",
+    date: "15 Eylül 2026",
     isLatest: true,
-    highlightTr: "Yetişkin ve kısıtlı video akış sitelerinde video oynatıcıların siyah ekranda kalma sorununun 69 yeni medya CDN'i, akıllı auto-heal ve QUIC engellemesiyle kökten çözülmesi, mobil ve harici cihazlar için tam donanımlı LAN Proxy paylaşımı, macOS üzerinde pencere kapanmalarını önleyen bağımsız root motor mimarisi.",
-    highlightEn: "Permanent fix for video player black screen issues across streaming platforms via 69 new CDNs, auto-healing and QUIC blocking, feature-complete LAN Proxy sharing with captive portal support, and unprivileged GUI architecture preventing crashes on macOS.",
+    highlightTr: "Kullanıcıların arıza, öneri veya erişim sorunlarını doğrudan iletebilecekleri entegre Destek merkezi, Türkçe ve İngilizce'ye ek olarak Rusça, Almanca ve Fransızca tam dil desteği, Ağ Paylaşımında mobil cihazlar için güvenli DNS fallback entegrasyonu, ham günlük görünümü yerine odaklanmış daha hızlı ve sade arayüz yapısı.",
+    highlightEn: "Integrated Support & Feedback center for reporting issues and suggestions, expanded multi-language support adding Russian, German, and French, public secure DNS fallback for LAN proxy connected devices, and streamlined, high-performance UI architecture.",
     changes: [
       {
         type: "feature",
-        textTr: "69+ Yeni Medya & Oynatıcı CDN Alan Adı: Pornhub, XVideos, XHamster, SpankBang, Stripchat, Chaturbate, Eporner ve topluluk platformlarının video dağıtım, HLS manifest ve oynatıcı script CDN alan adları çekirdek hedef listesine eklendi.",
-        textEn: "69+ New Media & Player CDN Domains: Streaming, HLS manifest, and player script CDNs for major video and adult platforms were integrated directly into the core target list.",
+        textTr: "Entegre Destek & Geri Bildirim Merkezi: Kurulum ile Ayarlar arasına eklenen minimalist form ile Hata, Erişim Engeli, Öneri ve Diğer kategorilerinde doğrudan teknik ekibe bildirim gönderme imkanı.",
+        textEn: "Integrated Support & Feedback Center: Added a dedicated, minimalist support section positioned between Setup and Settings allowing users to submit bug reports, connectivity blockers, and suggestions directly.",
+      },
+      {
+        type: "feature",
+        textTr: "5 Dilli Küresel Yerelleştirme: Türkçe ve İngilizce desteğine ek olarak Rusça, Almanca ve Fransızca tam sözlükleriyle entegre edildi; başlık çubuğu ve ayarlar paneline dil seçici eklendi.",
+        textEn: "5-Language Localization: Expanded language options beyond Turkish and English to include complete Russian, German, and French translations with quick selectors in the titlebar and settings.",
+      },
+      {
+        type: "feature",
+        textTr: "Ağ Paylaşımı (LAN Proxy) Güvenli DNS Desteği: Mobil cihaz ve konsolların yerel proxy kullanımında ISP DNS kısıtlamalarına takılmaması için genel güvenli DNS fallback çözümleyicisi ve anlık bağlantı tanı testi eklendi.",
+        textEn: "LAN Proxy Secure DNS Fallback: Integrated public secure DNS fallback resolving ISP DNS redirection for connected mobile and console devices, alongside live local socket diagnostics.",
+      },
+      {
+        type: "fix",
+        textTr: "Güncelleme Döngüsü & Sürüm Senkronizasyonu: Önbellekteki sürüm uyuşmazlıklarından kaynaklanan bildirim döngüleri giderildi; SemVer sürüm denetimi katı kurallarla güçlendirildi.",
+        textEn: "Update Loop & Version Synchronization: Hardened SemVer version checks and eliminated false-positive update notification loops caused by asynchronous version queries.",
+      },
+      {
+        type: "perf",
+        textTr: "Performans ve Arayüz Sadeleştirmesi: Ham geliştirici günlükleri yerine doğrudan operasyonel kontrole odaklanıldı, ana ekran bağlantı kısayolları 2 sütunlu şık ızgara mimarisine geçirildi.",
+        textEn: "Performance & UI Streamlining: Shifted focus from developer log tables to streamlined operational controls, upgrading connection shortcuts to a responsive 2-column grid.",
+      },
+    ],
+  },
+  {
+    version: "v0.3.5",
+    titleTr: "Medya ve Video Oynatıcı CDN Genişletmesi (69+ Hedef), Ağ Paylaşımı (LAN Proxy) ve macOS Ayrık Root Mimarisi",
+    titleEn: "Media & Video Player CDN Expansion (69+ Targets), LAN Proxy Overhaul & macOS Unprivileged GUI Separation",
+    date: "14 Eylül 2026",
+    isLatest: false,
+    highlightTr: "Kısıtlı video ve medya akış servislerinde oynatıcıların siyah ekranda kalma sorununun 69 yeni medya CDN'i, akıllı auto-heal ve QUIC optimizasyonuyla çözülmesi, mobil ve harici cihazlar için tam donanımlı LAN Proxy paylaşımı, macOS üzerinde bağımsız çalışan motor mimarisi.",
+    highlightEn: "Permanent fix for video player black screen issues across streaming platforms via 69 new media CDNs, auto-healing and QUIC optimization, feature-complete LAN Proxy sharing with captive portal support, and unprivileged GUI architecture on macOS.",
+    changes: [
+      {
+        type: "feature",
+        textTr: "69+ Yeni Medya & Oynatıcı CDN Alan Adı: Kısıtlı video ve medya akış servislerinin video dağıtım, HLS manifest ve oynatıcı script CDN alan adları çekirdek hedef listesine eklendi.",
+        textEn: "69+ New Media & Player CDN Domains: Streaming, HLS manifest, and player script CDNs for media and streaming platforms were integrated directly into the core target list.",
       },
       {
         type: "fix",
@@ -52,8 +88,8 @@ const RELEASES: ReleaseEntry[] = [
       },
       {
         type: "feature",
-        textTr: "Akıllı Otomatik Onarma (Auto-Heal): Mevcut kurulumlardaki kullanıcıya özel alan adları korunarak eksik çekirdek ve medya CDN alan adları yerel blacklist.txt dosyasına otomatik eklendi; Siteler sekmesine tek tıkla senkronizasyon ve 'Yetişkin & Video CDN' filtre hapı eklendi.",
-        textEn: "Smart Blacklist Auto-Healing: Automatically detects and appends missing core CDN targets to existing local blacklist.txt without overwriting user custom domains; added one-click sync and 'Adult & Video CDN' filter pill.",
+        textTr: "Akıllı Otomatik Onarma (Auto-Heal): Mevcut kurulumlardaki kullanıcıya özel alan adları korunarak eksik çekirdek ve medya CDN alan adları yerel listeye otomatik eklendi; Siteler sekmesine tek tıkla senkronizasyon ve 'Medya CDN' filtre seçeneği eklendi.",
+        textEn: "Smart Blacklist Auto-Healing: Automatically detects and appends missing core CDN targets to existing local blacklist.txt without overwriting user custom domains; added one-click sync and 'Media CDN' filter option.",
       },
       {
         type: "feature",

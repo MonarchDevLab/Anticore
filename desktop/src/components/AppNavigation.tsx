@@ -1,8 +1,8 @@
-import { Activity, Globe2, Layers, LayoutDashboard, LoaderCircle, Power, ScrollText, Settings, Share2, Shield, FileText, Wrench } from "lucide-react";
+import { Activity, Globe2, Layers, LayoutDashboard, LoaderCircle, Power, Settings, Share2, Shield, FileText, Wrench, LifeBuoy } from "lucide-react";
 import { useI18n } from "../lib/i18n";
 import { connectionCopy } from "../features/connection/copy";
 
-export type ViewId = "dashboard" | "sites" | "profiles" | "test" | "network" | "lan_share" | "setup" | "settings" | "wizard" | "logs" | "changelog";
+export type ViewId = "dashboard" | "sites" | "profiles" | "test" | "network" | "lan_share" | "setup" | "destek" | "settings" | "wizard" | "logs" | "changelog" | "support";
 interface Props { view: ViewId; onNavigate: (view: ViewId) => void; running: boolean; known: boolean; busy: boolean; onToggle: () => void; }
 
 export default function AppNavigation({ view, onNavigate, running, known, busy, onToggle }: Props) {
@@ -10,8 +10,8 @@ export default function AppNavigation({ view, onNavigate, running, known, busy, 
   const copy = connectionCopy[lang];
   const groups = [
     { label: copy.workspace, items: [{ id: "dashboard", label: t("nav_dashboard"), icon: LayoutDashboard }, { id: "sites", label: t("nav_sites"), icon: Globe2 }, { id: "profiles", label: t("nav_profiles"), icon: Layers }] },
-    { label: copy.tools, items: [{ id: "test", label: t("nav_test"), icon: Activity }, { id: "network", label: t("nav_network"), icon: Wrench }, { id: "lan_share", label: t("nav_lan_share"), icon: Share2 }, { id: "logs", label: t("nav_logs"), icon: ScrollText }] },
-    { label: copy.support, items: [{ id: "changelog", label: t("nav_changelog"), icon: FileText }, { id: "setup", label: t("nav_setup"), icon: Shield }, { id: "settings", label: t("nav_settings"), icon: Settings }] },
+    { label: copy.tools, items: [{ id: "test", label: t("nav_test"), icon: Activity }, { id: "network", label: t("nav_network"), icon: Wrench }, { id: "lan_share", label: t("nav_lan_share"), icon: Share2 }] },
+    { label: copy.support, items: [{ id: "changelog", label: t("nav_changelog"), icon: FileText }, { id: "setup", label: t("nav_setup"), icon: Shield }, { id: "destek", label: t("nav_destek"), icon: LifeBuoy }, { id: "settings", label: t("nav_settings"), icon: Settings }] },
   ];
   return (
     <aside className="workspace-sidebar">

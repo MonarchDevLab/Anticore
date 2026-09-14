@@ -351,6 +351,7 @@ export default function SettingsView({
 
       <nav className="tool-section-nav" aria-label={t("settings_title")}>
         <a href="#appearance">{t("settings_theme_title")}</a>
+        <a href="#language">{t("settings_lang_title")}</a>
         <a href="#engine-options">{t("settings_defense_title")}</a>
         <a href="#updates">{t("settings_updates_title")}</a>
         <a href="#recovery">{t("settings_factory_title")}</a>
@@ -406,7 +407,7 @@ export default function SettingsView({
       </section>
 
       {/* Dil Seçimi */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+      <section id="language" className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
             <Languages size={18} aria-hidden strokeWidth={2} />
@@ -417,28 +418,61 @@ export default function SettingsView({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-1">
           <button
             onClick={() => setLang("tr")}
-            className={`py-3 px-4 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
               lang === "tr"
                 ? "bg-live/15 text-live border-live/35 shadow-sm"
                 : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
             }`}
           >
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${lang === "tr" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>TR</span>
-            <span>TÜRKÇE ({t("settings_lang_default")})</span>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${lang === "tr" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>TR</span>
+            <span>TÜRKÇE</span>
           </button>
           <button
             onClick={() => setLang("en")}
-            className={`py-3 px-4 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
               lang === "en"
                 ? "bg-live/15 text-live border-live/35 shadow-sm"
                 : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
             }`}
           >
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${lang === "en" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>EN</span>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${lang === "en" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>EN</span>
             <span>ENGLISH</span>
+          </button>
+          <button
+            onClick={() => setLang("ru")}
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+              lang === "ru"
+                ? "bg-live/15 text-live border-live/35 shadow-sm"
+                : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
+            }`}
+          >
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${lang === "ru" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>RU</span>
+            <span>РУССКИЙ</span>
+          </button>
+          <button
+            onClick={() => setLang("de")}
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+              lang === "de"
+                ? "bg-live/15 text-live border-live/35 shadow-sm"
+                : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
+            }`}
+          >
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${lang === "de" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>DE</span>
+            <span>DEUTSCH</span>
+          </button>
+          <button
+            onClick={() => setLang("fr")}
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+              lang === "fr"
+                ? "bg-live/15 text-live border-live/35 shadow-sm"
+                : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
+            }`}
+          >
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${lang === "fr" ? "bg-live text-void" : "bg-white/[0.08] text-paper-muted"}`}>FR</span>
+            <span>FRANÇAIS</span>
           </button>
         </div>
       </section>
