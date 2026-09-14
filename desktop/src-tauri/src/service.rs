@@ -7,6 +7,7 @@ use std::time::Instant;
 use std::path::Path;
 use lru::LruCache;
 use std::num::NonZeroUsize;
+#[allow(unused_imports)]
 use crate::process::resolve_socket_info;
 #[cfg(target_os = "macos")]
 use anticore_core::transport::PacketTransport;
@@ -463,10 +464,11 @@ impl Engine {
                 stats.packets_seen.fetch_add(1, Ordering::Relaxed);
 
                 let raw = &buf[..n];
-                if let Some(domain) = extract_domain_from_packet(raw) {
+                if let Some((domain, _port)) = extract_domain_from_packet(raw) {
                     if let Ok(mut map) = captured_domains_ref.lock() {
                         let stat = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
                             domain,
+                            process_name: None,
                             hit_count: 0,
                             tx_bytes: 0,
                             rx_bytes: 0,
