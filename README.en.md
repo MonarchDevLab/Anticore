@@ -21,19 +21,11 @@
 <br />
 
 <p align="center">
-  <a href="README.md"><img src="https://img.shields.io/badge/Türkçe-00FF9D?style=for-the-badge&labelColor=0C1017" alt="Türkçe" /></a>&nbsp;
-  <a href="README.en.md"><img src="https://img.shields.io/badge/English-00E5FF?style=for-the-badge&labelColor=0C1017" alt="English" /></a>&nbsp;
-  <a href="README.ru.md"><img src="https://img.shields.io/badge/Русский-FFE600?style=for-the-badge&labelColor=0C1017" alt="Русский" /></a>&nbsp;
-  <a href="README.de.md"><img src="https://img.shields.io/badge/Deutsch-FF7733?style=for-the-badge&labelColor=0C1017" alt="Deutsch" /></a>&nbsp;
-  <a href="README.fr.md"><img src="https://img.shields.io/badge/Français-FF2A55?style=for-the-badge&labelColor=0C1017" alt="Français" /></a>
-</p>
-
-<p align="center">
-  <b><a href="README.md">Türkçe</a></b> &bull;
-  <b><a href="README.en.md">English</a></b> &bull;
-  <b><a href="README.ru.md">Русский</a></b> &bull;
-  <b><a href="README.de.md">Deutsch</a></b> &bull;
-  <b><a href="README.fr.md">Français</a></b>
+  <a href="README.md"><img src="assets/languages/badge-tr.svg" alt="Türkçe" height="28" /></a>&nbsp;
+  <a href="README.en.md"><img src="assets/languages/badge-en.svg" alt="English" height="28" /></a>&nbsp;
+  <a href="README.ru.md"><img src="assets/languages/badge-ru.svg" alt="Русский" height="28" /></a>&nbsp;
+  <a href="README.de.md"><img src="assets/languages/badge-de.svg" alt="Deutsch" height="28" /></a>&nbsp;
+  <a href="README.fr.md"><img src="assets/languages/badge-fr.svg" alt="Français" height="28" /></a>
 </p>
 
 <br />
