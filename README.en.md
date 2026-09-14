@@ -20,6 +20,24 @@
 
 <br />
 
+<p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/Türkçe-00FF9D?style=for-the-badge&labelColor=0C1017" alt="Türkçe" /></a>&nbsp;
+  <a href="README.en.md"><img src="https://img.shields.io/badge/English-00E5FF?style=for-the-badge&labelColor=0C1017" alt="English" /></a>&nbsp;
+  <a href="README.ru.md"><img src="https://img.shields.io/badge/Русский-FFE600?style=for-the-badge&labelColor=0C1017" alt="Русский" /></a>&nbsp;
+  <a href="README.de.md"><img src="https://img.shields.io/badge/Deutsch-FF7733?style=for-the-badge&labelColor=0C1017" alt="Deutsch" /></a>&nbsp;
+  <a href="README.fr.md"><img src="https://img.shields.io/badge/Français-FF2A55?style=for-the-badge&labelColor=0C1017" alt="Français" /></a>
+</p>
+
+<p align="center">
+  <b><a href="README.md">Türkçe</a></b> &bull;
+  <b><a href="README.en.md">English</a></b> &bull;
+  <b><a href="README.ru.md">Русский</a></b> &bull;
+  <b><a href="README.de.md">Deutsch</a></b> &bull;
+  <b><a href="README.fr.md">Français</a></b>
+</p>
+
+<br />
+
 **Next-generation local packet manipulation engine engineered to circumvent ISP censorship and Deep Packet Inspection (DPI) middleboxes. Operates completely locally without tunneling through third-party remote servers—preserving 100% of your network throughput and ping latency.**
 
 <br />
@@ -27,7 +45,7 @@
 <table width="100%" align="center">
   <tr>
     <td width="25%" align="center">
-      <a href="#download-options-v034"><img src="https://img.shields.io/badge/01-DISTRIBUTION-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Distribution" /></a>
+      <a href="#download-options-v036"><img src="https://img.shields.io/badge/01-DISTRIBUTION-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Distribution" /></a>
     </td>
     <td width="25%" align="center">
       <a href="#what-anticore-is-and-is-not"><img src="https://img.shields.io/badge/02-CORE_ARCH-20f2ff?style=for-the-badge&labelColor=08090D" alt="02 Core Architecture" /></a>
