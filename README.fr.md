@@ -10,7 +10,7 @@
 
 [![Version](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=20ffa0&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Téléchargements](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=20f2ff&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
-[![Plateforme](https://img.shields.io/badge/Plateforme-Windows%20%7C%20macOS-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
+[![Plateforme](https://img.shields.io/badge/Plateforme-Windows%20%7C%20macOS%20%7C%20Android-20f2ff?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Noyau](https://img.shields.io/badge/Noyau-WinDivert%20%2B%20macOS%20UTUN-FF2A4D?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Interface](https://img.shields.io/badge/Interface-Tauri%202.0%20%2B%20React%2019-FFE600?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
 [![Tests](https://img.shields.io/badge/Tests-72%20Réussis-20ffa0?style=for-the-badge&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore)
@@ -37,7 +37,7 @@
 <table width="100%" align="center">
   <tr>
     <td width="25%" align="center">
-      <a href="#options-de-téléchargement-v036"><img src="https://img.shields.io/badge/01-TÉLÉCHARGEMENTS-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Téléchargements" /></a>
+      <a href="#options-de-téléchargement-v037"><img src="https://img.shields.io/badge/01-TÉLÉCHARGEMENTS-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Téléchargements" /></a>
     </td>
     <td width="25%" align="center">
       <a href="#quest-ce-que-anticore"><img src="https://img.shields.io/badge/02-ARCHITECTURE-20f2ff?style=for-the-badge&labelColor=08090D" alt="02 Architecture" /></a>
