@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "desktop-updater",
+  "description": "Desktop-specific updater capability",
+  "windows": ["main"],
+  "platforms": ["windows", "macOS", "linux"],
+  "permissions": [
+    "updater:default"
+  ]
+}

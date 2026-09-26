@@ -3650,28 +3650,33 @@ fn strip_emojis(input: &str) -> String {
 
 #[tauri::command]
 pub fn window_close(app: AppHandle) {
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if let Some(window) = app.get_webview_window("main") {
         if crate::tray::get_tray_minimize_pref(&app) {
             let _ = window.hide();
-        } else {
-            let engine = app.state::<Engine>();
-            if engine.running.load(Ordering::SeqCst) {
-                let _ = engine.stop();
-            }
-            app.exit(0);
+            return;
         }
     }
+    let engine = app.state::<Engine>();
+    if engine.running.load(Ordering::SeqCst) {
+        let _ = engine.stop();
+    }
+    app.exit(0);
 }
 
 #[tauri::command]
 pub fn window_minimize(app: AppHandle) {
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.minimize();
     }
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    let _ = app;
 }
 
 #[tauri::command]
 pub fn window_toggle_maximize(app: AppHandle) -> bool {
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if let Some(window) = app.get_webview_window("main") {
         if window.is_maximized().unwrap_or(false) {
             let _ = window.unmaximize();
@@ -3683,13 +3688,24 @@ pub fn window_toggle_maximize(app: AppHandle) -> bool {
     } else {
         false
     }
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    {
+        let _ = app;
+        false
+    }
 }
 
 #[tauri::command]
 pub fn window_is_maximized(app: AppHandle) -> bool {
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if let Some(window) = app.get_webview_window("main") {
         window.is_maximized().unwrap_or(false)
     } else {
+        false
+    }
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    {
+        let _ = app;
         false
     }
 }
@@ -3700,6 +3716,7 @@ pub fn show_main_window(app: AppHandle) {
         let _ = panel.hide();
     }
     if let Some(window) = app.get_webview_window("main") {
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();

@@ -25,7 +25,6 @@
         { "url": "https://*.github.com/**" }
       ]
     },
-    "updater:default",
     "process:allow-restart",
     "dialog:allow-save",
     "dialog:allow-open",

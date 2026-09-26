@@ -9,11 +9,14 @@ use std::sync::atomic::Ordering;
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Emitter, Listener, Manager,
 };
+use tauri::{AppHandle, Manager};
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+use tauri::{Emitter, Listener};
 
 use crate::service::Engine;
 
@@ -96,6 +99,7 @@ pub fn set_show_tray_icon(app: AppHandle, enabled: bool) -> Result<(), String> {
     settings.show_tray_icon = enabled;
     save_tray_settings(&app, &settings)?;
 
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if let Some(handles) = app.try_state::<TrayHandles>() {
         if let Ok(tray) = handles.tray.lock() {
             let _ = tray.set_visible(enabled);
@@ -104,6 +108,7 @@ pub fn set_show_tray_icon(app: AppHandle, enabled: bool) -> Result<(), String> {
 
     // Güvenlik koruması: Eğer simge gizleniyorsa, kullanıcının pencereyi kaybetmesini
     // ve arayüze erişememesini önlemek için ana pencere görünür yapılır.
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if !enabled {
         if let Some(window) = app.get_webview_window("main") {
             let _ = window.unminimize();
@@ -126,6 +131,7 @@ pub fn set_always_on_top(app: AppHandle, enabled: bool) -> Result<(), String> {
     settings.always_on_top = enabled;
     save_tray_settings(&app, &settings)?;
 
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.set_always_on_top(enabled);
     }
@@ -133,7 +139,9 @@ pub fn set_always_on_top(app: AppHandle, enabled: bool) -> Result<(), String> {
     Ok(())
 }
 
-// ---------- Kurulum ----------
+// ---------- Kurulum (Desktop) ----------
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 
 /// Tray simgesi + menü + olay dinleyicileri kurar. `app.manage()` ile
 /// saklanan `TrayHandles`, motor durumu değiştikçe (status_changed olayı)
@@ -169,7 +177,7 @@ fn position_quick_panel(panel: &tauri::WebviewWindow, tray_rect: &tauri::Rect) {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(all(not(target_os = "macos"), not(any(target_os = "android", target_os = "ios"))))]
 fn position_quick_panel(panel: &tauri::WebviewWindow, tray_rect: &tauri::Rect) {
     if let Ok(Some(monitor)) = panel.current_monitor() {
         let scale = monitor.scale_factor();
@@ -201,6 +209,7 @@ fn position_quick_panel(panel: &tauri::WebviewWindow, tray_rect: &tauri::Rect) {
     }
 }
 
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     let engine = app.state::<Engine>();
     let is_running = engine.running.load(Ordering::SeqCst);
@@ -382,6 +391,7 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     Ok(())
 }
 
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub struct TrayHandles {
     pub tray: Mutex<TrayIcon>,
     pub start_item: MenuItem<tauri::Wry>,
@@ -391,6 +401,7 @@ pub struct TrayHandles {
 /// Pencere `X` ile kapatılmak istendiğinde çağrılır. "Tray'e küçült" VE tepsi simgesi
 /// açıksa pencereyi gizleyip kapatmayı iptal eder. Tepsi simgesi kapalıysa veya küçültme
 /// istenmiyorsa kullanıcıyı kilitlememek için olağan kapatma davranışına izin verilir.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub fn handle_close_request(window: &tauri::WebviewWindow, api: &tauri::CloseRequestApi) {
     let settings = get_tray_settings(window.app_handle());
     if settings.minimize_to_tray && settings.show_tray_icon {
@@ -403,3 +414,14 @@ pub fn handle_close_request(window: &tauri::WebviewWindow, api: &tauri::CloseReq
         }
     }
 }
+
+// ---------- Kurulum (Mobile Stubs) ----------
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+pub fn setup(_app: &tauri::App) -> tauri::Result<()> {
+    Ok(())
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+pub fn handle_close_request(_window: &tauri::WebviewWindow, _api: &tauri::CloseRequestApi) {}
+

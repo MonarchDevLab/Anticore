@@ -1,6 +1,8 @@
 # Derleme çıktıları
 /dist/
 dist-portable/
+dist-android/
+*.apk
 engine/target/
 desktop/src-tauri/target/
 desktop/src-tauri/gen/
