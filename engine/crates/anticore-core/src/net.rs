@@ -225,6 +225,7 @@ fn raw_payload_len_u16(raw: &[u8]) -> usize {
 ///
 /// `payload` boş olabilir; `ttl_override` ile sahte düşük-TTL kopyalar,
 /// `ack_override` ile sıra yanıltma kopyaları üretilir.
+#[allow(clippy::too_many_arguments)]
 pub fn build_tcp_segment(
     view: &PacketView,
     new_seq: u32,

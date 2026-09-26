@@ -248,6 +248,7 @@ pub fn apply_steps(view: &PacketView, steps: &[Step]) -> StrategyPlan {
     
     // WindowSize override'ını real paketlere de uygula (tekrar build ederek)
     if let Some(ws) = window_size {
+        #[allow(clippy::needless_range_loop)]
         for i in 0..real.len() {
             if let Some(view) = PacketView::parse(&real[i]) {
                 real[i] = build_tcp_segment(&view, view.seq(), view.payload(), None, None, false, None, Some(ws));
@@ -264,6 +265,7 @@ pub fn apply_steps(view: &PacketView, steps: &[Step]) -> StrategyPlan {
 }
 
 /// HTTP payload dönüştürücüleri: HostCase, HostSpace, HttpMethodCase, HttpAbsoluteUri, HttpLf
+#[allow(clippy::needless_range_loop, clippy::collapsible_if)]
 fn transform_http_payload(payload: &[u8], steps: &[Step]) -> Vec<u8> {
     let mut out = payload.to_vec();
     

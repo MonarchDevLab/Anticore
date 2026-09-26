@@ -219,9 +219,10 @@ impl Drop for WinDivert {
 impl anticore_core::transport::PacketTransport for WinDivert {
     fn recv(&self, buf: &mut [u8]) -> Option<(usize, anticore_core::transport::TransportMeta)> {
         self.recv(buf).map(|(n, addr)| {
-            let mut meta = anticore_core::transport::TransportMeta::default();
-            meta.opaque = addr.to_bytes();
-            (n, meta)
+            (n, anticore_core::transport::TransportMeta {
+                opaque: addr.to_bytes(),
+                ..Default::default()
+            })
         })
     }
 

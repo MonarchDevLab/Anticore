@@ -81,7 +81,7 @@ fn main() {
             tray::setup(app)?;
             let args: Vec<String> = std::env::args().collect();
             let start_hidden = args.iter().any(|a| a == "--hidden" || a == "--minimized" || a == "-m");
-            let tray_settings = tray::get_tray_settings(&app.handle());
+            let tray_settings = tray::get_tray_settings(app.handle());
 
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_always_on_top(tray_settings.always_on_top);

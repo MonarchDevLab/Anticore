@@ -290,16 +290,14 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
                 std::env::current_dir().ok().map(|d| d.join("bin")),
                 std::env::current_dir().ok().map(|d| d.join("vendor").join("windows")),
             ];
-            for src_opt in &search_sources {
-                if let Some(src_dir) = src_opt {
-                    let s_dll = src_dir.join("WinDivert.dll");
-                    let s_sys = src_dir.join("WinDivert64.sys");
-                    if s_dll.is_file() && !dll.is_file() {
-                        let _ = std::fs::copy(&s_dll, &dll);
-                    }
-                    if s_sys.is_file() && !sys.is_file() {
-                        let _ = std::fs::copy(&s_sys, &sys);
-                    }
+            for src_dir in search_sources.iter().flatten() {
+                let s_dll = src_dir.join("WinDivert.dll");
+                let s_sys = src_dir.join("WinDivert64.sys");
+                if s_dll.is_file() && !dll.is_file() {
+                    let _ = std::fs::copy(&s_dll, &dll);
+                }
+                if s_sys.is_file() && !sys.is_file() {
+                    let _ = std::fs::copy(&s_sys, &sys);
                 }
             }
         }
@@ -2058,16 +2056,14 @@ pub fn ensure_windivert_files(app: Option<&AppHandle>) -> bool {
 
         // Gömülü ikili baytlardan diske çıkart (Self-Extract / Auto-Provision)
         let mut extracted = false;
-        if !target_dll.exists() {
-            if std::fs::write(&target_dll, EMBEDDED_WINDIVERT_DLL).is_ok() {
+        if !target_dll.exists()
+            && std::fs::write(&target_dll, EMBEDDED_WINDIVERT_DLL).is_ok() {
                 extracted = true;
             }
-        }
-        if !target_sys.exists() {
-            if std::fs::write(&target_sys, EMBEDDED_WINDIVERT_SYS).is_ok() {
+        if !target_sys.exists()
+            && std::fs::write(&target_sys, EMBEDDED_WINDIVERT_SYS).is_ok() {
                 extracted = true;
             }
-        }
         if !target_webview2.exists() {
             let _ = std::fs::write(&target_webview2, EMBEDDED_WEBVIEW2_LOADER_DLL);
         }
@@ -3324,7 +3320,7 @@ pub async fn install_update_direct(
             if let Ok(mut f) = std::fs::File::open(&target_file_path) {
                 let _ = f.read_exact(&mut magic);
             }
-            if magic != [b'M', b'Z'] {
+            if magic != *b"MZ" {
                 let _ = std::fs::remove_file(&target_file_path);
                 return Err("İndirilen güncelleme paketi geçerli bir Windows yürütülebilir dosyası (.exe) değil. İndirme bozulmuş veya bağlantı hatalı olabilir.".into());
             }
@@ -3602,7 +3598,7 @@ pub fn sync_default_blacklist(app: AppHandle, engine: tauri::State<Engine>) -> R
 
 fn parse_version_tuple(s: &str) -> Vec<u64> {
     let clean = s.trim().trim_start_matches('v');
-    let base = clean.split(|c| c == '-' || c == '+').next().unwrap_or("");
+    let base = clean.split(['-', '+']).next().unwrap_or("");
     base.split('.')
         .filter_map(|p| p.parse::<u64>().ok())
         .collect()

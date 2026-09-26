@@ -341,7 +341,7 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
         })
         .build(app)?;
 
-    let settings = get_tray_settings(&app.handle());
+    let settings = get_tray_settings(app.handle());
     if !settings.show_tray_icon {
         let _ = tray.set_visible(false);
     }

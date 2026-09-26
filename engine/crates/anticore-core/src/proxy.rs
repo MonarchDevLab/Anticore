@@ -563,8 +563,7 @@ async fn handle_http(
         let uri = parts[1];
         let version = parts.get(2).copied().unwrap_or("HTTP/1.1");
 
-        let (target_host, target_port, path_part) = if uri.starts_with("http://") {
-            let after = &uri["http://".len()..];
+        let (target_host, target_port, path_part) = if let Some(after) = uri.strip_prefix("http://") {
             let (hp, p) = match after.split_once('/') {
                 Some((h, path)) => (h, format!("/{path}")),
                 None => (after, "/".to_string()),
