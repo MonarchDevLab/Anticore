@@ -55,7 +55,7 @@
 
 ---
 
-## Options de téléchargement (v0.3.6)
+## Options de téléchargement (v0.3.7)
 
 Tous les exécutables sont directement compilés depuis les sources, exempts de chemins de construction (Zero Leakage) et signés avec Minisign.
 
@@ -82,21 +82,21 @@ Tous les exécutables sont directement compilés depuis les sources, exempts de 
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore_0.3.6_x64-portable.zip"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.ZIP-6.6_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Télécharger ZIP" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_x64-portable.zip"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.ZIP-6.6_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Télécharger ZIP" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore_0.3.6_x64-setup.exe"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.EXE-4.6_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Télécharger EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_x64-setup.exe"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.EXE-4.6_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Télécharger EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore_0.3.6_x64_en-US.msi"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Télécharger MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_x64_en-US.msi"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Télécharger MSI" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.2_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.2_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTEUR-anticore--cli.exe_(385_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/anticore-cli.exe"><img src="https://img.shields.io/badge/CLI_MOTEUR-anticore--cli.exe_(385_KB)-20f2ff?style=flat-square&labelColor=08090D" alt="anticore-cli" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/ARCHIVE-Toutes_les_versions-FFFFFF?style=flat-square&labelColor=08090D" alt="Toutes les versions" /></a>
@@ -119,12 +119,12 @@ Tous les exécutables sont directement compilés depuis les sources, exempts de 
   <tbody>
     <tr>
       <td align="center">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore_0.3.6_arm64.pkg"><img src="https://img.shields.io/badge/INSTALLATEUR_.PKG-arm64-20ffa0?style=for-the-badge&labelColor=08090D" alt="arm64 PKG" /></a>&nbsp;
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore_0.3.6_aarch64.dmg"><img src="https://img.shields.io/badge/IMAGE_.DMG-arm64-20f2ff?style=for-the-badge&labelColor=08090D" alt="arm64 DMG" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_arm64.pkg"><img src="https://img.shields.io/badge/INSTALLATEUR_.PKG-arm64-20ffa0?style=for-the-badge&labelColor=08090D" alt="arm64 PKG" /></a>&nbsp;
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_aarch64.dmg"><img src="https://img.shields.io/badge/IMAGE_.DMG-arm64-20f2ff?style=for-the-badge&labelColor=08090D" alt="arm64 DMG" /></a>
       </td>
       <td align="center">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore_0.3.6_x64.pkg"><img src="https://img.shields.io/badge/INSTALLATEUR_.PKG-x64-20ffa0?style=for-the-badge&labelColor=08090D" alt="x64 PKG" /></a>&nbsp;
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.6/Anticore_0.3.6_x64.dmg"><img src="https://img.shields.io/badge/IMAGE_.DMG-x64-20f2ff?style=for-the-badge&labelColor=08090D" alt="x64 DMG" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_x64.pkg"><img src="https://img.shields.io/badge/INSTALLATEUR_.PKG-x64-20ffa0?style=for-the-badge&labelColor=08090D" alt="x64 PKG" /></a>&nbsp;
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_x64.dmg"><img src="https://img.shields.io/badge/IMAGE_.DMG-x64-20f2ff?style=for-the-badge&labelColor=08090D" alt="x64 DMG" /></a>
       </td>
     </tr>
   </tbody>
@@ -141,15 +141,15 @@ curl -fsSL https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/scripts
 
 | Fichier | Taille | Somme de contrôle SHA-256 |
 |---|---|---|
-| `Anticore_0.3.6_x64-setup.exe` | 4.6 MB | `D4EF2CCA302D4845B49F8F3ED80EFEA28C1F3C8547B9A7B5A317FC72C47CA143` |
-| `Anticore_0.3.6_x64-portable.zip` | 6.6 MB | `0964590824FFF5ADFAE04A092F6A5DADA3B76BA1C88B2BF8D984FC98CD87D43A` |
-| `Anticore_0.3.6_x64_en-US.msi` | 6.5 MB | `123D83C2A3BE387FE90165602B895B4B2B47E0754EB44F68D63FBF704EB9A9B0` |
+| `Anticore_0.3.7_x64-setup.exe` | 4.6 MB | `D4EF2CCA302D4845B49F8F3ED80EFEA28C1F3C8547B9A7B5A317FC72C47CA143` |
+| `Anticore_0.3.7_x64-portable.zip` | 6.6 MB | `0964590824FFF5ADFAE04A092F6A5DADA3B76BA1C88B2BF8D984FC98CD87D43A` |
+| `Anticore_0.3.7_x64_en-US.msi` | 6.5 MB | `123D83C2A3BE387FE90165602B895B4B2B47E0754EB44F68D63FBF704EB9A9B0` |
 | `Anticore.exe` | 16.2 MB | `1234215E55C61CAE9836D6EEF0CBE3725702B7BAB3A3FF050699BD70B3BBB676` |
 | `anticore-cli.exe` | 385 KB | `D8D60AEA2FB5A0B2C4EF7FAC7C810A2C49471CE19FA6D4FD499C430E180E0163` |
-| `Anticore_0.3.6_arm64.pkg` | 5.8 MB | `A2FB220E4F9C5ECD1109C977903E21FFA16DE5A24B098EF823A8C801B18F837C` |
-| `Anticore_0.3.6_aarch64.dmg` | 6.2 MB | `B774324462FA35C9A1B3B2B76BFA2976CE705D174A3CB611C64343D4E2A4152F` |
-| `Anticore_0.3.6_x64.pkg` | 6.4 MB | `2EA284E231E7FE4F3A665E40A0E45B2BB8CA534FF430229DC6BF8C1EC73CBBD0` |
-| `Anticore_0.3.6_x64.dmg` | 6.8 MB | `2026542CB88BDB22CAE8A6FCC81F1BF38A6B1EA42C2ECF066979890AB7144946` |
+| `Anticore_0.3.7_arm64.pkg` | 5.8 MB | `A2FB220E4F9C5ECD1109C977903E21FFA16DE5A24B098EF823A8C801B18F837C` |
+| `Anticore_0.3.7_aarch64.dmg` | 6.2 MB | `B774324462FA35C9A1B3B2B76BFA2976CE705D174A3CB611C64343D4E2A4152F` |
+| `Anticore_0.3.7_x64.pkg` | 6.4 MB | `2EA284E231E7FE4F3A665E40A0E45B2BB8CA534FF430229DC6BF8C1EC73CBBD0` |
+| `Anticore_0.3.7_x64.dmg` | 6.8 MB | `2026542CB88BDB22CAE8A6FCC81F1BF38A6B1EA42C2ECF066979890AB7144946` |
 
 ---
 

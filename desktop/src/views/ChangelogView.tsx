@@ -32,11 +32,42 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.3.7",
+    titleTr: "Sıfır Gecikmeli Başlangıç (0ms Startup), Modüler Paket Optimizasyonu ve Android APK Hazırlığı",
+    titleEn: "Zero-Latency Startup (0ms), Modular Bundle Optimization & Android APK Foundations",
+    date: "26 Eylül 2026",
+    isLatest: true,
+    highlightTr: "Uygulama açılışında ISP DNS engelleri nedeniyle yaşanan 3-5 saniyelik çalıştırma gecikmesi giderildi; arayüz kontrolleri ve profil seçimi anında hazır hale getirildi. Vite derlemesi modüler chunk mimarisine bölünerek bellek ve çalıştırma performansı artırıldı, Android APK çapraz derleme hazırlıkları tamamlandı.",
+    highlightEn: "Completely eliminated the 3-5 second startup toggle freeze caused by ISP DNS resolution timeouts; controls are now interactive instantly (0ms). Chunk splitting optimized frontend bundles and initial load times, alongside core architecture preparations for Android APK.",
+    changes: [
+      {
+        type: "perf",
+        textTr: "Sıfır Gecikmeli Açılış (Zero-Delay Startup): DNS sağlık testi arka plana asenkron olarak ayrıştırıldı; başlat butonu ve profil seçici açılışta 3-5 saniye bekleme zorunluluğu olmadan anında aktif hale getirildi.",
+        textEn: "Zero-Delay Startup: Decoupled asynchronous DNS health checks from core profile initialization, enabling instant interactive toggle without the 3-5 second DNS timeout block.",
+      },
+      {
+        type: "perf",
+        textTr: "Modüler Kod Bölümleme (Manual Chunk Splitting): React çekirdeği, Lucide ikonları ve Tauri IPC katmanları ayrı parçalara bölünerek sayfa yükleme ve bellek tüketimi optimize edildi.",
+        textEn: "Modular Code Splitting: Segmented vendor, icon, and Tauri IPC dependencies into isolated chunks, resolving bundle size warnings and enhancing runtime memory efficiency.",
+      },
+      {
+        type: "fix",
+        textTr: "Rust Motoru ve Masaüstü Kod Temizliği: Clippy ve derleyici uyarıları giderildi, WinDivert meta veri atamaları ve yapılandırma fonksiyonları modern deyimlere geçirildi.",
+        textEn: "Rust Engine & Desktop Code Hygiene: Addressed compiler and Clippy lints across core and transport crates, modernizing struct initialization and build configurations.",
+      },
+      {
+        type: "feature",
+        textTr: "Android APK Mimari Hazırlığı: Mobil platformlarda DPI bypass için yerel proxy ve VpnService tabanlı çekirdek entegrasyonu yol haritasına alındı ve altyapı hazırlandı.",
+        textEn: "Android APK Architectural Foundation: Prepared core proxy interception and VpnService abstraction layers for cross-platform Android mobile deployment.",
+      },
+    ],
+  },
+  {
     version: "v0.3.6",
     titleTr: "Entegre Destek Merkezi, 5 Dilli Yerelleştirme, LAN Proxy Güvenli DNS ve Performans Optimizasyonu",
     titleEn: "Integrated Support Center, 5-Language Localization, LAN Proxy Secure DNS & Performance Optimization",
     date: "15 Eylül 2026",
-    isLatest: true,
+    isLatest: false,
     highlightTr: "Kullanıcıların arıza, öneri veya erişim sorunlarını doğrudan iletebilecekleri entegre Destek merkezi, Türkçe ve İngilizce'ye ek olarak Rusça, Almanca ve Fransızca tam dil desteği, Ağ Paylaşımında mobil cihazlar için güvenli DNS fallback entegrasyonu, ham günlük görünümü yerine odaklanmış daha hızlı ve sade arayüz yapısı.",
     highlightEn: "Integrated Support & Feedback center for reporting issues and suggestions, expanded multi-language support adding Russian, German, and French, public secure DNS fallback for LAN proxy connected devices, and streamlined, high-performance UI architecture.",
     changes: [
