@@ -397,10 +397,39 @@ async fn handle_socks5(
     let _rsv = stream.read_u8().await?;
     let atyp = stream.read_u8().await?;
 
-    if req_ver != 0x05 || cmd != 0x01 {
-        // Yalnızca TCP CONNECT (0x01) desteklenir
+    if req_ver != 0x05 {
+        return Err("Geçersiz SOCKS sürümü".into());
+    }
+
+    if cmd == 0x03 {
+        // UDP ASSOCIATE (RFC 1928) - Android DNS ve UDP trafiği için
+        match atyp {
+            0x01 => {
+                let mut ip = [0u8; 4];
+                stream.read_exact(&mut ip).await?;
+                let _port = stream.read_u16().await?;
+            }
+            0x04 => {
+                let mut ip = [0u8; 16];
+                stream.read_exact(&mut ip).await?;
+                let _port = stream.read_u16().await?;
+            }
+            0x03 => {
+                let len = stream.read_u8().await? as usize;
+                let mut domain = vec![0u8; len];
+                stream.read_exact(&mut domain).await?;
+                let _port = stream.read_u16().await?;
+            }
+            _ => return Err("Geçersiz SOCKS5 adres tipi".into()),
+        }
+
+        return handle_socks5_udp(stream, stats, client_ip).await;
+    }
+
+    if cmd != 0x01 {
+        // Yalnızca TCP CONNECT (0x01) ve UDP ASSOCIATE (0x03) desteklenir
         stream.write_all(&[0x05, 0x07, 0x00, 0x01, 0, 0, 0, 0, 0, 0]).await?;
-        return Err("Yalnızca TCP CONNECT desteklenir".into());
+        return Err("Yalnızca TCP CONNECT ve UDP ASSOCIATE desteklenir".into());
     }
 
     let target_host = match atyp {
@@ -444,6 +473,155 @@ async fn handle_socks5(
 
     // İki yönlü boru (bidirectional copy)
     tunnel_bidirectional(stream, outbound, stats, client_ip).await
+}
+
+/// RFC 1928 SOCKS5 UDP ASSOCIATE Rölesi (Android TUN DNS ve UDP trafiği için)
+async fn handle_socks5_udp(
+    stream: &mut TcpStream,
+    stats: &Arc<ProxyStats>,
+    client_ip: IpAddr,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // 1. İstemcinin (hevtunnel) UDP paketlerini göndereceği yerel dinleme soketi
+    let local_udp = tokio::net::UdpSocket::bind("127.0.0.1:0").await?;
+    let bound_port = local_udp.local_addr()?.port();
+
+    // 2. Dış internete doğrudan çıkacak soket (Anticore muafiyeti sayesinde gerçek ağa gider)
+    let outbound_udp = tokio::net::UdpSocket::bind("0.0.0.0:0").await?;
+
+    // 3. İstemciye BND.ADDR=127.0.0.1 ve BND.PORT bilgisini başarıyla (0x00) dön
+    let mut resp = vec![0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1];
+    resp.extend_from_slice(&bound_port.to_be_bytes());
+    stream.write_all(&resp).await?;
+
+    stats.on_client_target(client_ip, "udp:associate");
+
+    let local_udp = Arc::new(local_udp);
+    let outbound_udp = Arc::new(outbound_udp);
+    let client_addr_slot: Arc<Mutex<Option<SocketAddr>>> = Arc::new(Mutex::new(None));
+
+    let l2o_local = local_udp.clone();
+    let l2o_outbound = outbound_udp.clone();
+    let l2o_slot = client_addr_slot.clone();
+    let stats_l2o = stats.clone();
+
+    // Görev A: İstemciden (hevtunnel) gelen UDP paketlerini dış hedefe aktar
+    let client_to_remote = async move {
+        let mut buf = vec![0u8; 65535];
+        loop {
+            let (n, src) = match l2o_local.recv_from(&mut buf).await {
+                Ok(res) => res,
+                Err(_) => break,
+            };
+            if let Ok(mut lock) = l2o_slot.lock() {
+                *lock = Some(src);
+            }
+
+            if n < 10 {
+                continue;
+            }
+
+            // RFC 1928 UDP Paket Başlığı:
+            // +----+------+------+----------+----------+----------+
+            // |RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
+            // +----+------+------+----------+----------+----------+
+            // | 2  |  1   |  1   | Variable |    2     | Variable |
+            let atyp = buf[3];
+            let (target_addr, data_offset) = match atyp {
+                0x01 => {
+                    if n < 10 { continue; }
+                    let ip = std::net::Ipv4Addr::new(buf[4], buf[5], buf[6], buf[7]);
+                    let port = u16::from_be_bytes([buf[8], buf[9]]);
+                    (SocketAddr::new(IpAddr::V4(ip), port), 10)
+                }
+                0x04 => {
+                    if n < 22 { continue; }
+                    let mut ip_bytes = [0u8; 16];
+                    ip_bytes.copy_from_slice(&buf[4..20]);
+                    let ip = std::net::Ipv6Addr::from(ip_bytes);
+                    let port = u16::from_be_bytes([buf[20], buf[21]]);
+                    (SocketAddr::new(IpAddr::V6(ip), port), 22)
+                }
+                0x03 => {
+                    let len = buf[4] as usize;
+                    if n < 7 + len { continue; }
+                    let domain = String::from_utf8_lossy(&buf[5..5 + len]);
+                    let port = u16::from_be_bytes([buf[5 + len], buf[6 + len]]);
+                    if let Ok(mut addrs) = tokio::net::lookup_host(format!("{domain}:{port}")).await {
+                        if let Some(addr) = addrs.next() {
+                            (addr, 7 + len)
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+                _ => continue,
+            };
+
+            let payload = &buf[data_offset..n];
+            if l2o_outbound.send_to(payload, target_addr).await.is_ok() {
+                stats_l2o.bytes_transferred.fetch_add(payload.len() as u64, Ordering::Relaxed);
+                stats_l2o.on_client_bytes(client_ip, payload.len() as u64);
+            }
+        }
+    };
+
+    // Görev B: Dış hedeften gelen yanıtları RFC 1928 başlığıyla istemciye geri aktar
+    let o2l_local = local_udp.clone();
+    let o2l_outbound = outbound_udp.clone();
+    let o2l_slot = client_addr_slot.clone();
+    let stats_o2l = stats.clone();
+
+    let remote_to_client = async move {
+        let mut in_buf = vec![0u8; 65535];
+        let mut out_pkt = Vec::with_capacity(65535);
+
+        loop {
+            let (n, remote_src) = match o2l_outbound.recv_from(&mut in_buf).await {
+                Ok(res) => res,
+                Err(_) => break,
+            };
+
+            let client_dest = {
+                let lock = o2l_slot.lock().ok();
+                lock.and_then(|l| *l)
+            };
+
+            if let Some(dest) = client_dest {
+                out_pkt.clear();
+                out_pkt.extend_from_slice(&[0x00, 0x00, 0x00]); // RSV (2) + FRAG (1)
+                match remote_src {
+                    SocketAddr::V4(v4) => {
+                        out_pkt.push(0x01); // ATYP IPv4
+                        out_pkt.extend_from_slice(&v4.ip().octets());
+                        out_pkt.extend_from_slice(&v4.port().to_be_bytes());
+                    }
+                    SocketAddr::V6(v6) => {
+                        out_pkt.push(0x04); // ATYP IPv6
+                        out_pkt.extend_from_slice(&v6.ip().octets());
+                        out_pkt.extend_from_slice(&v6.port().to_be_bytes());
+                    }
+                }
+                out_pkt.extend_from_slice(&in_buf[..n]);
+
+                if o2l_local.send_to(&out_pkt, dest).await.is_ok() {
+                    stats_o2l.bytes_transferred.fetch_add(n as u64, Ordering::Relaxed);
+                    stats_o2l.on_client_bytes(client_ip, n as u64);
+                }
+            }
+        }
+    };
+
+    // Görev C: TCP kontrol kanalı kapanınca UDP tünelini derhal sonlandır
+    let mut tcp_buf = [0u8; 1];
+    tokio::select! {
+        _ = client_to_remote => {},
+        _ = remote_to_client => {},
+        _ = stream.read(&mut tcp_buf) => {},
+    }
+
+    Ok(())
 }
 
 /// HTTP CONNECT Tünelleme, PAC Sunumu, Doğrulama/Durum Sayfası ve Düz HTTP Proxy
@@ -636,13 +814,14 @@ async fn handle_http(
     }
 }
 
-/// İstemci ile hedef sunucu arasında iki yönlü şeffaf veri transferi.
+/// İstemci ile hedef sunucu arasında iki yönlü şeffaf veri transferi ve DPI bypass koruması.
 async fn tunnel_bidirectional(
     client: &mut TcpStream,
     mut outbound: TcpStream,
     stats: &Arc<ProxyStats>,
     client_ip: IpAddr,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let _ = outbound.set_nodelay(true);
     let (mut c_read, mut c_write) = client.split();
     let (mut o_read, mut o_write) = outbound.split();
 
@@ -650,12 +829,48 @@ async fn tunnel_bidirectional(
     let c_to_o = async {
         let mut buf = vec![0u8; 16384];
         let mut total = 0u64;
+        let mut first_packet = true;
+
         loop {
             let n = c_read.read(&mut buf).await?;
             if n == 0 {
                 break;
             }
-            o_write.write_all(&buf[..n]).await?;
+
+            if first_packet {
+                first_packet = false;
+                let payload = &buf[..n];
+
+                // 1) TLS ClientHello parçalama (DPI SNI sansürünü aşma)
+                if let Some(offset) = crate::tls::find_split_offset(payload, &crate::tls::SplitMode::SniMid)
+                    .or_else(|| {
+                        if crate::tls::parse_client_hello(payload).is_some() {
+                            Some(payload.len().min(5).max(1))
+                        } else {
+                            None
+                        }
+                    })
+                {
+                    o_write.write_all(&payload[..offset]).await?;
+                    let _ = o_write.flush().await;
+                    tokio::time::sleep(tokio::time::Duration::from_millis(2)).await;
+                    o_write.write_all(&payload[offset..]).await?;
+                    let _ = o_write.flush().await;
+                } else if let Some(http_info) = crate::tls::parse_http_host(payload) {
+                    // 2) HTTP Host başlığını parçalama
+                    let split_pt = (http_info.host_offset + http_info.host_len / 2).min(n - 1).max(1);
+                    o_write.write_all(&payload[..split_pt]).await?;
+                    let _ = o_write.flush().await;
+                    tokio::time::sleep(tokio::time::Duration::from_millis(2)).await;
+                    o_write.write_all(&payload[split_pt..]).await?;
+                    let _ = o_write.flush().await;
+                } else {
+                    o_write.write_all(payload).await?;
+                }
+            } else {
+                o_write.write_all(&buf[..n]).await?;
+            }
+
             total += n as u64;
             stats_c.bytes_transferred.fetch_add(n as u64, Ordering::Relaxed);
             stats_c.on_client_bytes(client_ip, n as u64);
@@ -839,5 +1054,35 @@ mod tests {
         assert_eq!(snap.total_connections, 42);
         assert_eq!(snap.bytes_transferred, 1048576);
         assert!(snap.clients.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_socks5_udp_associate() {
+        let config = ProxyConfig {
+            bind_addr: SocketAddr::from(([127, 0, 0, 1], 0)),
+            lan_ip: "127.0.0.1".into(),
+        };
+        let mut proxy = LanProxy::new(config);
+        proxy.start().await.expect("Proxy başlatılmalı");
+        let port = proxy.bound_port().expect("Port atanmalı");
+
+        let mut client = TcpStream::connect(("127.0.0.1", port)).await.expect("Bağlanabilmeli");
+        // 1. SOCKS5 greeting
+        client.write_all(&[0x05, 0x01, 0x00]).await.unwrap();
+        let mut reply = [0u8; 2];
+        client.read_exact(&mut reply).await.unwrap();
+        assert_eq!(reply, [0x05, 0x00]);
+
+        // 2. SOCKS5 UDP ASSOCIATE request: CMD=0x03, ATYP=0x01, 0.0.0.0:0
+        client.write_all(&[0x05, 0x03, 0x00, 0x01, 0, 0, 0, 0, 0, 0]).await.unwrap();
+        let mut resp = [0u8; 10];
+        client.read_exact(&mut resp).await.unwrap();
+        assert_eq!(resp[0], 0x05); // VER=5
+        assert_eq!(resp[1], 0x00); // SUCCESS
+        assert_eq!(resp[3], 0x01); // ATYP IPv4
+        let bnd_port = u16::from_be_bytes([resp[8], resp[9]]);
+        assert!(bnd_port > 0);
+
+        proxy.stop();
     }
 }

@@ -170,6 +170,8 @@ pub struct Engine {
     active_transport_macos: Arc<Mutex<Option<Arc<anticore_transport_macos::UtunTransport>>>>,
     #[cfg(target_os = "android")]
     active_tun_fd: Arc<std::sync::atomic::AtomicI32>,
+    #[cfg(target_os = "android")]
+    android_proxy: Arc<Mutex<Option<anticore_core::proxy::LanProxy>>>,
 }
 
 impl Engine {
@@ -189,6 +191,8 @@ impl Engine {
             active_transport_macos: Arc::new(Mutex::new(None)),
             #[cfg(target_os = "android")]
             active_tun_fd: Arc::new(std::sync::atomic::AtomicI32::new(-1)),
+            #[cfg(target_os = "android")]
+            android_proxy: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -546,7 +550,26 @@ impl Engine {
             let _ = previous.join();
         }
 
-        // Android VpnService'i başlat
+        // 1. Android yerel SOCKS5 proxy motorunu başlat (127.0.0.1:10808)
+        let proxy_config = anticore_core::proxy::ProxyConfig {
+            bind_addr: std::net::SocketAddr::from(([127, 0, 0, 1], 10808)),
+            lan_ip: "127.0.0.1".into(),
+        };
+        let mut proxy = anticore_core::proxy::LanProxy::new(proxy_config);
+        let proxy_stats = proxy.stats();
+
+        tauri::async_runtime::block_on(async {
+            proxy.start().await
+        }).map_err(|e| format!("Yerel Android SOCKS5 proxy sunucusu başlatılamadı: {e}"))?;
+
+        if let Ok(mut lock) = self.android_proxy.lock() {
+            if let Some(mut old) = lock.take() {
+                old.stop();
+            }
+            *lock = Some(proxy);
+        }
+
+        // 2. Android VpnService'i başlat (hevtunnel 127.0.0.1:10808 üzerinden çalışacak)
         crate::android_bridge::start_vpn_service()?;
 
         // TUN tanıtıcısının (fd) hazır olmasını bekle (kullanıcı izin onayı için 30 saniye)
@@ -587,111 +610,41 @@ impl Engine {
         let started_at = self.started_at.clone();
         let profile_id = profile_id.to_string();
         let captured_domains_ref = self.captured_domains.clone();
-        let active_tun_fd = self.active_tun_fd.clone();
 
         let handle = std::thread::Builder::new()
             .name("anticore-packets-android".into())
             .spawn(move || {
                 let initial_count = blacklist_ref.read().map(|b| b.len()).unwrap_or(0);
                 on_log(format!(
-                    "[+] Android VpnService aktif | profil={profile_id} | {initial_count} hedef domain",
+                    "[+] Android VpnService ve SOCKS5 tüneli aktif | profil={profile_id} | {initial_count} hedef domain",
                 ));
 
-                let mut buf = vec![0u8; 65_535];
-                let mut consecutive_errors = 0u32;
+                while !stop.load(Ordering::SeqCst) {
+                    let snap = proxy_stats.snapshot();
+                    stats.packets_seen.store(snap.total_connections, Ordering::Relaxed);
+                    stats.packets_touched.store(snap.total_connections, Ordering::Relaxed);
+                    stats.passthrough.store(snap.bytes_transferred, Ordering::Relaxed);
 
-                loop {
-                    if stop.load(Ordering::SeqCst) {
-                        break;
-                    }
-
-                    let fd = active_tun_fd.load(Ordering::SeqCst);
-                    if fd < 0 {
-                        break;
-                    }
-
-                    // Poll ile 100ms bloklamalı bekleme (CPU %100 spin önleme & durdurma sinyali yakalama)
-                    let mut pfd = libc::pollfd {
-                        fd,
-                        events: libc::POLLIN,
-                        revents: 0,
-                    };
-                    let poll_res = unsafe { libc::poll(&mut pfd, 1, 100) };
-                    if poll_res < 0 {
-                        if stop.load(Ordering::SeqCst) {
-                            break;
-                        }
-                        continue;
-                    }
-                    if poll_res == 0 || (pfd.revents & libc::POLLIN) == 0 {
-                        continue;
-                    }
-
-                    let n = unsafe {
-                        libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len())
-                    };
-
-                    if n <= 0 {
-                        if stop.load(Ordering::SeqCst) {
-                            break;
-                        }
-                        consecutive_errors += 1;
-                        if consecutive_errors > 100 {
-                            on_log("[!] Android TUN arabirim bağlantısı kesildi (100 ardışık hata)".into());
-                            break;
-                        }
-                        std::thread::sleep(std::time::Duration::from_millis(50));
-                        continue;
-                    }
-                    consecutive_errors = 0;
-                    stats.packets_seen.fetch_add(1, Ordering::Relaxed);
-
-                    let raw = &buf[..n as usize];
-                    if let Some((domain, _port)) = extract_domain_from_packet(raw) {
-                        if let Ok(mut map) = captured_domains_ref.lock() {
-                            let stat = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
-                                domain,
-                                process_name: None,
-                                hit_count: 0,
-                                tx_bytes: 0,
-                                rx_bytes: 0,
-                            });
-                            stat.hit_count = stat.hit_count.saturating_add(1);
-                            stat.tx_bytes = stat.tx_bytes.saturating_add(raw.len() as u64);
-                        }
-                    }
-
-                    use anticore_core::dispatch::{decide_packet, PacketDecision, PassthroughReason};
-                    let decision = {
-                        let bl_guard = blacklist_ref.read().unwrap();
-                        decide_packet(raw, &bl_guard, &steps)
-                    };
-
-                    match decision {
-                        PacketDecision::Passthrough(reason) => {
-                            let _ = unsafe {
-                                libc::write(fd, raw.as_ptr() as *const libc::c_void, raw.len())
-                            };
-                            if matches!(reason, PassthroughReason::TooLarge | PassthroughReason::NotTargeted) {
-                                stats.passthrough.fetch_add(1, Ordering::Relaxed);
-                            }
-                        }
-                        PacketDecision::Rewrite(segments) => {
-                            let mut ok = true;
-                            for seg in &segments {
-                                let w = unsafe {
-                                    libc::write(fd, seg.as_ptr() as *const libc::c_void, seg.len())
-                                };
-                                if w < 0 {
-                                    ok = false;
-                                    break;
+                    for client in &snap.clients {
+                        if let Some(ref target) = client.last_target {
+                            let domain = target.split(':').next().unwrap_or(target).to_string();
+                            if domain.contains('.') && !domain.contains("127.0.0.1") {
+                                if let Ok(mut map) = captured_domains_ref.lock() {
+                                    let entry = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
+                                        domain,
+                                        process_name: None,
+                                        hit_count: 0,
+                                        tx_bytes: 0,
+                                        rx_bytes: 0,
+                                    });
+                                    entry.hit_count = client.total_requests as u32;
+                                    entry.tx_bytes = client.bytes_transferred;
                                 }
                             }
-                            if ok {
-                                stats.packets_touched.fetch_add(1, Ordering::Relaxed);
-                            }
                         }
                     }
+
+                    std::thread::sleep(std::time::Duration::from_millis(500));
                 }
 
                 *started_at.lock().unwrap() = None;
@@ -770,6 +723,13 @@ impl Engine {
         self.stop_flag.store(true, Ordering::SeqCst);
         let _ = crate::android_bridge::stop_vpn_service();
         self.active_tun_fd.store(-1, Ordering::SeqCst);
+
+        if let Ok(mut lock) = self.android_proxy.lock() {
+            if let Some(mut proxy) = lock.take() {
+                proxy.stop();
+            }
+        }
+
         if let Some(h) = worker.take() {
             let _ = h.join();
         }
