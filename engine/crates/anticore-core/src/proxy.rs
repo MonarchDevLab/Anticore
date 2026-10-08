@@ -347,8 +347,144 @@ async fn connect_target(host: &str, port: u16) -> Result<TcpStream, Box<dyn std:
     Err(format!("Hedefe bağlanılamadı ({host}:{port})").into())
 }
 
-/// Cloudflare (1.1.1.1) veya Google (8.8.8.8) UDP 53 üzerinden A kaydı çözümleyici
+/// RFC 7766: DNS over TCP ile tekil sunucuya güvenli sorgu gönderir.
+/// Android'de soket koruması (protect_raw_fd) ve 2 parçalı mikro-gecikmeli segmentasyon uygular.
+pub async fn query_dns_tcp_raw(
+    query: &[u8],
+    server: SocketAddr,
+) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    let timeout = tokio::time::Duration::from_millis(2500);
+    tokio::time::timeout(timeout, async {
+        let mut stream = connect_to_addr(server).await?;
+        stream.set_nodelay(true)?;
+
+        let q_len = query.len() as u16;
+        let len_bytes = q_len.to_be_bytes();
+
+        // 2 bayt uzunluk öneki + 2ms mikro gecikme + ham payload (DPI imza kırıcı)
+        stream.write_all(&len_bytes).await?;
+        tokio::time::sleep(tokio::time::Duration::from_millis(2)).await;
+        stream.write_all(query).await?;
+        stream.flush().await?;
+
+        // 2 bayt yanıt uzunluğu
+        let resp_len = stream.read_u16().await? as usize;
+        if resp_len < 12 || resp_len > 65535 {
+            return Err("Geçersiz DNS yanıt uzunluğu".into());
+        }
+
+        let mut resp = vec![0u8; resp_len];
+        stream.read_exact(&mut resp).await?;
+        Ok(resp)
+    })
+    .await?
+}
+
+/// Gelen ham DNS sorgusunu (UDP 53) TCP üzerinden Cloudflare (1.1.1.1) veya Google (8.8.8.8) sunucularına iletir.
+/// Operatörlerin UDP 53 transparent proxy / zehirleme filtrelerini tamamen atlatır.
+pub async fn resolve_raw_dns_query_tcp(query: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    let servers = [
+        SocketAddr::new(IpAddr::V4(std::net::Ipv4Addr::new(1, 1, 1, 1)), 53),
+        SocketAddr::new(IpAddr::V4(std::net::Ipv4Addr::new(8, 8, 8, 8)), 53),
+        SocketAddr::new(IpAddr::V4(std::net::Ipv4Addr::new(1, 0, 0, 1)), 53),
+    ];
+
+    for &server in &servers {
+        if let Ok(resp) = query_dns_tcp_raw(query, server).await {
+            if resp.len() >= 12 {
+                return Ok(resp);
+            }
+        }
+    }
+
+    Err("Tüm güvenli TCP DNS sunucuları başarısız oldu".into())
+}
+
+fn build_dns_a_query(host: &str) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    let mut query = Vec::with_capacity(64);
+    // Header: ID=0x1337, Flags=RD (0x0100), QDCOUNT=1
+    query.extend_from_slice(&[0x13, 0x37, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+    for label in host.split('.') {
+        if label.is_empty() || label.len() > 63 {
+            return Err("Geçersiz alan adı parçası".into());
+        }
+        query.push(label.len() as u8);
+        query.extend_from_slice(label.as_bytes());
+    }
+    query.push(0x00);
+    query.extend_from_slice(&[0x00, 0x01, 0x00, 0x01]); // A, IN
+    Ok(query)
+}
+
+fn parse_dns_a_response(buf: &[u8]) -> Result<IpAddr, Box<dyn std::error::Error + Send + Sync>> {
+    let n = buf.len();
+    if n < 12 {
+        return Err("DNS yanıtı çok kısa".into());
+    }
+
+    let ancount = u16::from_be_bytes([buf[6], buf[7]]);
+    if ancount == 0 {
+        return Err("DNS yanıtında adres yok".into());
+    }
+
+    let mut idx = 12;
+    while idx < n && buf[idx] != 0 {
+        if (buf[idx] & 0xc0) == 0xc0 {
+            idx += 2;
+            break;
+        }
+        idx += 1 + buf[idx] as usize;
+    }
+    if idx < n && buf[idx] == 0 {
+        idx += 1;
+    }
+    idx += 4;
+
+    for _ in 0..ancount {
+        if idx + 10 > n {
+            break;
+        }
+        if (buf[idx] & 0xc0) == 0xc0 {
+            idx += 2;
+        } else {
+            while idx < n && buf[idx] != 0 {
+                idx += 1 + buf[idx] as usize;
+            }
+            if idx < n && buf[idx] == 0 {
+                idx += 1;
+            }
+        }
+        if idx + 10 > n {
+            break;
+        }
+        let rtype = u16::from_be_bytes([buf[idx], buf[idx + 1]]);
+        let rdlength = u16::from_be_bytes([buf[idx + 8], buf[idx + 9]]) as usize;
+        idx += 10;
+        if rtype == 1 && rdlength == 4 && idx + 4 <= n {
+            let ip = std::net::Ipv4Addr::new(buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]);
+            let ip_addr = IpAddr::V4(ip);
+            if !ip.is_unspecified() && !ip.is_loopback() && !crate::tester::is_bogon_or_poisoned(&ip_addr) {
+                return Ok(ip_addr);
+            }
+        }
+        idx += rdlength;
+    }
+
+    Err("Geçerli ve zehirlenmemiş IPv4 adresi bulunamadı".into())
+}
+
+/// Cloudflare (1.1.1.1) veya Google (8.8.8.8) güvenli TCP DNS üzerinden A kaydı çözümleyici
 async fn resolve_via_public_dns(host: &str) -> Option<IpAddr> {
+    if let Ok(query) = build_dns_a_query(host) {
+        if let Ok(resp) = resolve_raw_dns_query_tcp(&query).await {
+            if let Ok(ip) = parse_dns_a_response(&resp) {
+                return Some(ip);
+            }
+        }
+    }
+
+    // UDP Fallback
     for server in &["1.1.1.1:53", "8.8.8.8:53", "1.0.0.1:53"] {
         if let Ok(ip) = query_dns_udp(host, server).await {
             return Some(ip);
@@ -386,45 +522,7 @@ async fn query_dns_udp(host: &str, dns_server: &str) -> Result<IpAddr, Box<dyn s
         return Err("DNS yanıtı çok kısa".into());
     }
 
-    let ancount = u16::from_be_bytes([buf[6], buf[7]]);
-    if ancount == 0 {
-        return Err("DNS yanıtında adres yok".into());
-    }
-
-    let mut idx = 12;
-    while idx < n && buf[idx] != 0 {
-        idx += 1 + buf[idx] as usize;
-    }
-    idx += 5; // 0x00 + type (2) + class (2)
-
-    for _ in 0..ancount {
-        if idx + 10 > n {
-            break;
-        }
-        if buf[idx] & 0xc0 == 0xc0 {
-            idx += 2;
-        } else {
-            while idx < n && buf[idx] != 0 {
-                idx += 1 + buf[idx] as usize;
-            }
-            idx += 1;
-        }
-        if idx + 10 > n {
-            break;
-        }
-        let rtype = u16::from_be_bytes([buf[idx], buf[idx + 1]]);
-        let rdlength = u16::from_be_bytes([buf[idx + 8], buf[idx + 9]]) as usize;
-        idx += 10;
-        if rtype == 1 && rdlength == 4 && idx + 4 <= n {
-            let ip = std::net::Ipv4Addr::new(buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]);
-            if !ip.is_unspecified() && !ip.is_loopback() {
-                return Ok(IpAddr::V4(ip));
-            }
-        }
-        idx += rdlength;
-    }
-
-    Err("Geçerli IPv4 adresi bulunamadı".into())
+    parse_dns_a_response(&buf[..n])
 }
 
 /// RFC 1928 SOCKS5 El Sıkışması ve Tünelleme
@@ -620,6 +718,41 @@ async fn handle_socks5_udp(
             };
 
             let payload = &buf[data_offset..n];
+
+            // DNS sorguları (Port 53) için ISP UDP 53 zehirleme/engellemesini tamamen aşan güvenli TCP yönlendirmesi
+            if target_addr.port() == 53 {
+                let l2o_local = l2o_local.clone();
+                let l2o_outbound = l2o_outbound.clone();
+                let stats_l2o = stats_l2o.clone();
+                let payload_vec = payload.to_vec();
+                tokio::spawn(async move {
+                    if let Ok(resp_bytes) = resolve_raw_dns_query_tcp(&payload_vec).await {
+                        let mut out_pkt = Vec::with_capacity(32 + resp_bytes.len());
+                        out_pkt.extend_from_slice(&[0x00, 0x00, 0x00]); // RSV (2) + FRAG (1)
+                        match target_addr {
+                            SocketAddr::V4(v4) => {
+                                out_pkt.push(0x01); // ATYP IPv4
+                                out_pkt.extend_from_slice(&v4.ip().octets());
+                                out_pkt.extend_from_slice(&v4.port().to_be_bytes());
+                            }
+                            SocketAddr::V6(v6) => {
+                                out_pkt.push(0x04); // ATYP IPv6
+                                out_pkt.extend_from_slice(&v6.ip().octets());
+                                out_pkt.extend_from_slice(&v6.port().to_be_bytes());
+                            }
+                        }
+                        out_pkt.extend_from_slice(&resp_bytes);
+                        let _ = l2o_local.send_to(&out_pkt, src).await;
+                        stats_l2o.bytes_transferred.fetch_add((payload_vec.len() + resp_bytes.len()) as u64, Ordering::Relaxed);
+                        stats_l2o.on_client_bytes(client_ip, (payload_vec.len() + resp_bytes.len()) as u64);
+                    } else {
+                        // TCP DNS başarısız olursa düz UDP ile dış hedefe gönder
+                        let _ = l2o_outbound.send_to(&payload_vec, target_addr).await;
+                    }
+                });
+                continue;
+            }
+
             if l2o_outbound.send_to(payload, target_addr).await.is_ok() {
                 stats_l2o.bytes_transferred.fetch_add(payload.len() as u64, Ordering::Relaxed);
                 stats_l2o.on_client_bytes(client_ip, payload.len() as u64);
@@ -1201,5 +1334,31 @@ mod tests {
         assert!(bnd_port > 0);
 
         proxy.stop();
+    }
+
+    #[test]
+    fn test_build_and_parse_dns_query() {
+        let q = build_dns_a_query("example.com").expect("Sorgu oluşturulmalı");
+        assert!(q.len() >= 12);
+        assert_eq!(&q[0..2], &[0x13, 0x37]); // ID
+
+        // Sentetik gecerli DNS yaniti (A kaydi)
+        let mut resp = Vec::new();
+        resp.extend_from_slice(&[0x13, 0x37, 0x81, 0x80, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00]);
+        // Question
+        resp.extend_from_slice(&[0x07, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 0x03, b'c', b'o', b'm', 0x00]);
+        resp.extend_from_slice(&[0x00, 0x01, 0x00, 0x01]);
+        // Answer (pointer 0xc00c, type A, class IN, ttl 300, rdlen 4)
+        resp.extend_from_slice(&[0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x01, 0x2c, 0x00, 0x04]);
+        resp.extend_from_slice(&[192, 0, 2, 1]);
+
+        let parsed = parse_dns_a_response(&resp).expect("A kaydi cozulmeli");
+        assert_eq!(parsed, IpAddr::V4(std::net::Ipv4Addr::new(192, 0, 2, 1)));
+
+        // Zehirli yanıt testi (0.0.0.0 reddedilmeli)
+        let mut poisoned_resp = resp.clone();
+        let len = poisoned_resp.len();
+        poisoned_resp[len - 4..].copy_from_slice(&[0, 0, 0, 0]);
+        assert!(parse_dns_a_response(&poisoned_resp).is_err());
     }
 }

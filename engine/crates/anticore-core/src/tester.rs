@@ -24,7 +24,7 @@ pub enum ProbeResult {
     Unreachable(String),
 }
 
-fn is_bogon_or_poisoned(ip: &IpAddr) -> bool {
+pub fn is_bogon_or_poisoned(ip: &IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => {
             let o = v4.octets();
@@ -35,16 +35,120 @@ fn is_bogon_or_poisoned(ip: &IpAddr) -> bool {
             if o[0] == 85 && o[1] == 29 { return true; }
             if o[0] == 212 && o[1] == 252 { return true; }
             if o[0] == 212 && o[1] == 65 { return true; }
-            if v4.is_unspecified() || v4.is_broadcast() { return true; }
+            if v4.is_unspecified() || v4.is_broadcast() || v4.is_loopback() { return true; }
             false
         }
         IpAddr::V6(v6) => {
-            if v6.is_unspecified() { return true; }
+            if v6.is_unspecified() || v6.is_loopback() { return true; }
             let s = v6.segments();
             if s[0] == 0x2a00 && s[1] == 0x1368 { return true; }
             false
         }
     }
+}
+
+/// RFC 7766: DNS over TCP ile tekil sunucudan senkronize A kaydı çözer.
+fn query_dns_tcp_sync(host: &str, server: SocketAddr) -> Result<IpAddr, Box<dyn std::error::Error>> {
+    let timeout = Duration::from_millis(2000);
+    let mut stream = TcpStream::connect_timeout(&server, timeout)?;
+    stream.set_read_timeout(Some(timeout)).ok();
+    stream.set_write_timeout(Some(timeout)).ok();
+    stream.set_nodelay(true).ok();
+
+    #[cfg(unix)]
+    {
+        use std::os::fd::AsRawFd;
+        crate::proxy::protect_raw_fd(stream.as_raw_fd());
+    }
+
+    let mut query = Vec::with_capacity(64);
+    // Header: ID=0x1337, RD=1, QDCOUNT=1
+    query.extend_from_slice(&[0x13, 0x37, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+    for label in host.split('.') {
+        if label.is_empty() || label.len() > 63 {
+            return Err("invalid label".into());
+        }
+        query.push(label.len() as u8);
+        query.extend_from_slice(label.as_bytes());
+    }
+    query.push(0x00);
+    query.extend_from_slice(&[0x00, 0x01, 0x00, 0x01]); // Type A, Class IN
+
+    let q_len = (query.len() as u16).to_be_bytes();
+    stream.write_all(&q_len)?;
+    std::thread::sleep(Duration::from_millis(2));
+    stream.write_all(&query)?;
+    stream.flush()?;
+
+    let mut len_buf = [0u8; 2];
+    stream.read_exact(&mut len_buf)?;
+    let resp_len = u16::from_be_bytes(len_buf) as usize;
+    if resp_len < 12 || resp_len > 4096 {
+        return Err("invalid len".into());
+    }
+
+    let mut buf = vec![0u8; resp_len];
+    stream.read_exact(&mut buf)?;
+
+    let ancount = u16::from_be_bytes([buf[6], buf[7]]);
+    if ancount == 0 {
+        return Err("no answer".into());
+    }
+
+    let mut idx = 12;
+    while idx < resp_len && buf[idx] != 0 {
+        if (buf[idx] & 0xc0) == 0xc0 {
+            idx += 2;
+            break;
+        }
+        idx += 1 + buf[idx] as usize;
+    }
+    if idx < resp_len && buf[idx] == 0 {
+        idx += 1;
+    }
+    idx += 4; // qtype + qclass
+
+    for _ in 0..ancount {
+        if idx + 10 > resp_len {
+            break;
+        }
+        if (buf[idx] & 0xc0) == 0xc0 {
+            idx += 2;
+        } else {
+            while idx < resp_len && buf[idx] != 0 {
+                idx += 1 + buf[idx] as usize;
+            }
+            if idx < resp_len && buf[idx] == 0 {
+                idx += 1;
+            }
+        }
+        if idx + 10 > resp_len {
+            break;
+        }
+        let rtype = u16::from_be_bytes([buf[idx], buf[idx + 1]]);
+        let rdlength = u16::from_be_bytes([buf[idx + 8], buf[idx + 9]]) as usize;
+        idx += 10;
+        if rtype == 1 && rdlength == 4 && idx + 4 <= resp_len {
+            let ip = Ipv4Addr::new(buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]);
+            let ip_addr = IpAddr::V4(ip);
+            if !is_bogon_or_poisoned(&ip_addr) {
+                return Ok(ip_addr);
+            }
+        }
+        idx += rdlength;
+    }
+
+    Err("no valid ip".into())
+}
+
+/// Cloudflare (1.1.1.1) ve Google (8.8.8.8) üzerinden güvenli TCP DNS çözümleme dener.
+fn resolve_via_tcp_dns_sync(host: &str) -> Option<IpAddr> {
+    for server_ip in &[Ipv4Addr::new(1, 1, 1, 1), Ipv4Addr::new(8, 8, 8, 8), Ipv4Addr::new(1, 0, 0, 1)] {
+        if let Ok(ip) = query_dns_tcp_sync(host, SocketAddr::new(IpAddr::V4(*server_ip), 53)) {
+            return Some(ip);
+        }
+    }
+    None
 }
 
 fn resolve_target_addr(host: &str, port: u16) -> Result<SocketAddr, String> {
@@ -56,6 +160,12 @@ fn resolve_target_addr(host: &str, port: u16) -> Result<SocketAddr, String> {
             }
         }
     }
+
+    // Sistem DNS zehirlendiyse (0.0.0.0 / ISP block) veya boşsa: Güvenli TCP DNS ile çöz
+    if let Some(ip) = resolve_via_tcp_dns_sync(host) {
+        return Ok(SocketAddr::new(ip, port));
+    }
+
     // DNS zehirlenmesi veya yerel çözümlenememe durumunda meşru sunucu IP yedekleri
     match host.trim().to_lowercase().as_str() {
         "discord.com" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(162, 159, 138, 232)), port)),

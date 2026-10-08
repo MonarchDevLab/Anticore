@@ -17,6 +17,10 @@ function extractServiceBrand(host: string): string {
   if (/mullvad\.(?:net|com)/i.test(domain)) return "mullvad.net";
   if (/steam(?:community|powered)\.com/i.test(domain)) return "steamcommunity.com";
   if (/(?:archive|wayback)\.org/i.test(domain)) return "archive.org";
+  if (/(?:brazzers|brazzers-cdn)\./i.test(domain)) return "brazzers.com";
+  if (/(?:pornhub|phncdn|phprcdn)\./i.test(domain)) return "pornhub.com";
+  if (/(?:xvideos|xvideos-cdn|xv-cdn)\./i.test(domain)) return "xvideos.com";
+  if (/(?:xhamster|xhcdn)\./i.test(domain)) return "xhamster.com";
 
   const parts = domain.split(".");
   if (parts.length <= 2) return domain;
