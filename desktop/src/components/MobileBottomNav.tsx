@@ -33,7 +33,15 @@ export default function MobileBottomNav({
       className="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a0f1d]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 pt-1 pb-[max(env(safe-area-inset-bottom,8px),8px)] shadow-2xl flex items-center justify-around"
     >
       {navItems.map(({ id, label, icon: Icon }) => {
-        const isActive = view === id;
+        const isActive =
+          view === id ||
+          (id === "settings" &&
+            (view === "network" ||
+              view === "lan_share" ||
+              view === "changelog" ||
+              view === "support" ||
+              view === "destek" ||
+              view === "setup"));
         return (
           <button
             key={id}

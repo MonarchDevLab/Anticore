@@ -587,10 +587,10 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                   </label>
                   <button
                     onClick={() => void api.removeSite(d).then(refresh)}
-                    className="text-paper-faint hover:text-alert p-1 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-white/[0.05] transition-all cursor-pointer shrink-0"
+                    className="text-paper-faint hover:text-alert p-1.5 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 hover:bg-white/[0.05] transition-all cursor-pointer shrink-0"
                     title={t("sites_delete_count")}
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={14} />
                   </button>
                 </li>
               ))}

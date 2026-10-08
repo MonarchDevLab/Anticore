@@ -141,7 +141,7 @@ export default function Profiles() {
 
       <div className="grid gap-6 lg:grid-cols-[19rem_1fr]">
         {/* Profil Listesi */}
-        <section className="card p-3 max-h-[32rem] overflow-y-auto space-y-1.5" aria-label="Profil listesi">
+        <section className="card p-3 max-h-[18rem] lg:max-h-[32rem] overflow-y-auto space-y-1.5" aria-label="Profil listesi">
           {profiles.length === 0 && (
             <EmptyState icon={<Layers size={28} aria-hidden />} title={t("profiles_none_title")} hint="" />
           )}

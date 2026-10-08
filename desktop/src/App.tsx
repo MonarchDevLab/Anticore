@@ -539,6 +539,7 @@ export default function App() {
               pushLog={pushLog}
               onOpenWizard={() => setView("wizard")}
               running={running}
+              onNavigate={setView}
               onSimulateUpdate={(ver) => {
                 setUpdateAvailable(ver);
                 setBannerDismissed(false);

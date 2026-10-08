@@ -171,20 +171,28 @@ export default function Titlebar({
         {isMac && <div className="h-3.5 w-px bg-white/[0.1] mr-0.5" />}
 
         {/* Logo & Versiyon */}
-        <div className="flex items-center gap-2.5 pointer-events-none">
-          <BrandLogo size={22} running={running} showText={false} />
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pointer-events-none">
+          <BrandLogo size={isMobile || isAndroid ? 24 : 22} running={running} showText={false} />
+          <div className="flex items-center gap-1.5">
             <span className="font-bold tracking-widest text-paper-bright text-xs">
               ANTICORE
             </span>
             <span className="text-[10px] font-mono text-paper-muted font-semibold bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08]">
               v{appVersion}
             </span>
+            {/* Mobilde Başlık İçi Canlı Durum Noktası */}
+            {(isMobile || isAndroid) && (
+              <span
+                className={`w-2 h-2 rounded-full ml-0.5 ${
+                  running ? "bg-live shadow-[0_0_8px_#10b981] animate-pulse" : "bg-red-500/80"
+                }`}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Orta: Canlı Telemetri LED Durum Hapı */}
+      {/* Orta: Canlı Telemetri LED Durum Hapı (Masaüstü) */}
       <div className="pointer-events-none hidden md:flex items-center gap-2 px-3 py-0.5 rounded-full border border-white/[0.06] bg-surface-subtle/80">
         <span
           className={`h-1.5 w-1.5 rounded-full transition-all ${
@@ -213,7 +221,7 @@ export default function Titlebar({
       </div>
 
       {/* Sağ: Aksiyonlar & Yerel Pencere Kontrolleri */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1">
         {/* Güncelleme Bildirimi */}
         {updateAvailable && (
           <button
@@ -229,10 +237,10 @@ export default function Titlebar({
         {/* Kılavuz Çekmecesi Butonu */}
         <button
           onClick={onToggleGuide}
-          className="h-11 w-11 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
-          title={lang === "tr" ? "Kullanım Rehberi & Bilgi Bankası (F1)" : "User Guide & Knowledge Base (F1)"}
+          className="h-11 w-10 sm:w-11 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
+          title={isMobile || isAndroid ? (lang === "tr" ? "Kullanım Rehberi & Bilgi Bankası" : "User Guide & Knowledge Base") : (lang === "tr" ? "Kullanım Rehberi & Bilgi Bankası (F1)" : "User Guide & Knowledge Base (F1)")}
         >
-          <HelpCircle size={14} />
+          <HelpCircle size={15} />
         </button>
 
         {/* Dil Değiştirici (5 Dil Popover) */}

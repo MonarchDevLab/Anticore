@@ -20,6 +20,11 @@ import {
   Eye,
   Pin,
   Bell,
+  Share2,
+  Wrench,
+  LifeBuoy,
+  FileText,
+  ChevronRight,
 } from "lucide-react";
 import {
   api,
@@ -31,7 +36,7 @@ import {
 } from "../lib/tauri";
 import { useTheme } from "../lib/theme";
 import { useI18n } from "../lib/i18n";
-import { isMac } from "../lib/platform";
+import { isMac, isMobile, isAndroid } from "../lib/platform";
 import { isNewerVersion } from "../lib/version";
 import ConfirmDialog from "../components/ConfirmDialog";
 
@@ -40,11 +45,13 @@ export default function SettingsView({
   onOpenWizard,
   running,
   onSimulateUpdate,
+  onNavigate,
 }: {
   pushLog: (l: string) => void;
   onOpenWizard?: () => void;
   running?: boolean;
   onSimulateUpdate?: (version: string) => void;
+  onNavigate?: (view: any) => void;
 }) {
   const { theme, setTheme, options: themeOptions } = useTheme();
   const { lang, setLang, t } = useI18n();
@@ -498,83 +505,192 @@ export default function SettingsView({
         </div>
       </section>
 
-      {/* Pencere ve Sistem Tepsisi (Tray) */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
-        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
-          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
-            <PictureInPicture2 size={18} aria-hidden strokeWidth={2} />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-paper-bright">{t("settings_window_tray_group")}</h3>
-            <p className="text-xs text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
-          </div>
-        </div>
-
-        <div className="space-y-3 pt-1">
-          {/* 1. Kapatınca Tray'e Küçült */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
+      {/* Mobil Sistem Araçları & Destek Merkezi ($10K Siber Hub) */}
+      {(isMobile || isAndroid) && onNavigate && (
+        <section className="card p-5 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+          <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <Wrench size={18} strokeWidth={2} />
+            </div>
             <div>
-              <h4 className="text-xs font-semibold text-paper-bright">{t("settings_tray_title")}</h4>
-              <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
+              <h3 className="text-sm font-bold text-paper-bright">
+                {lang === "tr" ? "Sistem Araçları & Destek" : "System Tools & Support"}
+              </h3>
+              <p className="text-xs text-paper-muted mt-0.5">
+                {lang === "tr"
+                  ? "Teşhis araçları, LAN paylaşımı ve destek kanalları"
+                  : "Diagnostic tools, LAN sharing, and support channels"}
+              </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={trayMinimize}
-              aria-label={t("settings_tray_title")}
-              disabled={trayBusy}
-              onClick={() => void toggleTrayMinimize()}
-              className={`toggle-track ${trayMinimize ? "is-active" : ""}`}
-            >
-              <span className="toggle-thumb" />
-            </button>
           </div>
 
-          {/* 2. Sistem Tepsisi Simgesini Göster */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
-            <div className="flex items-start gap-2.5">
-              <Eye size={16} className="text-paper-muted mt-0.5 shrink-0" />
-              <div>
-                <h4 className="text-xs font-semibold text-paper-bright">{t("settings_show_tray_icon_title")}</h4>
-                <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_show_tray_icon_desc")}</p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
             <button
               type="button"
-              role="switch"
-              aria-checked={showTrayIcon}
-              aria-label={t("settings_show_tray_icon_title")}
-              disabled={trayBusy}
-              onClick={() => void toggleShowTrayIcon()}
-              className={`toggle-track ${showTrayIcon ? "is-active" : ""}`}
+              onClick={() => onNavigate("network")}
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
             >
-              <span className="toggle-thumb" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
+                  <Wrench size={16} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-paper-bright block">
+                    {lang === "tr" ? "Ağ Teşhisi & Onarım" : "Network Diagnostics"}
+                  </span>
+                  <span className="text-[11px] text-paper-muted block">
+                    {lang === "tr" ? "DNS kontrolü ve adaptör onarımı" : "DNS status and adapter repair"}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-paper-muted shrink-0" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate("lan_share")}
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
+                  <Share2 size={16} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-paper-bright block">
+                    {lang === "tr" ? "LAN Proxy Paylaşımı" : "LAN Proxy Share"}
+                  </span>
+                  <span className="text-[11px] text-paper-muted block">
+                    {lang === "tr" ? "Yerel ağ cihazlarına bypass sun" : "Share bypass with local devices"}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-paper-muted shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate("changelog")}
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
+                  <FileText size={16} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-paper-bright block">
+                    {lang === "tr" ? "Sürüm Günlüğü" : "Changelog"}
+                  </span>
+                  <span className="text-[11px] text-paper-muted block">
+                    {lang === "tr" ? `v${appVersion || "0.3.8"} yenilikleri` : `v${appVersion || "0.3.8"} release notes`}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-paper-muted shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate("support")}
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
+                  <LifeBuoy size={16} />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-paper-bright block">
+                    {lang === "tr" ? "Yardım & Destek" : "Help & Support"}
+                  </span>
+                  <span className="text-[11px] text-paper-muted block">
+                    {lang === "tr" ? "Topluluk ve geri bildirim kanalları" : "Community and feedback"}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-paper-muted shrink-0" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Pencere ve Sistem Tepsisi (Tray - Sadece Masaüstü) */}
+      {!isMobile && !isAndroid && (
+        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+          <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <PictureInPicture2 size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-paper-bright">{t("settings_window_tray_group")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
+            </div>
           </div>
 
-          {/* 3. Pencereyi Her Zaman En Üstte Tut */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
-            <div className="flex items-start gap-2.5">
-              <Pin size={16} className="text-paper-muted mt-0.5 shrink-0" />
+          <div className="space-y-3 pt-1">
+            {/* 1. Kapatınca Tray'e Küçült */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
               <div>
-                <h4 className="text-xs font-semibold text-paper-bright">{t("settings_always_on_top_title")}</h4>
-                <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_always_on_top_desc")}</p>
+                <h4 className="text-xs font-semibold text-paper-bright">{t("settings_tray_title")}</h4>
+                <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_tray_desc")}</p>
               </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={trayMinimize}
+                aria-label={t("settings_tray_title")}
+                disabled={trayBusy}
+                onClick={() => void toggleTrayMinimize()}
+                className={`toggle-track ${trayMinimize ? "is-active" : ""}`}
+              >
+                <span className="toggle-thumb" />
+              </button>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={alwaysOnTop}
-              aria-label={t("settings_always_on_top_title")}
-              disabled={trayBusy}
-              onClick={() => void toggleAlwaysOnTop()}
-              className={`toggle-track ${alwaysOnTop ? "is-active" : ""}`}
-            >
-              <span className="toggle-thumb" />
-            </button>
+
+            {/* 2. Sistem Tepsisi Simgesini Göster */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
+              <div className="flex items-start gap-2.5">
+                <Eye size={16} className="text-paper-muted mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-semibold text-paper-bright">{t("settings_show_tray_icon_title")}</h4>
+                  <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_show_tray_icon_desc")}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showTrayIcon}
+                aria-label={t("settings_show_tray_icon_title")}
+                disabled={trayBusy}
+                onClick={() => void toggleShowTrayIcon()}
+                className={`toggle-track ${showTrayIcon ? "is-active" : ""}`}
+              >
+                <span className="toggle-thumb" />
+              </button>
+            </div>
+
+            {/* 3. Pencereyi Her Zaman En Üstte Tut */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-white/[0.04]">
+              <div className="flex items-start gap-2.5">
+                <Pin size={16} className="text-paper-muted mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-semibold text-paper-bright">{t("settings_always_on_top_title")}</h4>
+                  <p className="text-[11px] text-paper-muted mt-0.5">{t("settings_always_on_top_desc")}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={alwaysOnTop}
+                aria-label={t("settings_always_on_top_title")}
+                disabled={trayBusy}
+                onClick={() => void toggleAlwaysOnTop()}
+                className={`toggle-track ${alwaysOnTop ? "is-active" : ""}`}
+              >
+                <span className="toggle-thumb" />
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Çekirdek Savunma Katmanları */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
@@ -625,126 +741,130 @@ export default function SettingsView({
         )}
       </section>
 
-      {/* Uyumluluk ve Güvenlik Raporu */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-warn/10 border border-warn/25 text-warn">
-              <AlertTriangle size={18} aria-hidden strokeWidth={2} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-paper-bright">{t("settings_compat_title")}</h3>
-              <p className="text-xs text-paper-muted mt-0.5">{t("settings_compat_desc")}</p>
-            </div>
-          </div>
-          <button
-            className="btn btn-secondary text-xs self-start sm:self-auto"
-            onClick={() => void runCompatScan()}
-            disabled={compatBusy}
-          >
-            {compatBusy ? <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={2.5} /> : <RefreshCw size={14} strokeWidth={2} />}
-            <span>{t("btn_scan")}</span>
-          </button>
-        </div>
-
-        {compat && (
-          <div className="space-y-3 pt-1 text-xs">
-            {compat.av_detected.length === 0 &&
-            compat.vpn_detected.length === 0 &&
-            compat.legacy_services.length === 0 ? (
-              <div className="flex items-center gap-2 rounded-xl border border-live/30 bg-live/10 p-3 text-live">
-                <CheckCircle2 size={16} strokeWidth={2} />
-                <span className="font-semibold">{t("settings_compat_clean")}</span>
+      {/* Uyumluluk ve Güvenlik Raporu (Yalnızca Masaüstü) */}
+      {!isMobile && !isAndroid && (
+        <>
+          <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-warn/10 border border-warn/25 text-warn">
+                  <AlertTriangle size={18} aria-hidden strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-paper-bright">{t("settings_compat_title")}</h3>
+                  <p className="text-xs text-paper-muted mt-0.5">{t("settings_compat_desc")}</p>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {compat.av_detected.length > 0 && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-warn/30 bg-warn/10 p-3.5 text-warn">
-                    <AlertTriangle size={16} className="mt-0.5 shrink-0" strokeWidth={2} />
-                    <div>
-                      <p className="font-semibold">{t("settings_compat_av_found")}: {compat.av_detected.join(", ")}</p>
-                      <p className="text-xs mt-1 text-paper-muted">{t("settings_compat_av_hint")}</p>
-                    </div>
+              <button
+                className="btn btn-secondary text-xs self-start sm:self-auto"
+                onClick={() => void runCompatScan()}
+                disabled={compatBusy}
+              >
+                {compatBusy ? <LoaderCircle size={14} className="animate-spin text-live" strokeWidth={2.5} /> : <RefreshCw size={14} strokeWidth={2} />}
+                <span>{t("btn_scan")}</span>
+              </button>
+            </div>
+
+            {compat && (
+              <div className="space-y-3 pt-1 text-xs">
+                {compat.av_detected.length === 0 &&
+                compat.vpn_detected.length === 0 &&
+                compat.legacy_services.length === 0 ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-live/30 bg-live/10 p-3 text-live">
+                    <CheckCircle2 size={16} strokeWidth={2} />
+                    <span className="font-semibold">{t("settings_compat_clean")}</span>
                   </div>
-                )}
-
-                {compat.legacy_services.length > 0 && (
-                  <div className="flex items-center justify-between rounded-xl border border-alert/30 bg-alert/10 p-3.5 text-alert">
-                    <div>
-                      <p className="font-semibold">{t("settings_compat_legacy_found")}: {compat.legacy_services.join(", ")}</p>
-                      <p className="text-xs mt-1 text-paper-muted">{t("settings_compat_legacy_hint")}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Legacy Servis Tarayıcısı */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-alert/10 border border-alert/25 text-alert">
-              <Trash2 size={18} aria-hidden strokeWidth={2} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-paper-bright">{t("settings_legacy_title")}</h3>
-              <p className="text-xs text-paper-muted mt-0.5">{t("settings_legacy_desc")}</p>
-            </div>
-          </div>
-          <button
-            className="btn btn-secondary text-xs self-start sm:self-auto"
-            onClick={() => void scanLegacy()}
-            disabled={legacyBusy !== null}
-          >
-            {legacyBusy === "scan" ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <RefreshCw size={14} strokeWidth={2} />}
-            <span>{t("btn_scan")}</span>
-          </button>
-        </div>
-
-        {legacyServices && (
-          <div className="space-y-2 pt-1">
-            {legacyServices.filter((s) => s.installed).length === 0 ? (
-              <div className="flex items-center gap-2 rounded-xl border border-live/30 bg-live/10 p-3 text-xs text-live">
-                <CheckCircle2 size={16} strokeWidth={2} />
-                <span className="font-semibold">{t("settings_legacy_none")}</span>
-              </div>
-            ) : (
-              <>
-                {legacyServices
-                  .filter((s) => s.installed)
-                  .map((s) => (
-                    <label
-                      key={s.id}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3 text-xs hover:border-white/[0.14] transition-all"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={legacySelected.has(s.id)}
-                        onChange={() => toggleLegacySelected(s.id)}
-                        className="w-4 h-4 accent-alert rounded"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-paper-bright">{s.name}</p>
-                        <p className="text-xs text-paper-muted font-mono">{s.id} — {s.status}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {compat.av_detected.length > 0 && (
+                      <div className="flex items-start gap-2.5 rounded-xl border border-warn/30 bg-warn/10 p-3.5 text-warn">
+                        <AlertTriangle size={16} className="mt-0.5 shrink-0" strokeWidth={2} />
+                        <div>
+                          <p className="font-semibold">{t("settings_compat_av_found")}: {compat.av_detected.join(", ")}</p>
+                          <p className="text-xs mt-1 text-paper-muted">{t("settings_compat_av_hint")}</p>
+                        </div>
                       </div>
-                    </label>
-                  ))}
-                <button
-                  className="btn btn-danger text-xs mt-2"
-                  onClick={() => void cleanSelectedLegacy()}
-                  disabled={legacyBusy !== null || legacySelected.size === 0}
-                >
-                  {legacyBusy === "clean" ? <LoaderCircle size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                  <span>{t("btn_clean")} ({legacySelected.size})</span>
-                </button>
-              </>
+                    )}
+
+                    {compat.legacy_services.length > 0 && (
+                      <div className="flex items-center justify-between rounded-xl border border-alert/30 bg-alert/10 p-3.5 text-alert">
+                        <div>
+                          <p className="font-semibold">{t("settings_compat_legacy_found")}: {compat.legacy_services.join(", ")}</p>
+                          <p className="text-xs mt-1 text-paper-muted">{t("settings_compat_legacy_hint")}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
-          </div>
-        )}
-      </section>
+          </section>
+
+          {/* Legacy Servis Tarayıcısı */}
+          <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-alert/10 border border-alert/25 text-alert">
+                  <Trash2 size={18} aria-hidden strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-paper-bright">{t("settings_legacy_title")}</h3>
+                  <p className="text-xs text-paper-muted mt-0.5">{t("settings_legacy_desc")}</p>
+                </div>
+              </div>
+              <button
+                className="btn btn-secondary text-xs self-start sm:self-auto"
+                onClick={() => void scanLegacy()}
+                disabled={legacyBusy !== null}
+              >
+                {legacyBusy === "scan" ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <RefreshCw size={14} strokeWidth={2} />}
+                <span>{t("btn_scan")}</span>
+              </button>
+            </div>
+
+            {legacyServices && (
+              <div className="space-y-2 pt-1">
+                {legacyServices.filter((s) => s.installed).length === 0 ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-live/30 bg-live/10 p-3 text-xs text-live">
+                    <CheckCircle2 size={16} strokeWidth={2} />
+                    <span className="font-semibold">{t("settings_legacy_none")}</span>
+                  </div>
+                ) : (
+                  <>
+                    {legacyServices
+                      .filter((s) => s.installed)
+                      .map((s) => (
+                        <label
+                          key={s.id}
+                          className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3 text-xs hover:border-white/[0.14] transition-all"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={legacySelected.has(s.id)}
+                            onChange={() => toggleLegacySelected(s.id)}
+                            className="w-4 h-4 accent-alert rounded"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-paper-bright">{s.name}</p>
+                            <p className="text-xs text-paper-muted font-mono">{s.id} — {s.status}</p>
+                          </div>
+                        </label>
+                      ))}
+                    <button
+                      className="btn btn-danger text-xs mt-2"
+                      onClick={() => void cleanSelectedLegacy()}
+                      disabled={legacyBusy !== null || legacySelected.size === 0}
+                    >
+                      {legacyBusy === "clean" ? <LoaderCircle size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                      <span>{t("btn_clean")} ({legacySelected.size})</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {/* DNS Sızıntı & Çözümleme Testi */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
@@ -997,33 +1117,35 @@ export default function SettingsView({
         </button>
       </section>
 
-      {/* Sistemden Tamamen Kaldır */}
-      <section className="card p-5 lg:p-6 border border-alert/30 rounded-2xl bg-surface-card space-y-3 shadow-xl">
-        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
-          <div className="p-2 rounded-xl bg-alert/10 border border-alert/25 text-alert">
-            <Trash2 size={18} aria-hidden strokeWidth={2} />
+      {/* Sistemden Tamamen Kaldır (Yalnızca Masaüstü) */}
+      {!isMobile && !isAndroid && (
+        <section className="card p-5 lg:p-6 border border-alert/30 rounded-2xl bg-surface-card space-y-3 shadow-xl">
+          <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+            <div className="p-2 rounded-xl bg-alert/10 border border-alert/25 text-alert">
+              <Trash2 size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <div>
+              <h3 id="purge" className="text-sm font-bold text-alert">{t("settings_purge_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("settings_purge_desc")}</p>
+            </div>
           </div>
-          <div>
-            <h3 id="purge" className="text-sm font-bold text-alert">{t("settings_purge_title")}</h3>
-            <p className="text-xs text-paper-muted mt-0.5">{t("settings_purge_desc")}</p>
-          </div>
-        </div>
-        {purgeError && (
-          <div className="p-3 rounded-xl bg-alert/10 border border-alert/25 text-alert text-xs flex items-center gap-2">
-            <AlertTriangle size={14} />
-            <span>Kaldırma hatası: {purgeError}</span>
-          </div>
-        )}
+          {purgeError && (
+            <div className="p-3 rounded-xl bg-alert/10 border border-alert/25 text-alert text-xs flex items-center gap-2">
+              <AlertTriangle size={14} />
+              <span>Kaldırma hatası: {purgeError}</span>
+            </div>
+          )}
 
-        <button
-          className="btn btn-danger text-xs mt-2"
-          onClick={() => setPurgeConfirm(true)}
-          disabled={purgeBusy}
-        >
-          {purgeBusy ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <Trash2 size={14} strokeWidth={2} />}
-          <span>{t("settings_purge_btn")}</span>
-        </button>
-      </section>
+          <button
+            className="btn btn-danger text-xs mt-2"
+            onClick={() => setPurgeConfirm(true)}
+            disabled={purgeBusy}
+          >
+            {purgeBusy ? <LoaderCircle size={14} className="animate-spin" strokeWidth={2.5} /> : <Trash2 size={14} strokeWidth={2} />}
+            <span>{t("settings_purge_btn")}</span>
+          </button>
+        </section>
+      )}
 
       {/* Güvenlik Modeli */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-3 shadow-xl">

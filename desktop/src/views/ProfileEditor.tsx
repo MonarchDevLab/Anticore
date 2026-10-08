@@ -170,24 +170,24 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
                       aria-label="Yukarı taşı"
                       disabled={i === 0}
                       onClick={() => move(i, -1)}
-                      className="p-1 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer"
+                      className="p-2 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
-                      <ArrowUp size={14} aria-hidden strokeWidth={2} />
+                      <ArrowUp size={15} aria-hidden strokeWidth={2} />
                     </button>
                     <button
                       aria-label="Aşağı taşı"
                       disabled={i === steps.length - 1}
                       onClick={() => move(i, 1)}
-                      className="p-1 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer"
+                      className="p-2 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
-                      <ArrowDown size={14} aria-hidden strokeWidth={2} />
+                      <ArrowDown size={15} aria-hidden strokeWidth={2} />
                     </button>
                     <button
                       aria-label="Adımı sil"
                       onClick={() => setSteps(steps.filter((_, j) => j !== i))}
-                      className="p-1 rounded-lg text-paper-muted hover:text-alert hover:bg-alert/10 cursor-pointer"
+                      className="p-2 rounded-lg text-paper-muted hover:text-alert hover:bg-alert/10 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
-                      <Trash2 size={14} aria-hidden strokeWidth={2} />
+                      <Trash2 size={15} aria-hidden strokeWidth={2} />
                     </button>
                   </div>
                 )}

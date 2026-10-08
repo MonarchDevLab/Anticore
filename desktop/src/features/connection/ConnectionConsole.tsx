@@ -1,7 +1,9 @@
-import { useEffect, useRef } from "react";
-import { ArrowUpRight, Layers, LoaderCircle, Power } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, ChevronDown, Layers, LoaderCircle, Power } from "lucide-react";
 import type { Profile } from "../../lib/tauri";
 import type { ConnectionCopy } from "./copy";
+import { isMobile, isAndroid } from "../../lib/platform";
+import ProfilePickerSheet from "./ProfilePickerSheet";
 
 interface Props {
   known: boolean; running: boolean; busy: boolean; loading: boolean;
@@ -144,6 +146,8 @@ function CoreOrb({ running, known, copy, busy = false, onToggle }: { running: bo
 
 export default function ConnectionConsole({ known, running, busy, loading, profiles, selectedProfile, copy, onToggle, onSelect, onConfigure }: Props) {
   const profile = profiles.find((item) => item.id === selectedProfile);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
   return (
     <section className={`workspace-panel engine-console ${running && known ? "is-active" : ""}`}>
       <div className="console-body">
@@ -154,13 +158,41 @@ export default function ConnectionConsole({ known, running, busy, loading, profi
         <button className={`power-switch ${running && known ? "is-running" : ""}`} onClick={onToggle} disabled={busy || !known || (!running && !profile)} aria-busy={busy} aria-label={busy ? copy.busy : running ? copy.stop : copy.start}>
           {busy ? <LoaderCircle size={19} className="animate-spin" /> : <Power size={19} />}<span>{busy ? copy.busy : running ? copy.stop : copy.start}</span>
         </button>
-        <div className="console-profile"><label htmlFor="connection-profile"><Layers size={12} />{copy.profile}</label><select id="connection-profile" className="workspace-select" value={selectedProfile} disabled={running || busy || loading || !profiles.length} onChange={(event) => onSelect(event.target.value)}>
-          {!profiles.length && <option value={selectedProfile}>{loading ? copy.busy : copy.profileEmpty}</option>}
-          {profiles.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-        </select></div>
+        <div className="console-profile">
+          <label htmlFor="connection-profile"><Layers size={12} />{copy.profile}</label>
+          {isMobile || isAndroid ? (
+            <button
+              type="button"
+              id="connection-profile"
+              onClick={() => !running && !busy && setSheetOpen(true)}
+              disabled={running || busy || loading || !profiles.length}
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-white/[0.12] bg-surface-subtle text-paper flex items-center justify-between text-xs font-mono cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="truncate font-semibold text-paper-bright">
+                {profile?.name || (loading ? copy.busy : copy.profileEmpty)}
+              </span>
+              <ChevronDown size={15} className="text-paper-muted shrink-0 ml-2" />
+            </button>
+          ) : (
+            <select id="connection-profile" className="workspace-select" value={selectedProfile} disabled={running || busy || loading || !profiles.length} onChange={(event) => onSelect(event.target.value)}>
+              {!profiles.length && <option value={selectedProfile}>{loading ? copy.busy : copy.profileEmpty}</option>}
+              {profiles.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
+            </select>
+          )}
+        </div>
         <button className="workspace-icon-button" onClick={onConfigure} aria-label={copy.configure} title={copy.configure}><ArrowUpRight size={18} /></button>
       </div>
       <p className="profile-description">{running ? copy.profileLocked : profile?.description || copy.profileHint}</p>
+
+      {/* Siber Mobil Profil Seçici Alt Sayfası */}
+      <ProfilePickerSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        profiles={profiles}
+        selectedProfile={selectedProfile}
+        onSelect={onSelect}
+        disabled={running || busy}
+      />
     </section>
   );
 }

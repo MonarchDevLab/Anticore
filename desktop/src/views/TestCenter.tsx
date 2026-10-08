@@ -299,7 +299,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
             placeholder="discord.com"
             className="input flex-1 text-xs"
           />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2">
             <button
               type="submit"
               disabled={busy || !host.includes(".")}
