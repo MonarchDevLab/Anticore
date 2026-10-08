@@ -8,6 +8,7 @@ import { useConnectionData } from "../features/connection/useConnectionData";
 import ConnectionConsole from "../features/connection/ConnectionConsole";
 import ConnectionActivity from "../features/connection/ConnectionActivity";
 import ConnectionTargets from "../features/connection/ConnectionTargets";
+import { isMobile, isAndroid } from "../lib/platform";
 
 interface Props {
   status: Status | null; running: boolean; logs: string[]; selectedProfile: string;
@@ -35,7 +36,7 @@ export default function Dashboard({ status, running, logs: _logs, selectedProfil
     <div className="connection-workspace">
       <header className="workspace-heading"><div><h1>{copy.title}</h1></div></header>
       {data.error && <div className="workspace-notice" role="alert"><TriangleAlert size={18} /><span>{copy.loadError}</span><button onClick={data.reload} disabled={data.loading}>{copy.retry}</button></div>}
-      {data.dns?.poisoned && (
+      {!isAndroid && !isMobile && !running && data.dns?.poisoned && (
         <div className="workspace-notice" role="alert">
           <TriangleAlert size={18} />
           <span>{copy.dnsWarning}</span>

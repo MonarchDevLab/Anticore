@@ -610,6 +610,7 @@ impl Engine {
         let started_at = self.started_at.clone();
         let profile_id = profile_id.to_string();
         let captured_domains_ref = self.captured_domains.clone();
+        let android_proxy_ref = self.android_proxy.clone();
 
         let handle = std::thread::Builder::new()
             .name("anticore-packets-android".into())
@@ -619,7 +620,7 @@ impl Engine {
                     "[+] Android VpnService ve SOCKS5 tüneli aktif | profil={profile_id} | {initial_count} hedef domain",
                 ));
 
-                while !stop.load(Ordering::SeqCst) {
+                while !stop.load(Ordering::SeqCst) && crate::android_bridge::is_vpn_running() {
                     let snap = proxy_stats.snapshot();
                     stats.packets_seen.store(snap.total_connections, Ordering::Relaxed);
                     stats.packets_touched.store(snap.total_connections, Ordering::Relaxed);
@@ -647,6 +648,11 @@ impl Engine {
                     std::thread::sleep(std::time::Duration::from_millis(500));
                 }
 
+                if let Ok(mut lock) = android_proxy_ref.lock() {
+                    if let Some(mut p) = lock.take() {
+                        p.stop();
+                    }
+                }
                 *started_at.lock().unwrap() = None;
                 running.store(false, Ordering::SeqCst);
                 on_log("[*] Android motoru durduruldu".into());

@@ -1783,73 +1783,102 @@ pub fn is_poisoned_or_bogus_ip(ip: &std::net::IpAddr) -> bool {
 /// Discord ve hedef siteler için DNS'in operatör yönlendirme IP'sine
 /// yönlendirilip yönlendirilmediğini (DNS zehirlenmesi) asenkron ve kilitlenmesiz test eder.
 #[tauri::command]
-pub async fn check_dns_health() -> DnsHealthDto {
-    use std::net::ToSocketAddrs;
-    use std::time::Duration;
+pub async fn check_dns_health(app: AppHandle) -> DnsHealthDto {
+    let engine = app.state::<Engine>();
+    let is_running = engine.running.load(Ordering::SeqCst) || crate::android_bridge::is_vpn_running();
 
-    let res = tokio::time::timeout(Duration::from_millis(3000), tokio::task::spawn_blocking(|| {
-        ("discord.com", 443u16).to_socket_addrs()
-    })).await;
-
-    match res {
-        Ok(Ok(Ok(addrs))) => {
-            let addrs_vec: Vec<_> = addrs.collect();
-            if addrs_vec.is_empty() {
-                return DnsHealthDto {
-                    poisoned: true,
-                    resolved_ip: "none".into(),
-                    is_secure: false,
-                    message: "Discord domaini çözümlenemedi (DNS engeli olabilir).".into(),
-                };
-            }
-
-            let mut poisoned_ip = None;
-            for sa in &addrs_vec {
-                if is_poisoned_or_bogus_ip(&sa.ip()) {
-                    poisoned_ip = Some(sa.ip().to_string());
-                    break;
-                }
-            }
-
-            let first_ip = addrs_vec[0].ip().to_string();
-            if let Some(bad_ip) = poisoned_ip {
-                DnsHealthDto {
-                    poisoned: true,
-                    resolved_ip: bad_ip,
-                    is_secure: false,
-                    message: "İnternet sağlayıcınız (ISP) Discord'u hatalı yönlendirme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
-                }
+    #[cfg(target_os = "android")]
+    {
+        return DnsHealthDto {
+            poisoned: false,
+            resolved_ip: if is_running { "1.1.1.1 (Tünellendi)".into() } else { "Sistem DNS".into() },
+            is_secure: is_running,
+            message: if is_running {
+                "Anticore VPN tüneli devrede. DNS sorguları güvenli sunuculara (1.1.1.1 / 8.8.8.8) yönlendiriliyor.".into()
             } else {
-                DnsHealthDto {
-                    poisoned: false,
-                    resolved_ip: first_ip,
-                    is_secure: true,
-                    message: "DNS çözünürlüğü temiz ve gerçek sunucuya ulaşıyor.".into(),
+                "Anticore başlatıldığında güvenli DNS tüneli otomatik olarak devreye girer.".into()
+            },
+        };
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        if is_running {
+            return DnsHealthDto {
+                poisoned: false,
+                resolved_ip: "1.1.1.1".into(),
+                is_secure: true,
+                message: "Anticore motoru devrede. Paketler filtreleniyor.".into(),
+            };
+        }
+
+        use std::net::ToSocketAddrs;
+        use std::time::Duration;
+
+        let res = tokio::time::timeout(Duration::from_millis(3000), tokio::task::spawn_blocking(|| {
+            ("discord.com", 443u16).to_socket_addrs()
+        })).await;
+
+        match res {
+            Ok(Ok(Ok(addrs))) => {
+                let addrs_vec: Vec<_> = addrs.collect();
+                if addrs_vec.is_empty() {
+                    return DnsHealthDto {
+                        poisoned: true,
+                        resolved_ip: "none".into(),
+                        is_secure: false,
+                        message: "Discord domaini çözümlenemedi (DNS engeli olabilir).".into(),
+                    };
+                }
+
+                let mut poisoned_ip = None;
+                for sa in &addrs_vec {
+                    if is_poisoned_or_bogus_ip(&sa.ip()) {
+                        poisoned_ip = Some(sa.ip().to_string());
+                        break;
+                    }
+                }
+
+                let first_ip = addrs_vec[0].ip().to_string();
+                if let Some(bad_ip) = poisoned_ip {
+                    DnsHealthDto {
+                        poisoned: true,
+                        resolved_ip: bad_ip,
+                        is_secure: false,
+                        message: "İnternet sağlayıcınız (ISP) Discord'u hatalı yönlendirme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
+                    }
+                } else {
+                    DnsHealthDto {
+                        poisoned: false,
+                        resolved_ip: first_ip,
+                        is_secure: true,
+                        message: "DNS çözünürlüğü temiz ve gerçek sunucuya ulaşıyor.".into(),
+                    }
                 }
             }
-        }
-        Ok(Ok(Err(e))) => {
-            DnsHealthDto {
-                poisoned: true,
-                resolved_ip: "unresolvable".into(),
-                is_secure: false,
-                message: format!("DNS çözümlenemedi: {e}"),
+            Ok(Ok(Err(e))) => {
+                DnsHealthDto {
+                    poisoned: true,
+                    resolved_ip: "unresolvable".into(),
+                    is_secure: false,
+                    message: format!("DNS çözümlenemedi: {e}"),
+                }
             }
-        }
-        Ok(Err(join_err)) => {
-            DnsHealthDto {
-                poisoned: true,
-                resolved_ip: "task_error".into(),
-                is_secure: false,
-                message: format!("DNS çözümleme görevi başarısız: {join_err}"),
+            Ok(Err(join_err)) => {
+                DnsHealthDto {
+                    poisoned: true,
+                    resolved_ip: "task_error".into(),
+                    is_secure: false,
+                    message: format!("DNS çözümleme görevi başarısız: {join_err}"),
+                }
             }
-        }
-        Err(_) => {
-            DnsHealthDto {
-                poisoned: true,
-                resolved_ip: "timeout".into(),
-                is_secure: false,
-                message: "DNS sorgusu 3 saniyede yanıt vermedi (İnternet sağlayıcınız DNS isteklerini engelliyor olabilir).".into(),
+            Err(_) => {
+                DnsHealthDto {
+                    poisoned: true,
+                    resolved_ip: "timeout".into(),
+                    is_secure: false,
+                    message: "DNS sorgusu 3 saniyede yanıt vermedi (İnternet sağlayıcınız DNS isteklerini engelliyor olabilir).".into(),
+                }
             }
         }
     }

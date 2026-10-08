@@ -5,7 +5,16 @@ dist-android/
 *.apk
 engine/target/
 desktop/src-tauri/target/
-desktop/src-tauri/gen/
+desktop/src-tauri/gen/android/.gradle/
+desktop/src-tauri/gen/android/.kotlin/
+desktop/src-tauri/gen/android/build/
+desktop/src-tauri/gen/android/buildSrc/.gradle/
+desktop/src-tauri/gen/android/buildSrc/.kotlin/
+desktop/src-tauri/gen/android/buildSrc/build/
+desktop/src-tauri/gen/android/app/build/
+desktop/src-tauri/gen/android/app/.cxx/
+desktop/src-tauri/gen/android/app/src/main/assets/
+desktop/src-tauri/gen/android/app/src/main/jniLibs/
 desktop/dist/
 target/
 node_modules/
