@@ -154,6 +154,7 @@ pub struct ProxyStatsSnapshot {
 pub struct ProxyConfig {
     pub bind_addr: SocketAddr,
     pub lan_ip: String,
+    pub steps: Vec<crate::strategy::Step>,
 }
 
 impl Default for ProxyConfig {
@@ -161,6 +162,7 @@ impl Default for ProxyConfig {
         Self {
             bind_addr: SocketAddr::from(([0, 0, 0, 0], DEFAULT_PROXY_PORT)),
             lan_ip: "127.0.0.1".into(),
+            steps: Vec::new(),
         }
     }
 }
@@ -209,6 +211,7 @@ impl LanProxy {
         let stats = self.stats.clone();
         let lan_ip = self.config.lan_ip.clone();
         let port = actual_port;
+        let steps = Arc::new(self.config.steps.clone());
 
         tokio::spawn(async move {
             let mut rx = shutdown_rx;
@@ -219,8 +222,9 @@ impl LanProxy {
                             Ok((stream, client_addr)) => {
                                 let stats = stats.clone();
                                 let lan_ip = lan_ip.clone();
+                                let steps = steps.clone();
                                 tokio::spawn(async move {
-                                    handle_client(stream, client_addr, stats, lan_ip, port).await;
+                                    handle_client(stream, client_addr, stats, lan_ip, port, steps).await;
                                 });
                             }
                             Err(_) => break,
@@ -253,13 +257,14 @@ async fn handle_client(
     stats: Arc<ProxyStats>,
     lan_ip: String,
     proxy_port: u16,
+    steps: Arc<Vec<crate::strategy::Step>>,
 ) {
     let client_ip = client_addr.ip();
     stats.active_connections.fetch_add(1, Ordering::Relaxed);
     stats.total_connections.fetch_add(1, Ordering::Relaxed);
     stats.on_client_connect(client_ip);
 
-    let res = handle_client_inner(&mut stream, &stats, &lan_ip, proxy_port, client_ip).await;
+    let res = handle_client_inner(&mut stream, &stats, &lan_ip, proxy_port, client_ip, steps).await;
     let _ = res;
 
     stats.on_client_disconnect(client_ip);
@@ -272,6 +277,7 @@ async fn handle_client_inner(
     lan_ip: &str,
     proxy_port: u16,
     client_ip: IpAddr,
+    steps: Arc<Vec<crate::strategy::Step>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut peek_buf = [0u8; 8];
     let n = stream.peek(&mut peek_buf).await?;
@@ -281,10 +287,10 @@ async fn handle_client_inner(
 
     if peek_buf[0] == 0x05 {
         // SOCKS5 Protokolü
-        handle_socks5(stream, stats, client_ip).await
+        handle_socks5(stream, stats, client_ip, steps).await
     } else {
         // HTTP / HTTP CONNECT / PAC / Status / Plain HTTP isteği
-        handle_http(stream, stats, lan_ip, proxy_port, client_ip).await
+        handle_http(stream, stats, lan_ip, proxy_port, client_ip, steps).await
     }
 }
 
@@ -426,6 +432,7 @@ async fn handle_socks5(
     stream: &mut TcpStream,
     stats: &Arc<ProxyStats>,
     client_ip: IpAddr,
+    steps: Arc<Vec<crate::strategy::Step>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // 1. Kimlik doğrulama yöntemi anlaşması
     let ver = stream.read_u8().await?;
@@ -520,7 +527,7 @@ async fn handle_socks5(
     stats.on_client_target(client_ip, &format!("{target_host}:{target_port}"));
 
     // İki yönlü boru (bidirectional copy)
-    tunnel_bidirectional(stream, outbound, stats, client_ip).await
+    tunnel_bidirectional(stream, outbound, stats, client_ip, steps).await
 }
 
 /// RFC 1928 SOCKS5 UDP ASSOCIATE Rölesi (Android TUN DNS ve UDP trafiği için)
@@ -693,6 +700,7 @@ async fn handle_http(
     lan_ip: &str,
     proxy_port: u16,
     client_ip: IpAddr,
+    steps: Arc<Vec<crate::strategy::Step>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut buf = vec![0u8; 8192];
     let n = stream.read(&mut buf).await?;
@@ -795,7 +803,7 @@ async fn handle_http(
 
         stats.on_client_target(client_ip, &format!("{host}:{port}"));
 
-        tunnel_bidirectional(stream, outbound, stats, client_ip).await
+        tunnel_bidirectional(stream, outbound, stats, client_ip, steps).await
     } else if parts.len() >= 2 {
         // 4. Düz HTTP Proxy (GET http://example.com/path veya GET /path ile Host: example.com)
         // iOS ve Android captive portal / internet erişim kontrolü (generate_204, hotspot-detect) düz HTTP kullanır.
@@ -869,7 +877,7 @@ async fn handle_http(
             outbound.write_all(&buf[..n]).await?;
         }
 
-        tunnel_bidirectional(stream, outbound, stats, client_ip).await
+        tunnel_bidirectional(stream, outbound, stats, client_ip, steps).await
     } else {
         stream.write_all(b"HTTP/1.1 400 Bad Request\r\n\r\n").await?;
         Ok(())
@@ -882,12 +890,14 @@ async fn tunnel_bidirectional(
     mut outbound: TcpStream,
     stats: &Arc<ProxyStats>,
     client_ip: IpAddr,
+    steps: Arc<Vec<crate::strategy::Step>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let _ = outbound.set_nodelay(true);
     let (mut c_read, mut c_write) = client.split();
     let (mut o_read, mut o_write) = outbound.split();
 
     let stats_c = stats.clone();
+    let steps_c = steps.clone();
     let c_to_o = async {
         let mut buf = vec![0u8; 16384];
         let mut total = 0u64;
@@ -904,26 +914,66 @@ async fn tunnel_bidirectional(
                 let payload = &buf[..n];
 
                 // 1) TLS ClientHello parçalama (DPI SNI sansürünü aşma)
-                if let Some(offset) = crate::tls::find_split_offset(payload, &crate::tls::SplitMode::SniMid)
-                    .or_else(|| {
-                        if crate::tls::parse_client_hello(payload).is_some() {
-                            Some(payload.len().min(5).max(1))
-                        } else {
-                            None
+                if let Some(info) = crate::tls::parse_client_hello(payload) {
+                    let mut cuts = Vec::with_capacity(4);
+
+                    // A) Profil adımlarından kesim noktalarını topla
+                    let mut custom_cuts = false;
+                    for step in steps_c.iter() {
+                        match step {
+                            crate::strategy::Step::MultiSplit { positions } => {
+                                for &pos in positions {
+                                    if pos > 0 && pos < payload.len() {
+                                        cuts.push(pos);
+                                    }
+                                }
+                                custom_cuts = true;
+                            }
+                            crate::strategy::Step::FragmentTls { mode } => {
+                                if let Some(off) = crate::tls::find_split_offset(payload, mode) {
+                                    if off > 0 && off < payload.len() {
+                                        cuts.push(off);
+                                    }
+                                }
+                                custom_cuts = true;
+                            }
+                            _ => {}
                         }
-                    })
-                {
-                    o_write.write_all(&payload[..offset]).await?;
-                    let _ = o_write.flush().await;
-                    tokio::time::sleep(tokio::time::Duration::from_millis(2)).await;
-                    o_write.write_all(&payload[offset..]).await?;
-                    let _ = o_write.flush().await;
+                    }
+
+                    // B) Varsayılan / Evrensel kalkan: Türkiye mobil ve sabit hatları için Tri-Split (2 bayt + SNI ortası)
+                    if !custom_cuts || cuts.is_empty() {
+                        cuts.push(2);
+                        let mid = info.sni_offset + (info.sni_len / 2);
+                        if mid > 2 && mid < payload.len() {
+                            cuts.push(mid);
+                        }
+                    } else if !cuts.contains(&2) && payload.len() > 2 {
+                        cuts.push(2);
+                    }
+
+                    cuts.sort_unstable();
+                    cuts.dedup();
+
+                    let mut prev = 0;
+                    for &cut in &cuts {
+                        if cut > prev && cut <= payload.len() {
+                            o_write.write_all(&payload[prev..cut]).await?;
+                            let _ = o_write.flush().await;
+                            tokio::time::sleep(tokio::time::Duration::from_millis(3)).await;
+                            prev = cut;
+                        }
+                    }
+                    if prev < payload.len() {
+                        o_write.write_all(&payload[prev..]).await?;
+                        let _ = o_write.flush().await;
+                    }
                 } else if let Some(http_info) = crate::tls::parse_http_host(payload) {
                     // 2) HTTP Host başlığını parçalama
                     let split_pt = (http_info.host_offset + http_info.host_len / 2).min(n - 1).max(1);
                     o_write.write_all(&payload[..split_pt]).await?;
                     let _ = o_write.flush().await;
-                    tokio::time::sleep(tokio::time::Duration::from_millis(2)).await;
+                    tokio::time::sleep(tokio::time::Duration::from_millis(3)).await;
                     o_write.write_all(&payload[split_pt..]).await?;
                     let _ = o_write.flush().await;
                 } else {
@@ -972,6 +1022,7 @@ mod tests {
         let config = ProxyConfig {
             bind_addr: SocketAddr::from(([127, 0, 0, 1], 0)),
             lan_ip: "192.168.1.50".into(),
+            steps: Vec::new(),
         };
         let mut proxy = LanProxy::new(config);
         proxy.start().await.expect("Proxy başlatılmalı");
@@ -996,6 +1047,7 @@ mod tests {
         let config = ProxyConfig {
             bind_addr: SocketAddr::from(([127, 0, 0, 1], 0)),
             lan_ip: "192.168.1.50".into(),
+            steps: Vec::new(),
         };
         let mut proxy = LanProxy::new(config);
         proxy.start().await.expect("Proxy başlatılmalı");
@@ -1020,6 +1072,7 @@ mod tests {
         let config = ProxyConfig {
             bind_addr: SocketAddr::from(([127, 0, 0, 1], 0)),
             lan_ip: "127.0.0.1".into(),
+            steps: Vec::new(),
         };
         let mut proxy = LanProxy::new(config);
         proxy.start().await.expect("Proxy başlatılmalı");
@@ -1082,6 +1135,7 @@ mod tests {
         let config = ProxyConfig {
             bind_addr: SocketAddr::from(([127, 0, 0, 1], 0)),
             lan_ip: "127.0.0.1".into(),
+            steps: Vec::new(),
         };
         let mut proxy = LanProxy::new(config);
         proxy.start().await.expect("Proxy başlatılmalı");
@@ -1123,6 +1177,7 @@ mod tests {
         let config = ProxyConfig {
             bind_addr: SocketAddr::from(([127, 0, 0, 1], 0)),
             lan_ip: "127.0.0.1".into(),
+            steps: Vec::new(),
         };
         let mut proxy = LanProxy::new(config);
         proxy.start().await.expect("Proxy başlatılmalı");

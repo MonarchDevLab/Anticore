@@ -421,6 +421,7 @@ pub async fn start_lan_proxy(
         let config = ProxyConfig {
             bind_addr: std::net::SocketAddr::from(([0, 0, 0, 0], target_port)),
             lan_ip: local_ip.clone(),
+            steps: Vec::new(),
         };
         let mut proxy = LanProxy::new(config);
         proxy.start().await?;

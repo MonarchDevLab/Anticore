@@ -556,6 +556,7 @@ impl Engine {
         let proxy_config = anticore_core::proxy::ProxyConfig {
             bind_addr: std::net::SocketAddr::from(([127, 0, 0, 1], 10808)),
             lan_ip: "127.0.0.1".into(),
+            steps,
         };
         let mut proxy = anticore_core::proxy::LanProxy::new(proxy_config);
         let proxy_stats = proxy.stats();

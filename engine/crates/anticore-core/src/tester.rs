@@ -294,6 +294,97 @@ pub fn probe_with_steps(
     }
 }
 
+/// Yerel SOCKS5 proxy (örn: 127.0.0.1:10808) üzerinden hedefe TLS ClientHello göndererek DPI bypass başarısını ölçer.
+pub fn probe_via_socks5(host: &str, port: u16, socks5_addr: &str, timeout_ms: u64) -> ProbeResult {
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_millis(timeout_ms);
+
+    let Ok(mut stream) = TcpStream::connect_timeout(
+        &socks5_addr.to_socket_addrs().ok().and_then(|mut a| a.next()).unwrap_or_else(|| {
+            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 10808)
+        }),
+        timeout,
+    ) else {
+        return ProbeResult::Unreachable(format!("socks5 connect: {socks5_addr}"));
+    };
+
+    stream.set_read_timeout(Some(timeout)).ok();
+    stream.set_write_timeout(Some(timeout)).ok();
+    stream.set_nodelay(true).ok();
+
+    // 1. SOCKS5 Greeting (VER=5, NMETHODS=1, NO_AUTH=0)
+    if stream.write_all(&[0x05, 0x01, 0x00]).is_err() {
+        return ProbeResult::Unreachable("socks5 greeting failed".into());
+    }
+    let mut greeting_resp = [0u8; 2];
+    if stream.read_exact(&mut greeting_resp).is_err() || greeting_resp != [0x05, 0x00] {
+        return ProbeResult::Unreachable("socks5 auth rejected".into());
+    }
+
+    // 2. SOCKS5 CONNECT (CMD=0x01, ATYP=0x03 DOMAIN)
+    let host_bytes = host.as_bytes();
+    let mut req = Vec::with_capacity(7 + host_bytes.len());
+    req.extend_from_slice(&[0x05, 0x01, 0x00, 0x03]);
+    req.push(host_bytes.len() as u8);
+    req.extend_from_slice(host_bytes);
+    req.extend_from_slice(&port.to_be_bytes());
+
+    if stream.write_all(&req).is_err() {
+        return ProbeResult::Unreachable("socks5 connect request failed".into());
+    }
+
+    let mut connect_resp = [0u8; 4];
+    if stream.read_exact(&mut connect_resp).is_err() || connect_resp[1] != 0x00 {
+        return classify_reset(start.elapsed().as_millis());
+    }
+
+    // Kalan BND.ADDR ve BND.PORT baytlarını oku
+    let atyp = connect_resp[3];
+    let to_skip = match atyp {
+        0x01 => 4 + 2, // IPv4 (4) + Port (2)
+        0x04 => 16 + 2, // IPv6 (16) + Port (2)
+        0x03 => {
+            let mut len_b = [0u8; 1];
+            if stream.read_exact(&mut len_b).is_err() {
+                return ProbeResult::Unreachable("socks5 bind read failed".into());
+            }
+            len_b[0] as usize + 2
+        }
+        _ => 6,
+    };
+    let mut skip_buf = vec![0u8; to_skip];
+    let _ = stream.read_exact(&mut skip_buf);
+
+    // 3. Tünel üzerinden sentetik TLS ClientHello gönder
+    let hello = synthetic_hello(host);
+    if stream.write_all(&hello).is_err() || stream.flush().is_err() {
+        return classify_reset(start.elapsed().as_millis());
+    }
+
+    // 4. Sunucudan yanıt bekle (ServerHello 0x16 veya HTTP 200/301/400 vb.)
+    let mut buf = [0u8; 512];
+    match stream.read(&mut buf) {
+        Ok(n) if n > 0 && (buf[0] == 0x16 || buf[0] == 0x15 || buf.starts_with(b"HTTP/")) => {
+            ProbeResult::Open {
+                latency_ms: start.elapsed().as_millis(),
+            }
+        }
+        Ok(n) if n > 0 => ProbeResult::Open {
+            latency_ms: start.elapsed().as_millis(),
+        },
+        Ok(_) => classify_reset(start.elapsed().as_millis()),
+        Err(ref e)
+            if e.kind() == std::io::ErrorKind::ConnectionReset
+                || e.kind() == std::io::ErrorKind::ConnectionAborted =>
+        {
+            ProbeResult::Blocked {
+                latency_ms: start.elapsed().as_millis(),
+            }
+        }
+        Err(_) => ProbeResult::Filtered,
+    }
+}
+
 /// Sunucu veriyi aniden kapattıysa DPI RST'i olabilir.
 fn classify_reset(latency_ms: u128) -> ProbeResult {
     ProbeResult::Blocked { latency_ms }

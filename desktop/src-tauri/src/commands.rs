@@ -4,7 +4,7 @@ use std::sync::atomic::Ordering;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 use anticore_core::dto::StepDto;
 use crate::service::Engine;
@@ -1480,9 +1480,22 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
 // ---------- test (probe) ----------
 
 #[tauri::command]
-pub fn probe_target(req: ProbeRequest) -> ProbeDto {
+pub fn probe_target(req: ProbeRequest, engine: State<'_, Engine>) -> ProbeDto {
     let host = req.host.trim().to_lowercase();
-    let r = anticore_core::tester::probe(&host, 443, 3000);
+    let is_running = engine.running.load(Ordering::SeqCst);
+
+    let r = if is_running {
+        // Motor aktifken yerel SOCKS5 proxy (127.0.0.1:10808) üzerinden bypass etkinliğini doğrula
+        let socks_probe = anticore_core::tester::probe_via_socks5(&host, 443, "127.0.0.1:10808", 3000);
+        if matches!(socks_probe, anticore_core::tester::ProbeResult::Open { .. }) {
+            socks_probe
+        } else {
+            anticore_core::tester::probe(&host, 443, 3000)
+        }
+    } else {
+        anticore_core::tester::probe(&host, 443, 3000)
+    };
+
     let (result, latency) = match r {
         anticore_core::tester::ProbeResult::Open { latency_ms } => ("open".into(), Some(latency_ms)),
         anticore_core::tester::ProbeResult::Blocked { latency_ms } => ("blocked".into(), Some(latency_ms)),
