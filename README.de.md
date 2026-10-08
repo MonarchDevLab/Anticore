@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.svg" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.svg?v=0.3.8" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -150,12 +150,12 @@ Nativer DNS- & DPI-Umgehungsclient für Android (API 26 / Android 8.0+):
   <tbody>
     <tr>
       <td align="center">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_arm64.pkg"><img src="https://img.shields.io/badge/INSTALLER_.PKG-arm64-20ffa0?style=for-the-badge&labelColor=08090D" alt="arm64 PKG" /></a>&nbsp;
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_aarch64.dmg"><img src="https://img.shields.io/badge/DISK_IMAGE_.DMG-arm64-20f2ff?style=for-the-badge&labelColor=08090D" alt="arm64 DMG" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_arm64.pkg"><img src="https://img.shields.io/badge/INSTALLER_.PKG-arm64-20ffa0?style=for-the-badge&labelColor=08090D" alt="arm64 PKG" /></a>&nbsp;
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_aarch64.dmg"><img src="https://img.shields.io/badge/DISK_IMAGE_.DMG-arm64-20f2ff?style=for-the-badge&labelColor=08090D" alt="arm64 DMG" /></a>
       </td>
       <td align="center">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_x64.pkg"><img src="https://img.shields.io/badge/INSTALLER_.PKG-x64-20ffa0?style=for-the-badge&labelColor=08090D" alt="x64 PKG" /></a>&nbsp;
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.7/Anticore_0.3.7_x64.dmg"><img src="https://img.shields.io/badge/DISK_IMAGE_.DMG-x64-20f2ff?style=for-the-badge&labelColor=08090D" alt="x64 DMG" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64.pkg"><img src="https://img.shields.io/badge/INSTALLER_.PKG-x64-20ffa0?style=for-the-badge&labelColor=08090D" alt="x64 PKG" /></a>&nbsp;
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64.dmg"><img src="https://img.shields.io/badge/DISK_IMAGE_.DMG-x64-20f2ff?style=for-the-badge&labelColor=08090D" alt="x64 DMG" /></a>
       </td>
     </tr>
   </tbody>
@@ -176,10 +176,10 @@ curl -fsSL https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/scripts
 | `anticore-desktop.exe` | 16.8 MB | `FC805530210112B62A12CA9FCCE3AD91122F40C6C0426E44C86B4D1568F523AC` |
 | `Anticore_0.3.8_x64_en-US.msi` | 6.5 MB | `AD11DD3157FAC530A8C0ED5F299CC9AA8EEC0B8843B8981DDA70226BAF58E9FB` |
 | `Anticore-v0.3.8.apk` (Android) | 42.3 MB | `D036DCC5B434DA7C3EE3998A2DCEB9282FDC5363FB36B9BA933263E2B138EA68` |
-| `Anticore_0.3.7_arm64.pkg` | 6.2 MB | `A2FB220E4F9C5ECD1109C977903E21FFA16DE5A24B098EF823A8C801B18F837C` |
-| `Anticore_0.3.7_aarch64.dmg` | 6.7 MB | `B774324462FA35C9A1B3B2B76BFA2976CE705D174A3CB611C64343D4E2A4152F` |
-| `Anticore_0.3.7_x64.pkg` | 6.4 MB | `2EA284E231E7FE4F3A665E40A0E45B2BB8CA534FF430229DC6BF8C1EC73CBBD0` |
-| `Anticore_0.3.7_x64.dmg` | 6.9 MB | `2026542CB88BDB22CAE8A6FCC81F1BF38A6B1EA42C2ECF066979890AB7144946` |
+| `Anticore_0.3.8_arm64.pkg` | 6.8 MB | `053C1DF92BC6691AA0FEEACE47D775D099790BEBF2A0AC1F82372D6183CEB8F5` |
+| `Anticore_0.3.8_aarch64.dmg` | 6.8 MB | `9D490A4CF49EC721BB980ABE586C50D3937743D8C5B2DD106038B95874B10EFA` |
+| `Anticore_0.3.8_x64.pkg` | 7.1 MB | `68461BE56EAF7AC1FD69D399EA1A3013F30B8DFA3427DCB91D6803D04470AA13` |
+| `Anticore_0.3.8_x64.dmg` | 7.0 MB | `BB5C69A369F291B07E8CE790665FB8A9DF2C9A401212D2629AB33E54D68F6F7A` |
 
 ---
 
