@@ -1,6 +1,6 @@
 [package]
 name = "anticore-desktop"
-version = "0.3.7"
+version = "0.3.8"
 edition = "2021"
 license = "MIT"
 authors = ["Monolith Works <info@monolithworks.com.tr>"]
@@ -48,6 +48,10 @@ windows = { version = "0.52", features = [
 
 [target.'cfg(target_os = "macos")'.dependencies]
 anticore-transport-macos = { path = "../../engine/crates/anticore-transport-macos" }
+libc = "0.2"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
 libc = "0.2"
 
 [profile.release]

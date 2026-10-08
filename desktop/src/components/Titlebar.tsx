@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ShieldCheck, ShieldAlert, Minus, Square, X, Plus, ArrowDownCircle, HelpCircle, Palette, Globe, Check } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useI18n, type Language } from "../lib/i18n";
-import { isMac } from "../lib/platform";
+import { isMac, isMobile, isAndroid } from "../lib/platform";
 import { api, type Status } from "../lib/tauri";
 
 const LANGUAGES: { code: Language; label: string; name: string }[] = [
@@ -33,7 +33,7 @@ export default function Titlebar({
   const { theme, setTheme, options } = useTheme();
   const { lang, setLang, t } = useI18n();
   const [isMaximized, setIsMaximized] = useState(false);
-  const [appVersion, setAppVersion] = useState<string>("0.3.7");
+  const [appVersion, setAppVersion] = useState<string>("0.3.8");
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   // Tauri window instance lazy-loader (fallback)
@@ -127,8 +127,8 @@ export default function Titlebar({
   return (
     <header
       data-tauri-drag-region
-      onDoubleClick={handleToggleMaximize}
-      className="workspace-titlebar h-12 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono cursor-default"
+      onDoubleClick={isMobile || isAndroid ? undefined : handleToggleMaximize}
+      className="workspace-titlebar min-h-12 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono cursor-default"
     >
       {/* Sol: macOS Traffic Lights + Logo VEYA Sadece Logo (Windows) */}
       <div className="flex items-center gap-3">
@@ -295,8 +295,8 @@ export default function Titlebar({
           <span className="text-xs font-mono hidden md:inline">{currentThemeObj.name.split(" ")[0]}</span>
         </button>
 
-        {/* Dikey ayırıcı ve Windows Tarzı Pencere Kontrolleri (Yalnızca Windows'ta) */}
-        {!isMac && (
+        {/* Dikey ayırıcı ve Masaüstü Pencere Kontrolleri (Yalnızca Masaüstü Windows/Linux) */}
+        {!isMac && !isMobile && !isAndroid && (
           <>
             <div className="h-4 w-px bg-white/[0.1] mx-1" />
             <div className="flex items-center">

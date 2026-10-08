@@ -149,20 +149,6 @@ jobs:
           Compress-Archive -Path "$pDir/*" -DestinationPath $zipPath -CompressionLevel Optimal
           gh release upload $ref $zipPath --clobber
           gh release upload $ref "$pDir/Anticore.exe" --clobber
-
-          $manifest = @{
-            version = $ver
-            notes = "Anticore $ref — Yasakli video sitelerinde siyah ekran onarimi (69+ CDN), QUIC engelleme, ag paylasimi (LAN proxy), macOS kalici yetkilendirme ve coklu mimari paketleri."
-            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-            platforms = @{
-              "windows-x86_64" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_x64-setup.exe" }
-              "windows-x86_64-nsis" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_x64-setup.exe" }
-              "darwin-aarch64" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_arm64.pkg" }
-              "darwin-x86_64" = @{ url = "https://github.com/MonarchDevLab/Anticore/releases/download/$ref/Anticore_${ver}_x64.pkg" }
-            }
-          } | ConvertTo-Json -Depth 5
-          Set-Content -Path "latest.json" -Value $manifest -Encoding UTF8
-          gh release upload $ref "latest.json" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -232,3 +218,135 @@ jobs:
           gh release upload "$ref" "$tar_name" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  manifest:
+    name: Dağıtım Paketlerini İmzala ve latest.json Yayınla
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sürüm etiketini belirle
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "${GITHUB_REF}" != refs/tags/* ]]; then
+            TAG="${{ github.event.inputs.release_tag }}"
+            if [ -z "$TAG" ]; then
+              TAG="v0.3.7"
+            fi
+          fi
+          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+
+      - name: Node kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bağımlılıklar (Tauri CLI)
+        run: npm ci
+        working-directory: desktop
+
+      - name: Dağıtım paketlerini indir, imzala ve latest.json yayınla
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          ref="${{ env.RELEASE_TAG }}"
+          ver="${ref#v}"
+          mkdir -p dist_release
+          cd dist_release
+
+          echo "GitHub Release paketleri indiriliyor: $ref..."
+          gh release download "$ref" --pattern "Anticore_*" || true
+
+          sign_asset() {
+            local file="$1"
+            if [ -f "$file" ]; then
+              echo "İmzalanıyor: $file" >&2
+              npx --prefix ../desktop tauri signer sign -p "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" "$file" >&2
+              if [ -f "${file}.sig" ]; then
+                cat "${file}.sig"
+              fi
+            else
+              echo "Dosya bulunamadı: $file" >&2
+            fi
+          }
+
+          SETUP_EXE="Anticore_${ver}_x64-setup.exe"
+          MSI_FILE="Anticore_${ver}_x64_en-US.msi"
+          MAC_ARM64="Anticore_${ver}_arm64.pkg"
+          MAC_X64="Anticore_${ver}_x64.pkg"
+
+          export VER="$ver"
+          export REF="$ref"
+          export SIG_SETUP="$(sign_asset "$SETUP_EXE")"
+          export SIG_MSI="$(sign_asset "$MSI_FILE")"
+          export SIG_ARM64="$(sign_asset "$MAC_ARM64")"
+          export SIG_X64="$(sign_asset "$MAC_X64")"
+
+          node -e '
+            const fs = require("fs");
+            const ver = process.env.VER;
+            const ref = process.env.REF;
+            const sigSetup = (process.env.SIG_SETUP || "").trim();
+            const sigMsi = (process.env.SIG_MSI || "").trim();
+            const sigArm64 = (process.env.SIG_ARM64 || "").trim();
+            const sigX64 = (process.env.SIG_X64 || "").trim();
+
+            const manifest = {
+              version: ver,
+              notes: `Anticore ${ref} — Canlı tünel motoru, DPI atlatma, OTA otomatik güncelleme ve çoklu platform desteği.`,
+              pub_date: new Date().toISOString(),
+              platforms: {}
+            };
+
+            const base = `https://github.com/MonarchDevLab/Anticore/releases/download/${ref}`;
+
+            if (sigSetup) {
+              manifest.platforms["windows-x86_64"] = {
+                signature: sigSetup,
+                url: `${base}/Anticore_${ver}_x64-setup.exe`
+              };
+              manifest.platforms["windows-x86_64-nsis"] = {
+                signature: sigSetup,
+                url: `${base}/Anticore_${ver}_x64-setup.exe`
+              };
+            }
+            if (sigMsi) {
+              manifest.platforms["windows-x86_64-msi"] = {
+                signature: sigMsi,
+                url: `${base}/Anticore_${ver}_x64_en-US.msi`
+              };
+            }
+            if (sigArm64) {
+              manifest.platforms["darwin-aarch64"] = {
+                signature: sigArm64,
+                url: `${base}/Anticore_${ver}_arm64.pkg`
+              };
+            }
+            if (sigX64) {
+              manifest.platforms["darwin-x86_64"] = {
+                signature: sigX64,
+                url: `${base}/Anticore_${ver}_x64.pkg`
+              };
+            }
+
+            fs.writeFileSync("latest.json", JSON.stringify(manifest, null, 2), "utf8");
+            console.log("Oluşturulan latest.json içeriği:");
+            console.log(JSON.stringify(manifest, null, 2));
+          '
+
+          echo "latest.json GitHub Release üzerine yükleniyor..."
+          gh release upload "$ref" latest.json --clobber
+
+          echo "İmza (.sig) dosyaları GitHub Release üzerine yükleniyor..."
+          for sig in *.sig; do
+            if [ -f "$sig" ]; then
+              gh release upload "$ref" "$sig" --clobber
+            fi
+          done

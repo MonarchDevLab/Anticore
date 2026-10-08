@@ -57,12 +57,13 @@ dependencies = [
 
 [[package]]
 name = "anticore-desktop"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anticore-core",
  "anticore-transport-macos",
  "anticore-transport-win",
  "chrono",
+ "jni 0.21.1",
  "libc",
  "lru",
  "semver",

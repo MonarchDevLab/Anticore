@@ -1597,3 +1597,27 @@ html.theme-solar .topbar {
   }
 }
 
+/* Mobil & Android Uyumluluk (Safe Area Insets & Touch UX) */
+html, body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body {
+  padding-top: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  .workspace-titlebar {
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(3rem + env(safe-area-inset-top, 0px));
+  }
+}
+
+button, a, input, select {
+  touch-action: manipulation;
+}
+

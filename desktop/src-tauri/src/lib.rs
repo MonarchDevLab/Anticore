@@ -1,3 +1,4 @@
+pub mod android_bridge;
 mod commands;
 pub mod lan_share;
 pub mod net_teardown;

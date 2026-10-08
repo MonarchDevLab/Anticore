@@ -62,6 +62,11 @@ impl Default for LanProxyState {
 /// Bilgisayarın yerel ağdaki birincil IPv4 adresini (192.168.x.x vb.) tespit eder.
 pub fn get_local_ipv4() -> Option<String> {
     if let Ok(socket) = std::net::UdpSocket::bind("0.0.0.0:0") {
+        #[cfg(target_os = "android")]
+        {
+            use std::os::unix::io::AsRawFd;
+            crate::android_bridge::protect_socket(socket.as_raw_fd());
+        }
         if socket.connect("8.8.8.8:80").is_ok() {
             if let Ok(addr) = socket.local_addr() {
                 let ip = addr.ip();

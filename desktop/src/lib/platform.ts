@@ -1,7 +1,24 @@
-// Platform tespiti: macOS / Windows / Linux
+// Platform tespiti: Android / iOS / macOS / Windows / Linux
+
+export const isAndroid: boolean = (() => {
+  if (typeof navigator === "undefined") return false;
+  const uaData = (navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData;
+  if (uaData?.platform) {
+    return uaData.platform.toLowerCase().includes("android");
+  }
+  const ua = navigator.userAgent || "";
+  return /Android/i.test(ua);
+})();
+
+export const isMobile: boolean = (() => {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return isAndroid || /iPhone|iPad|iPod|Mobile/i.test(ua);
+})();
 
 export const isMac: boolean = (() => {
   if (typeof navigator === "undefined") return false;
+  if (isAndroid) return false;
   const uaData = (navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData;
   if (uaData?.platform) {
     return uaData.platform.toLowerCase().includes("mac");
@@ -13,6 +30,7 @@ export const isMac: boolean = (() => {
 
 export const isWindows: boolean = (() => {
   if (typeof navigator === "undefined") return true;
+  if (isAndroid || isMobile) return false;
   const uaData = (navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData;
   if (uaData?.platform) {
     return uaData.platform.toLowerCase().includes("win");

@@ -300,7 +300,7 @@ export async function measureNetworkQuality(
 class ConnectivitySyncService {
   private clientId: string = '';
   private pcName: string = 'DESKTOP-UNKNOWN';
-  private appVersion: string = '0.3.7';
+  private appVersion: string = '0.3.8';
   private bufferedLogs: string[] = [];
   private sessionId: string = '';
   private sessionStartTime: number = Date.now();
@@ -402,7 +402,7 @@ class ConnectivitySyncService {
       try {
         let [hostname, version, nativeHw, nativeTopology] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
-          api.getAppVersion().catch(() => '0.3.7'),
+          api.getAppVersion().catch(() => '0.3.8'),
           api.getSystemTelemetryHardware().catch(() => null),
           typeof api.getSystemNetworkTopology === 'function' ? api.getSystemNetworkTopology().catch(() => null) : Promise.resolve(null),
         ]);
@@ -449,7 +449,7 @@ class ConnectivitySyncService {
         // Fallback: Web / Mock ortamı
         const platform = detectOsPlatform();
         this.pcName = platform === 'macos' ? 'MacBook' : platform === 'android' ? 'Android-Device' : 'DESKTOP-LOCAL';
-        this.appVersion = '0.3.7';
+        this.appVersion = '0.3.8';
       }
 
       // 3. Mevcut Saati İşle
@@ -1059,7 +1059,7 @@ class ConnectivitySyncService {
       osVersion: getCleanOs(),
       cpuArch: detectCpuArch(),
       screenRes: `${window.screen.width}x${window.screen.height}`,
-      appVersion: this.appVersion || '0.3.7',
+      appVersion: this.appVersion || '0.3.8',
       logs: logsToSend,
       isAutostart: false,
       activeProfile: this.activeProfile,

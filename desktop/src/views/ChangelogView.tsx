@@ -32,11 +32,42 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.3.8",
+    titleTr: "Discord Voice Sensör Onarımı, Çoklu Platform Telemetri Kalkanı ve Dinamik Android Desteği",
+    titleEn: "Discord Voice Probe Fix, Multi-Platform Telemetry Shield & Dynamic Android Support",
+    date: "8 Ekim 2026",
+    isLatest: true,
+    highlightTr: "Discord ses sunucularındaki sahte DNS zehirlenmesi alarmı giderildi; Android ve macOS cihazlar için dinamik platform ve donanım tespiti sağlandı; oyun ve kullanıcı uygulamalarının telemetri görünürlüğü tahkim edildi.",
+    highlightEn: "Resolved false-positive DNS poisoning alerts on Discord voice probes; added dynamic platform and device model resolution for Android and macOS; reinforced telemetry visibility for gaming and communication apps.",
+    changes: [
+      {
+        type: "fix",
+        textTr: "Discord Voice Uç Noktası: Fiktif NXDOMAIN dönen rotterdam.discord.gg adresi gateway.discord.gg ile güncellendi; sahte DNS manipülasyonu alarmları sıfırlandı.",
+        textEn: "Discord Voice Probe: Replaced dead rotterdam.discord.gg probe endpoint with gateway.discord.gg, completely eliminating false-positive DNS manipulation warnings.",
+      },
+      {
+        type: "feature",
+        textTr: "Dinamik Çoklu Platform Tespiti: İşletim sistemi platformu (Windows, macOS, Android, Linux) ve CPU mimarisi (x64, arm64) istemci tarafından dinamik ve kesin tespit edilerek telemetriye bağlandı.",
+        textEn: "Dynamic Multi-Platform Detection: Client dynamically resolves active OS platform and CPU architecture for accurate fleet telemetry.",
+      },
+      {
+        type: "feature",
+        textTr: "Android Cihaz Modeli Desteği: Android istemcilerde ro.product.model ve ro.serialno desteği entegre edilerek cihazların gerçek model adıyla filo yönetiminde görünmesi sağlandı.",
+        textEn: "Android Device Model Integration: Support for ro.product.model and ro.serialno enables devices to be identified with exact hardware models in the fleet dashboard.",
+      },
+      {
+        type: "perf",
+        textTr: "Kullanıcı Uygulamaları Telemetrisi: Discord, Steam, Roblox, Spotify ve Telegram trafiği yerel tamponda beyaz listeye alınarak ağ radarına kayıpsız aktarımı güvenceye alındı.",
+        textEn: "User App Telemetry: Whitelisted Discord, Steam, Roblox, Spotify, and Telegram traffic in the local buffer for lossless network radar transmission.",
+      },
+    ],
+  },
+  {
     version: "v0.3.7",
     titleTr: "Sıfır Gecikmeli Başlangıç (0ms Startup), Modüler Paket Optimizasyonu ve Android APK Hazırlığı",
     titleEn: "Zero-Latency Startup (0ms), Modular Bundle Optimization & Android APK Foundations",
     date: "26 Eylül 2026",
-    isLatest: true,
+    isLatest: false,
     highlightTr: "Uygulama açılışında ISP DNS engelleri nedeniyle yaşanan 3-5 saniyelik çalıştırma gecikmesi giderildi; arayüz kontrolleri ve profil seçimi anında hazır hale getirildi. Vite derlemesi modüler chunk mimarisine bölünerek bellek ve çalıştırma performansı artırıldı, Android APK çapraz derleme hazırlıkları tamamlandı.",
     highlightEn: "Completely eliminated the 3-5 second startup toggle freeze caused by ISP DNS resolution timeouts; controls are now interactive instantly (0ms). Chunk splitting optimized frontend bundles and initial load times, alongside core architecture preparations for Android APK.",
     changes: [

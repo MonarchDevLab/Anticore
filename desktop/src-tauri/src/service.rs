@@ -168,6 +168,8 @@ pub struct Engine {
     active_handles: Arc<Mutex<Vec<Arc<anticore_transport_win::WinDivert>>>>,
     #[cfg(target_os = "macos")]
     active_transport_macos: Arc<Mutex<Option<Arc<anticore_transport_macos::UtunTransport>>>>,
+    #[cfg(target_os = "android")]
+    active_tun_fd: Arc<std::sync::atomic::AtomicI32>,
 }
 
 impl Engine {
@@ -185,6 +187,8 @@ impl Engine {
             active_handles: Arc::new(Mutex::new(Vec::new())),
             #[cfg(target_os = "macos")]
             active_transport_macos: Arc::new(Mutex::new(None)),
+            #[cfg(target_os = "android")]
+            active_tun_fd: Arc::new(std::sync::atomic::AtomicI32::new(-1)),
         }
     }
 
@@ -524,7 +528,191 @@ impl Engine {
         Ok(())
     }
 
-    #[cfg(not(any(windows, target_os = "macos")))]
+    #[cfg(target_os = "android")]
+    pub fn start(
+        &self,
+        profile_id: &str,
+        blacklist: anticore_core::config::Blacklist,
+        steps: Vec<anticore_core::strategy::Step>,
+        _config: &EngineConfig,
+        _dll_dir: Option<std::path::PathBuf>,
+        on_log: impl Fn(String) + Send + 'static,
+    ) -> Result<(), String> {
+        let mut worker = self.worker.lock().unwrap();
+        if self.running.load(Ordering::SeqCst) {
+            return Err("Motor zaten çalışıyor".into());
+        }
+        if let Some(previous) = worker.take() {
+            let _ = previous.join();
+        }
+
+        // Android VpnService'i başlat
+        crate::android_bridge::start_vpn_service()?;
+
+        // TUN tanıtıcısının (fd) hazır olmasını bekle (kullanıcı izin onayı için 30 saniye)
+        let mut tun_fd = crate::android_bridge::get_tun_fd();
+        for _ in 0..300 {
+            if tun_fd >= 0 {
+                break;
+            }
+            if crate::android_bridge::is_permission_denied() {
+                return Err("VPN izni kullanıcı tarafından reddedildi".into());
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            tun_fd = crate::android_bridge::get_tun_fd();
+        }
+
+        if tun_fd < 0 {
+            return Err("Android TUN arabirimi zaman aşımına uğradı (İzin onaylanmamış olabilir)".into());
+        }
+
+        self.active_tun_fd.store(tun_fd, Ordering::SeqCst);
+        *self.profile_id.lock().unwrap() = profile_id.to_string();
+        self.stop_flag.store(false, Ordering::SeqCst);
+        self.stats.packets_seen.store(0, Ordering::Relaxed);
+        self.stats.packets_touched.store(0, Ordering::Relaxed);
+        self.stats.passthrough.store(0, Ordering::Relaxed);
+
+        if let Ok(mut lock) = self.blacklist.write() {
+            *lock = blacklist;
+        }
+        let blacklist_ref = self.blacklist.clone();
+
+        *self.started_at.lock().unwrap() = Some(Instant::now());
+        self.running.store(true, Ordering::SeqCst);
+
+        let running = self.running.clone();
+        let stop = self.stop_flag.clone();
+        let stats = self.stats.clone();
+        let started_at = self.started_at.clone();
+        let profile_id = profile_id.to_string();
+        let captured_domains_ref = self.captured_domains.clone();
+        let active_tun_fd = self.active_tun_fd.clone();
+
+        let handle = std::thread::Builder::new()
+            .name("anticore-packets-android".into())
+            .spawn(move || {
+                let initial_count = blacklist_ref.read().map(|b| b.len()).unwrap_or(0);
+                on_log(format!(
+                    "[+] Android VpnService aktif | profil={profile_id} | {initial_count} hedef domain",
+                ));
+
+                let mut buf = vec![0u8; 65_535];
+                let mut consecutive_errors = 0u32;
+
+                loop {
+                    if stop.load(Ordering::SeqCst) {
+                        break;
+                    }
+
+                    let fd = active_tun_fd.load(Ordering::SeqCst);
+                    if fd < 0 {
+                        break;
+                    }
+
+                    // Poll ile 100ms bloklamalı bekleme (CPU %100 spin önleme & durdurma sinyali yakalama)
+                    let mut pfd = libc::pollfd {
+                        fd,
+                        events: libc::POLLIN,
+                        revents: 0,
+                    };
+                    let poll_res = unsafe { libc::poll(&mut pfd, 1, 100) };
+                    if poll_res < 0 {
+                        if stop.load(Ordering::SeqCst) {
+                            break;
+                        }
+                        continue;
+                    }
+                    if poll_res == 0 || (pfd.revents & libc::POLLIN) == 0 {
+                        continue;
+                    }
+
+                    let n = unsafe {
+                        libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len())
+                    };
+
+                    if n <= 0 {
+                        if stop.load(Ordering::SeqCst) {
+                            break;
+                        }
+                        consecutive_errors += 1;
+                        if consecutive_errors > 100 {
+                            on_log("[!] Android TUN arabirim bağlantısı kesildi (100 ardışık hata)".into());
+                            break;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(50));
+                        continue;
+                    }
+                    consecutive_errors = 0;
+                    stats.packets_seen.fetch_add(1, Ordering::Relaxed);
+
+                    let raw = &buf[..n as usize];
+                    if let Some((domain, _port)) = extract_domain_from_packet(raw) {
+                        if let Ok(mut map) = captured_domains_ref.lock() {
+                            let stat = map.entry(domain.clone()).or_insert_with(|| CapturedDomainStat {
+                                domain,
+                                process_name: None,
+                                hit_count: 0,
+                                tx_bytes: 0,
+                                rx_bytes: 0,
+                            });
+                            stat.hit_count = stat.hit_count.saturating_add(1);
+                            stat.tx_bytes = stat.tx_bytes.saturating_add(raw.len() as u64);
+                        }
+                    }
+
+                    use anticore_core::dispatch::{decide_packet, PacketDecision, PassthroughReason};
+                    let decision = {
+                        let bl_guard = blacklist_ref.read().unwrap();
+                        decide_packet(raw, &bl_guard, &steps)
+                    };
+
+                    match decision {
+                        PacketDecision::Passthrough(reason) => {
+                            let _ = unsafe {
+                                libc::write(fd, raw.as_ptr() as *const libc::c_void, raw.len())
+                            };
+                            if matches!(reason, PassthroughReason::TooLarge | PassthroughReason::NotTargeted) {
+                                stats.passthrough.fetch_add(1, Ordering::Relaxed);
+                            }
+                        }
+                        PacketDecision::Rewrite(segments) => {
+                            let mut ok = true;
+                            for seg in &segments {
+                                let w = unsafe {
+                                    libc::write(fd, seg.as_ptr() as *const libc::c_void, seg.len())
+                                };
+                                if w < 0 {
+                                    ok = false;
+                                    break;
+                                }
+                            }
+                            if ok {
+                                stats.packets_touched.fetch_add(1, Ordering::Relaxed);
+                            }
+                        }
+                    }
+                }
+
+                *started_at.lock().unwrap() = None;
+                running.store(false, Ordering::SeqCst);
+                on_log("[*] Android motoru durduruldu".into());
+            });
+
+        match handle {
+            Ok(h) => {
+                *worker = Some(h);
+                Ok(())
+            }
+            Err(e) => {
+                *self.started_at.lock().unwrap() = None;
+                self.running.store(false, Ordering::SeqCst);
+                Err(format!("Android motor iş parçacığı başlatılamadı: {e}"))
+            }
+        }
+    }
+
+    #[cfg(all(not(windows), not(target_os = "macos"), not(target_os = "android")))]
     pub fn start(
         &self,
         _p: &str,
@@ -573,7 +761,24 @@ impl Engine {
         Ok(())
     }
 
-    #[cfg(not(any(windows, target_os = "macos")))]
+    #[cfg(target_os = "android")]
+    pub fn stop(&self) -> Result<(), String> {
+        let mut worker = self.worker.lock().unwrap();
+        if worker.is_none() && !self.running.load(Ordering::SeqCst) {
+            return Err("Motor zaten durdurulmuş".into());
+        }
+        self.stop_flag.store(true, Ordering::SeqCst);
+        let _ = crate::android_bridge::stop_vpn_service();
+        self.active_tun_fd.store(-1, Ordering::SeqCst);
+        if let Some(h) = worker.take() {
+            let _ = h.join();
+        }
+        self.running.store(false, Ordering::SeqCst);
+        *self.started_at.lock().unwrap() = None;
+        Ok(())
+    }
+
+    #[cfg(all(not(windows), not(target_os = "macos"), not(target_os = "android")))]
     pub fn stop(&self) -> Result<(), String> {
         Err("Motor çalışmıyor".into())
     }
