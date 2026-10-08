@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-core"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "serde",
  "tokio",
@@ -86,7 +86,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-transport-macos"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anticore-core",
  "libc",
@@ -94,7 +94,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-transport-win"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "anticore-core",
 ]

@@ -156,6 +156,24 @@ html.light { --workspace-accent: var(--color-live-dim); --workspace-on-accent: v
 @media (min-width: 1400px) { .console-body { min-height: 180px; }.core-indicator { width: 190px; }.activity-chart { height: 82px; } }
 @media (max-width: 1100px) { .workspace-sidebar { width: 154px; }.workspace-main { padding: 18px; }.core-indicator { width: 105px; }.console-body { padding-inline: 14px; }.console-controls { padding-inline: 14px; gap: 8px; }.console-controls > .workspace-icon-button { width: 44px; }.power-switch { padding-inline: 10px; }.console-copy h2 { font-size: 30px; }.connection-stats dt svg { display: none; } }
 @media (max-width: 900px) { .workspace-sidebar { width: 60px; padding: 20px 7px; }.nav-label, .nav-group button > span, .sidebar-footer { display: none; }.nav-group button { justify-content: center; padding: 0; }.nav-group + .nav-group { margin-top: 14px; }.operations-grid { grid-template-columns: minmax(0, 1.2fr) minmax(260px, 1fr); }.console-copy h2 { font-size: 28px; }.core-indicator { display: none; }.console-controls { flex-wrap: wrap; }.console-profile { min-width: 120px; }.target-symbol { display: none; }.target-row { padding: 12px 10px; gap: 4px; } }
-@media (max-width: 700px) { .workspace-main { padding: 16px 12px; }.workspace-heading h1 { font-size: 23px; }.workspace-badge { display: none; }.operations-grid, .operations-footer { grid-template-columns: 1fr; }.connection-shortcuts { grid-template-columns: 1fr; }.connection-shortcuts > button + button { border-left: 0; border-top: 1px solid var(--color-border-brutal); }.core-indicator { display: block; width: 120px; }.connection-stats dd { font-size: 22px; }.activity-chart { height: 85px; }.target-list { grid-template-columns: 1fr; }.target-row { padding: 12px; border-right: 0; border-bottom: 1px solid var(--color-border-brutal); }.target-row:last-child { border-bottom: 0; }.target-symbol { display: grid; }.target-panel { grid-template-columns: 1fr; }.target-panel > .workspace-button { grid-row: 3; grid-column: 1; margin: 10px 12px; }.target-panel > .panel-heading { padding-inline: 12px; }.workspace-notice { flex-wrap: wrap; } }
-@media (max-width: 430px) { .workspace-sidebar { width: 52px; padding-inline: 4px; }.workspace-heading .workspace-eyebrow { font-size: 9px; letter-spacing: .8px; }.core-indicator { width: 76px; }.console-copy h2 { font-size: 26px; }.console-controls { gap: 10px; }.power-switch { width: 100%; }.console-profile { flex: 1; }.console-strip { padding-inline: 12px; font-size: 12px; }.connection-stats dd { font-size: 18px; }.connection-stats dt { font-size: 12px; } }
+@media (max-width: 768px) {
+  .workspace-sidebar { display: none !important; }
+  .workspace-content { width: 100% !important; min-width: 100% !important; }
+  .workspace-main { padding: 14px 12px 88px 12px !important; }
+  .workspace-titlebar { padding-top: max(env(safe-area-inset-top), 0px); min-height: 52px; }
+  .operations-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .console-body { flex-direction: column !important; text-align: center !important; gap: 16px !important; padding: 18px 14px !important; }
+  .core-orb-container, .core-indicator { margin: 0 auto !important; width: 120px !important; }
+  .console-controls { flex-direction: column !important; width: 100% !important; gap: 10px !important; padding: 0 14px 16px !important; }
+  .power-switch { width: 100% !important; min-height: 52px !important; font-size: 14px !important; font-weight: 700 !important; border-radius: 8px !important; }
+  .console-profile { width: 100% !important; }
+  .workspace-select { min-height: 48px !important; border-radius: 8px !important; font-size: 13px !important; }
+  .connection-stats { grid-template-columns: repeat(3, 1fr) !important; padding: 10px 0 !important; }
+  .connection-stats > div { padding: 0 8px !important; }
+  .connection-stats dd { font-size: 18px !important; }
+  .connection-stats dt { font-size: 11px !important; justify-content: center !important; }
+  .target-list { grid-template-columns: 1fr !important; }
+}
+
 @media (prefers-reduced-motion: reduce) { .connection-workspace *, .workspace-sidebar * { animation: none !important; transition: none !important; } }
+

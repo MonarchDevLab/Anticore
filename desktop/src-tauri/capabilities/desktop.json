@@ -5,6 +5,7 @@
   "windows": ["main"],
   "platforms": ["windows", "macOS", "linux"],
   "permissions": [
-    "updater:default"
+    "updater:default",
+    "process:allow-restart"
   ]
 }

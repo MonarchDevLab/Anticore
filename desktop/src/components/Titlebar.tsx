@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, ShieldAlert, Minus, Square, X, Plus, ArrowDownCircle, HelpCircle, Palette, Globe, Check } from "lucide-react";
+import { Minus, Square, X, Plus, ArrowDownCircle, HelpCircle, Palette, Globe, Check } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useI18n, type Language } from "../lib/i18n";
 import { isMac, isMobile, isAndroid } from "../lib/platform";
 import { api, type Status } from "../lib/tauri";
+import BrandLogo from "./BrandLogo";
 
 const LANGUAGES: { code: Language; label: string; name: string }[] = [
   { code: "tr", label: "TR", name: "Türkçe" },
@@ -171,13 +172,7 @@ export default function Titlebar({
 
         {/* Logo & Versiyon */}
         <div className="flex items-center gap-2.5 pointer-events-none">
-          <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all ${
-            running
-              ? "border-live/40 bg-live/15 text-live"
-              : "border-red-500/40 bg-red-500/15 text-red-400"
-          }`}>
-            {running ? <ShieldCheck size={13} strokeWidth={2.5} /> : <ShieldAlert size={13} strokeWidth={2.5} />}
-          </div>
+          <BrandLogo size={22} running={running} showText={false} />
           <div className="flex items-center gap-2">
             <span className="font-bold tracking-widest text-paper-bright text-xs">
               ANTICORE

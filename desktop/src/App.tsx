@@ -25,6 +25,7 @@ import { isMac } from "./lib/platform";
 import { isNewerVersion } from "./lib/version";
 
 import AppNavigation, { type ViewId } from "./components/AppNavigation";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 export default function App() {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -554,6 +555,15 @@ export default function App() {
       </main>
         </div>
       </div>
+
+      {/* ── 3.1 Mobil Alt Gezinme Çubuğu (Bottom Navigation) ── */}
+      <MobileBottomNav
+        view={view}
+        onNavigate={setView}
+        running={running}
+        busy={toggling}
+        onToggle={() => void quickToggle()}
+      />
 
       {/* ── 4. Kılavuz Çekmecesi (Slide-over Drawer) ── */}
       <GuideDrawer open={guideOpen} onClose={() => setGuideOpen(false)} />

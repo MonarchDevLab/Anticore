@@ -62,13 +62,14 @@ pub fn run() {
         .manage(Engine::new())
         .manage(lan_share::LanProxyState::new())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init());
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        builder = builder
+            .plugin(tauri_plugin_process::init())
+            .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             use tauri::Manager;
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.unminimize();

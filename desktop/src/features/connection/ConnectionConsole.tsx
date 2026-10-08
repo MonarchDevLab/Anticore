@@ -9,7 +9,7 @@ interface Props {
   onToggle: () => void; onSelect: (id: string) => void; onConfigure: () => void;
 }
 
-function CoreOrb({ running, known, copy }: { running: boolean; known: boolean; copy: ConnectionCopy }) {
+function CoreOrb({ running, known, copy, busy = false, onToggle }: { running: boolean; known: boolean; copy: ConnectionCopy; busy?: boolean; onToggle?: () => void }) {
   const active = running && known;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -126,7 +126,14 @@ function CoreOrb({ running, known, copy }: { running: boolean; known: boolean; c
   }, [active]);
 
   return (
-    <div className={`core-orb-container ${active ? "is-active" : "is-idle"}`} aria-hidden="true" style={{ position: "relative", width: "160px", height: "160px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div
+      onClick={!busy && known ? onToggle : undefined}
+      role="button"
+      tabIndex={0}
+      aria-label={busy ? copy.busy : running ? copy.stop : copy.start}
+      className={`core-orb-container ${active ? "is-active" : "is-idle"} cursor-pointer transition-transform duration-200 active:scale-95`}
+      style={{ position: "relative", width: "160px", height: "160px", display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
       <canvas ref={canvasRef} width={220} height={220} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }} />
       <span className="orb-label" style={{ position: "absolute", bottom: "5px", left: 0, right: 0, textAlign: "center", zIndex: 10, fontSize: "11px", fontWeight: 600, color: active ? "#10b981" : "#64748b", textTransform: "uppercase", letterSpacing: "1px" }}>
         {!known ? "—" : active ? copy.online : copy.standby}
@@ -141,7 +148,7 @@ export default function ConnectionConsole({ known, running, busy, loading, profi
     <section className={`workspace-panel engine-console ${running && known ? "is-active" : ""}`}>
       <div className="console-body">
         <div className="console-copy"><p className="workspace-eyebrow">{copy.engineControl}</p><h2>{!known ? copy.unknown : running ? copy.active : copy.ready}</h2><p>{!known ? copy.unknownHint : running ? copy.activeHint : copy.readyHint}</p></div>
-        <CoreOrb running={running} known={known} copy={copy} />
+        <CoreOrb running={running} known={known} copy={copy} busy={busy} onToggle={onToggle} />
       </div>
       <div className="console-controls">
         <button className={`power-switch ${running && known ? "is-running" : ""}`} onClick={onToggle} disabled={busy || !known || (!running && !profile)} aria-busy={busy} aria-label={busy ? copy.busy : running ? copy.stop : copy.start}>
