@@ -753,6 +753,12 @@ async fn handle_socks5_udp(
                 continue;
             }
 
+            // QUIC (UDP 443) engellemesi: Chrome/Edge ve mobil uygulamaları gecikmesiz
+            // olarak DPI bypass uygulanan TCP TLS 1.3 tüneline zorlar.
+            if target_addr.port() == 443 {
+                continue;
+            }
+
             if l2o_outbound.send_to(payload, target_addr).await.is_ok() {
                 stats_l2o.bytes_transferred.fetch_add(payload.len() as u64, Ordering::Relaxed);
                 stats_l2o.on_client_bytes(client_ip, payload.len() as u64);
