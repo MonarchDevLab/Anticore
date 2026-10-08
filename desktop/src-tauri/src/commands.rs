@@ -307,11 +307,19 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
 }
 
 fn sc_query(service: &str) -> String {
-    silent_command("sc")
-        .args(["query", service])
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
-        .unwrap_or_default()
+    #[cfg(windows)]
+    {
+        silent_command("sc")
+            .args(["query", service])
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
+            .unwrap_or_default()
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = service;
+        String::new()
+    }
 }
 
 #[derive(Serialize)]
@@ -339,7 +347,7 @@ fn is_detached_running(app: &AppHandle) -> bool {
         status.map(|s| s.success()).unwrap_or(false)
     };
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
     let alive = {
         silent_command("tasklist")
             .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
@@ -350,6 +358,9 @@ fn is_detached_running(app: &AppHandle) -> bool {
             })
             .unwrap_or(false)
     };
+
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    let alive = false;
 
     if !alive {
         let _ = std::fs::remove_file(&pid_file);
@@ -388,7 +399,7 @@ pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
         });
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
     {
         let output = silent_command("sc").args(["query", SERVICE_NAME]).output()
             .map_err(|e| format!("Servis durumu sorgulanamadı: {e}"))?;
@@ -412,10 +423,36 @@ pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
             detached_running,
         })
     }
+
+    #[cfg(target_os = "android")]
+    {
+        let service_running = crate::android_bridge::is_vpn_running();
+        Ok(SetupStatusDto {
+            service_installed: false,
+            service_running,
+            detached_running: false,
+        })
+    }
+
+    #[cfg(all(not(windows), not(target_os = "macos"), not(target_os = "android")))]
+    {
+        let _ = app;
+        Ok(SetupStatusDto {
+            service_installed: false,
+            service_running: false,
+            detached_running: false,
+        })
+    }
 }
 
 #[tauri::command]
 pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String> {
+    #[cfg(target_os = "android")]
+    {
+        let _ = (app, profile_id);
+        return Err("Sistem servisi Android platformunda desteklenmez; VpnService kullanılmaktadır".into());
+    }
+
     if !is_running_as_admin() {
         return Err("Sistem servisi kurmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
     }
@@ -479,7 +516,7 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
         return Ok(());
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
     {
         // sc create komutunu CMD üzerinden tırnakları tam koruyarak çalıştır
         let create_cmd = format!(
@@ -517,10 +554,25 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
             .ok();
         Ok(())
     }
+
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        let _ = app;
+        let _ = profile_id;
+        let _ = exe_str;
+        let _ = dir_str;
+        Err("Bu işletim sisteminde arka plan servisi kurulumu desteklenmiyor.".into())
+    }
 }
 
 #[tauri::command]
 pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "android")]
+    {
+        let _ = app;
+        return Err("Sistem servisi Android platformunda desteklenmez".into());
+    }
+
     if !is_running_as_admin() {
         return Err("Servisi kaldırmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
     }
@@ -537,7 +589,7 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
     {
         let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
         std::thread::sleep(std::time::Duration::from_millis(1000));
@@ -554,11 +606,26 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
         app.emit("log", "[-] servis kaldırıldı".to_string()).ok();
         Ok(())
     }
+
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        let _ = app;
+        Err("Bu işletim sisteminde servis kaldırma desteklenmiyor.".into())
+    }
 }
 
 #[tauri::command]
 pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> {
-    use std::process::Stdio;
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        let _ = app;
+        let _ = profile_id;
+        return Err("Bu platformda bağımsız motor modu desteklenmiyor.".into());
+    }
+
+    #[cfg(any(windows, target_os = "macos"))]
+    {
+        use std::process::Stdio;
 
     if !is_running_as_admin() {
         return Err("Bağımsız motor çalıştırmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
@@ -651,57 +718,67 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
     )
     .ok();
     app.emit("status_changed", true).ok();
-    Ok(())
+        Ok(())
+    }
 }
 
 #[tauri::command]
 pub fn detached_stop(app: AppHandle) -> Result<(), String> {
-    if !is_running_as_admin() {
-        return Err("Bağımsız motoru durdurmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        let _ = app;
+        return Err("Bu platformda bağımsız motor modu desteklenmiyor.".into());
     }
 
-    let pid_file = app_dir(&app).join("detached.pid");
-    let pid = std::fs::read_to_string(&pid_file)
-        .ok()
-        .and_then(|s| s.trim().parse::<u32>().ok())
-        .ok_or_else(|| "çalışan bağımsız motor bulunamadı".to_string())?;
-
-    #[cfg(target_os = "macos")]
+    #[cfg(any(windows, target_os = "macos"))]
     {
-        let out = if unsafe { libc::geteuid() } == 0 {
-            silent_command("kill").args(["-15", &pid.to_string()]).output()
-        } else {
-            silent_command("sudo").args(["-n", "/bin/kill", "-15", &pid.to_string()]).output()
-        }.map_err(|e| format!("kill başarısız: {e}"))?;
-
-        if !out.status.success() {
-            let _ = if unsafe { libc::geteuid() } == 0 {
-                silent_command("kill").args(["-9", &pid.to_string()]).output()
-            } else {
-                silent_command("sudo").args(["-n", "/bin/kill", "-9", &pid.to_string()]).output()
-            };
+        if !is_running_as_admin() {
+            return Err("Bağımsız motoru durdurmak için uygulamanın Yönetici / root olarak çalıştırılması gerekir.".into());
         }
-        let _ = std::fs::remove_file(&pid_file);
-        let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
-        app.emit("log", "[*] motor durduruldu".to_string()).ok();
-        app.emit("status_changed", false).ok();
-        return Ok(());
-    }
 
-    #[cfg(not(target_os = "macos"))]
-    {
-        let out = silent_command("taskkill")
-            .args(["/PID", &pid.to_string(), "/F"])
-            .output()
-            .map_err(|e| format!("taskkill başarısız: {e}"))?;
-        let out_str = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
-        if out.status.success() || out_str.contains("bulunamadı") || out_str.to_lowercase().contains("not found") {
+        let pid_file = app_dir(&app).join("detached.pid");
+        let pid = std::fs::read_to_string(&pid_file)
+            .ok()
+            .and_then(|s| s.trim().parse::<u32>().ok())
+            .ok_or_else(|| "çalışan bağımsız motor bulunamadı".to_string())?;
+
+        #[cfg(target_os = "macos")]
+        {
+            let out = if unsafe { libc::geteuid() } == 0 {
+                silent_command("kill").args(["-15", &pid.to_string()]).output()
+            } else {
+                silent_command("sudo").args(["-n", "/bin/kill", "-15", &pid.to_string()]).output()
+            }.map_err(|e| format!("kill başarısız: {e}"))?;
+
+            if !out.status.success() {
+                let _ = if unsafe { libc::geteuid() } == 0 {
+                    silent_command("kill").args(["-9", &pid.to_string()]).output()
+                } else {
+                    silent_command("sudo").args(["-n", "/bin/kill", "-9", &pid.to_string()]).output()
+                };
+            }
             let _ = std::fs::remove_file(&pid_file);
             let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
-            app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
-            Ok(())
-        } else {
-            Err(format!("Motor sonlandırılamadı: {out_str}"))
+            app.emit("log", "[*] motor durduruldu".to_string()).ok();
+            app.emit("status_changed", false).ok();
+            return Ok(());
+        }
+
+        #[cfg(windows)]
+        {
+            let out = silent_command("taskkill")
+                .args(["/PID", &pid.to_string(), "/F"])
+                .output()
+                .map_err(|e| format!("taskkill başarısız: {e}"))?;
+            let out_str = format!("{} {}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+            if out.status.success() || out_str.contains("bulunamadı") || out_str.to_lowercase().contains("not found") {
+                let _ = std::fs::remove_file(&pid_file);
+                let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
+                app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
+                Ok(())
+            } else {
+                Err(format!("Motor sonlandırılamadı: {out_str}"))
+            }
         }
     }
 }
@@ -839,6 +916,13 @@ fn resolve_steps(app: &AppHandle, profile_id: &str) -> Result<Vec<anticore_core:
 #[tauri::command]
 pub fn get_status(app: AppHandle, engine: tauri::State<Engine>) -> StatusDto {
     let panel_running = engine.running.load(Ordering::SeqCst);
+    #[cfg(target_os = "android")]
+    let service_running = if !panel_running {
+        crate::android_bridge::is_vpn_running()
+    } else {
+        false
+    };
+    #[cfg(not(target_os = "android"))]
     let service_running = if !panel_running {
         sc_query(SERVICE_NAME).contains("RUNNING")
     } else {
@@ -1214,6 +1298,7 @@ fn save_blacklist(app: &AppHandle, domains: &[String]) -> Result<(), String> {
 pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: String) -> Result<(), String> {
     ensure_windivert_files(Some(&app));
     let modes = get_setup_status(app.clone())?;
+    #[cfg(windows)]
     if modes.detached_running || (modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED")) {
         return Err("Servis veya bağımsız motor çalışıyor; panel motorunu başlatmadan önce durdurun.".into());
     }
@@ -1260,6 +1345,7 @@ pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), S
     }
     let modes = get_setup_status(app.clone())?;
     if modes.detached_running { detached_stop(app.clone())?; }
+    #[cfg(windows)]
     if modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED") {
         let output = silent_command("sc").args(["stop", SERVICE_NAME]).output()
             .map_err(|e| format!("Servis durdurma komutu çalıştırılamadı: {e}"))?;
@@ -1458,7 +1544,11 @@ pub fn get_dns_servers() -> DnsDto {
         }
         DnsDto { servers }
     }
-    #[cfg(not(any(windows, target_os = "macos")))]
+    #[cfg(target_os = "android")]
+    {
+        DnsDto { servers: vec!["1.1.1.1".into(), "8.8.8.8".into()] }
+    }
+    #[cfg(all(not(windows), not(target_os = "macos"), not(target_os = "android")))]
     {
         DnsDto { servers: vec![] }
     }
@@ -2120,53 +2210,68 @@ pub async fn auto_discover_profile(app: AppHandle) -> Result<Vec<anticore_core::
 
 #[tauri::command]
 pub fn scan_legacy_services() -> Vec<LegacyServiceDto> {
-    let targets = [
-        ("GoodbyeDPI", "GoodbyeDPI Servisi"),
-        ("goodbyedpi", "GoodbyeDPI Servisi (Küçük Harf)"),
-        ("GoodbyeDPI-Turkey", "GoodbyeDPI Türkiye Servisi"),
-        ("splitwire", "SplitWire Servisi"),
-        ("SplitWire", "SplitWire Servisi"),
-        ("splitwire-service", "SplitWire Arka Plan Servisi"),
-        ("SplitwireService", "SplitWire Arka Plan Servisi"),
-        ("zapret", "Zapret DPI Servisi"),
-        ("winws1", "WinWS Servisi 1"),
-        ("winws2", "WinWS Servisi 2"),
-        ("WireSock", "WireSock Servisi"),
-        ("WireSockService", "WireSock Service"),
-        ("ProxiFyre", "ProxiFyre SOCKS Proxy"),
-        ("WinDivert", "WinDivert Sürücü Servisi"),
-        ("WinDivert14", "WinDivert 1.4 Sürücü Servisi"),
-    ];
+    #[cfg(not(windows))]
+    return Vec::new();
 
-    let mut results = Vec::new();
-    for (id, name) in targets {
-        let q = sc_query(id);
-        let installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
-        let status = if !installed {
-            "NOT_INSTALLED"
-        } else if q.contains("RUNNING") {
-            "RUNNING"
-        } else if q.contains("STOPPED") {
-            "STOPPED"
-        } else {
-            "UNKNOWN"
-        };
+    #[cfg(windows)]
+    {
+        let targets = [
+            ("GoodbyeDPI", "GoodbyeDPI Servisi"),
+            ("goodbyedpi", "GoodbyeDPI Servisi (Küçük Harf)"),
+            ("GoodbyeDPI-Turkey", "GoodbyeDPI Türkiye Servisi"),
+            ("splitwire", "SplitWire Servisi"),
+            ("SplitWire", "SplitWire Servisi"),
+            ("splitwire-service", "SplitWire Arka Plan Servisi"),
+            ("SplitwireService", "SplitWire Arka Plan Servisi"),
+            ("zapret", "Zapret DPI Servisi"),
+            ("winws1", "WinWS Servisi 1"),
+            ("winws2", "WinWS Servisi 2"),
+            ("WireSock", "WireSock Servisi"),
+            ("WireSockService", "WireSock Service"),
+            ("ProxiFyre", "ProxiFyre SOCKS Proxy"),
+            ("WinDivert", "WinDivert Sürücü Servisi"),
+            ("WinDivert14", "WinDivert 1.4 Sürücü Servisi"),
+        ];
 
-        results.push(LegacyServiceDto {
-            id: id.to_string(),
-            name: name.to_string(),
-            status: status.to_string(),
-            installed,
-        });
+        let mut results = Vec::new();
+        for (id, name) in targets {
+            let q = sc_query(id);
+            let installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
+            let status = if !installed {
+                "NOT_INSTALLED"
+            } else if q.contains("RUNNING") {
+                "RUNNING"
+            } else if q.contains("STOPPED") {
+                "STOPPED"
+            } else {
+                "UNKNOWN"
+            };
+
+            results.push(LegacyServiceDto {
+                id: id.to_string(),
+                name: name.to_string(),
+                status: status.to_string(),
+                installed,
+            });
+        }
+        results
     }
-    results
 }
 
 #[tauri::command]
 pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>) -> Result<Vec<String>, String> {
-    if !is_running_as_admin() {
-        return Err("Eski servisleri durdurmak ve kaldırmak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
+    #[cfg(not(windows))]
+    {
+        let _ = app;
+        let _ = service_ids;
+        return Ok(Vec::new());
     }
+
+    #[cfg(windows)]
+    {
+        if !is_running_as_admin() {
+            return Err("Eski servisleri durdurmak ve kaldırmak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
+        }
 
     // 1. Arka planda çalışan ve dosyaları kilitleyen eski süreçleri sonlandır
     let legacy_procs = ["goodbyedpi.exe", "splitwire.exe", "winws.exe", "wiresock.exe", "sing-box.exe"];
@@ -2230,6 +2335,7 @@ pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>)
     }
 
     Ok(cleaned)
+    }
 }
 
 #[cfg(windows)]
@@ -2550,7 +2656,7 @@ pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), 
         let _ = silent_command("pfctl").args(["-F", "all"]).output();
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
     {
         // Windows Servisini durdur ve sil
         let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
@@ -3803,7 +3909,20 @@ pub fn get_system_hostname() -> String {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(target_os = "android")]
+    {
+        if let Ok(output) = std::process::Command::new("getprop").arg("ro.product.model").output() {
+            if output.status.success() {
+                let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !name.is_empty() {
+                    return name;
+                }
+            }
+        }
+        return "Android-Device".to_string();
+    }
+
+    #[cfg(all(target_os = "linux", not(target_os = "android")))]
     {
         if let Ok(name) = std::fs::read_to_string("/etc/hostname") {
             let clean = name.trim().to_string();
@@ -3826,7 +3945,9 @@ pub fn get_system_hostname() -> String {
         .unwrap_or_else(|_| {
             #[cfg(target_os = "macos")]
             return "MacBook".to_string();
-            #[cfg(not(target_os = "macos"))]
+            #[cfg(target_os = "android")]
+            return "Android-Device".to_string();
+            #[cfg(not(any(target_os = "macos", target_os = "android")))]
             return "DESKTOP-UNKNOWN".to_string();
         })
 }
@@ -3865,7 +3986,25 @@ pub fn get_machine_id() -> String {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(target_os = "android")]
+    {
+        if let Ok(output) = std::process::Command::new("getprop").arg("ro.serialno").output() {
+            if output.status.success() {
+                let s = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !s.is_empty() && s != "unknown" {
+                    return s;
+                }
+            }
+        }
+        if let Ok(id) = std::fs::read_to_string("/sys/class/net/wlan0/address") {
+            let clean = id.trim().to_string();
+            if !clean.is_empty() {
+                return clean;
+            }
+        }
+    }
+
+    #[cfg(all(target_os = "linux", not(target_os = "android")))]
     {
         if let Ok(id) = std::fs::read_to_string("/etc/machine-id") {
             let clean = id.trim().to_string();

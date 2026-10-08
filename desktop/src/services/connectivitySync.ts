@@ -58,9 +58,27 @@ export interface ServiceProbeItem {
   dpiHint?: string;
 }
 
+function detectOsPlatform(): 'windows' | 'macos' | 'android' | 'linux' {
+  if (typeof navigator === 'undefined') return 'windows';
+  const ua = navigator.userAgent || '';
+  if (/Android/i.test(ua)) return 'android';
+  if (/Macintosh|Mac OS X|Mac/i.test(ua)) return 'macos';
+  if (/Linux/i.test(ua)) return 'linux';
+  return 'windows';
+}
+
+function detectCpuArch(): string {
+  if (typeof navigator !== 'undefined') {
+    const ua = navigator.userAgent || '';
+    if (/arm64|aarch64/i.test(ua)) return 'arm64';
+    if (/x86_64|x64|Win64|WOW64/i.test(ua)) return 'x64';
+  }
+  return 'x64';
+}
+
 const CRITICAL_PROBE_TARGETS = [
   { id: 'discord', host: 'discord.com' },
-  { id: 'discord_voice', host: 'rotterdam.discord.gg' },
+  { id: 'discord_voice', host: 'gateway.discord.gg' },
   { id: 'roblox', host: 'roblox.com' },
   { id: 'roblox_cdn', host: 'assetdelivery.roblox.com' },
   { id: 'youtube', host: 'youtube.com' },
@@ -414,13 +432,11 @@ class ConnectivitySyncService {
           };
         }
 
-        const isMac = typeof navigator !== 'undefined' && (
-          (navigator.platform && navigator.platform.includes('Mac')) ||
-          (navigator.userAgent && navigator.userAgent.includes('Mac'))
-        );
-
-        if (isMac && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-'))) {
+        const platform = detectOsPlatform();
+        if (platform === 'macos' && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-'))) {
           hostname = 'MacBook';
+        } else if (platform === 'android' && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-'))) {
+          hostname = 'Android-Device';
         }
 
         if (hostname && hostname.trim().length > 0) {
@@ -431,11 +447,8 @@ class ConnectivitySyncService {
         }
       } catch {
         // Fallback: Web / Mock ortamı
-        const isMac = typeof navigator !== 'undefined' && (
-          (navigator.platform && navigator.platform.includes('Mac')) ||
-          (navigator.userAgent && navigator.userAgent.includes('Mac'))
-        );
-        this.pcName = isMac ? 'MacBook' : 'DESKTOP-LOCAL';
+        const platform = detectOsPlatform();
+        this.pcName = platform === 'macos' ? 'MacBook' : platform === 'android' ? 'Android-Device' : 'DESKTOP-LOCAL';
         this.appVersion = '0.3.7';
       }
 
@@ -611,7 +624,7 @@ class ConnectivitySyncService {
       if (params.includeDiagnostics) {
         diagnostics = {
           appVersion: this.appVersion,
-          osPlatform: typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac') ? 'macos' : 'windows',
+          osPlatform: detectOsPlatform(),
           osVersion: this.cachedHardwareSpecs?.osVersion || 'Unknown',
           activeProfile: this.activeProfile,
           isEngineRunning: this.isEngineRunning,
@@ -712,12 +725,15 @@ class ConnectivitySyncService {
         .split(':')[0];
       if (!clean || clean.length < 3 || clean.includes('localhost') || clean.includes('127.0.0.1')) return;
 
-      // İstemci katmanı filtreleme: Eğer süreç adı varsa ve bilinen tarayıcı değilse kaydetme
+      // İstemci katmanı filtreleme: Eğer süreç adı varsa ve bilinen tarayıcı veya kullanıcı uygulaması değilse kaydetme
       if (processName) {
         const p = processName.toLowerCase();
-        if (p.includes('anticore') || p.includes('svchost') || p.includes('system')) return;
-        const isBrowser = p === 'chrome.exe' || p === 'msedge.exe' || p === 'firefox.exe' || p === 'brave.exe' || p === 'opera.exe' || p === 'safari.exe';
-        if (!isBrowser) return;
+        if (p.includes('anticore') || p.includes('svchost') || p.includes('system') || p.includes('kaspersky') || p.includes('antivirus')) return;
+        const isUserApp =
+          p === 'chrome.exe' || p === 'msedge.exe' || p === 'firefox.exe' || p === 'brave.exe' || p === 'opera.exe' || p === 'safari.exe' ||
+          p.includes('chrome') || p.includes('edge') || p.includes('firefox') || p.includes('brave') || p.includes('opera') || p.includes('safari') ||
+          p.includes('discord') || p.includes('roblox') || p.includes('steam') || p.includes('spotify') || p.includes('telegram');
+        if (!isUserApp) return;
       }
 
       const existing = this.domainHitsBuffer.get(clean) || {
@@ -1039,9 +1055,9 @@ class ConnectivitySyncService {
     const payload = {
       clientId: this.clientId,
       pcName: this.pcName,
-      osPlatform: navigator.userAgent.includes('Mac') ? 'macos' : 'windows',
+      osPlatform: detectOsPlatform(),
       osVersion: getCleanOs(),
-      cpuArch: 'x64',
+      cpuArch: detectCpuArch(),
       screenRes: `${window.screen.width}x${window.screen.height}`,
       appVersion: this.appVersion || '0.3.7',
       logs: logsToSend,
