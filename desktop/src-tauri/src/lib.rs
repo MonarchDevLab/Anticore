@@ -15,6 +15,11 @@ pub fn run() {
         let _ = std::fs::write("panic.log", &msg);
     }));
 
+    #[cfg(target_os = "android")]
+    anticore_core::proxy::set_socket_protector(|fd| {
+        crate::android_bridge::protect_socket(fd)
+    });
+
     // Taşınabilir tek dosya modu: sürücü ve DLL dosyalarını başlatma anında sağla
     commands::ensure_windivert_files(None);
 

@@ -543,12 +543,14 @@ impl Engine {
         on_log: impl Fn(String) + Send + 'static,
     ) -> Result<(), String> {
         let mut worker = self.worker.lock().unwrap();
-        if self.running.load(Ordering::SeqCst) {
-            return Err("Motor zaten çalışıyor".into());
-        }
         if let Some(previous) = worker.take() {
             let _ = previous.join();
         }
+
+        // 0. Dış ağ soketlerini Android VpnService tünel döngüsünden muaf tut (protect)
+        anticore_core::proxy::set_socket_protector(|fd| {
+            crate::android_bridge::protect_socket(fd)
+        });
 
         // 1. Android yerel SOCKS5 proxy motorunu başlat (127.0.0.1:10808)
         let proxy_config = anticore_core::proxy::ProxyConfig {

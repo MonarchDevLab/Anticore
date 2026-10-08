@@ -46,8 +46,13 @@ class AnticoreVpnService : VpnService() {
 
         @JvmStatic
         fun protectSocket(fd: Int): Boolean {
-            val s = instance ?: return false
-            return s.protect(fd)
+            val s = instance ?: run {
+                Log.w(TAG, "protectSocket(fd=$fd) başarısız: instance null")
+                return false
+            }
+            val ok = s.protect(fd)
+            Log.d(TAG, "protectSocket(fd=$fd) -> $ok")
+            return ok
         }
 
         @JvmStatic
@@ -221,12 +226,11 @@ class AnticoreVpnService : VpnService() {
             val tun2socksConfig = """
                 |misc:
                 |  task-stack-size: 81920
-                |tunnel:
-                |  mtu: 1500
                 |socks5:
                 |  port: 10808
                 |  address: 127.0.0.1
                 |  udp: udp
+                |  mtu: 8500
             """.trimMargin("|")
 
             val configFile = File(cacheDir, "hevtunnel.yaml")

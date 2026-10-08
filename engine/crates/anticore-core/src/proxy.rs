@@ -16,6 +16,26 @@ use tokio::sync::watch;
 /// Varsayılan LAN Proxy dinleme portu.
 pub const DEFAULT_PROXY_PORT: u16 = 10808;
 
+type SocketProtectorFn = Box<dyn Fn(i32) -> bool + Send + Sync>;
+static SOCKET_PROTECTOR: std::sync::OnceLock<SocketProtectorFn> = std::sync::OnceLock::new();
+
+/// Android VpnService soket koruma kancasını kaydeder.
+pub fn set_socket_protector<F>(f: F)
+where
+    F: Fn(i32) -> bool + Send + Sync + 'static,
+{
+    let _ = SOCKET_PROTECTOR.set(Box::new(f));
+}
+
+/// Dış ağ soketlerini VPN tünel döngüsünden muaf tutar (VpnService.protect).
+pub fn protect_raw_fd(fd: i32) -> bool {
+    if let Some(protector) = SOCKET_PROTECTOR.get() {
+        protector(fd)
+    } else {
+        true
+    }
+}
+
 /// Bağlı istemci için anlık metrik özeti.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 pub struct ClientStatsSnapshot {
@@ -268,11 +288,28 @@ async fn handle_client_inner(
     }
 }
 
+/// Güvenli soket bağlantı kurucu: soketi oluşturur, Android'de protect çağırır ve hedefe bağlanır.
+async fn connect_to_addr(addr: SocketAddr) -> Result<TcpStream, std::io::Error> {
+    let socket = match addr {
+        SocketAddr::V4(_) => tokio::net::TcpSocket::new_v4()?,
+        SocketAddr::V6(_) => tokio::net::TcpSocket::new_v6()?,
+    };
+
+    #[cfg(unix)]
+    {
+        use std::os::fd::AsRawFd;
+        let fd = socket.as_raw_fd();
+        protect_raw_fd(fd);
+    }
+
+    socket.connect(addr).await
+}
+
 /// Hedefe bağlanırken yerel sistem DNS zehirlemesine (0.0.0.0 vb.) karşı güvenli genel DNS yedekli bağlantı kurucu.
 async fn connect_target(host: &str, port: u16) -> Result<TcpStream, Box<dyn std::error::Error + Send + Sync>> {
     // 1. IP ise doğrudan bağlan
     if let Ok(ip) = host.parse::<IpAddr>() {
-        return Ok(TcpStream::connect((ip, port)).await?);
+        return Ok(connect_to_addr(SocketAddr::new(ip, port)).await?);
     }
 
     // 2. Sistem DNS çözümlemesini dene
@@ -280,7 +317,7 @@ async fn connect_target(host: &str, port: u16) -> Result<TcpStream, Box<dyn std:
         if let Some(addr) = addrs.next() {
             let ip = addr.ip();
             if !ip.is_unspecified() && !ip.is_loopback() {
-                if let Ok(stream) = TcpStream::connect(addr).await {
+                if let Ok(stream) = connect_to_addr(addr).await {
                     return Ok(stream);
                 }
             }
@@ -289,13 +326,19 @@ async fn connect_target(host: &str, port: u16) -> Result<TcpStream, Box<dyn std:
 
     // 3. Sistem DNS başarısız veya 0.0.0.0 zehirlenmesi varsa: Güvenli genel DNS (1.1.1.1 / 8.8.8.8) sorgula
     if let Some(resolved_ip) = resolve_via_public_dns(host).await {
-        if let Ok(stream) = TcpStream::connect((resolved_ip, port)).await {
+        if let Ok(stream) = connect_to_addr(SocketAddr::new(resolved_ip, port)).await {
             return Ok(stream);
         }
     }
 
     // 4. Son deneme
-    Ok(TcpStream::connect((host, port)).await?)
+    if let Ok(mut addrs) = tokio::net::lookup_host(format!("{host}:{port}")).await {
+        if let Some(addr) = addrs.next() {
+            return Ok(connect_to_addr(addr).await?);
+        }
+    }
+
+    Err(format!("Hedefe bağlanılamadı ({host}:{port})").into())
 }
 
 /// Cloudflare (1.1.1.1) veya Google (8.8.8.8) UDP 53 üzerinden A kaydı çözümleyici
@@ -323,6 +366,11 @@ async fn query_dns_udp(host: &str, dns_server: &str) -> Result<IpAddr, Box<dyn s
     query.extend_from_slice(&[0x00, 0x01, 0x00, 0x01]);
 
     let socket = tokio::net::UdpSocket::bind("0.0.0.0:0").await?;
+    #[cfg(unix)]
+    {
+        use std::os::fd::AsRawFd;
+        protect_raw_fd(socket.as_raw_fd());
+    }
     socket.connect(dns_server).await?;
     socket.send(&query).await?;
 
@@ -487,6 +535,11 @@ async fn handle_socks5_udp(
 
     // 2. Dış internete doğrudan çıkacak soket (Anticore muafiyeti sayesinde gerçek ağa gider)
     let outbound_udp = tokio::net::UdpSocket::bind("0.0.0.0:0").await?;
+    #[cfg(unix)]
+    {
+        use std::os::fd::AsRawFd;
+        protect_raw_fd(outbound_udp.as_raw_fd());
+    }
 
     // 3. İstemciye BND.ADDR=127.0.0.1 ve BND.PORT bilgisini başarıyla (0x00) dön
     let mut resp = vec![0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1];
@@ -613,12 +666,21 @@ async fn handle_socks5_udp(
         }
     };
 
-    // Görev C: TCP kontrol kanalı kapanınca UDP tünelini derhal sonlandır
-    let mut tcp_buf = [0u8; 1];
+    // Görev C: TCP kontrol kanalı bağlantısı koptuğunda (EOF veya hata) UDP tünelini sonlandır
+    let wait_disconnect = async {
+        let mut b = [0u8; 64];
+        loop {
+            match stream.read(&mut b).await {
+                Ok(0) | Err(_) => break,
+                Ok(_) => continue,
+            }
+        }
+    };
+
     tokio::select! {
         _ = client_to_remote => {},
         _ = remote_to_client => {},
-        _ = stream.read(&mut tcp_buf) => {},
+        _ = wait_disconnect => {},
     }
 
     Ok(())

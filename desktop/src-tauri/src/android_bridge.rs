@@ -64,6 +64,9 @@ pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_onTunReady(
     TUN_FD.store(fd, Ordering::SeqCst);
     VPN_ACTIVE.store(true, Ordering::SeqCst);
     PERMISSION_DENIED.store(false, Ordering::SeqCst);
+    anticore_core::proxy::set_socket_protector(|s_fd| {
+        protect_socket(s_fd)
+    });
     true
 }
 
