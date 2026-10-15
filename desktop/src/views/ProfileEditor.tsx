@@ -110,7 +110,7 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 tabular-nums" aria-busy={busy}>
       <div className="card p-6 border border-white/[0.08] rounded-2xl bg-surface-card space-y-4 shadow-xl">
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
           <h3 className="text-sm font-bold text-paper-bright">
@@ -155,7 +155,7 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
             {steps.map((s, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 rounded-xl bg-surface-subtle/60 border border-white/[0.06] p-3 transition-all"
+                className="flex items-center gap-3 rounded-xl bg-surface-subtle/60 border border-white/[0.06] p-3 transition-opacity duration-150"
               >
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-live/15 text-live font-mono text-xs font-bold border border-live/25">
                   {i + 1}
@@ -170,7 +170,7 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
                       aria-label="Yukarı taşı"
                       disabled={i === 0}
                       onClick={() => move(i, -1)}
-                      className="p-2 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      className="p-2 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 transition-transform duration-150 active:scale-[0.97] cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
                       <ArrowUp size={15} aria-hidden strokeWidth={2} />
                     </button>
@@ -178,14 +178,14 @@ export default function ProfileEditor({ profile, onSaved, onDeleted, onError }: 
                       aria-label="Aşağı taşı"
                       disabled={i === steps.length - 1}
                       onClick={() => move(i, 1)}
-                      className="p-2 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      className="p-2 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] disabled:opacity-20 transition-transform duration-150 active:scale-[0.97] cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
                       <ArrowDown size={15} aria-hidden strokeWidth={2} />
                     </button>
                     <button
                       aria-label="Adımı sil"
                       onClick={() => setSteps(steps.filter((_, j) => j !== i))}
-                      className="p-2 rounded-lg text-paper-muted hover:text-alert hover:bg-alert/10 cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                      className="p-2 rounded-lg text-paper-muted hover:text-alert hover:bg-alert/10 transition-transform duration-150 active:scale-[0.97] cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                     >
                       <Trash2 size={15} aria-hidden strokeWidth={2} />
                     </button>

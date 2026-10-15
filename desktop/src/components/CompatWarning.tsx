@@ -8,15 +8,30 @@ import { useI18n } from "../lib/i18n";
  * AV/eski servis/sürücü sorunu bulunursa üstbarın altında bir uyarı
  * şeridi gösterir. Kullanıcı tek tıkla eski çakışan servisleri temizleyebilir.
  */
-export default function CompatWarning() {
+interface CompatWarningProps {
+  initialReport?: CompatReport | null;
+  onRefresh?: () => Promise<void>;
+}
+
+export default function CompatWarning({ initialReport, onRefresh }: CompatWarningProps = {}) {
   const { t, lang } = useI18n();
-  const [report, setReport] = useState<CompatReport | null>(null);
+  const [report, setReport] = useState<CompatReport | null>(initialReport ?? null);
   const [dismissed, setDismissed] = useState(false);
   const [cleaning, setCleaning] = useState(false);
   const [cleanSuccess, setCleanSuccess] = useState(false);
   const [cleanError, setCleanError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialReport !== undefined) {
+      setReport(initialReport);
+    }
+  }, [initialReport]);
+
   const refreshReport = async () => {
+    if (onRefresh) {
+      await onRefresh();
+      return;
+    }
     try {
       const rep = await api.checkCompatibility();
       setReport(rep);
@@ -26,7 +41,9 @@ export default function CompatWarning() {
   };
 
   useEffect(() => {
-    void refreshReport();
+    if (initialReport === undefined) {
+      void refreshReport();
+    }
   }, []);
 
   const handleCleanupLegacy = async () => {
@@ -82,7 +99,8 @@ export default function CompatWarning() {
   return (
     <div
       role="alert"
-      className={`flex items-start gap-3 border-b px-5 py-2.5 text-xs transition-all ${
+      aria-busy={cleaning}
+      className={`flex items-start gap-3 border-b px-5 py-2.5 text-xs transition-opacity duration-150 ${
         severe ? "border-warn/25 bg-warn/10 text-warn" : "border-sky/20 bg-sky/10 text-sky"
       }`}
     >
@@ -107,7 +125,7 @@ export default function CompatWarning() {
         <button
           onClick={handleCleanupLegacy}
           disabled={cleaning || cleanSuccess}
-          className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded bg-warn/20 hover:bg-warn/30 text-warn border border-warn/30 font-bold text-[11px] transition-colors cursor-pointer disabled:opacity-60"
+          className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded bg-warn/20 hover:bg-warn/30 text-warn border border-warn/30 font-bold text-[11px] transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer disabled:opacity-60"
         >
           {cleaning ? (
             <Loader2 size={12} className="animate-spin" />
@@ -131,7 +149,7 @@ export default function CompatWarning() {
               await refreshReport();
             }
           }}
-          className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded bg-alert/20 hover:bg-alert/30 text-alert border border-alert/30 font-bold text-[11px] transition-colors cursor-pointer"
+          className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded bg-alert/20 hover:bg-alert/30 text-alert border border-alert/30 font-bold text-[11px] transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer"
         >
           <Wrench size={12} />
           <span>{lang === "tr" ? "Dosyaları Onar" : "Repair Files"}</span>
@@ -141,7 +159,7 @@ export default function CompatWarning() {
       <button
         onClick={() => setDismissed(true)}
         aria-label={t("dialog_cancel")}
-        className="shrink-0 rounded-lg p-1 text-current opacity-70 hover:opacity-100 hover:bg-white/[0.08] transition-colors cursor-pointer"
+        className="shrink-0 rounded-lg p-1 text-current opacity-70 hover:opacity-100 hover:bg-white/[0.08] transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer"
       >
         <X size={15} aria-hidden />
       </button>

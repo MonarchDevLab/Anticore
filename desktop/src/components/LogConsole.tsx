@@ -39,12 +39,12 @@ export default function LogConsole({ logs, className, height }: Props) {
   };
 
   return (
-    <section aria-label="Canlı log" className={`card p-4 space-y-3 ${className ?? ""}`}>
+    <section aria-label="Canlı log" aria-busy="false" className={`card p-4 space-y-3 ${className ?? ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs font-bold text-paper-bright">
           <TerminalSquare size={15} className="text-live" aria-hidden />
           <span>{t("log_title")}</span>
-          <span className="font-mono text-xs text-paper-faint">({logs.length})</span>
+          <span className="font-mono text-xs text-paper-faint tabular-nums">({logs.length})</span>
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
@@ -63,7 +63,7 @@ export default function LogConsole({ logs, className, height }: Props) {
           <div className="flex rounded-lg bg-surface-subtle p-0.5 border border-white/[0.06]">
             <button
               onClick={() => setFilter("all")}
-              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
                 filter === "all" ? "bg-white/[0.12] text-paper-bright shadow-sm" : "text-paper-muted hover:text-paper"
               }`}
             >
@@ -71,7 +71,7 @@ export default function LogConsole({ logs, className, height }: Props) {
             </button>
             <button
               onClick={() => setFilter("error")}
-              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
                 filter === "error" ? "bg-alert/20 text-alert shadow-sm" : "text-paper-muted hover:text-alert"
               }`}
             >
@@ -79,7 +79,7 @@ export default function LogConsole({ logs, className, height }: Props) {
             </button>
             <button
               onClick={() => setFilter("success")}
-              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+              className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
                 filter === "success" ? "bg-live/20 text-live shadow-sm" : "text-paper-muted hover:text-live"
               }`}
             >
@@ -90,7 +90,7 @@ export default function LogConsole({ logs, className, height }: Props) {
           {/* Kopyala Butonu */}
           <button
             onClick={copyLogs}
-            className="p-1.5 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-paper-muted hover:text-paper hover:bg-white/[0.06] transition-transform duration-150 active:scale-[0.97] cursor-pointer"
             title="Logları Panoya Kopyala"
           >
             {copied ? <Check size={14} className="text-live" /> : <Copy size={14} />}

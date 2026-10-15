@@ -453,13 +453,13 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
             {missingPresets.map((g) => (
               <div
                 key={g.label}
-                className="card-subtle p-3.5 border border-white/[0.06] hover:border-white/[0.14] transition-all flex flex-col justify-between gap-3"
+                className="card-subtle p-3.5 border border-white/[0.06] hover:border-white/[0.14] transition-opacity duration-150 flex flex-col justify-between gap-3"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-paper-bright">{g.label}</span>
                   <button
                     onClick={() => void addBatch(g.domains)}
-                    className="btn btn-secondary !py-1 !px-2.5 text-[11px] text-live border-live/25 hover:bg-live/10"
+                    className="btn btn-secondary !py-1 !px-2.5 text-[11px] text-live border-live/25 hover:bg-live/10 active:scale-[0.97] transition-transform duration-150"
                   >
                     <Plus size={12} /> {t("sites_preset_pack_add")} ({g.domains.length})
                   </button>
@@ -469,7 +469,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                     <button
                       key={d}
                       onClick={() => void add(d)}
-                      className="rounded-md border border-white/[0.08] bg-white/[0.03] text-paper-muted hover:text-paper hover:border-live/40 px-2 py-0.5 text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer"
+                      className="rounded-md border border-white/[0.08] bg-white/[0.03] text-paper-muted hover:text-paper hover:border-live/40 px-2 py-0.5 text-[11px] font-mono flex items-center gap-1 transition-transform duration-150 active:scale-[0.97] cursor-pointer"
                     >
                       <Plus size={10} aria-hidden /> {d}
                     </button>
@@ -523,7 +523,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-transform duration-150 active:scale-[0.97] cursor-pointer ${
                 activeCategory === cat.id
                   ? "bg-live text-surface shadow-brutal-live"
                   : "bg-surface-subtle text-paper-muted border border-border-brutal hover:text-paper hover:bg-white/[0.08]"
@@ -571,7 +571,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
               {filtered.map((d) => (
                 <li
                   key={d}
-                  className="group flex items-center justify-between p-2 rounded-lg border border-white/[0.04] bg-surface-subtle/30 hover:bg-surface-subtle/80 hover:border-white/[0.12] transition-all"
+                  className="group flex items-center justify-between p-2 rounded-lg border border-white/[0.04] bg-surface-subtle/30 hover:bg-surface-subtle/80 hover:border-white/[0.12] transition-opacity duration-150"
                 >
                   <label className="flex items-center gap-2.5 cursor-pointer w-full overflow-hidden">
                     <input
@@ -587,7 +587,7 @@ export default function Sites({ pushLog }: { pushLog: (l: string) => void }) {
                   </label>
                   <button
                     onClick={() => void api.removeSite(d).then(refresh)}
-                    className="text-paper-faint hover:text-alert p-1.5 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 hover:bg-white/[0.05] transition-all cursor-pointer shrink-0"
+                    className="text-paper-faint hover:text-alert p-1.5 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 hover:bg-white/[0.05] transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer shrink-0"
                     title={t("sites_delete_count")}
                   >
                     <Trash2 size={14} />

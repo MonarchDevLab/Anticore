@@ -123,10 +123,28 @@ export const MaintenanceOverlay: React.FC<MaintenanceOverlayProps> = ({
       animationFrameId = requestAnimationFrame(render);
     };
 
+    let isVisible = true;
+    const observer = typeof IntersectionObserver !== 'undefined'
+      ? new IntersectionObserver(([entry]) => {
+          isVisible = entry ? entry.isIntersecting : true;
+        })
+      : null;
+    if (observer) observer.observe(canvas);
+
+    const handleVis = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrameId);
+      } else if (isVisible) {
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVis);
     render();
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      document.removeEventListener('visibilitychange', handleVis);
+      if (observer) observer.disconnect();
     };
   }, []);
 
@@ -211,7 +229,7 @@ export const MaintenanceOverlay: React.FC<MaintenanceOverlayProps> = ({
               <span>Tahmini Bakım Bitiş Sayacı</span>
             </div>
 
-            <div className="flex items-center justify-center gap-2 font-mono">
+            <div className="flex items-center justify-center gap-2 font-mono tabular-nums">
               {countdown.days > 0 && (
                 <>
                   <div className="flex flex-col items-center bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5 min-w-[52px]">
@@ -257,7 +275,7 @@ export const MaintenanceOverlay: React.FC<MaintenanceOverlayProps> = ({
           <button
             onClick={handleManualCheck}
             disabled={checking}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-mono transition-all cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-mono transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer disabled:opacity-50"
           >
             <RotateCw className={`w-3.5 h-3.5 ${checking ? 'animate-spin text-amber-400' : ''}`} />
             <span>{checking ? 'Kontrol Ediliyor...' : 'Durumu Yeniden Kontrol Et'}</span>

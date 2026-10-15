@@ -384,7 +384,7 @@ export default function SettingsView({
                 key={item.id}
                 aria-pressed={active}
                 onClick={() => setTheme(item.id)}
-                className={`p-3.5 flex flex-col items-start gap-2 rounded-xl border text-xs transition-all cursor-pointer text-left relative overflow-hidden ${
+                className={`p-3.5 flex flex-col items-start gap-2 rounded-xl border text-xs transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer text-left relative overflow-hidden ${
                   active
                     ? "bg-surface-elevated border-live shadow-md ring-1 ring-live/30"
                     : "bg-surface-subtle/60 border-white/[0.06] hover:border-white/[0.15] hover:bg-surface-subtle"
@@ -428,7 +428,7 @@ export default function SettingsView({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-1">
           <button
             onClick={() => setLang("tr")}
-            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
               lang === "tr"
                 ? "bg-live/15 text-live border-live/35 shadow-sm"
                 : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
@@ -439,7 +439,7 @@ export default function SettingsView({
           </button>
           <button
             onClick={() => setLang("en")}
-            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
               lang === "en"
                 ? "bg-live/15 text-live border-live/35 shadow-sm"
                 : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
@@ -450,7 +450,7 @@ export default function SettingsView({
           </button>
           <button
             onClick={() => setLang("ru")}
-            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
               lang === "ru"
                 ? "bg-live/15 text-live border-live/35 shadow-sm"
                 : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
@@ -461,7 +461,7 @@ export default function SettingsView({
           </button>
           <button
             onClick={() => setLang("de")}
-            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
               lang === "de"
                 ? "bg-live/15 text-live border-live/35 shadow-sm"
                 : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
@@ -472,7 +472,7 @@ export default function SettingsView({
           </button>
           <button
             onClick={() => setLang("fr")}
-            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+            className={`py-3 px-3 flex items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
               lang === "fr"
                 ? "bg-live/15 text-live border-live/35 shadow-sm"
                 : "bg-surface-subtle/60 text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
@@ -528,7 +528,7 @@ export default function SettingsView({
             <button
               type="button"
               onClick={() => onNavigate("network")}
-              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-transform duration-150 active:scale-[0.97] cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
@@ -549,7 +549,7 @@ export default function SettingsView({
             <button
               type="button"
               onClick={() => onNavigate("lan_share")}
-              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-transform duration-150 active:scale-[0.97] cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
@@ -570,7 +570,7 @@ export default function SettingsView({
             <button
               type="button"
               onClick={() => onNavigate("changelog")}
-              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-transform duration-150 active:scale-[0.97] cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
@@ -591,7 +591,7 @@ export default function SettingsView({
             <button
               type="button"
               onClick={() => onNavigate("support")}
-              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer"
+              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-transform duration-150 active:scale-[0.97] cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
@@ -836,7 +836,7 @@ export default function SettingsView({
                       .map((s) => (
                         <label
                           key={s.id}
-                          className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3 text-xs hover:border-white/[0.14] transition-all"
+                          className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3 text-xs hover:border-white/[0.14] transition-opacity duration-150"
                         >
                           <input
                             type="checkbox"
@@ -1236,7 +1236,7 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className={`flex items-start justify-between gap-4 rounded-xl bg-surface-subtle/50 p-4 border border-white/[0.06] transition-all ${disabled ? "opacity-60 cursor-not-allowed" : "hover:border-white/[0.12]"}`}>
+    <div className={`flex items-start justify-between gap-4 rounded-xl bg-surface-subtle/50 p-4 border border-white/[0.06] transition-opacity duration-150 ${disabled ? "opacity-60 cursor-not-allowed" : "hover:border-white/[0.12]"}`}>
       <div className="min-w-0">
         <p className="text-xs font-bold text-paper-bright">{label}</p>
         <p className="mt-0.5 text-xs leading-relaxed text-paper-muted">{desc}</p>

@@ -625,7 +625,7 @@ export default function ChangelogView() {
               <button
                 key={tab.id}
                 onClick={() => setFilterType(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer border ${
                   active
                     ? "bg-live/15 text-live border-live/30 shadow-sm"
                     : "bg-surface-subtle text-paper-muted border-border-brutal hover:text-paper hover:bg-surface-hover"
@@ -639,11 +639,11 @@ export default function ChangelogView() {
       </div>
 
       {/* ── Sürümler Zaman Çizelgesi ── */}
-      <div className="space-y-6">
+      <div className="space-y-6 tabular-nums" aria-busy="false">
         {filteredReleases.map((rel) => (
           <article
             key={rel.version}
-            className={`card p-5 lg:p-6 rounded-2xl border transition-all ${
+            className={`card p-5 lg:p-6 rounded-2xl border transition-opacity duration-150 ${
               rel.isLatest
                 ? "border-live/40 bg-surface-card shadow-[var(--shadow-brutal-live)]"
                 : "border-border-brutal bg-surface-card"

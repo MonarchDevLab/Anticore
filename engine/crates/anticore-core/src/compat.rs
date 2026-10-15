@@ -169,15 +169,28 @@ pub fn check_compatibility() -> CompatReport {
             report.vpn_detected = vpns;
         }
 
-        // 2. Legacy Services Check (Penceresiz sessiz komut)
-        for srv in KNOWN_LEGACY_SERVICES {
-            if let Ok(output) = silent_cmd("sc").args(["query", srv]).output() {
-                let out = String::from_utf8_lossy(&output.stdout);
-                if parse_sc_query_output(output.status.success(), &out) {
-                    report.legacy_services.push(srv.to_string());
+        // 2. Legacy Services Check (Paralel penceresiz sessiz komut — 14x ardışık gecikmeyi önler)
+        std::thread::scope(|s| {
+            let handles: Vec<_> = KNOWN_LEGACY_SERVICES
+                .iter()
+                .map(|&srv| {
+                    s.spawn(move || {
+                        if let Ok(output) = silent_cmd("sc").args(["query", srv]).output() {
+                            let out = String::from_utf8_lossy(&output.stdout);
+                            if parse_sc_query_output(output.status.success(), &out) {
+                                return Some(srv.to_string());
+                            }
+                        }
+                        None
+                    })
+                })
+                .collect();
+            for h in handles {
+                if let Ok(Some(found)) = h.join() {
+                    report.legacy_services.push(found);
                 }
             }
-        }
+        });
 
         // 3. WinDivert Files Check
         let mut search_paths = Vec::new();

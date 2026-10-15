@@ -265,7 +265,7 @@ export default function TrayQuickPanel() {
         <div className="flex items-center gap-2">
           {/* Live LED Status */}
           <div
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide border transition-all ${
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide border transition-opacity duration-150 ${
               running
                 ? "bg-live/10 text-live border-live/30 shadow-[var(--shadow-brutal-live)]"
                 : "bg-surface-elevated text-paper-muted border-border-brutal"
@@ -283,7 +283,7 @@ export default function TrayQuickPanel() {
           <button
             onClick={() => void api.hideQuickPanel()}
             title={t("btn_close")}
-            className="h-6 w-6 rounded-md flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-surface-hover transition-colors cursor-pointer"
+            className="h-6 w-6 rounded-md flex items-center justify-center text-paper-muted hover:text-paper-bright hover:bg-surface-hover transition-transform duration-150 active:scale-[0.97] cursor-pointer"
           >
             <X size={14} />
           </button>
@@ -302,7 +302,7 @@ export default function TrayQuickPanel() {
                 <span className="text-[10px] font-extrabold text-live uppercase tracking-wider">
                   {lang === "tr" ? "Yeni Sürüm" : "New Update"}
                 </span>
-                <span className="text-[10px] font-mono font-bold text-paper-bright">
+                <span className="text-[10px] font-mono font-bold text-paper-bright tabular-nums">
                   {updateInfo.version}
                 </span>
               </div>
@@ -320,7 +320,7 @@ export default function TrayQuickPanel() {
               }
               void api.hideQuickPanel();
             }}
-            className="px-2.5 py-1 rounded-lg bg-live text-black font-bold text-[10px] hover:bg-live/90 transition-all shrink-0 cursor-pointer shadow-sm"
+            className="px-2.5 py-1 rounded-lg bg-live text-void font-bold text-[10px] hover:bg-live/90 transition-transform duration-150 active:scale-[0.97] shrink-0 cursor-pointer shadow-sm"
           >
             {lang === "tr" ? "İndir" : "Download"}
           </button>
@@ -363,7 +363,7 @@ export default function TrayQuickPanel() {
           onClick={() => void quickToggle()}
           disabled={toggling}
           aria-label={running ? t("btn_stop") : t("btn_start")}
-          className={`w-full group relative flex flex-col items-center justify-center py-4 px-4 rounded-xl border transition-all cursor-pointer overflow-hidden ${
+          className={`w-full group relative flex flex-col items-center justify-center py-4 px-4 rounded-xl border transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer overflow-hidden ${
             running
               ? "bg-live/10 border-live/40 shadow-[var(--shadow-brutal-live)] hover:bg-live/15"
               : "bg-surface-card border-border-brutal hover:border-border-brutal-strong hover:bg-surface-elevated"
@@ -378,7 +378,7 @@ export default function TrayQuickPanel() {
 
           {/* Reaktör İkonu */}
           <div
-            className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-2 transition-all transform group-active:scale-95 ${
+            className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-2 transition-transform duration-150 transform group-active:scale-95 ${
               running
                 ? "bg-live text-void shadow-lg shadow-live/30"
                 : "bg-surface-elevated text-paper-muted border border-border-brutal group-hover:text-paper-bright"
@@ -413,7 +413,7 @@ export default function TrayQuickPanel() {
       <div className="relative mb-2">
         <div className="flex items-center justify-between text-[10px] text-paper-muted font-bold uppercase tracking-wider mb-1 px-1">
           <span>{t("qp_profile")}</span>
-          <span className="text-paper-faint font-mono">{profiles.length} {lang === "tr" ? "Hazır" : "Ready"}</span>
+          <span className="text-paper-faint font-mono tabular-nums">{profiles.length} {lang === "tr" ? "Hazır" : "Ready"}</span>
         </div>
 
         <button
@@ -441,7 +441,7 @@ export default function TrayQuickPanel() {
         {/* Profil Açılır Listesi */}
         {isProfileOpen && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-surface-elevated/95 backdrop-blur-xl border border-border-brutal-strong rounded-xl shadow-2xl z-50 max-h-40 overflow-y-auto no-scrollbar p-1 animate-fade-in">
-            {profiles.map((p) => {
+            {profiles.length === 0 ? null : profiles.map((p) => {
               const active = p.id === selectedProfile;
               return (
                 <button
@@ -466,7 +466,7 @@ export default function TrayQuickPanel() {
       </div>
 
       {/* ── 4. Mini Telemetri HUD (3 Sütun - Gerçek Veriler) ── */}
-      <div className="grid grid-cols-3 gap-1.5 mb-2">
+      <div className="grid grid-cols-3 gap-1.5 mb-2 tabular-nums">
         <div className="rounded-lg bg-surface-card border border-border-brutal p-2 flex flex-col items-center text-center">
           <span className="text-[9px] text-paper-muted uppercase font-bold tracking-tight">
             {t("qp_telemetry_pps")}
@@ -500,7 +500,7 @@ export default function TrayQuickPanel() {
         <button
           onClick={() => void handleDnsFix()}
           disabled={actionLoading !== null}
-          className="h-7 px-2 rounded-lg bg-surface-card border border-border-brutal hover:border-border-brutal-strong hover:bg-surface-elevated text-[11px] font-semibold text-paper flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+          className="h-7 px-2 rounded-lg bg-surface-card border border-border-brutal hover:border-border-brutal-strong hover:bg-surface-elevated text-[11px] font-semibold text-paper flex items-center justify-center gap-1.5 transition-transform duration-150 active:scale-[0.97] cursor-pointer disabled:opacity-50"
         >
           {actionLoading === "dns" ? (
             <LoaderCircle size={12} className="animate-spin text-sky" />
@@ -513,7 +513,7 @@ export default function TrayQuickPanel() {
         <button
           onClick={() => void handleDiscordFix()}
           disabled={actionLoading !== null}
-          className="h-7 px-2 rounded-lg bg-surface-card border border-border-brutal hover:border-border-brutal-strong hover:bg-surface-elevated text-[11px] font-semibold text-paper flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+          className="h-7 px-2 rounded-lg bg-surface-card border border-border-brutal hover:border-border-brutal-strong hover:bg-surface-elevated text-[11px] font-semibold text-paper flex items-center justify-center gap-1.5 transition-transform duration-150 active:scale-[0.97] cursor-pointer disabled:opacity-50"
         >
           {actionLoading === "discord" ? (
             <LoaderCircle size={12} className="animate-spin text-live" />

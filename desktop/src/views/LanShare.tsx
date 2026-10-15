@@ -235,7 +235,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             <button
               type="button"
               onClick={onStartEngine}
-              className="px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-black font-semibold text-xs transition-colors shrink-0 flex items-center gap-1.5 shadow"
+              className="px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-void font-semibold text-xs transition-transform duration-150 active:scale-[0.97] shrink-0 flex items-center gap-1.5 shadow"
             >
               <Play size={13} />
               <span>Motoru Başlat</span>
@@ -273,7 +273,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               type="button"
               disabled={firewallBusy}
               onClick={handleAllowFirewall}
-              className="px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-black font-semibold text-xs transition-colors shrink-0 flex items-center gap-1.5 shadow"
+              className="px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-void font-semibold text-xs transition-transform duration-150 active:scale-[0.97] shrink-0 flex items-center gap-1.5 shadow"
             >
               {firewallBusy ? (
                 <LoaderCircle size={13} className="animate-spin" />
@@ -287,7 +287,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
       )}
 
       {/* MOD A: Wi-Fi SOCKS5 / HTTP Proxy Kartı */}
-      <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-5">
+      <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-5 tabular-nums">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-border/20 pb-4">
           <div className="flex items-start gap-3">
             <div
@@ -323,7 +323,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             type="button"
             disabled={busy || loading}
             onClick={toggleProxy}
-            className={`px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-all shrink-0 ${
+            className={`px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-[transform,opacity] duration-150 active:scale-[0.97] shrink-0 ${
               isProxyActive
                 ? "bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40"
                 : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40"
@@ -755,7 +755,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
           <button
             type="button"
             onClick={openHotspot}
-            className="px-4 py-2 rounded-lg text-xs font-medium bg-paper-border/30 hover:bg-paper-border/50 text-paper-bright border border-paper-border/40 flex items-center gap-1.5 transition-colors shrink-0"
+            className="px-4 py-2 rounded-lg text-xs font-medium bg-paper-border/30 hover:bg-paper-border/50 text-paper-bright border border-paper-border/40 flex items-center gap-1.5 transition-transform duration-150 active:scale-[0.97] shrink-0"
           >
             <span>{isMac ? t("lan_btn_open_hotspot_mac") : t("lan_btn_open_hotspot")}</span>
             <ExternalLink size={13} />
@@ -776,7 +776,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               onChange={(e) => toggleHotspotMode(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-10 h-5 bg-paper-border/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-anticore-primary" />
+            <div className="w-10 h-5 bg-paper-border/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:bg-anticore-primary" />
           </label>
         </div>
       </div>

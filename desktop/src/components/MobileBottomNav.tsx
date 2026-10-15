@@ -25,14 +25,15 @@ export default function MobileBottomNav({
     { id: "profiles", label: t("nav_profiles") || "Profiller", icon: Layers },
     { id: "test", label: t("nav_test") || "Test", icon: Activity },
     { id: "settings", label: t("nav_settings") || "Ayarlar", icon: Settings },
-  ] as const;
+  ];
 
   return (
     <nav
       aria-label="Mobil Gezinme Çubuğu"
+      aria-busy={busy}
       className="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a0f1d]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 pt-1 pb-[max(env(safe-area-inset-bottom,8px),8px)] shadow-2xl flex items-center justify-around"
     >
-      {navItems.map(({ id, label, icon: Icon }) => {
+      {navItems.length === 0 ? null : navItems.map(({ id, label, icon: Icon }) => {
         const isActive =
           view === id ||
           (id === "settings" &&
@@ -47,7 +48,7 @@ export default function MobileBottomNav({
             key={id}
             type="button"
             onClick={() => onNavigate(id as ViewId)}
-            className={`flex flex-col items-center justify-center min-w-[56px] py-1.5 px-1 rounded-xl transition-all duration-200 cursor-pointer select-none active:scale-90 ${
+            className={`flex flex-col items-center justify-center min-w-[56px] py-1.5 px-1 rounded-xl transition-transform duration-150 cursor-pointer select-none active:scale-[0.97] ${
               isActive
                 ? "text-live font-bold"
                 : "text-paper-muted hover:text-paper-bright"
@@ -73,12 +74,12 @@ export default function MobileBottomNav({
           onClick={onToggle}
           disabled={busy}
           title={running ? t("btn_stop") : t("btn_start")}
-          className={`flex flex-col items-center justify-center min-w-[52px] py-1 px-1 rounded-xl transition-transform active:scale-90 ${
+          className={`flex flex-col items-center justify-center min-w-[52px] py-1 px-1 rounded-xl transition-transform duration-150 active:scale-[0.97] ${
             running ? "text-live" : "text-red-400"
           }`}
         >
           <div
-            className={`p-1.5 rounded-full border transition-all ${
+            className={`p-1.5 rounded-full border transition-colors duration-150 ${
               running
                 ? "border-live/40 bg-live/20 shadow-[0_0_12px_rgba(16,185,129,0.4)]"
                 : "border-red-500/40 bg-red-500/15"

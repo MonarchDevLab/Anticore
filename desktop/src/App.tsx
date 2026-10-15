@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ShieldAlert, Shield, X, Lock, RotateCw } from "lucide-react";
-import { api, onLog, onOpenUpdateModal, type Status } from "./lib/tauri";
+import { api, onLog, onOpenUpdateModal, type CompatReport, type Status } from "./lib/tauri";
 import { useI18n } from "./lib/i18n";
 import { connectivitySync } from "./services/connectivitySync";
 import { MaintenanceOverlay } from "./components/MaintenanceOverlay";
@@ -32,7 +32,15 @@ export default function App() {
   const [view, setView] = useState<ViewId>(() => {
     return localStorage.getItem("anticore_onboarded") === "true" ? "dashboard" : "wizard";
   });
-  const [status, setStatus] = useState<Status | null>(null);
+  const [status, setStatus] = useState<Status | null>(() => ({
+    running: false,
+    profile_id: localStorage.getItem("anticore_last_profile") || "universal",
+    packets_seen: 0,
+    packets_touched: 0,
+    passthrough: 0,
+    uptime_sec: 0,
+  }));
+  const [compatReport, setCompatReport] = useState<CompatReport | null>(null);
   const [toggling, setToggling] = useState(false);
   const togglePending = useRef(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -236,9 +244,11 @@ export default function App() {
       },
     });
 
-    // Sürücü ve AV uyumluluk durumunu sessizce denetle
-    api.checkCompatibility()
-      .then((report) => {
+    // Sürücü ve AV uyumluluk durumunu tek merkezden sessizce denetle
+    const refreshCompat = async () => {
+      try {
+        const report = await api.checkCompatibility();
+        setCompatReport(report);
         if (report && (!report.windivert_ok || (report.av_detected && report.av_detected.length > 0))) {
           const avNames = report.av_detected?.join(', ') || undefined;
           if (!report.windivert_ok) {
@@ -249,8 +259,15 @@ export default function App() {
             );
           }
         }
-      })
-      .catch(() => {});
+      } catch {
+        // fail-safe
+      }
+    };
+    const compatTimer = setTimeout(() => {
+      void refreshCompat();
+    }, 350);
+
+    return () => clearTimeout(compatTimer);
   }, [pushLog]);
 
   // Sayfa Geçişi Dwell Time Takibi
@@ -349,7 +366,7 @@ export default function App() {
           }
         }
       } catch {
-        if (alive) setStatus(null);
+        // Geçici zaman aşımında mevcut iyimser durumu koru, butonları kilitleme
       } finally {
         clearTimeout(timeout);
         polling = false;
@@ -442,7 +459,17 @@ export default function App() {
       <div className="workspace-layout">
         <AppNavigation view={view} onNavigate={setView} running={running} known={status !== null} busy={toggling} onToggle={() => void quickToggle()} />
         <div className="workspace-content">
-      <CompatWarning />
+      <CompatWarning
+        initialReport={compatReport}
+        onRefresh={async () => {
+          try {
+            const rep = await api.checkCompatibility();
+            setCompatReport(rep);
+          } catch {
+            // fail-safe
+          }
+        }}
+      />
       {topError && (() => {
         const lower = topError.toLowerCase();
         const isAdminError =
@@ -622,14 +649,14 @@ export default function App() {
             <button
               onClick={handleCheckLock}
               disabled={checkingLock}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer disabled:opacity-50"
             >
               <RotateCw className={`w-3.5 h-3.5 ${checkingLock ? 'animate-spin' : ''}`} />
               <span>{checkingLock ? 'Kontrol Ediliyor...' : 'Kilidi Kontrol Et'}</span>
             </button>
             <button
               onClick={() => api.closeWindow()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
               <span>Uygulamayı Kapat</span>

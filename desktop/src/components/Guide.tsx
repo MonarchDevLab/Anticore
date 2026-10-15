@@ -15,8 +15,10 @@ interface Props {
 export default function Guide({ title = "Bu ekran ne işe yarar?", items }: Props) {
   const [open, setOpen] = useState<number | null>(null);
 
+  if (items.length === 0) return null;
+
   return (
-    <details className="card p-3.5 rounded-xl border border-white/[0.08] bg-surface-subtle/50 group transition-all">
+    <details className="card p-3.5 rounded-xl border border-white/[0.08] bg-surface-subtle/50 group" aria-busy="false">
       <summary className="flex cursor-pointer select-none items-center gap-2 text-xs font-semibold text-paper-muted hover:text-paper-bright transition-colors">
         <HelpCircle size={15} className="text-sky" aria-hidden strokeWidth={2} />
         <span>{title}</span>
@@ -33,7 +35,7 @@ export default function Guide({ title = "Bu ekran ne işe yarar?", items }: Prop
             <button
               onClick={() => setOpen(open === i ? null : i)}
               aria-expanded={open === i}
-              className="flex w-full cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-left text-xs font-medium text-paper hover:text-live transition-colors"
+              className="flex w-full cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-left text-xs font-medium text-paper hover:text-live transition-transform duration-150 active:scale-[0.97]"
             >
               <span>{it.q}</span>
               <ChevronDown

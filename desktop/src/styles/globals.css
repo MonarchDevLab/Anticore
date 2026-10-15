@@ -612,10 +612,10 @@ html.theme-titanium {
     white-space: nowrap;
     position: relative;
     user-select: none;
-    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
   }
   .btn:active:not(:disabled) {
-    transform: scale(0.98);
+    transform: scale(0.97);
   }
   .btn:disabled {
     opacity: 0.35;
@@ -755,7 +755,7 @@ html.theme-titanium {
     cursor: pointer;
     flex-shrink: 0;
     background: rgba(255, 255, 255, 0.08);
-    transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
     box-sizing: border-box;
   }
   .toggle-track:hover:not(:disabled) {
@@ -779,7 +779,7 @@ html.theme-titanium {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
     pointer-events: none;
     transform: translateX(0);
-    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 200ms ease, box-shadow 200ms ease;
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms ease, box-shadow 200ms ease;
   }
   .toggle-track[aria-checked="true"] .toggle-thumb,
   .toggle-track.is-active .toggle-thumb {
@@ -804,7 +804,8 @@ html.theme-titanium {
     height: 100%;
     border-radius: 9999px;
     background: var(--color-neon-live);
-    transition: width 200ms ease-out;
+    transform-origin: left center;
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out;
   }
 
   /* ── Bölücü Çizgi ── */
@@ -826,7 +827,7 @@ html.theme-titanium {
 }
 
 /* ═══════════════════════════════════════════════
-   Animasyonlar
+   Animasyonlar (60 FPS GPU Compositor-Only)
    ═══════════════════════════════════════════════ */
 
 /* Durum halkası nabzı */
@@ -835,14 +836,30 @@ html.theme-titanium {
   70% { opacity: 0; transform: scale(1.4); }
   100% { opacity: 0; transform: scale(1.4); }
 }
-.ring-pulse { animation: ring-pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+.ring-pulse { animation: ring-pulse 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
 
-/* Sayfa giriş */
+/* Sayfa ve Kart Giriş Fizikleri */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate3d(0, 6px, 0) scale(0.992); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
-.fade-up { animation: fade-up 240ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.fade-up,
+.animate-view-in {
+  animation: fade-up 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-1 { animation-delay: 25ms; }
+.stagger-2 { animation-delay: 50ms; }
+.stagger-3 { animation-delay: 75ms; }
+.stagger-4 { animation-delay: 100ms; }
 
 /* Shimmer (yükleme efekti) */
 @keyframes shimmer {
@@ -889,7 +906,7 @@ html.theme-titanium {
 /* Donanım tıklama hissi (Tactile Reactor Button) */
 .btn-reactor {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.2);
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
 }
 .btn-reactor:active:not(:disabled) {
   transform: scale(0.96) translateY(2px);
@@ -900,7 +917,9 @@ html.theme-titanium {
 @media (prefers-reduced-motion: reduce) {
   .ring-pulse,
   .shimmer::after { animation: none; }
-  .fade-up { animation: none; }
+  .fade-up,
+  .animate-view-in,
+  .animate-fade-in { animation: none; }
   #root::before { animation: none; }
   * {
     transition-duration: 0.01ms !important;
@@ -1132,7 +1151,7 @@ html.theme-luxury .card-subtle {
 html.theme-luxury .btn {
   border-radius: 8px !important;
   letter-spacing: 0.04em !important;
-  transition: all 200ms ease !important;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease, background-color 200ms ease !important;
 }
 
 [data-theme="luxury"] .btn-primary,
@@ -1243,7 +1262,7 @@ html.theme-amethyst .card-subtle {
 [data-theme="amethyst"] .btn,
 html.theme-amethyst .btn {
   border-radius: 9999px !important;
-  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 [data-theme="amethyst"] .btn-primary,

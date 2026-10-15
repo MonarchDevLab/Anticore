@@ -120,7 +120,7 @@ export default function SupportView({ pushLog }: Props) {
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6" aria-busy={submitting}>
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
               <AlertCircle size={16} className="shrink-0" />
@@ -134,7 +134,7 @@ export default function SupportView({ pushLog }: Props) {
               {t("support_label_category")}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {categories.map((cat) => {
+              {categories.length === 0 ? null : categories.map((cat) => {
                 const Icon = cat.icon;
                 const isSelected = category === cat.id;
                 return (
@@ -142,7 +142,7 @@ export default function SupportView({ pushLog }: Props) {
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-medium transition-all cursor-pointer gap-1.5 ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-medium transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer gap-1.5 ${
                       isSelected
                         ? "bg-cyan/15 border-cyan text-cyan shadow-sm"
                         : "bg-surface-card border-white/[0.08] text-paper-muted hover:border-white/20 hover:text-paper"
@@ -188,7 +188,7 @@ export default function SupportView({ pushLog }: Props) {
               maxLength={2000}
               required
             />
-            <div className="text-[10px] text-paper-faint text-right">
+            <div className="text-[10px] text-paper-faint text-right tabular-nums">
               {message.length} / 2000
             </div>
           </div>

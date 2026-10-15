@@ -398,39 +398,12 @@ class ConnectivitySyncService {
       this.clientId = cid;
       this.sessionId = 'ses-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
 
-      // 2. PC Adını, Sürümü ve %100 GERÇEK Donanım/Ağ Telemetrisini Yerel Arka Uçtan (Tauri) Al
+      // 2. PC Adını ve Sürümü anında al; ağır Donanım/Ağ Telemetrisi sorgularını 1500ms ertele (0ms açılış tepkiselliği)
       try {
-        let [hostname, version, nativeHw, nativeTopology] = await Promise.all([
+        let [hostname, version] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
           api.getAppVersion().catch(() => '0.3.8'),
-          api.getSystemTelemetryHardware().catch(() => null),
-          typeof api.getSystemNetworkTopology === 'function' ? api.getSystemNetworkTopology().catch(() => null) : Promise.resolve(null),
         ]);
-
-        if (nativeTopology) {
-          this.cachedNetworkTopology = {
-            gatewayIp: nativeTopology.gateway_ip || null,
-            gatewayMac: nativeTopology.gateway_mac || null,
-            modemVendor: nativeTopology.modem_vendor || null,
-            localIp: nativeTopology.local_ip || null,
-            dnsServers: nativeTopology.dns_servers || [],
-            connectionMedium: nativeTopology.connection_medium || 'Ethernet',
-            wifiSsid: nativeTopology.wifi_ssid || null,
-            wifiSignalPct: nativeTopology.wifi_signal_pct ?? null,
-          };
-        }
-
-        if (nativeHw) {
-          this.cachedHardwareSpecs = {
-            osVersion: nativeHw.os_version || null,
-            cpuModel: nativeHw.cpu_model || null,
-            gpuModel: nativeHw.gpu_model || null,
-            ramTotalGb: nativeHw.ram_total_gb || null,
-            networkInterface: nativeHw.network_interface || null,
-            linkSpeedMbps: nativeHw.link_speed_mbps || null,
-            mtu: nativeHw.mtu || null,
-          };
-        }
 
         const platform = detectOsPlatform();
         if (platform === 'macos' && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-'))) {
@@ -445,6 +418,37 @@ class ConnectivitySyncService {
         if (version && version.trim().length > 0) {
           this.appVersion = version.trim();
         }
+
+        setTimeout(() => {
+          void Promise.all([
+            api.getSystemTelemetryHardware().catch(() => null),
+            typeof api.getSystemNetworkTopology === 'function' ? api.getSystemNetworkTopology().catch(() => null) : Promise.resolve(null),
+          ]).then(([nativeHw, nativeTopology]) => {
+            if (nativeTopology) {
+              this.cachedNetworkTopology = {
+                gatewayIp: nativeTopology.gateway_ip || null,
+                gatewayMac: nativeTopology.gateway_mac || null,
+                modemVendor: nativeTopology.modem_vendor || null,
+                localIp: nativeTopology.local_ip || null,
+                dnsServers: nativeTopology.dns_servers || [],
+                connectionMedium: nativeTopology.connection_medium || 'Ethernet',
+                wifiSsid: nativeTopology.wifi_ssid || null,
+                wifiSignalPct: nativeTopology.wifi_signal_pct ?? null,
+              };
+            }
+            if (nativeHw) {
+              this.cachedHardwareSpecs = {
+                osVersion: nativeHw.os_version || null,
+                cpuModel: nativeHw.cpu_model || null,
+                gpuModel: nativeHw.gpu_model || null,
+                ramTotalGb: nativeHw.ram_total_gb || null,
+                networkInterface: nativeHw.network_interface || null,
+                linkSpeedMbps: nativeHw.link_speed_mbps || null,
+                mtu: nativeHw.mtu || null,
+              };
+            }
+          });
+        }, 1500);
       } catch {
         // Fallback: Web / Mock ortamı
         const platform = detectOsPlatform();
@@ -463,7 +467,7 @@ class ConnectivitySyncService {
       this.scheduleNextTick();
 
       // 5.1 Canlı Servis Erişim Yoklaması (Probe Matrix: Discord, Roblox, YouTube, Twitch)
-      setTimeout(() => this.runServiceProbeMatrix(), 1000);
+      setTimeout(() => this.runServiceProbeMatrix(), 2200);
       this.probeTimer = window.setInterval(() => {
         this.runServiceProbeMatrix();
       }, 300000);

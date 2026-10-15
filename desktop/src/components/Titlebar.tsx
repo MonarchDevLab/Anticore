@@ -128,6 +128,7 @@ export default function Titlebar({
   return (
     <header
       data-tauri-drag-region
+      aria-busy={!status}
       onDoubleClick={isMobile || isAndroid ? undefined : handleToggleMaximize}
       className="workspace-titlebar min-h-12 shrink-0 select-none flex items-center justify-between px-3 bg-surface-subtle border-b border-border-brutal relative z-50 text-xs font-mono cursor-default"
     >
@@ -141,9 +142,9 @@ export default function Titlebar({
               onClick={handleClose}
               aria-label={lang === "tr" ? "Pencereyi Kapat" : "Close Window"}
               title={lang === "tr" ? "Kapat" : "Close"}
-              className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
+              className="w-3 h-3 rounded-full bg-rose-500 border border-rose-600 flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-[0.97]"
             >
-              <X size={8} strokeWidth={3} className="text-[#4c0000] opacity-0 group-hover:opacity-100 transition-opacity" />
+              <X size={8} strokeWidth={3} className="text-rose-950 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
             {/* Sarı - Simge Durumuna Küçült */}
             <button
@@ -151,9 +152,9 @@ export default function Titlebar({
               onClick={handleMinimize}
               aria-label={lang === "tr" ? "Küçült" : "Minimize Window"}
               title={lang === "tr" ? "Küçült" : "Minimize"}
-              className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
+              className="w-3 h-3 rounded-full bg-amber-400 border border-amber-500 flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-[0.97]"
             >
-              <Minus size={8} strokeWidth={3} className="text-[#5c3c00] opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Minus size={8} strokeWidth={3} className="text-amber-950 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
             {/* Yeşil - Büyüt / Geri Yükle */}
             <button
@@ -161,9 +162,9 @@ export default function Titlebar({
               onClick={handleToggleMaximize}
               aria-label={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
               title={lang === "tr" ? (isMaximized ? "Geri Yükle" : "Büyüt") : (isMaximized ? "Restore" : "Maximize")}
-              className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
+              className="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-600 flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-[0.97]"
             >
-              <Plus size={8} strokeWidth={3} className="text-[#004d00] opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Plus size={8} strokeWidth={3} className="text-emerald-950 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </div>
         )}
@@ -177,14 +178,14 @@ export default function Titlebar({
             <span className="font-bold tracking-widest text-paper-bright text-xs">
               ANTICORE
             </span>
-            <span className="text-[10px] font-mono text-paper-muted font-semibold bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08]">
+            <span className="text-[10px] font-mono text-paper-muted font-semibold bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08] tabular-nums">
               v{appVersion}
             </span>
             {/* Mobilde Başlık İçi Canlı Durum Noktası */}
             {(isMobile || isAndroid) && (
               <span
                 className={`w-2 h-2 rounded-full ml-0.5 ${
-                  running ? "bg-live shadow-[0_0_8px_#10b981] animate-pulse" : "bg-red-500/80"
+                  running ? "bg-live shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" : "bg-red-500/80"
                 }`}
               />
             )}
@@ -195,7 +196,7 @@ export default function Titlebar({
       {/* Orta: Canlı Telemetri LED Durum Hapı (Masaüstü) */}
       <div className="pointer-events-none hidden md:flex items-center gap-2 px-3 py-0.5 rounded-full border border-white/[0.06] bg-surface-subtle/80">
         <span
-          className={`h-1.5 w-1.5 rounded-full transition-all ${
+          className={`h-1.5 w-1.5 rounded-full transition-opacity duration-150 ${
             running
               ? "bg-live animate-pulse"
               : "bg-red-500"
@@ -226,7 +227,7 @@ export default function Titlebar({
         {updateAvailable && (
           <button
             onClick={onOpenUpdateModal}
-            className="flex items-center gap-1.5 text-xs font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-all cursor-pointer mr-1 animate-pulse"
+            className="flex items-center gap-1.5 text-xs font-bold text-live bg-live/10 hover:bg-live/20 border border-live/30 px-2 py-0.5 rounded transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer mr-1 animate-pulse"
             title={lang === "tr" ? "Yeni sürüm hazır" : "New version available"}
           >
             <ArrowDownCircle size={12} className="text-live" />
@@ -237,7 +238,7 @@ export default function Titlebar({
         {/* Kılavuz Çekmecesi Butonu */}
         <button
           onClick={onToggleGuide}
-          className="h-11 w-10 sm:w-11 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="h-11 w-10 sm:w-11 flex items-center justify-center rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-transform duration-150 active:scale-[0.97] cursor-pointer"
           title={isMobile || isAndroid ? (lang === "tr" ? "Kullanım Rehberi & Bilgi Bankası" : "User Guide & Knowledge Base") : (lang === "tr" ? "Kullanım Rehberi & Bilgi Bankası (F1)" : "User Guide & Knowledge Base (F1)")}
         >
           <HelpCircle size={15} />
@@ -247,7 +248,7 @@ export default function Titlebar({
         <div className="relative">
           <button
             onClick={() => setLangMenuOpen((v) => !v)}
-            className={`h-11 px-2 flex items-center gap-1.5 rounded transition-all text-xs font-bold cursor-pointer ${
+            className={`h-11 px-2 flex items-center gap-1.5 rounded transition-transform duration-150 active:scale-[0.97] text-xs font-bold cursor-pointer ${
               langMenuOpen
                 ? "text-live bg-live/10 border border-live/30"
                 : "text-paper-muted hover:text-paper-bright hover:bg-white/[0.06]"
@@ -259,8 +260,8 @@ export default function Titlebar({
           </button>
 
           {langMenuOpen && (
-            <div className="absolute right-0 top-12 mt-1 w-36 rounded-xl bg-[#0e1218] border border-white/[0.12] shadow-2xl p-1 z-[100] backdrop-blur-md">
-              {LANGUAGES.map((item) => (
+            <div className="absolute right-0 top-12 mt-1 w-36 rounded-xl bg-surface-card border border-white/[0.12] shadow-2xl p-1 z-[100] backdrop-blur-md">
+              {LANGUAGES.length === 0 ? null : LANGUAGES.map((item) => (
                 <button
                   key={item.code}
                   onClick={() => {
@@ -291,7 +292,7 @@ export default function Titlebar({
         {/* Tema Değiştirici (5 Donanım Teması) */}
         <button
           onClick={handleNextTheme}
-          className="h-11 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="h-11 px-1.5 flex items-center gap-1 rounded text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-transform duration-150 active:scale-[0.97] cursor-pointer"
           title={lang === "tr" ? `Tema: ${currentThemeObj.name} (Tıkla ve Değiştir)` : `Theme: ${currentThemeObj.name} (Click to Switch)`}
         >
           <Palette size={13} style={{ color: currentThemeObj.accent }} />

@@ -115,7 +115,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-8">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8 tabular-nums" aria-busy={busy}>
       {error && <p role="alert" className="tool-error">{error}</p>}
       {/* İlerleme Göstergesi */}
       <div className="flex items-center justify-between gap-3 px-1">
@@ -125,7 +125,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
           return (
             <div key={i} className="flex flex-1 items-center gap-2">
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold transition-all border ${
+                className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold transition-transform duration-150 border ${
                   isActive
                     ? "bg-live text-void border-live shadow-md scale-105"
                     : isDone
@@ -137,7 +137,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
               </div>
               {i < 4 && (
                 <div
-                  className={`h-1 flex-1 rounded-full transition-all ${
+                  className={`h-1 flex-1 rounded-full transition-colors duration-150 ${
                     isDone ? "bg-live" : "bg-white/[0.08]"
                   }`}
                 />
@@ -151,7 +151,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
       {step === 1 && (
         <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-2xl bg-surface-card space-y-6 shadow-2xl">
           <div className="flex items-center gap-3.5 border-b border-white/[0.08] pb-4">
-            <div className="p-3 rounded-2xl bg-live/15 text-live border border-live/30">
+            <div className="p-3 rounded-xl bg-live/15 text-live border border-live/30">
               <Shield size={24} strokeWidth={2} />
             </div>
             <div>
@@ -188,21 +188,21 @@ export default function Wizard({ onComplete, pushLog }: Props) {
 
       {/* Adım 2: ISP Seçimi */}
       {step === 2 && (
-        <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-2xl bg-surface-card space-y-5 shadow-2xl">
+        <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-xl bg-surface-card space-y-5 shadow-2xl">
           <div className="border-b border-white/[0.08] pb-3">
             <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("wiz_step_2_title")}</h2>
             <p className="text-xs text-paper-muted mt-0.5">{t("wiz_step_2_desc")}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1">
-            {ISP_LIST.map((isp) => {
+            {ISP_LIST.length === 0 ? null : ISP_LIST.map((isp) => {
               const active = selectedIsp === isp.id;
               return (
                 <button
                   key={isp.id}
                   type="button"
                   onClick={() => setSelectedIsp(isp.id)}
-                  className={`text-left rounded-xl p-3.5 border transition-all cursor-pointer ${
+                  className={`text-left rounded-xl p-3.5 border transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer ${
                     active
                       ? "bg-live/15 border-live/40 text-paper-bright shadow-sm"
                       : "bg-surface-subtle/50 border-white/[0.06] text-paper-muted hover:border-white/[0.14] hover:text-paper"
@@ -224,7 +224,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
 
       {/* Adım 3: Hedef Paketleri */}
       {step === 3 && (
-        <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-2xl bg-surface-card space-y-5 shadow-2xl">
+        <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-xl bg-surface-card space-y-5 shadow-2xl">
           <div className="border-b border-white/[0.08] pb-3">
             <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("wiz_step_3_title")}</h2>
             <p className="text-xs text-paper-muted mt-0.5">{t("wiz_step_3_desc")}</p>
@@ -236,7 +236,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
               return (
                 <label
                   key={pack.id}
-                  className={`flex items-start gap-3 rounded-xl p-3.5 border cursor-pointer transition-all ${
+                  className={`flex items-start gap-3 rounded-xl p-3.5 border cursor-pointer transition-opacity duration-150 ${
                     checked
                       ? "bg-live/10 border-live/30 text-paper-bright"
                       : "bg-surface-subtle/50 border-white/[0.06] text-paper-muted hover:border-white/[0.14]"
@@ -263,7 +263,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
 
       {/* Adım 4: Güvenli DNS & Tamamla */}
       {step === 4 && (
-        <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-2xl bg-surface-card space-y-5 shadow-2xl">
+        <section className="card p-6 sm:p-8 border border-white/[0.08] rounded-xl bg-surface-card space-y-5 shadow-2xl">
           <div className="border-b border-white/[0.08] pb-3">
             <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("wiz_step_4_title")}</h2>
             <p className="text-xs text-paper-muted mt-0.5">{t("wiz_step_4_desc")}</p>
@@ -271,7 +271,7 @@ export default function Wizard({ onComplete, pushLog }: Props) {
 
           <div className="space-y-3">
             <label
-              className={`flex items-start gap-3.5 rounded-xl p-4 border cursor-pointer transition-all ${
+              className={`flex items-start gap-3.5 rounded-xl p-4 border cursor-pointer transition-opacity duration-150 ${
                 applyDns
                   ? "bg-live/10 border-live/30 text-paper-bright"
                   : "bg-surface-subtle/50 border-white/[0.06] text-paper-muted"

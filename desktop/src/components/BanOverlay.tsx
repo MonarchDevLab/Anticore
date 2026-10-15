@@ -106,7 +106,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
   return (
     <div className="fixed inset-0 z-[9999] bg-[#030712]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 select-none font-mono text-slate-200">
       {/* Arka Plan Siber Parıltı Efekti */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-rose-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg h-96 bg-rose-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-lg bg-[#0b0e17]/90 border border-rose-500/30 rounded-3xl shadow-[0_0_60px_-15px_rgba(225,29,72,0.3)] p-8 text-center flex flex-col items-center">
         {/* Güvenlik Kalkanı İkonu */}
@@ -135,7 +135,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
         </p>
 
         {/* Gerekçe Kutusu */}
-        <div className="w-full mb-6 p-4 rounded-2xl bg-black/40 border border-rose-500/20 text-left space-y-1">
+        <div className="w-full mb-6 p-4 rounded-xl bg-void/40 border border-rose-500/20 text-left space-y-1">
           <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
             <Clock className="w-3 h-3" />
             <span>Kısıtlama Gerekçesi</span>
@@ -153,9 +153,9 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
               <span>Erişimin Açılmasına Kalan Süre</span>
             </div>
 
-            <div className="grid grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-4 gap-2.5 tabular-nums">
               {/* Gün */}
-              <div className="p-3 bg-white/[0.03] border border-white/[0.08] rounded-2xl flex flex-col items-center justify-center">
+              <div className="p-3 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col items-center justify-center">
                 <span className="text-2xl font-black text-white font-mono tracking-tight">
                   {String(remaining.days).padStart(2, '0')}
                 </span>
@@ -165,7 +165,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
               </div>
 
               {/* Saat */}
-              <div className="p-3 bg-white/[0.03] border border-white/[0.08] rounded-2xl flex flex-col items-center justify-center">
+              <div className="p-3 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col items-center justify-center">
                 <span className="text-2xl font-black text-white font-mono tracking-tight">
                   {String(remaining.hours).padStart(2, '0')}
                 </span>
@@ -175,7 +175,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
               </div>
 
               {/* Dakika */}
-              <div className="p-3 bg-white/[0.03] border border-white/[0.08] rounded-2xl flex flex-col items-center justify-center">
+              <div className="p-3 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col items-center justify-center">
                 <span className="text-2xl font-black text-cyan-400 font-mono tracking-tight">
                   {String(remaining.minutes).padStart(2, '0')}
                 </span>
@@ -185,7 +185,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
               </div>
 
               {/* Saniye */}
-              <div className="p-3 bg-white/[0.03] border border-rose-500/30 rounded-2xl flex flex-col items-center justify-center bg-rose-500/5">
+              <div className="p-3 bg-white/[0.03] border border-rose-500/30 rounded-xl flex flex-col items-center justify-center bg-rose-500/5">
                 <span className="text-2xl font-black text-rose-400 font-mono tracking-tight animate-pulse">
                   {String(remaining.seconds).padStart(2, '0')}
                 </span>
@@ -202,7 +202,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
             </div>
           </div>
         ) : !isPermanent && remaining?.isExpired ? (
-          <div className="w-full mb-6 p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-xs text-center space-y-1">
+          <div className="w-full mb-6 p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-xs text-center space-y-1">
             <span className="font-bold block">Kısıtlama Süresi Tamamlandı</span>
             <span className="text-[11px] text-slate-400">
               Erişim kilidini kaldırmak için aşağıdaki durum kontrol butonuna tıklayın.
@@ -210,7 +210,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
           </div>
         ) : (
           /* Kalıcı Yasaklama */
-          <div className="w-full mb-6 p-4 rounded-2xl bg-rose-950/20 border border-rose-500/30 text-center space-y-2">
+          <div className="w-full mb-6 p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 text-center space-y-2">
             <div className="inline-flex items-center gap-2 text-rose-400 font-bold text-xs uppercase">
               <InfinityIcon className="w-4 h-4" />
               <span>Süresiz / Kalıcı Kısıtlama</span>
@@ -232,7 +232,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
             type="button"
             onClick={handleManualCheck}
             disabled={checking}
-            className="flex-1 py-3 px-4 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-white border border-white/[0.12] hover:border-cyan-400/50 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            className="flex-1 py-3 px-4 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-white border border-white/[0.12] hover:border-cyan-400/50 font-bold text-xs flex items-center justify-center gap-2 transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 text-cyan-400 ${checking ? 'animate-spin' : ''}`} />
             <span>{checking ? 'Kontrol Ediliyor...' : 'Durumu Yeniden Kontrol Et'}</span>
@@ -241,7 +241,7 @@ export const BanOverlay: React.FC<BanOverlayProps> = ({
           <button
             type="button"
             onClick={handleCloseApp}
-            className="py-3 px-5 rounded-2xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            className="py-3 px-5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer"
           >
             <Power className="w-4 h-4" />
             <span>Uygulamayı Kapat</span>

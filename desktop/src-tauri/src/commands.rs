@@ -4,7 +4,7 @@ use std::sync::atomic::Ordering;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, Manager};
 
 use anticore_core::dto::StepDto;
 use crate::service::Engine;
@@ -369,8 +369,82 @@ fn is_detached_running(app: &AppHandle) -> bool {
     alive
 }
 
-#[tauri::command]
-pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
+use std::sync::atomic::{AtomicU64, AtomicU8};
+
+static BG_STATUS_CACHE_TS_MS: AtomicU64 = AtomicU64::new(0);
+// Bit 0: service_installed, Bit 1: service_running, Bit 2: detached_running
+static BG_STATUS_CACHE_FLAGS: AtomicU8 = AtomicU8::new(0);
+
+pub(crate) fn invalidate_bg_status_cache() {
+    BG_STATUS_CACHE_TS_MS.store(0, Ordering::SeqCst);
+}
+
+fn query_bg_status_cached(app: &AppHandle) -> (bool, bool, bool) {
+    let now = chrono_like_id();
+    let last = BG_STATUS_CACHE_TS_MS.load(Ordering::Relaxed);
+    if last > 0 && now.saturating_sub(last) < 3000 {
+        let flags = BG_STATUS_CACHE_FLAGS.load(Ordering::Relaxed);
+        return (
+            (flags & 1) != 0,
+            (flags & 2) != 0,
+            (flags & 4) != 0,
+        );
+    }
+
+    #[cfg(target_os = "android")]
+    let (service_installed, service_running) = (false, crate::android_bridge::is_vpn_running());
+
+    #[cfg(target_os = "macos")]
+    let (service_installed, service_running) = {
+        let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
+        let installed = plist_path.exists();
+        let running = if installed {
+            silent_command("launchctl")
+                .args(["list", "com.monolithworks.anticore"])
+                .output()
+                .ok()
+                .map(|o| {
+                    if !o.status.success() {
+                        return false;
+                    }
+                    let s = String::from_utf8_lossy(&o.stdout);
+                    !s.contains("\"PID\" = 0;") && (s.contains("\"PID\"") || s.split_whitespace().next().map(|p| p != "-").unwrap_or(false))
+                })
+                .unwrap_or(false)
+        } else {
+            false
+        };
+        (installed, running)
+    };
+
+    #[cfg(windows)]
+    let (service_installed, service_running) = {
+        let q = sc_query(SERVICE_NAME);
+        let installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
+        let running = installed && q.contains("RUNNING");
+        (installed, running)
+    };
+
+    #[cfg(all(not(windows), not(target_os = "macos"), not(target_os = "android")))]
+    let (service_installed, service_running) = (false, false);
+
+    let detached_running = if !service_running {
+        is_detached_running(app)
+    } else {
+        false
+    };
+
+    let mut flags = 0u8;
+    if service_installed { flags |= 1; }
+    if service_running { flags |= 2; }
+    if detached_running { flags |= 4; }
+    BG_STATUS_CACHE_FLAGS.store(flags, Ordering::Relaxed);
+    BG_STATUS_CACHE_TS_MS.store(now, Ordering::Relaxed);
+
+    (service_installed, service_running, detached_running)
+}
+
+pub fn get_setup_status_sync(app: AppHandle) -> Result<SetupStatusDto, String> {
     #[cfg(target_os = "macos")]
     {
         let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
@@ -417,6 +491,13 @@ pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
         let service_running = service_installed && stdout.contains("RUNNING");
         let detached_running = is_detached_running(&app);
 
+        let mut flags = 0u8;
+        if service_installed { flags |= 1; }
+        if service_running { flags |= 2; }
+        if detached_running { flags |= 4; }
+        BG_STATUS_CACHE_FLAGS.store(flags, Ordering::Relaxed);
+        BG_STATUS_CACHE_TS_MS.store(chrono_like_id(), Ordering::Relaxed);
+
         Ok(SetupStatusDto {
             service_installed,
             service_running,
@@ -446,7 +527,14 @@ pub fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
 }
 
 #[tauri::command]
-pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String> {
+pub async fn get_setup_status(app: AppHandle) -> Result<SetupStatusDto, String> {
+    tokio::task::spawn_blocking(move || get_setup_status_sync(app))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+pub fn install_service_sync(app: AppHandle, profile_id: String) -> Result<(), String> {
+    invalidate_bg_status_cache();
     #[cfg(target_os = "android")]
     {
         let _ = (app, profile_id);
@@ -464,7 +552,7 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
     if !profile_id.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.')) {
         return Err("Servis profili kimliği geçersiz.".into());
     }
-    if get_setup_status(app.clone())?.service_installed {
+    if get_setup_status_sync(app.clone())?.service_installed {
         return Err("Servis zaten kurulu. Yeniden kurmadan önce kaldırın.".into());
     }
     let motor = find_motor_exe(&app)?;
@@ -512,6 +600,7 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
         if !out.status.success() {
             return Err(format!("launchctl load hatası: {}", String::from_utf8_lossy(&out.stderr)));
         }
+        invalidate_bg_status_cache();
         app.emit("log", format!("[+] macOS LaunchDaemon kuruldu ve başlatıldı (profil={profile_id})")).ok();
         return Ok(());
     }
@@ -550,6 +639,7 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
             let msg = if !err.is_empty() { err } else { out_msg };
             return Err(format!("servis başlatılamadı: {msg} (Başka DPI servisi çakışıyor olabilir)"));
         }
+        invalidate_bg_status_cache();
         app.emit("log", format!("[+] servis kuruldu ve başlatıldı (profil={profile_id})"))
             .ok();
         Ok(())
@@ -566,7 +656,14 @@ pub fn install_service(app: AppHandle, profile_id: String) -> Result<(), String>
 }
 
 #[tauri::command]
-pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
+pub async fn install_service(app: AppHandle, profile_id: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || install_service_sync(app, profile_id))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+pub fn uninstall_service_sync(app: AppHandle) -> Result<(), String> {
+    invalidate_bg_status_cache();
     #[cfg(target_os = "android")]
     {
         let _ = app;
@@ -585,6 +682,7 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
             let _ = std::fs::remove_file(plist_path);
         }
         let _ = silent_command("pkill").args(["-9", "-f", "anticore-cli"]).output();
+        invalidate_bg_status_cache();
         app.emit("log", "[-] macOS LaunchDaemon kaldırıldı".to_string()).ok();
         return Ok(());
     }
@@ -603,6 +701,7 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
                 return Err("servis kaldırılamadı (kurulu olmayabilir)".into());
             }
         }
+        invalidate_bg_status_cache();
         app.emit("log", "[-] servis kaldırıldı".to_string()).ok();
         Ok(())
     }
@@ -615,7 +714,14 @@ pub fn uninstall_service(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> {
+pub async fn uninstall_service(app: AppHandle) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || uninstall_service_sync(app))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+pub fn detached_start_sync(app: AppHandle, profile_id: String) -> Result<(), String> {
+    invalidate_bg_status_cache();
     #[cfg(all(not(windows), not(target_os = "macos")))]
     {
         let _ = app;
@@ -642,7 +748,7 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
         let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
     }
     resolve_steps(&app, &profile_id)?;
-    if get_setup_status(app.clone())?.service_installed {
+    if get_setup_status_sync(app.clone())?.service_installed {
         return Err("Servis kurulu; çakışmayı önlemek için önce servisi kaldırın".into());
     }
 
@@ -712,6 +818,7 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
         *lock = profile_id.clone();
     }
     drop(child);
+    invalidate_bg_status_cache();
     app.emit(
         "log",
         format!("[+] motor aktif (profil={profile_id})"),
@@ -723,7 +830,14 @@ pub fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> 
 }
 
 #[tauri::command]
-pub fn detached_stop(app: AppHandle) -> Result<(), String> {
+pub async fn detached_start(app: AppHandle, profile_id: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || detached_start_sync(app, profile_id))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+pub fn detached_stop_sync(app: AppHandle) -> Result<(), String> {
+    invalidate_bg_status_cache();
     #[cfg(all(not(windows), not(target_os = "macos")))]
     {
         let _ = app;
@@ -759,6 +873,7 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
             }
             let _ = std::fs::remove_file(&pid_file);
             let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
+            invalidate_bg_status_cache();
             app.emit("log", "[*] motor durduruldu".to_string()).ok();
             app.emit("status_changed", false).ok();
             return Ok(());
@@ -774,6 +889,7 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
             if out.status.success() || out_str.contains("bulunamadı") || out_str.to_lowercase().contains("not found") {
                 let _ = std::fs::remove_file(&pid_file);
                 let _ = std::fs::remove_file(app_dir(&app).join("detached-stats.json"));
+                invalidate_bg_status_cache();
                 app.emit("log", "[*] bağımsız motor durduruldu".to_string()).ok();
                 Ok(())
             } else {
@@ -781,6 +897,13 @@ pub fn detached_stop(app: AppHandle) -> Result<(), String> {
             }
         }
     }
+}
+
+#[tauri::command]
+pub async fn detached_stop(app: AppHandle) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || detached_stop_sync(app))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 // ---------- yardımcılar ----------
@@ -913,25 +1036,14 @@ fn resolve_steps(app: &AppHandle, profile_id: &str) -> Result<Vec<anticore_core:
 
 // ---------- durum ----------
 
-#[tauri::command]
-pub fn get_status(app: AppHandle, engine: tauri::State<Engine>) -> StatusDto {
+pub fn get_status_sync(app: AppHandle) -> StatusDto {
+    let engine = app.state::<Engine>();
     let panel_running = engine.running.load(Ordering::SeqCst);
-    #[cfg(target_os = "android")]
-    let service_running = if !panel_running {
-        crate::android_bridge::is_vpn_running()
+    let (service_running, detached_running) = if !panel_running {
+        let (_installed, srv_run, det_run) = query_bg_status_cached(&app);
+        (srv_run, det_run)
     } else {
-        false
-    };
-    #[cfg(not(target_os = "android"))]
-    let service_running = if !panel_running {
-        sc_query(SERVICE_NAME).contains("RUNNING")
-    } else {
-        false
-    };
-    let detached_running = if !panel_running && !service_running {
-        is_detached_running(&app)
-    } else {
-        false
+        (false, false)
     };
 
     let running = panel_running || service_running || detached_running;
@@ -1015,22 +1127,40 @@ pub fn get_status(app: AppHandle, engine: tauri::State<Engine>) -> StatusDto {
     }
 }
 
+#[tauri::command]
+pub async fn get_status(app: AppHandle) -> StatusDto {
+    tokio::task::spawn_blocking(move || get_status_sync(app))
+        .await
+        .unwrap_or(StatusDto {
+            running: false,
+            profile_id: "universal".into(),
+            packets_seen: 0,
+            packets_touched: 0,
+            passthrough: 0,
+            uptime_sec: 0,
+        })
+}
+
 // ---------- profiller ----------
 
 #[tauri::command]
-pub fn list_profiles(app: AppHandle) -> Vec<ProfileDto> {
-    let mut out: Vec<ProfileDto> = anticore_core::profile::builtin_profiles()
-        .into_iter()
-        .map(|p| ProfileDto {
-            id: p.id.to_string(),
-            name: p.name.to_string(),
-            description: p.description.to_string(),
-            builtin: true,
-            steps: anticore_core::dto::steps_to_dto(&p.steps),
-        })
-        .collect();
-    out.extend(load_custom_profiles(&app));
-    out
+pub async fn list_profiles(app: AppHandle) -> Vec<ProfileDto> {
+    tokio::task::spawn_blocking(move || {
+        let mut out: Vec<ProfileDto> = anticore_core::profile::builtin_profiles()
+            .into_iter()
+            .map(|p| ProfileDto {
+                id: p.id.to_string(),
+                name: p.name.to_string(),
+                description: p.description.to_string(),
+                builtin: true,
+                steps: anticore_core::dto::steps_to_dto(&p.steps),
+            })
+            .collect();
+        out.extend(load_custom_profiles(&app));
+        out
+    })
+    .await
+    .unwrap_or_default()
 }
 
 #[tauri::command]
@@ -1155,8 +1285,7 @@ fn chrono_like_id() -> u64 {
 
 // ---------- hedef siteler ----------
 
-#[tauri::command]
-pub fn get_blacklist(app: AppHandle) -> Vec<String> {
+pub fn get_blacklist_sync(app: AppHandle) -> Vec<String> {
     let bl = load_blacklist(&app);
     let mut v: Vec<String> = bl.iter().cloned().collect();
     
@@ -1198,6 +1327,13 @@ pub fn get_blacklist(app: AppHandle) -> Vec<String> {
     v
 }
 
+#[tauri::command]
+pub async fn get_blacklist(app: AppHandle) -> Vec<String> {
+    tokio::task::spawn_blocking(move || get_blacklist_sync(app))
+        .await
+        .unwrap_or_default()
+}
+
 /// Hedef listesini native "Farklı Kaydet" diyaloğuyla seçilen `.txt`
 /// dosyasına yazar. Önceden Sites.tsx `<a download>` + blob kullanıyordu —
 /// WebView2'de sessizce çalışmaz (bkz. Faz 0 analizi A2.9).
@@ -1216,7 +1352,7 @@ pub fn export_sites_to_file(app: AppHandle) -> Result<bool, String> {
     };
     let path = path.into_path().map_err(|e| e.to_string())?;
 
-    std::fs::write(&path, get_blacklist(app).join("\n")).map_err(|e| format!("kaydedilemedi: {e}"))?;
+    std::fs::write(&path, get_blacklist_sync(app).join("\n")).map_err(|e| format!("kaydedilemedi: {e}"))?;
     Ok(true)
 }
 
@@ -1226,7 +1362,7 @@ pub fn add_site(app: AppHandle, engine: tauri::State<Engine>, domain: String) ->
     if domain.is_empty() || !domain.contains('.') || domain.contains(' ') {
         return Err("Geçersiz domain".into());
     }
-    let mut current = get_blacklist(app.clone());
+    let mut current = get_blacklist_sync(app.clone());
     if current.contains(&domain) {
         return Ok(());
     }
@@ -1241,7 +1377,7 @@ pub fn add_site(app: AppHandle, engine: tauri::State<Engine>, domain: String) ->
 /// Birden fazla alan adını tek disk yazma işlemiyle kara listeye ekler.
 #[tauri::command]
 pub fn add_sites(app: AppHandle, engine: tauri::State<Engine>, domains: Vec<String>) -> Result<usize, String> {
-    let current = get_blacklist(app.clone());
+    let current = get_blacklist_sync(app.clone());
     let mut set: std::collections::HashSet<String> = current.into_iter().collect();
     let mut added = 0usize;
     for domain in domains {
@@ -1266,17 +1402,21 @@ pub fn add_sites(app: AppHandle, engine: tauri::State<Engine>, domains: Vec<Stri
 /// kadar hafiftir (`ToSocketAddrs`, port 443 varsayımıyla); ayrı bir TLS
 /// probe'una gerek yok.
 #[tauri::command]
-pub fn resolve_domain(domain: String) -> bool {
-    use std::net::ToSocketAddrs;
-    (domain.trim(), 443u16)
-        .to_socket_addrs()
-        .map(|mut it| it.next().is_some())
-        .unwrap_or(false)
+pub async fn resolve_domain(domain: String) -> bool {
+    tokio::task::spawn_blocking(move || {
+        use std::net::ToSocketAddrs;
+        (domain.trim(), 443u16)
+            .to_socket_addrs()
+            .map(|mut it| it.next().is_some())
+            .unwrap_or(false)
+    })
+    .await
+    .unwrap_or(false)
 }
 
 #[tauri::command]
 pub fn remove_site(app: AppHandle, engine: tauri::State<Engine>, domain: String) -> Result<(), String> {
-    let current = get_blacklist(app.clone());
+    let current = get_blacklist_sync(app.clone());
     save_blacklist(
         &app,
         &current.into_iter().filter(|d| *d != domain).collect::<Vec<_>>(),
@@ -1294,10 +1434,10 @@ fn save_blacklist(app: &AppHandle, domains: &[String]) -> Result<(), String> {
 
 // ---------- motor ----------
 
-#[tauri::command]
-pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: String) -> Result<(), String> {
+pub fn start_engine_sync(app: AppHandle, profile_id: String) -> Result<(), String> {
+    invalidate_bg_status_cache();
     ensure_windivert_files(Some(&app));
-    let modes = get_setup_status(app.clone())?;
+    let modes = get_setup_status_sync(app.clone())?;
     #[cfg(windows)]
     if modes.detached_running || (modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED")) {
         return Err("Servis veya bağımsız motor çalışıyor; panel motorunu başlatmadan önce durdurun.".into());
@@ -1308,7 +1448,7 @@ pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: St
         if unsafe { libc::geteuid() } != 0 {
             // macOS üzerinde GUI süreci standart kullanıcıdır (WebKit/WindowServer kısıtı).
             // Ağ motoru root yetkisi gerektirdiğinden, sudoers yetkisiyle bağımsız CLI alt süreci başlatılır.
-            return detached_start(app, profile_id);
+            return detached_start_sync(app, profile_id);
         }
     }
 
@@ -1333,18 +1473,28 @@ pub fn start_engine(app: AppHandle, engine: tauri::State<Engine>, profile_id: St
                 .and_then(|p| p.parent().map(|d| d.to_path_buf()))
         });
 
+    let engine = app.state::<Engine>();
     engine.start(&profile_id, bl, steps, &config, dll_dir, log_sink)?;
+    invalidate_bg_status_cache();
     app.emit("status_changed", true).ok();
     Ok(())
 }
 
 #[tauri::command]
-pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
+pub async fn start_engine(app: AppHandle, profile_id: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || start_engine_sync(app, profile_id))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+pub fn stop_engine_sync(app: AppHandle) -> Result<(), String> {
+    invalidate_bg_status_cache();
+    let engine = app.state::<Engine>();
     if let Err(error) = engine.stop() {
         if error != "Motor zaten durdurulmuş" { return Err(error); }
     }
-    let modes = get_setup_status(app.clone())?;
-    if modes.detached_running { detached_stop(app.clone())?; }
+    let modes = get_setup_status_sync(app.clone())?;
+    if modes.detached_running { detached_stop_sync(app.clone())?; }
     #[cfg(windows)]
     if modes.service_installed && !sc_query(SERVICE_NAME).contains("STOPPED") {
         let output = silent_command("sc").args(["stop", SERVICE_NAME]).output()
@@ -1354,15 +1504,23 @@ pub fn stop_engine(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), S
         }
         let mut stopped = false;
         for _ in 0..50 {
-            let current = get_setup_status(app.clone())?;
+            let current = get_setup_status_sync(app.clone())?;
             if !current.service_installed || sc_query(SERVICE_NAME).contains("STOPPED") { stopped = true; break; }
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
         if !stopped { return Err("Servisin durması 5 saniye içinde doğrulanamadı.".into()); }
         app.emit("log", "[*] Arka plan servisi durduruldu".to_string()).ok();
     }
+    invalidate_bg_status_cache();
     app.emit("status_changed", false).ok();
     Ok(())
+}
+
+#[tauri::command]
+pub async fn stop_engine(app: AppHandle) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || stop_engine_sync(app))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[cfg(windows)]
@@ -1480,35 +1638,43 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
 // ---------- test (probe) ----------
 
 #[tauri::command]
-pub fn probe_target(req: ProbeRequest, engine: State<'_, Engine>) -> ProbeDto {
+pub async fn probe_target(app: AppHandle, req: ProbeRequest) -> ProbeDto {
     let host = req.host.trim().to_lowercase();
-    let is_running = engine.running.load(Ordering::SeqCst);
+    let is_running = app.state::<Engine>().running.load(Ordering::SeqCst);
+    let host_fallback = host.clone();
 
-    let r = if is_running {
-        // Motor aktifken yerel SOCKS5 proxy (127.0.0.1:10808) üzerinden bypass etkinliğini doğrula
-        let socks_probe = anticore_core::tester::probe_via_socks5(&host, 443, "127.0.0.1:10808", 3000);
-        if matches!(socks_probe, anticore_core::tester::ProbeResult::Open { .. }) {
-            socks_probe
+    tokio::task::spawn_blocking(move || {
+        let r = if is_running {
+            // Motor aktifken yerel SOCKS5 proxy (127.0.0.1:10808) üzerinden bypass etkinliğini doğrula
+            let socks_probe = anticore_core::tester::probe_via_socks5(&host, 443, "127.0.0.1:10808", 3000);
+            if matches!(socks_probe, anticore_core::tester::ProbeResult::Open { .. }) {
+                socks_probe
+            } else {
+                anticore_core::tester::probe(&host, 443, 3000)
+            }
         } else {
             anticore_core::tester::probe(&host, 443, 3000)
-        }
-    } else {
-        anticore_core::tester::probe(&host, 443, 3000)
-    };
+        };
 
-    let (result, latency) = match r {
-        anticore_core::tester::ProbeResult::Open { latency_ms } => ("open".into(), Some(latency_ms)),
-        anticore_core::tester::ProbeResult::Blocked { latency_ms } => ("blocked".into(), Some(latency_ms)),
-        anticore_core::tester::ProbeResult::Filtered => ("filtered".into(), None),
-        anticore_core::tester::ProbeResult::Unreachable(e) => (format!("unreachable:{e}"), None),
-    };
-    ProbeDto { host, result, latency_ms: latency }
+        let (result, latency) = match r {
+            anticore_core::tester::ProbeResult::Open { latency_ms } => ("open".into(), Some(latency_ms)),
+            anticore_core::tester::ProbeResult::Blocked { latency_ms } => ("blocked".into(), Some(latency_ms)),
+            anticore_core::tester::ProbeResult::Filtered => ("filtered".into(), None),
+            anticore_core::tester::ProbeResult::Unreachable(e) => (format!("unreachable:{e}"), None),
+        };
+        ProbeDto { host, result, latency_ms: latency }
+    })
+    .await
+    .unwrap_or(ProbeDto {
+        host: host_fallback,
+        result: "unreachable:task_error".into(),
+        latency_ms: None,
+    })
 }
 
 // ---------- ağ onarımı (DNS) ----------
 
-#[tauri::command]
-pub fn get_dns_servers() -> DnsDto {
+pub fn get_dns_servers_sync() -> DnsDto {
     #[cfg(windows)]
     {
         let out = run_powershell(
@@ -1568,7 +1734,13 @@ pub fn get_dns_servers() -> DnsDto {
 }
 
 #[tauri::command]
-pub fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), String> {
+pub async fn get_dns_servers() -> DnsDto {
+    tokio::task::spawn_blocking(get_dns_servers_sync)
+        .await
+        .unwrap_or(DnsDto { servers: vec![] })
+}
+
+pub fn apply_secure_dns_sync(app: AppHandle, provider: Option<String>) -> Result<(), String> {
     let provider_key = provider.unwrap_or_else(|| "google".to_string()).to_lowercase();
     let (v4, v6, prov_name) = match provider_key.as_str() {
         "cloudflare" => (
@@ -1684,7 +1856,13 @@ Clear-DnsClientCache
 }
 
 #[tauri::command]
-pub fn reset_dns(app: AppHandle) -> Result<(), String> {
+pub async fn apply_secure_dns(app: AppHandle, provider: Option<String>) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || apply_secure_dns_sync(app, provider))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+pub fn reset_dns_sync(app: AppHandle) -> Result<(), String> {
     #[cfg(windows)]
     {
         if !is_running_as_admin() {
@@ -1736,6 +1914,13 @@ Clear-DnsClientCache
         app.emit("log", "[*] DNS ayarları sıfırlandı".to_string()).ok();
         Ok(())
     }
+}
+
+#[tauri::command]
+pub async fn reset_dns(app: AppHandle) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || reset_dns_sync(app))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 /// Verilen IP'nin operatör DNS zehirlenmesi, yönlendirme sayfası veya
@@ -1900,23 +2085,26 @@ pub async fn check_dns_health(app: AppHandle) -> DnsHealthDto {
 /// Cloudflare Güvenli DNS'i ve Windows DoH (DNS-over-HTTPS) kaydını tek tıkla uygular,
 /// ardından sistem DNS önbelleğini temizler.
 #[tauri::command]
-pub fn auto_fix_dns(app: AppHandle) -> Result<(), String> {
-    #[cfg(windows)]
-    if !is_running_as_admin() {
-        return Err("Otomatik DNS onarımı için Windows yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak yeniden başlatın.".into());
-    }
-    apply_secure_dns(app.clone(), Some("cloudflare".into()))?;
-    #[cfg(windows)]
-    apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()))?;
-    #[cfg(not(windows))]
-    let _ = apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()));
-    crate::net_teardown::flush_dns_cache();
-    app.emit("log", "[+] Cloudflare Güvenli DNS otomatik olarak uygulandı ve DNS önbelleği temizlendi".to_string()).ok();
-    Ok(())
+pub async fn auto_fix_dns(app: AppHandle) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        #[cfg(windows)]
+        if !is_running_as_admin() {
+            return Err("Otomatik DNS onarımı için Windows yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak yeniden başlatın.".into());
+        }
+        apply_secure_dns_sync(app.clone(), Some("cloudflare".into()))?;
+        #[cfg(windows)]
+        apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()))?;
+        #[cfg(not(windows))]
+        let _ = apply_doh_registry(app.clone(), Some("https://cloudflare-dns.com/dns-query".into()));
+        crate::net_teardown::flush_dns_cache();
+        app.emit("log", "[+] Cloudflare Güvenli DNS otomatik olarak uygulandı ve DNS önbelleği temizlendi".to_string()).ok();
+        Ok(())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
-#[tauri::command]
-pub fn get_adapter_dns_info() -> Result<Vec<AdapterDnsInfo>, String> {
+pub fn get_adapter_dns_info_sync() -> Result<Vec<AdapterDnsInfo>, String> {
     #[cfg(windows)]
     {
         let script = r#"
@@ -1996,6 +2184,13 @@ $list | ConvertTo-Json -Compress
     {
         Ok(vec![])
     }
+}
+
+#[tauri::command]
+pub async fn get_adapter_dns_info() -> Result<Vec<AdapterDnsInfo>, String> {
+    tokio::task::spawn_blocking(get_adapter_dns_info_sync)
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 // ---------- LOG YÖNETİMİ ----------
@@ -2214,22 +2409,35 @@ pub fn ensure_windivert_files(app: Option<&AppHandle>) -> bool {
 }
 
 #[tauri::command]
-pub fn check_compatibility(app: AppHandle) -> anticore_core::compat::CompatReport {
-    ensure_windivert_files(Some(&app));
-    anticore_core::compat::check_compatibility()
+pub async fn check_compatibility(app: AppHandle) -> anticore_core::compat::CompatReport {
+    tokio::task::spawn_blocking(move || {
+        ensure_windivert_files(Some(&app));
+        anticore_core::compat::check_compatibility()
+    })
+    .await
+    .unwrap_or(anticore_core::compat::CompatReport {
+        av_detected: vec![],
+        vpn_detected: vec![],
+        legacy_services: vec![],
+        windivert_ok: true,
+    })
 }
 
 #[tauri::command]
-pub fn repair_driver_files(app: AppHandle) -> Result<bool, String> {
-    #[cfg(not(windows))]
-    {
-        let _ = app;
-        Ok(true)
-    }
-    #[cfg(windows)]
-    {
-        Ok(ensure_windivert_files(Some(&app)))
-    }
+pub async fn repair_driver_files(app: AppHandle) -> Result<bool, String> {
+    tokio::task::spawn_blocking(move || {
+        #[cfg(not(windows))]
+        {
+            let _ = app;
+            Ok(true)
+        }
+        #[cfg(windows)]
+        {
+            Ok(ensure_windivert_files(Some(&app)))
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -2250,8 +2458,7 @@ pub async fn auto_discover_profile(app: AppHandle) -> Result<Vec<anticore_core::
     Ok(res)
 }
 
-#[tauri::command]
-pub fn scan_legacy_services() -> Vec<LegacyServiceDto> {
+pub fn scan_legacy_services_sync() -> Vec<LegacyServiceDto> {
     #[cfg(not(windows))]
     return Vec::new();
 
@@ -2275,33 +2482,49 @@ pub fn scan_legacy_services() -> Vec<LegacyServiceDto> {
             ("WinDivert14", "WinDivert 1.4 Sürücü Servisi"),
         ];
 
-        let mut results = Vec::new();
-        for (id, name) in targets {
-            let q = sc_query(id);
-            let installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
-            let status = if !installed {
-                "NOT_INSTALLED"
-            } else if q.contains("RUNNING") {
-                "RUNNING"
-            } else if q.contains("STOPPED") {
-                "STOPPED"
-            } else {
-                "UNKNOWN"
-            };
+        std::thread::scope(|s| {
+            let handles: Vec<_> = targets
+                .iter()
+                .map(|&(id, name)| {
+                    s.spawn(move || {
+                        let q = sc_query(id);
+                        let installed = q.contains("SERVICE_NAME:") && !q.contains("1060");
+                        let status = if !installed {
+                            "NOT_INSTALLED"
+                        } else if q.contains("RUNNING") {
+                            "RUNNING"
+                        } else if q.contains("STOPPED") {
+                            "STOPPED"
+                        } else {
+                            "UNKNOWN"
+                        };
 
-            results.push(LegacyServiceDto {
-                id: id.to_string(),
-                name: name.to_string(),
-                status: status.to_string(),
-                installed,
-            });
-        }
-        results
+                        LegacyServiceDto {
+                            id: id.to_string(),
+                            name: name.to_string(),
+                            status: status.to_string(),
+                            installed,
+                        }
+                    })
+                })
+                .collect();
+
+            handles
+                .into_iter()
+                .filter_map(|h| h.join().ok())
+                .collect()
+        })
     }
 }
 
 #[tauri::command]
-pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>) -> Result<Vec<String>, String> {
+pub async fn scan_legacy_services() -> Vec<LegacyServiceDto> {
+    tokio::task::spawn_blocking(scan_legacy_services_sync)
+        .await
+        .unwrap_or_default()
+}
+
+pub fn cleanup_legacy_services_sync(app: AppHandle, service_ids: Option<Vec<String>>) -> Result<Vec<String>, String> {
     #[cfg(not(windows))]
     {
         let _ = app;
@@ -2328,7 +2551,7 @@ pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>)
     let to_clean = if let Some(ids) = service_ids {
         ids
     } else {
-        scan_legacy_services()
+        scan_legacy_services_sync()
             .into_iter()
             .filter(|s| s.installed)
             .map(|s| s.id)
@@ -2380,9 +2603,15 @@ pub fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>)
     }
 }
 
-#[cfg(windows)]
 #[tauri::command]
-pub fn get_startup_enabled() -> bool {
+pub async fn cleanup_legacy_services(app: AppHandle, service_ids: Option<Vec<String>>) -> Result<Vec<String>, String> {
+    tokio::task::spawn_blocking(move || cleanup_legacy_services_sync(app, service_ids))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[cfg(windows)]
+pub fn get_startup_enabled_sync() -> bool {
     // 1. Görev Zamanlayıcısı (Task Scheduler) kontrolü
     let task_exists = silent_command("schtasks")
         .args(["/Query", "/TN", "Anticore"])
@@ -2408,20 +2637,24 @@ fn macos_launch_agent_path() -> Result<PathBuf, String> {
 }
 
 #[cfg(target_os = "macos")]
-#[tauri::command]
-pub fn get_startup_enabled() -> bool {
+pub fn get_startup_enabled_sync() -> bool {
     macos_launch_agent_path().map(|p| p.exists()).unwrap_or(false)
 }
 
 #[cfg(not(any(windows, target_os = "macos")))]
-#[tauri::command]
-pub fn get_startup_enabled() -> bool {
+pub fn get_startup_enabled_sync() -> bool {
     false
 }
 
-#[cfg(windows)]
 #[tauri::command]
-pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+pub async fn get_startup_enabled() -> bool {
+    tokio::task::spawn_blocking(get_startup_enabled_sync)
+        .await
+        .unwrap_or(false)
+}
+
+#[cfg(windows)]
+pub fn set_startup_enabled_sync(app: AppHandle, enabled: bool) -> Result<(), String> {
     let run_key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
     if enabled {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
@@ -2467,8 +2700,7 @@ pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> 
 }
 
 #[cfg(target_os = "macos")]
-#[tauri::command]
-pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+pub fn set_startup_enabled_sync(app: AppHandle, enabled: bool) -> Result<(), String> {
     let plist_path = macos_launch_agent_path()?;
     if enabled {
         if let Some(parent) = plist_path.parent() {
@@ -2525,9 +2757,15 @@ pub fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> 
 }
 
 #[cfg(not(any(windows, target_os = "macos")))]
-#[tauri::command]
-pub fn set_startup_enabled(_app: AppHandle, _enabled: bool) -> Result<(), String> {
+pub fn set_startup_enabled_sync(_app: AppHandle, _enabled: bool) -> Result<(), String> {
     Err("Bu platformda başlangıç kaydı desteklenmiyor".into())
+}
+
+#[tauri::command]
+pub async fn set_startup_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || set_startup_enabled_sync(app, enabled))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[cfg(windows)]
@@ -2631,193 +2869,204 @@ pub fn reset_doh_registry(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn factory_reset(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
-    engine.stop().ok();
+pub async fn factory_reset(app: AppHandle) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        let engine = app.state::<Engine>();
+        engine.stop().ok();
 
-    // 1. Blacklist varsayılana sıfırlanır
-    std::fs::write(blacklist_path(&app), anticore_core::config::DEFAULT_BLACKLIST)
-        .map_err(|e| format!("Blacklist sıfırlanamadı: {e}"))?;
-    let new_bl = load_blacklist(&app);
-    engine.update_blacklist(new_bl);
+        // 1. Blacklist varsayılana sıfırlanır
+        std::fs::write(blacklist_path(&app), anticore_core::config::DEFAULT_BLACKLIST)
+            .map_err(|e| format!("Blacklist sıfırlanamadı: {e}"))?;
+        let new_bl = load_blacklist(&app);
+        engine.update_blacklist(new_bl);
 
-    // 2. Özel profiller kaldırılır
-    let _ = std::fs::remove_file(profiles_path(&app));
+        // 2. Özel profiller kaldırılır
+        let _ = std::fs::remove_file(profiles_path(&app));
 
-    // 3. Yapılandırma varsayılana döndürülür
-    let default_cfg = crate::service::EngineConfig::default();
-    let cfg_dto = EngineConfigDto {
-        pasif_savunma: default_cfg.pasif_savunma,
-        quic_engelle: default_cfg.quic_engelle,
-        lan_share: default_cfg.lan_share,
-    };
-    std::fs::write(
-        config_path(&app),
-        serde_json::to_string_pretty(&cfg_dto).map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| format!("Yapılandırma sıfırlanamadı: {e}"))?;
+        // 3. Yapılandırma varsayılana döndürülür
+        let default_cfg = crate::service::EngineConfig::default();
+        let cfg_dto = EngineConfigDto {
+            pasif_savunma: default_cfg.pasif_savunma,
+            quic_engelle: default_cfg.quic_engelle,
+            lan_share: default_cfg.lan_share,
+        };
+        std::fs::write(
+            config_path(&app),
+            serde_json::to_string_pretty(&cfg_dto).map_err(|e| e.to_string())?,
+        )
+        .map_err(|e| format!("Yapılandırma sıfırlanamadı: {e}"))?;
 
-    // 4. Bağımsız motor pid dosyasını kaldır
-    let _ = std::fs::remove_file(app_dir(&app).join("detached.pid"));
+        // 4. Bağımsız motor pid dosyasını kaldır
+        let _ = std::fs::remove_file(app_dir(&app).join("detached.pid"));
+        invalidate_bg_status_cache();
 
-    // 5. Başlangıçta çalıştırma görev ve kayıtlarını sil
-    set_startup_enabled(app.clone(), false).ok();
+        // 5. Başlangıçta çalıştırma görev ve kayıtlarını sil
+        set_startup_enabled_sync(app.clone(), false).ok();
 
-    // 6. DNS ve DoH kayıt defterini sıfırla
-    reset_dns(app.clone()).ok();
-    #[cfg(windows)]
-    reset_doh_registry(app.clone()).ok();
+        // 6. DNS ve DoH kayıt defterini sıfırla
+        reset_dns_sync(app.clone()).ok();
+        #[cfg(windows)]
+        reset_doh_registry(app.clone()).ok();
 
-    // 7. Log dosyasını temizle
-    clear_log_file(app.clone()).ok();
+        // 7. Log dosyasını temizle
+        clear_log_file(app.clone()).ok();
 
-    app.emit(
-        "log",
-        "[!] Fabrika sıfırlama tamamlandı: Tüm profiller, hedef listesi, DNS ayarları ve yapılandırma varsayılana döndürüldü.".to_string(),
-    )
-    .ok();
-    Ok(())
+        app.emit(
+            "log",
+            "[!] Fabrika sıfırlama tamamlandı: Tüm profiller, hedef listesi, DNS ayarları ve yapılandırma varsayılana döndürüldü.".to_string(),
+        )
+        .ok();
+        Ok(())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn purge_system(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
-    app.emit("log", "[!] Kapsamlı sistem temizliği başlatıldı. Tüm Anticore bileşenleri siliniyor...".to_string()).ok();
+pub async fn purge_system(app: AppHandle) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        app.emit("log", "[!] Kapsamlı sistem temizliği başlatıldı. Tüm Anticore bileşenleri siliniyor...".to_string()).ok();
 
-    // 1. Canlı motoru durdur
-    engine.stop().ok();
+        // 1. Canlı motoru durdur
+        app.state::<Engine>().stop().ok();
 
-    // 2. Servis ve süreçleri durdur/kaldır
-    #[cfg(target_os = "macos")]
-    {
-        let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
-        if plist_path.exists() {
-            let _ = silent_command("launchctl").args(["bootout", "system", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
-            let _ = silent_command("launchctl").args(["unload", "-w", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
-            let _ = std::fs::remove_file(plist_path);
-        }
-        let _ = silent_command("pkill").args(["-9", "-f", "anticore-cli"]).output();
-        let _ = silent_command("pfctl").args(["-F", "all"]).output();
-    }
-
-    #[cfg(windows)]
-    {
-        // Windows Servisini durdur ve sil
-        let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
-        let _ = silent_command("sc").args(["delete", SERVICE_NAME]).output();
-        // WinDivert sürücüsünü durdur
-        let _ = silent_command("net").args(["stop", "WinDivert"]).output();
-        // anticore-cli süreçlerini sonlandır
-        let _ = silent_command("taskkill").args(["/F", "/IM", "anticore-cli.exe"]).output();
-    }
-
-    // 3. DNS ve DoH kayıtlarını sıfırla, önbelleği boşalt
-    reset_dns(app.clone()).ok();
-    #[cfg(windows)]
-    reset_doh_registry(app.clone()).ok();
-    crate::net_teardown::flush_dns_cache();
-
-    // 4. Başlangıç görevlerini (schtasks / registry) sil
-    set_startup_enabled(app.clone(), false).ok();
-    #[cfg(windows)]
-    {
-        let _ = silent_command("schtasks").args(["/Delete", "/TN", "AnticoreAutoStart", "/F"]).output();
-        let _ = silent_command("schtasks").args(["/Delete", "/TN", "Anticore", "/F"]).output();
-        let run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run";
-        if let Ok(run_key) = windows_registry::CURRENT_USER.create(run_key_path) {
-            let _ = run_key.remove_value("Anticore");
-        }
-    }
-
-    // 5. Masaüstü ve Başlat Menüsü kısayollarını temizle (Windows)
-    #[cfg(windows)]
-    {
-        let ps_clean_shortcuts = r#"
-            $desktop = [Environment]::GetFolderPath('Desktop')
-            $commonDesktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
-            $startMenu = [Environment]::GetFolderPath('Programs')
-            $commonStartMenu = [Environment]::GetFolderPath('CommonPrograms')
-            $paths = @(
-                "$desktop\Anticore.lnk",
-                "$commonDesktop\Anticore.lnk",
-                "$startMenu\Anticore.lnk",
-                "$startMenu\Anticore",
-                "$commonStartMenu\Anticore.lnk",
-                "$commonStartMenu\Anticore"
-            )
-            foreach ($p in $paths) {
-                if (Test-Path $p) { Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue }
+        // 2. Servis ve süreçleri durdur/kaldır
+        #[cfg(target_os = "macos")]
+        {
+            let plist_path = std::path::Path::new("/Library/LaunchDaemons/com.monolithworks.anticore.plist");
+            if plist_path.exists() {
+                let _ = silent_command("launchctl").args(["bootout", "system", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
+                let _ = silent_command("launchctl").args(["unload", "-w", "/Library/LaunchDaemons/com.monolithworks.anticore.plist"]).output();
+                let _ = std::fs::remove_file(plist_path);
             }
-        "#;
-        let _ = silent_command("powershell").args(["-NoProfile", "-NonInteractive", "-Command", ps_clean_shortcuts]).output();
-    }
+            let _ = silent_command("pkill").args(["-9", "-f", "anticore-cli"]).output();
+            let _ = silent_command("pfctl").args(["-F", "all"]).output();
+        }
 
-    // 6. Uygulama veri dizinini (AppData / config) temizle
-    let data_dir = app_dir(&app);
-    if data_dir.exists() {
-        let _ = std::fs::remove_dir_all(&data_dir);
-    }
+        #[cfg(windows)]
+        {
+            // Windows Servisini durdur ve sil
+            let _ = silent_command("sc").args(["stop", SERVICE_NAME]).output();
+            let _ = silent_command("sc").args(["delete", SERVICE_NAME]).output();
+            // WinDivert sürücüsünü durdur
+            let _ = silent_command("net").args(["stop", "WinDivert"]).output();
+            // anticore-cli süreçlerini sonlandır
+            let _ = silent_command("taskkill").args(["/F", "/IM", "anticore-cli.exe"]).output();
+        }
 
-    // 7. Kendi kendini kaldırma / ikili dosya silme betiğini arka planda başlat
-    #[cfg(windows)]
-    let current_exe = std::env::current_exe().ok();
-    let app_pid = std::process::id();
+        // 3. DNS ve DoH kayıtlarını sıfırla, önbelleği boşalt
+        reset_dns_sync(app.clone()).ok();
+        #[cfg(windows)]
+        reset_doh_registry(app.clone()).ok();
+        crate::net_teardown::flush_dns_cache();
 
-    #[cfg(windows)]
-    if let Some(exe) = current_exe {
-        let exe_str = exe.to_string_lossy().to_string();
-        let install_dir = exe.parent();
-        let uninstaller = install_dir.map(|d| d.join("uninstall.exe"));
+        // 4. Başlangıç görevlerini (schtasks / registry) sil
+        set_startup_enabled_sync(app.clone(), false).ok();
+        #[cfg(windows)]
+        {
+            let _ = silent_command("schtasks").args(["/Delete", "/TN", "AnticoreAutoStart", "/F"]).output();
+            let _ = silent_command("schtasks").args(["/Delete", "/TN", "Anticore", "/F"]).output();
+            let run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run";
+            if let Ok(run_key) = windows_registry::CURRENT_USER.create(run_key_path) {
+                let _ = run_key.remove_value("Anticore");
+            }
+        }
 
-        let batch_path = std::env::temp_dir().join(format!("anticore_purge_{}.bat", app_pid));
-        let batch_content = if let Some(ref uninst) = uninstaller {
-            if uninst.is_file() {
-                format!(
-                    "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n\"{uninst_path}\" /S\r\n(goto) 2>nul & del \"%~f0\"\r\n",
-                    pid = app_pid,
-                    uninst_path = uninst.to_string_lossy()
+        // 5. Masaüstü ve Başlat Menüsü kısayollarını temizle (Windows)
+        #[cfg(windows)]
+        {
+            let ps_clean_shortcuts = r#"
+                $desktop = [Environment]::GetFolderPath('Desktop')
+                $commonDesktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
+                $startMenu = [Environment]::GetFolderPath('Programs')
+                $commonStartMenu = [Environment]::GetFolderPath('CommonPrograms')
+                $paths = @(
+                    "$desktop\Anticore.lnk",
+                    "$commonDesktop\Anticore.lnk",
+                    "$startMenu\Anticore.lnk",
+                    "$startMenu\Anticore",
+                    "$commonStartMenu\Anticore.lnk",
+                    "$commonStartMenu\Anticore"
                 )
+                foreach ($p in $paths) {
+                    if (Test-Path $p) { Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue }
+                }
+            "#;
+            let _ = silent_command("powershell").args(["-NoProfile", "-NonInteractive", "-Command", ps_clean_shortcuts]).output();
+        }
+
+        // 6. Uygulama veri dizinini (AppData / config) temizle
+        let data_dir = app_dir(&app);
+        if data_dir.exists() {
+            let _ = std::fs::remove_dir_all(&data_dir);
+        }
+
+        // 7. Kendi kendini kaldırma / ikili dosya silme betiğini arka planda başlat
+        #[cfg(windows)]
+        let current_exe = std::env::current_exe().ok();
+        let app_pid = std::process::id();
+
+        #[cfg(windows)]
+        if let Some(exe) = current_exe {
+            let exe_str = exe.to_string_lossy().to_string();
+            let install_dir = exe.parent();
+            let uninstaller = install_dir.map(|d| d.join("uninstall.exe"));
+
+            let batch_path = std::env::temp_dir().join(format!("anticore_purge_{}.bat", app_pid));
+            let batch_content = if let Some(ref uninst) = uninstaller {
+                if uninst.is_file() {
+                    format!(
+                        "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n\"{uninst_path}\" /S\r\n(goto) 2>nul & del \"%~f0\"\r\n",
+                        pid = app_pid,
+                        uninst_path = uninst.to_string_lossy()
+                    )
+                } else {
+                    format!(
+                        "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n:retry\r\ndel /F /Q \"{exe_path}\" >nul 2>&1\r\nif exist \"{exe_path}\" (\r\n  timeout /t 1 /nobreak >nul\r\n  goto retry\r\n)\r\n(goto) 2>nul & del \"%~f0\"\r\n",
+                        pid = app_pid,
+                        exe_path = exe_str
+                    )
+                }
             } else {
                 format!(
                     "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n:retry\r\ndel /F /Q \"{exe_path}\" >nul 2>&1\r\nif exist \"{exe_path}\" (\r\n  timeout /t 1 /nobreak >nul\r\n  goto retry\r\n)\r\n(goto) 2>nul & del \"%~f0\"\r\n",
                     pid = app_pid,
                     exe_path = exe_str
                 )
+            };
+
+            if std::fs::write(&batch_path, batch_content).is_ok() {
+                let _ = silent_command("cmd").args(["/C", &batch_path.to_string_lossy()]).spawn();
             }
-        } else {
-            format!(
-                "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ntaskkill /F /PID {pid} >nul 2>&1\r\n:retry\r\ndel /F /Q \"{exe_path}\" >nul 2>&1\r\nif exist \"{exe_path}\" (\r\n  timeout /t 1 /nobreak >nul\r\n  goto retry\r\n)\r\n(goto) 2>nul & del \"%~f0\"\r\n",
-                pid = app_pid,
-                exe_path = exe_str
-            )
-        };
-
-        if std::fs::write(&batch_path, batch_content).is_ok() {
-            let _ = silent_command("cmd").args(["/C", &batch_path.to_string_lossy()]).spawn();
         }
-    }
 
-    #[cfg(target_os = "macos")]
-    {
-        let cmd = format!(
-            "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore ~/Library/LaunchAgents/com.monolithworks.anticore.plist /etc/sudoers.d/anticore /etc/sudoers.d/com.monolithworks.anticore /var/log/anticore.*' >/dev/null 2>&1 &",
-            app_pid
-        );
-        let _ = silent_command("sh").args(["-c", &cmd]).spawn();
-    }
+        #[cfg(target_os = "macos")]
+        {
+            let cmd = format!(
+                "nohup sh -c 'sleep 2; kill -9 {} 2>/dev/null; rm -rf /Applications/Anticore.app ~/Library/Application\\ Support/com.monolithworks.anticore ~/Library/LaunchAgents/com.monolithworks.anticore.plist /etc/sudoers.d/anticore /etc/sudoers.d/com.monolithworks.anticore /var/log/anticore.*' >/dev/null 2>&1 &",
+                app_pid
+            );
+            let _ = silent_command("sh").args(["-c", &cmd]).spawn();
+        }
 
-    // 8. Uygulamayı 800ms sonra sonlandır
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(800));
-        std::process::exit(0);
-    });
+        // 8. Uygulamayı 800ms sonra sonlandır
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(800));
+            std::process::exit(0);
+        });
 
-    Ok(())
+        Ok(())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn dns_leak_test() -> Result<String, String> {
-    #[cfg(windows)]
-    {
-        let script = r#"
+pub async fn dns_leak_test() -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        #[cfg(windows)]
+        {
+            let script = r#"
 try {
     $result = Resolve-DnsName -Name discord.com -Type A -ErrorAction Stop
     $server = (Get-DnsClientServerAddress -AddressFamily IPv4 | Where-Object {$_.ServerAddresses}).ServerAddresses -join ', '
@@ -2826,34 +3075,38 @@ try {
     "Failed to resolve: $_"
 }
 "#;
-        let out = run_powershell(script);
-        Ok(out.trim().to_string())
-    }
-    #[cfg(target_os = "macos")]
-    {
-        if let Ok(out) = std::process::Command::new("dig").args(["discord.com", "+short"]).output() {
-            let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if !res.is_empty() {
-                return Ok(format!("Çözümlendi: {res}"));
+            let out = run_powershell(script);
+            Ok(out.trim().to_string())
+        }
+        #[cfg(target_os = "macos")]
+        {
+            if let Ok(out) = std::process::Command::new("dig").args(["discord.com", "+short"]).output() {
+                let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !res.is_empty() {
+                    return Ok(format!("Çözümlendi: {res}"));
+                }
             }
+            if let Ok(out) = std::process::Command::new("host").arg("discord.com").output() {
+                let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                return Ok(res);
+            }
+            Ok("DNS sorgusu tamamlanamadı".into())
         }
-        if let Ok(out) = std::process::Command::new("host").arg("discord.com").output() {
-            let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            return Ok(res);
+        #[cfg(not(any(windows, target_os = "macos")))]
+        {
+            Ok("Platformda desteklenmiyor".into())
         }
-        Ok("DNS sorgusu tamamlanamadı".into())
-    }
-    #[cfg(not(any(windows, target_os = "macos")))]
-    {
-        Ok("Platformda desteklenmiyor".into())
-    }
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn repair_discord_updates(app: AppHandle) -> Result<String, String> {
-    #[cfg(windows)]
-    {
-        let script = r#"
+pub async fn repair_discord_updates(app: AppHandle) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        #[cfg(windows)]
+        {
+            let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
@@ -2873,30 +3126,34 @@ foreach ($f in $discordFolders) {
 
 "Discord güncelleme kilitleri ve DNS önbelleği başarıyla temizlendi."
 "#;
-        let out = run_powershell(script);
-        app.emit("log", "[+] Discord güncelleme döngüsü onarıldı".to_string()).ok();
-        Ok(out.trim().to_string())
-    }
-    #[cfg(target_os = "macos")]
-    {
-        let _ = std::process::Command::new("pkill").args(["-f", "Discord"]).status();
-        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
-        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
-        app.emit("log", "[+] Discord süreçleri ve macOS DNS önbelleği yenilendi".to_string()).ok();
-        Ok("Discord süreçleri ve DNS önbelleği başarıyla temizlendi.".to_string())
-    }
-    #[cfg(not(any(windows, target_os = "macos")))]
-    {
-        app.emit("log", "[*] Discord onarımı bu platformda desteklenmiyor".to_string()).ok();
-        Ok("Desteklenmeyen platform".into())
-    }
+            let out = run_powershell(script);
+            app.emit("log", "[+] Discord güncelleme döngüsü onarıldı".to_string()).ok();
+            Ok(out.trim().to_string())
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let _ = std::process::Command::new("pkill").args(["-f", "Discord"]).status();
+            let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+            let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+            app.emit("log", "[+] Discord süreçleri ve macOS DNS önbelleği yenilendi".to_string()).ok();
+            Ok("Discord süreçleri ve DNS önbelleği başarıyla temizlendi.".to_string())
+        }
+        #[cfg(not(any(windows, target_os = "macos")))]
+        {
+            app.emit("log", "[*] Discord onarımı bu platformda desteklenmiyor".to_string()).ok();
+            Ok("Desteklenmeyen platform".into())
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn clear_discord_cache(app: AppHandle) -> Result<String, String> {
-    #[cfg(windows)]
-    {
-        let script = r#"
+pub async fn clear_discord_cache(app: AppHandle) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        #[cfg(windows)]
+        {
+            let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 Get-Process -Name Discord, DiscordPTB, DiscordCanary -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
@@ -2924,98 +3181,109 @@ ipconfig /flushdns
 
 "Discord önbelleği (Cache / GPU / Network State) ve DNS önbelleği başarıyla temizlendi."
 "#;
-        let out = run_powershell(script);
-        app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
-        Ok(out.trim().to_string())
-    }
-    #[cfg(target_os = "macos")]
-    {
-        let _ = std::process::Command::new("pkill").args(["-f", "Discord"]).status();
-        if let Some(home) = std::env::var_os("HOME") {
-            for app_name in &["discord", "discordptb", "discordcanary"] {
-                let discord_dir = std::path::PathBuf::from(&home).join("Library/Application Support").join(app_name);
-                if discord_dir.exists() {
-                    let caches = ["Cache", "Code Cache", "GPUCache", "DawnCache", "DawnGraphiteCache", "blob_storage", "Session Storage", "DIPS", "lockfile"];
-                    for c in &caches {
-                        let _ = std::fs::remove_dir_all(discord_dir.join(c));
+            let out = run_powershell(script);
+            app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
+            Ok(out.trim().to_string())
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let _ = std::process::Command::new("pkill").args(["-f", "Discord"]).status();
+            if let Some(home) = std::env::var_os("HOME") {
+                for app_name in &["discord", "discordptb", "discordcanary"] {
+                    let discord_dir = std::path::PathBuf::from(&home).join("Library/Application Support").join(app_name);
+                    if discord_dir.exists() {
+                        let caches = ["Cache", "Code Cache", "GPUCache", "DawnCache", "DawnGraphiteCache", "blob_storage", "Session Storage", "DIPS", "lockfile"];
+                        for c in &caches {
+                            let _ = std::fs::remove_dir_all(discord_dir.join(c));
+                        }
+                        let _ = std::fs::remove_file(discord_dir.join("Network/Network Persistent State"));
                     }
-                    let _ = std::fs::remove_file(discord_dir.join("Network/Network Persistent State"));
                 }
             }
+            let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+            let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+            app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
+            Ok("Discord önbelleği (Cache / GPU / Network State) ve DNS önbelleği başarıyla temizlendi.".to_string())
         }
-        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
-        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
-        app.emit("log", "[+] Discord önbellek dosyaları temizlendi".to_string()).ok();
-        Ok("Discord önbelleği (Cache / GPU / Network State) ve DNS önbelleği başarıyla temizlendi.".to_string())
-    }
-    #[cfg(not(any(windows, target_os = "macos")))]
-    {
-        app.emit("log", "[*] Discord önbellek temizleme bu platformda desteklenmiyor".to_string()).ok();
-        Ok("Discord önbellek temizleme bu platformda desteklenmiyor.".to_string())
-    }
+        #[cfg(not(any(windows, target_os = "macos")))]
+        {
+            app.emit("log", "[*] Discord önbellek temizleme bu platformda desteklenmiyor".to_string()).ok();
+            Ok("Discord önbellek temizleme bu platformda desteklenmiyor.".to_string())
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn flush_dns_and_renew_adapters(app: AppHandle) -> Result<String, String> {
-    crate::net_teardown::flush_dns_cache();
-    #[cfg(windows)]
-    {
-        let script = r#"
+pub async fn flush_dns_and_renew_adapters(app: AppHandle) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        crate::net_teardown::flush_dns_cache();
+        #[cfg(windows)]
+        {
+            let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 Clear-DnsClientCache
 ipconfig /flushdns
 ipconfig /renew
 "DNS önbelleği temizlendi ve ağ bağdaştırıcıları (DHCP) başarıyla yenilendi."
 "#;
-        let out = run_powershell(script);
-        app.emit("log", "[+] Windows DNS önbelleği temizlendi ve bağdaştırıcılar yenilendi".to_string()).ok();
-        Ok(out.trim().to_string())
-    }
-    #[cfg(target_os = "macos")]
-    {
-        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
-        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
-        app.emit("log", "[+] macOS DNS önbelleği temizlendi (dscacheutil & mDNSResponder)".to_string()).ok();
-        Ok("macOS DNS önbelleği başarıyla temizlendi.".to_string())
-    }
-    #[cfg(not(any(windows, target_os = "macos")))]
-    {
-        app.emit("log", "[+] DNS önbelleği temizlendi".to_string()).ok();
-        Ok("DNS önbelleği temizlendi.".to_string())
-    }
+            let out = run_powershell(script);
+            app.emit("log", "[+] Windows DNS önbelleği temizlendi ve bağdaştırıcılar yenilendi".to_string()).ok();
+            Ok(out.trim().to_string())
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+            let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+            app.emit("log", "[+] macOS DNS önbelleği temizlendi (dscacheutil & mDNSResponder)".to_string()).ok();
+            Ok("macOS DNS önbelleği başarıyla temizlendi.".to_string())
+        }
+        #[cfg(not(any(windows, target_os = "macos")))]
+        {
+            app.emit("log", "[+] DNS önbelleği temizlendi".to_string()).ok();
+            Ok("DNS önbelleği temizlendi.".to_string())
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn reset_network_stack(app: AppHandle) -> Result<String, String> {
-    #[cfg(windows)]
-    {
-        if !is_running_as_admin() {
-            return Err("Ağ yığınını ve Winsock katmanını sıfırlamak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
-        }
-        let script = r#"
+pub async fn reset_network_stack(app: AppHandle) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        #[cfg(windows)]
+        {
+            if !is_running_as_admin() {
+                return Err("Ağ yığınını ve Winsock katmanını sıfırlamak için Windows Yönetici (Administrator) yetkisi gereklidir. Lütfen uygulamayı yönetici olarak başlatın.".into());
+            }
+            let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
 netsh winsock reset
 netsh int ip reset
 ipconfig /flushdns
 "Winsock kataloğu ve TCP/IP protokol yığını başarıyla sıfırlandı. Değişikliklerin tam devreye girmesi için bilgisayarınızı yeniden başlatmanız önerilir."
 "#;
-        let out = run_powershell(script);
-        app.emit("log", "[+] Winsock ve TCP/IP ağ yığını başarıyla sıfırlandı".to_string()).ok();
-        Ok(out.trim().to_string())
-    }
-    #[cfg(target_os = "macos")]
-    {
-        let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
-        let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
-        let _ = std::process::Command::new("pfctl").args(["-F", "all"]).status();
-        app.emit("log", "[+] macOS ağ ve paket filtresi (pfctl) yığını başarıyla temizlendi".to_string()).ok();
-        Ok("macOS DNS ve paket filtresi (pf) kuralları başarıyla sıfırlandı.".to_string())
-    }
-    #[cfg(not(any(windows, target_os = "macos")))]
-    {
-        app.emit("log", "[+] Ağ yığını sıfırlandı".to_string()).ok();
-        Ok("Ağ yığını sıfırlandı.".to_string())
-    }
+            let out = run_powershell(script);
+            app.emit("log", "[+] Winsock ve TCP/IP ağ yığını başarıyla sıfırlandı".to_string()).ok();
+            Ok(out.trim().to_string())
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let _ = std::process::Command::new("dscacheutil").arg("-flushcache").status();
+            let _ = std::process::Command::new("killall").args(["-HUP", "mDNSResponder"]).status();
+            let _ = std::process::Command::new("pfctl").args(["-F", "all"]).status();
+            app.emit("log", "[+] macOS ağ ve paket filtresi (pfctl) yığını başarıyla temizlendi".to_string()).ok();
+            Ok("macOS DNS ve paket filtresi (pf) kuralları başarıyla sıfırlandı.".to_string())
+        }
+        #[cfg(not(any(windows, target_os = "macos")))]
+        {
+            app.emit("log", "[+] Ağ yığını sıfırlandı".to_string()).ok();
+            Ok("Ağ yığını sıfırlandı.".to_string())
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 // ---------- GITHUB UPDATER & SÜRÜM YÖNETİMİ ----------
@@ -3138,201 +3406,205 @@ fn trigger_update_notification(app: &AppHandle, tag: &str, _title: &str) {
 /// API 403 (Rate Limit) veya ağ engeli verirse, doğrudan GitHub CDN üzerindeki
 /// sınırsız `latest.json` dosyasını yedek (fallback) kanal olarak kullanır.
 #[tauri::command]
-pub fn check_update(
+pub async fn check_update(
     app: AppHandle,
     repo_override: Option<String>,
     token_override: Option<String>,
 ) -> Result<UpdateInfoDto, String> {
-    let repo = repo_override
-        .filter(|s| !s.trim().is_empty())
-        .unwrap_or_else(|| "MonarchDevLab/Anticore".to_string());
-    let current_ver = APP_VERSION;
+    tokio::task::spawn_blocking(move || {
+        let repo = repo_override
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or_else(|| "MonarchDevLab/Anticore".to_string());
+        let current_ver = APP_VERSION;
 
-    let uri = format!("https://api.github.com/repos/{}/releases/latest", repo.trim());
-    let mut req = ureq::get(&uri)
-        .set("User-Agent", &format!("Anticore-Desktop/{current_ver}"))
-        .set("Accept", "application/vnd.github+json")
-        .timeout(std::time::Duration::from_secs(5));
+        let uri = format!("https://api.github.com/repos/{}/releases/latest", repo.trim());
+        let mut req = ureq::get(&uri)
+            .set("User-Agent", &format!("Anticore-Desktop/{current_ver}"))
+            .set("Accept", "application/vnd.github+json")
+            .timeout(std::time::Duration::from_secs(5));
 
-    let token = token_override
-        .filter(|s| !s.trim().is_empty())
-        .or_else(|| std::env::var("GITHUB_TOKEN").ok())
-        .or_else(|| std::env::var("GH_TOKEN").ok());
+        let token = token_override
+            .filter(|s| !s.trim().is_empty())
+            .or_else(|| std::env::var("GITHUB_TOKEN").ok())
+            .or_else(|| std::env::var("GH_TOKEN").ok());
 
-    if let Some(tok) = token {
-        req = req.set("Authorization", &format!("Bearer {}", tok.trim()));
-    }
-
-    let api_result = req.call();
-
-    // 1. Birincil Yol: GitHub Releases REST API
-    if let Ok(resp) = api_result {
-        if let Ok(parsed) = resp.into_json::<GhRelease>() {
-            let latest_tag = parsed.tag_name.unwrap_or_default();
-            let clean_tag = latest_tag.trim().trim_start_matches('v').to_string();
-            let has_update = is_newer_version(current_ver, &clean_tag);
-            let is_portable = is_current_app_portable();
-
-            let mut setup_url = None;
-            let mut portable_exe_url = None;
-            let mut portable_zip_url = None;
-
-            for a in &parsed.assets {
-                if a.name.contains("cli") || a.name.contains("daemon") {
-                    continue;
-                }
-                if a.name.ends_with("-setup.exe") {
-                    setup_url = Some(a.browser_download_url.clone());
-                } else if a.name.ends_with("-portable.zip") {
-                    portable_zip_url = Some(a.browser_download_url.clone());
-                } else if a.name == "Anticore.exe" || a.name.ends_with("_portable.exe") {
-                    portable_exe_url = Some(a.browser_download_url.clone());
-                }
-            }
-
-            let download_url = {
-                #[cfg(target_os = "macos")]
-                {
-                    #[cfg(target_arch = "aarch64")]
-                    {
-                        parsed
-                            .assets
-                            .iter()
-                            .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                            .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".pkg"))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg")))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".pkg")))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
-                            .map(|a| a.browser_download_url.clone())
-                    }
-                    #[cfg(not(target_arch = "aarch64"))]
-                    {
-                        parsed
-                            .assets
-                            .iter()
-                            .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
-                            .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".pkg"))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg")))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".pkg")))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
-                            .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
-                            .map(|a| a.browser_download_url.clone())
-                    }
-                }
-                #[cfg(not(target_os = "macos"))]
-                {
-                    setup_url.clone()
-                        .or_else(|| portable_exe_url.clone())
-                }
-            };
-
-            let display_version = clean_tag.clone();
-            let release_title = format!("Anticore v{clean_tag}");
-
-            if has_update {
-                trigger_update_notification(&app, &display_version, &release_title);
-            }
-
-            let release_notes = strip_emojis(&parsed.body.unwrap_or_default());
-            return Ok(UpdateInfoDto {
-                has_update,
-                current_version: current_ver.to_string(),
-                latest_version: display_version,
-                release_name: release_title,
-                release_notes,
-                html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
-                download_url,
-                setup_url,
-                portable_exe_url,
-                portable_zip_url,
-                is_portable,
-                published_at: parsed.published_at.unwrap_or_default(),
-            });
+        if let Some(tok) = token {
+            req = req.set("Authorization", &format!("Bearer {}", tok.trim()));
         }
-    }
 
-    // 2. İkincil Yol (Rate Limit ve Ağ Fallback): Doğrudan GitHub CDN latest.json
-    let cdn_uri = format!("https://github.com/{}/releases/latest/download/latest.json", repo.trim());
-    let cdn_resp = ureq::get(&cdn_uri)
-        .set("User-Agent", &format!("Anticore-Desktop/{current_ver}"))
-        .timeout(std::time::Duration::from_secs(6))
-        .call();
+        let api_result = req.call();
 
-    if let Ok(resp) = cdn_resp {
-        if let Ok(latest_meta) = resp.into_json::<LatestJson>() {
-            let latest_version = latest_meta.version.unwrap_or_default();
-            let clean_ver = latest_version.trim().trim_start_matches('v').to_string();
-            let has_update = is_newer_version(current_ver, &clean_ver);
-            let is_portable = is_current_app_portable();
+        // 1. Birincil Yol: GitHub Releases REST API
+        if let Ok(resp) = api_result {
+            if let Ok(parsed) = resp.into_json::<GhRelease>() {
+                let latest_tag = parsed.tag_name.unwrap_or_default();
+                let clean_tag = latest_tag.trim().trim_start_matches('v').to_string();
+                let has_update = is_newer_version(current_ver, &clean_tag);
+                let is_portable = is_current_app_portable();
 
-            let setup_url = Some(format!(
-                "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-setup.exe",
-                repo.trim()
-            ));
-            let portable_exe_url = Some(format!(
-                "https://github.com/{}/releases/download/v{clean_ver}/Anticore.exe",
-                repo.trim()
-            ));
-            let portable_zip_url = Some(format!(
-                "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-portable.zip",
-                repo.trim()
-            ));
+                let mut setup_url = None;
+                let mut portable_exe_url = None;
+                let mut portable_zip_url = None;
 
-            let download_url = {
-                #[cfg(target_os = "macos")]
-                {
-                    #[cfg(target_arch = "aarch64")]
-                    {
-                        latest_meta
-                            .platforms
-                            .get("darwin-aarch64")
-                            .or_else(|| latest_meta.platforms.get("darwin-arm64"))
-                            .and_then(|p| p.url.clone())
-                            .or_else(|| Some(format!("https://github.com/{}/releases/latest", repo.trim())))
+                for a in &parsed.assets {
+                    if a.name.contains("cli") || a.name.contains("daemon") {
+                        continue;
                     }
-                    #[cfg(not(target_arch = "aarch64"))]
-                    {
-                        latest_meta
-                            .platforms
-                            .get("darwin-x86_64")
-                            .and_then(|p| p.url.clone())
-                            .or_else(|| Some(format!("https://github.com/{}/releases/latest", repo.trim())))
+                    if a.name.ends_with("-setup.exe") {
+                        setup_url = Some(a.browser_download_url.clone());
+                    } else if a.name.ends_with("-portable.zip") {
+                        portable_zip_url = Some(a.browser_download_url.clone());
+                    } else if a.name == "Anticore.exe" || a.name.ends_with("_portable.exe") {
+                        portable_exe_url = Some(a.browser_download_url.clone());
                     }
                 }
-                #[cfg(not(target_os = "macos"))]
-                {
-                    setup_url.clone()
-                        .or_else(|| portable_exe_url.clone())
+
+                let download_url = {
+                    #[cfg(target_os = "macos")]
+                    {
+                        #[cfg(target_arch = "aarch64")]
+                        {
+                            parsed
+                                .assets
+                                .iter()
+                                .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
+                                .find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".pkg"))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".dmg")))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".pkg")))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("aarch64") || a.name.contains("arm64")) && a.name.ends_with(".tar.gz")))
+                                .map(|a| a.browser_download_url.clone())
+                        }
+                        #[cfg(not(target_arch = "aarch64"))]
+                        {
+                            parsed
+                                .assets
+                                .iter()
+                                .filter(|a| !a.name.contains("cli") && !a.name.contains("daemon"))
+                                .find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".pkg"))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".dmg")))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".pkg")))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| a.name.ends_with(".dmg")))
+                                .or_else(|| parsed.assets.iter().filter(|a| !a.name.contains("cli") && !a.name.contains("daemon")).find(|a| (a.name.contains("x64") || a.name.contains("x86_64")) && a.name.ends_with(".tar.gz")))
+                                .map(|a| a.browser_download_url.clone())
+                        }
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        setup_url.clone()
+                            .or_else(|| portable_exe_url.clone())
+                    }
+                };
+
+                let display_version = clean_tag.clone();
+                let release_title = format!("Anticore v{clean_tag}");
+
+                if has_update {
+                    trigger_update_notification(&app, &display_version, &release_title);
                 }
-            };
 
-            let display_version = clean_ver.clone();
-            let release_title = format!("Anticore v{clean_ver}");
-
-            if has_update {
-                trigger_update_notification(&app, &display_version, &release_title);
+                let release_notes = strip_emojis(&parsed.body.unwrap_or_default());
+                return Ok(UpdateInfoDto {
+                    has_update,
+                    current_version: current_ver.to_string(),
+                    latest_version: display_version,
+                    release_name: release_title,
+                    release_notes,
+                    html_url: parsed.html_url.unwrap_or_else(|| format!("https://github.com/{repo}/releases")),
+                    download_url,
+                    setup_url,
+                    portable_exe_url,
+                    portable_zip_url,
+                    is_portable,
+                    published_at: parsed.published_at.unwrap_or_default(),
+                });
             }
-
-            let release_notes = strip_emojis(&latest_meta.notes.unwrap_or_default());
-            return Ok(UpdateInfoDto {
-                has_update,
-                current_version: current_ver.to_string(),
-                latest_version: display_version,
-                release_name: release_title,
-                release_notes,
-                html_url: format!("https://github.com/{repo}/releases/tag/v{clean_ver}"),
-                download_url,
-                setup_url,
-                portable_exe_url,
-                portable_zip_url,
-                is_portable,
-                published_at: latest_meta.pub_date.unwrap_or_default(),
-            });
         }
-    }
 
-    Err("Güncelleme sunucusuna ulaşılamadı (GitHub API ve CDN yedek kanalı yanıt vermedi).".into())
+        // 2. İkincil Yol (Rate Limit ve Ağ Fallback): Doğrudan GitHub CDN latest.json
+        let cdn_uri = format!("https://github.com/{}/releases/latest/download/latest.json", repo.trim());
+        let cdn_resp = ureq::get(&cdn_uri)
+            .set("User-Agent", &format!("Anticore-Desktop/{current_ver}"))
+            .timeout(std::time::Duration::from_secs(6))
+            .call();
+
+        if let Ok(resp) = cdn_resp {
+            if let Ok(latest_meta) = resp.into_json::<LatestJson>() {
+                let latest_version = latest_meta.version.unwrap_or_default();
+                let clean_ver = latest_version.trim().trim_start_matches('v').to_string();
+                let has_update = is_newer_version(current_ver, &clean_ver);
+                let is_portable = is_current_app_portable();
+
+                let setup_url = Some(format!(
+                    "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-setup.exe",
+                    repo.trim()
+                ));
+                let portable_exe_url = Some(format!(
+                    "https://github.com/{}/releases/download/v{clean_ver}/Anticore.exe",
+                    repo.trim()
+                ));
+                let portable_zip_url = Some(format!(
+                    "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-portable.zip",
+                    repo.trim()
+                ));
+
+                let download_url = {
+                    #[cfg(target_os = "macos")]
+                    {
+                        #[cfg(target_arch = "aarch64")]
+                        {
+                            latest_meta
+                                .platforms
+                                .get("darwin-aarch64")
+                                .or_else(|| latest_meta.platforms.get("darwin-arm64"))
+                                .and_then(|p| p.url.clone())
+                                .or_else(|| Some(format!("https://github.com/{}/releases/latest", repo.trim())))
+                        }
+                        #[cfg(not(target_arch = "aarch64"))]
+                        {
+                            latest_meta
+                                .platforms
+                                .get("darwin-x86_64")
+                                .and_then(|p| p.url.clone())
+                                .or_else(|| Some(format!("https://github.com/{}/releases/latest", repo.trim())))
+                        }
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        setup_url.clone()
+                            .or_else(|| portable_exe_url.clone())
+                    }
+                };
+
+                let display_version = clean_ver.clone();
+                let release_title = format!("Anticore v{clean_ver}");
+
+                if has_update {
+                    trigger_update_notification(&app, &display_version, &release_title);
+                }
+
+                let release_notes = strip_emojis(&latest_meta.notes.unwrap_or_default());
+                return Ok(UpdateInfoDto {
+                    has_update,
+                    current_version: current_ver.to_string(),
+                    latest_version: display_version,
+                    release_name: release_title,
+                    release_notes,
+                    html_url: format!("https://github.com/{repo}/releases/tag/v{clean_ver}"),
+                    download_url,
+                    setup_url,
+                    portable_exe_url,
+                    portable_zip_url,
+                    is_portable,
+                    published_at: latest_meta.pub_date.unwrap_or_default(),
+                });
+            }
+        }
+
+        Err("Güncelleme sunucusuna ulaşılamadı (GitHub API ve CDN yedek kanalı yanıt vermedi).".into())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -3643,105 +3915,115 @@ pub fn test_update_notification(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn fetch_community_blacklist(app: AppHandle, engine: tauri::State<Engine>, source_url: Option<String>) -> Result<usize, String> {
-    let url = source_url
-        .filter(|s| !s.trim().is_empty())
-        .unwrap_or_else(|| {
-            "https://raw.githubusercontent.com/alimali54/zapret-win-turkey/master/config/hostlist.txt".to_string()
-        });
+pub async fn fetch_community_blacklist(app: AppHandle, source_url: Option<String>) -> Result<usize, String> {
+    tokio::task::spawn_blocking(move || {
+        let engine = app.state::<Engine>();
+        let url = source_url
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or_else(|| {
+                "https://raw.githubusercontent.com/alimali54/zapret-win-turkey/master/config/hostlist.txt".to_string()
+            });
 
-    let remote_text = ureq::get(&url)
-        .set("User-Agent", "Anticore-Desktop/0.3.0")
-        .timeout(std::time::Duration::from_secs(6))
-        .call()
-        .ok()
-        .and_then(|resp| resp.into_string().ok());
+        let remote_text = ureq::get(&url)
+            .set("User-Agent", "Anticore-Desktop/0.3.0")
+            .timeout(std::time::Duration::from_secs(6))
+            .call()
+            .ok()
+            .and_then(|resp| resp.into_string().ok());
 
-    // Uzak liste indirilemediyse yerleşik genişletilmiş DEFAULT_BLACKLIST hedeflerini kullan
-    let text = remote_text.unwrap_or_else(|| anticore_core::config::DEFAULT_BLACKLIST.to_string());
+        // Uzak liste indirilemediyse yerleşik genişletilmiş DEFAULT_BLACKLIST hedeflerini kullan
+        let text = remote_text.unwrap_or_else(|| anticore_core::config::DEFAULT_BLACKLIST.to_string());
 
-    let path = blacklist_path(&app);
-    let existing_text = std::fs::read_to_string(&path).unwrap_or_default();
-    let mut existing_set = std::collections::HashSet::new();
-    let mut lines = Vec::new();
+        let path = blacklist_path(&app);
+        let existing_text = std::fs::read_to_string(&path).unwrap_or_default();
+        let mut existing_set = std::collections::HashSet::new();
+        let mut lines = Vec::new();
 
-    for line in existing_text.lines() {
-        let trimmed = line.trim();
-        if !trimmed.is_empty() {
-            if !trimmed.starts_with('#') {
-                existing_set.insert(trimmed.to_ascii_lowercase());
+        for line in existing_text.lines() {
+            let trimmed = line.trim();
+            if !trimmed.is_empty() {
+                if !trimmed.starts_with('#') {
+                    existing_set.insert(trimmed.to_ascii_lowercase());
+                }
+                lines.push(trimmed.to_string());
             }
-            lines.push(trimmed.to_string());
         }
-    }
 
-    let mut added_count = 0;
-    lines.push("\n# --- Topluluk Listesinden İçe Aktarılanlar ---".to_string());
+        let mut added_count = 0;
+        lines.push("\n# --- Topluluk Listesinden İçe Aktarılanlar ---".to_string());
 
-    for line in text.lines() {
-        let trimmed = line.trim().trim_start_matches("*.").to_ascii_lowercase();
-        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.contains('/') || trimmed.contains(' ') {
-            continue;
+        for line in text.lines() {
+            let trimmed = line.trim().trim_start_matches("*.").to_ascii_lowercase();
+            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.contains('/') || trimmed.contains(' ') {
+                continue;
+            }
+            if !existing_set.contains(&trimmed) {
+                existing_set.insert(trimmed.clone());
+                lines.push(trimmed);
+                added_count += 1;
+            }
         }
-        if !existing_set.contains(&trimmed) {
-            existing_set.insert(trimmed.clone());
-            lines.push(trimmed);
-            added_count += 1;
-        }
-    }
 
-    std::fs::write(&path, lines.join("\n"))
-        .map_err(|e| format!("Hedef listesi kaydedilemedi: {e}"))?;
+        std::fs::write(&path, lines.join("\n"))
+            .map_err(|e| format!("Hedef listesi kaydedilemedi: {e}"))?;
 
-    let new_bl = load_blacklist(&app);
-    engine.update_blacklist(new_bl);
+        let new_bl = load_blacklist(&app);
+        engine.update_blacklist(new_bl);
 
-    app.emit(
-        "log",
-        format!("[+] Topluluk listesinden {} yeni alan adı içe aktarıldı", added_count),
-    )
-    .ok();
+        app.emit(
+            "log",
+            format!("[+] Topluluk listesinden {} yeni alan adı içe aktarıldı", added_count),
+        )
+        .ok();
 
-    Ok(added_count)
+        Ok(added_count)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// Varsayılan hedef listesindeki (DEFAULT_BLACKLIST) eksik alan adlarını ve
 /// video/medya CDN'lerini mevcut kullanıcı listesine birleştirir.
 #[tauri::command]
-pub fn sync_default_blacklist(app: AppHandle, engine: tauri::State<Engine>) -> Result<usize, String> {
-    let p = blacklist_path(&app);
-    let existing_text = std::fs::read_to_string(&p).unwrap_or_default();
-    let current_bl = anticore_core::config::Blacklist::from_lines(&existing_text);
-    let default_bl = anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST);
+pub async fn sync_default_blacklist(app: AppHandle) -> Result<usize, String> {
+    tokio::task::spawn_blocking(move || {
+        let engine = app.state::<Engine>();
+        let p = blacklist_path(&app);
+        let existing_text = std::fs::read_to_string(&p).unwrap_or_default();
+        let current_bl = anticore_core::config::Blacklist::from_lines(&existing_text);
+        let default_bl = anticore_core::config::Blacklist::from_lines(anticore_core::config::DEFAULT_BLACKLIST);
 
-    let mut missing = Vec::new();
-    for d in default_bl.iter() {
-        if !current_bl.matches(d.as_bytes()) {
-            missing.push(d.clone());
+        let mut missing = Vec::new();
+        for d in default_bl.iter() {
+            if !current_bl.matches(d.as_bytes()) {
+                missing.push(d.clone());
+            }
         }
-    }
 
-    let added_count = missing.len();
-    if added_count > 0 {
-        missing.sort();
-        let mut updated_text = existing_text;
-        if !updated_text.ends_with('\n') {
-            updated_text.push('\n');
+        let added_count = missing.len();
+        if added_count > 0 {
+            missing.sort();
+            let mut updated_text = existing_text;
+            if !updated_text.ends_with('\n') {
+                updated_text.push('\n');
+            }
+            updated_text.push_str("\n# --- Güncellenen Çekirdek Varsayılanlar & Medya CDN'leri ---\n");
+            for d in &missing {
+                updated_text.push_str(d);
+                updated_text.push('\n');
+            }
+            std::fs::write(&p, &updated_text)
+                .map_err(|e| format!("Hedef listesi kaydedilemedi: {e}"))?;
+
+            let new_bl = anticore_core::config::Blacklist::from_lines(&updated_text);
+            engine.update_blacklist(new_bl);
+            app.emit("log", format!("[+] {added_count} eksik çekirdek ve medya CDN hedefi listeye eklendi")).ok();
         }
-        updated_text.push_str("\n# --- Güncellenen Çekirdek Varsayılanlar & Medya CDN'leri ---\n");
-        for d in &missing {
-            updated_text.push_str(d);
-            updated_text.push('\n');
-        }
-        std::fs::write(&p, &updated_text)
-            .map_err(|e| format!("Hedef listesi kaydedilemedi: {e}"))?;
 
-        let new_bl = anticore_core::config::Blacklist::from_lines(&updated_text);
-        engine.update_blacklist(new_bl);
-        app.emit("log", format!("[+] {added_count} eksik çekirdek ve medya CDN hedefi listeye eklendi")).ok();
-    }
-
-    Ok(added_count)
+        Ok(added_count)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 fn parse_version_tuple(s: &str) -> Vec<u64> {
@@ -3882,7 +4164,7 @@ pub fn hide_quick_panel(app: AppHandle) {
 pub fn prepare_for_update(app: AppHandle, engine: tauri::State<Engine>) -> Result<(), String> {
     // 1. Çalışan motoru durdur
     if engine.running.load(Ordering::SeqCst) {
-        let _ = stop_engine(app.clone(), engine);
+        let _ = stop_engine_sync(app.clone());
     }
 
     // 2. Windows: Bağımsız süreçleri, servisleri ve sürücüleri temizle
@@ -4117,359 +4399,371 @@ fn resolve_oui_vendor(mac: &str) -> Option<String> {
 }
 
 #[tauri::command]
-pub fn get_system_network_topology() -> SystemNetworkTopologyDto {
-    let mut dto = SystemNetworkTopologyDto {
-        gateway_ip: None,
-        gateway_mac: None,
-        modem_vendor: None,
-        local_ip: None,
-        dns_servers: Vec::new(),
-        connection_medium: "Ethernet".into(),
-        wifi_ssid: None,
-        wifi_signal_pct: None,
-    };
+pub async fn get_system_network_topology() -> Result<SystemNetworkTopologyDto, String> {
+    tokio::task::spawn_blocking(move || {
+        let mut dto = SystemNetworkTopologyDto {
+            gateway_ip: None,
+            gateway_mac: None,
+            modem_vendor: None,
+            local_ip: None,
+            dns_servers: Vec::new(),
+            connection_medium: "Ethernet".into(),
+            wifi_ssid: None,
+            wifi_signal_pct: None,
+        };
 
-    #[cfg(windows)]
-    {
-        let script = r#"
-            $r = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1 NextHop, InterfaceAlias;
-            if ($r) {
-                $gw = $r.NextHop;
-                $n = Get-NetNeighbor -IPAddress $gw -ErrorAction SilentlyContinue | Select-Object -First 1 LinkLayerAddress;
-                $ip = Get-NetIPAddress -InterfaceAlias $r.InterfaceAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 IPAddress;
-                $dns = (Get-DnsClientServerAddress -InterfaceAlias $r.InterfaceAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses;
-                [PSCustomObject]@{
-                    GatewayIp = $gw;
-                    GatewayMac = if ($n) { $n.LinkLayerAddress } else { $null };
-                    LocalIp = if ($ip) { $ip.IPAddress } else { $null };
-                    DnsServers = $dns;
-                } | ConvertTo-Json -Compress
-            }
-        "#;
-        let out = run_powershell(script);
-        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&out) {
-            if let Some(gw) = val.get("GatewayIp").and_then(|v| v.as_str()) {
-                if !gw.is_empty() && gw != "0.0.0.0" {
-                    dto.gateway_ip = Some(gw.to_string());
+        #[cfg(windows)]
+        {
+            let script = r#"
+                $r = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1 NextHop, InterfaceAlias;
+                if ($r) {
+                    $gw = $r.NextHop;
+                    $n = Get-NetNeighbor -IPAddress $gw -ErrorAction SilentlyContinue | Select-Object -First 1 LinkLayerAddress;
+                    $ip = Get-NetIPAddress -InterfaceAlias $r.InterfaceAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1 IPAddress;
+                    $dns = (Get-DnsClientServerAddress -InterfaceAlias $r.InterfaceAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue).ServerAddresses;
+                    [PSCustomObject]@{
+                        GatewayIp = $gw;
+                        GatewayMac = if ($n) { $n.LinkLayerAddress } else { $null };
+                        LocalIp = if ($ip) { $ip.IPAddress } else { $null };
+                        DnsServers = $dns;
+                    } | ConvertTo-Json -Compress
                 }
-            }
-            if let Some(mac) = val.get("GatewayMac").and_then(|v| v.as_str()) {
-                let trimmed = mac.trim().replace('-', ":").to_uppercase();
-                if !trimmed.is_empty() && trimmed != "00:00:00:00:00:00" {
-                    dto.modem_vendor = resolve_oui_vendor(&trimmed);
-                    dto.gateway_mac = Some(trimmed);
-                }
-            }
-            if let Some(lip) = val.get("LocalIp").and_then(|v| v.as_str()) {
-                if !lip.is_empty() {
-                    dto.local_ip = Some(lip.to_string());
-                }
-            }
-            if let Some(dns_arr) = val.get("DnsServers").and_then(|v| v.as_array()) {
-                for d in dns_arr {
-                    if let Some(s) = d.as_str() {
-                        if !s.is_empty() && !dto.dns_servers.contains(&s.to_string()) {
-                            dto.dns_servers.push(s.to_string());
-                        }
+            "#;
+            let out = run_powershell(script);
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&out) {
+                if let Some(gw) = val.get("GatewayIp").and_then(|v| v.as_str()) {
+                    if !gw.is_empty() && gw != "0.0.0.0" {
+                        dto.gateway_ip = Some(gw.to_string());
                     }
                 }
-            }
-        }
-
-        let wlan_out = run_powershell("netsh wlan show interfaces");
-        if !wlan_out.is_empty() && wlan_out.contains("SSID") {
-            for line in wlan_out.lines() {
-                let trimmed = line.trim();
-                if (trimmed.starts_with("SSID") || trimmed.starts_with("BSSID")) && !trimmed.starts_with("BSSID") {
-                    let parts: Vec<&str> = trimmed.splitn(2, ':').collect();
-                    if parts.len() == 2 {
-                        let ssid = parts[1].trim();
-                        if !ssid.is_empty() && ssid != "None" {
-                            dto.wifi_ssid = Some(ssid.to_string());
-                            dto.connection_medium = "Wi-Fi".into();
-                        }
-                    }
-                } else if trimmed.starts_with("Signal") || trimmed.starts_with("Sinyal") {
-                    let parts: Vec<&str> = trimmed.splitn(2, ':').collect();
-                    if parts.len() == 2 {
-                        let pct_str = parts[1].replace('%', "").trim().to_string();
-                        if let Ok(pct) = pct_str.parse::<u32>() {
-                            dto.wifi_signal_pct = Some(pct);
-                            dto.connection_medium = "Wi-Fi".into();
-                        }
+                if let Some(mac) = val.get("GatewayMac").and_then(|v| v.as_str()) {
+                    let trimmed = mac.trim().replace('-', ":").to_uppercase();
+                    if !trimmed.is_empty() && trimmed != "00:00:00:00:00:00" {
+                        dto.modem_vendor = resolve_oui_vendor(&trimmed);
+                        dto.gateway_mac = Some(trimmed);
                     }
                 }
-            }
-        }
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        if let Ok(out) = silent_command("route").args(["-n", "get", "default"]).output() {
-            let txt = String::from_utf8_lossy(&out.stdout);
-            for line in txt.lines() {
-                let t = line.trim();
-                if t.starts_with("gateway:") {
-                    let gw = t.replace("gateway:", "").trim().to_string();
-                    if !gw.is_empty() {
-                        dto.gateway_ip = Some(gw.clone());
-                        if let Ok(arp_out) = silent_command("arp").args(["-n", &gw]).output() {
-                            let arp_txt = String::from_utf8_lossy(&arp_out.stdout);
-                            for part in arp_txt.split_whitespace() {
-                                if part.contains(':') && part.len() >= 11 {
-                                    let mac = part.to_uppercase();
-                                    dto.modem_vendor = resolve_oui_vendor(&mac);
-                                    dto.gateway_mac = Some(mac);
-                                    break;
-                                }
+                if let Some(lip) = val.get("LocalIp").and_then(|v| v.as_str()) {
+                    if !lip.is_empty() {
+                        dto.local_ip = Some(lip.to_string());
+                    }
+                }
+                if let Some(dns_arr) = val.get("DnsServers").and_then(|v| v.as_array()) {
+                    for d in dns_arr {
+                        if let Some(s) = d.as_str() {
+                            if !s.is_empty() && !dto.dns_servers.contains(&s.to_string()) {
+                                dto.dns_servers.push(s.to_string());
                             }
                         }
                     }
                 }
-                if t.starts_with("interface:") {
-                    let iface = t.replace("interface:", "").trim().to_string();
-                    if iface.starts_with("en0") {
-                        dto.connection_medium = "Wi-Fi".into();
-                    }
-                    if let Ok(ip_out) = silent_command("ipconfig").args(["getifaddr", &iface]).output() {
-                        let ip = String::from_utf8_lossy(&ip_out.stdout).trim().to_string();
-                        if !ip.is_empty() {
-                            dto.local_ip = Some(ip);
-                        }
-                    }
-                }
             }
-        }
-        if let Ok(dns_out) = silent_command("scutil").args(["--dns"]).output() {
-            let txt = String::from_utf8_lossy(&dns_out.stdout);
-            for line in txt.lines() {
-                if line.contains("nameserver[") {
-                    let parts: Vec<&str> = line.split(':').collect();
-                    if parts.len() >= 2 {
-                        let ip = parts[1].trim().to_string();
-                        if !ip.is_empty() && !dto.dns_servers.contains(&ip) {
-                            dto.dns_servers.push(ip);
-                        }
-                    }
-                }
-            }
-        }
-    }
 
-    dto
+            let wlan_out = run_powershell("netsh wlan show interfaces");
+            if !wlan_out.is_empty() && wlan_out.contains("SSID") {
+                for line in wlan_out.lines() {
+                    let trimmed = line.trim();
+                    if (trimmed.starts_with("SSID") || trimmed.starts_with("BSSID")) && !trimmed.starts_with("BSSID") {
+                        let parts: Vec<&str> = trimmed.splitn(2, ':').collect();
+                        if parts.len() == 2 {
+                            let ssid = parts[1].trim();
+                            if !ssid.is_empty() && ssid != "None" {
+                                dto.wifi_ssid = Some(ssid.to_string());
+                                dto.connection_medium = "Wi-Fi".into();
+                            }
+                        }
+                    } else if trimmed.starts_with("Signal") || trimmed.starts_with("Sinyal") {
+                        let parts: Vec<&str> = trimmed.splitn(2, ':').collect();
+                        if parts.len() == 2 {
+                            let pct_str = parts[1].replace('%', "").trim().to_string();
+                            if let Ok(pct) = pct_str.parse::<u32>() {
+                                dto.wifi_signal_pct = Some(pct);
+                                dto.connection_medium = "Wi-Fi".into();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            if let Ok(out) = silent_command("route").args(["-n", "get", "default"]).output() {
+                let txt = String::from_utf8_lossy(&out.stdout);
+                for line in txt.lines() {
+                    let t = line.trim();
+                    if t.starts_with("gateway:") {
+                        let gw = t.replace("gateway:", "").trim().to_string();
+                        if !gw.is_empty() {
+                            dto.gateway_ip = Some(gw.clone());
+                            if let Ok(arp_out) = silent_command("arp").args(["-n", &gw]).output() {
+                                let arp_txt = String::from_utf8_lossy(&arp_out.stdout);
+                                for part in arp_txt.split_whitespace() {
+                                    if part.contains(':') && part.len() >= 11 {
+                                        let mac = part.to_uppercase();
+                                        dto.modem_vendor = resolve_oui_vendor(&mac);
+                                        dto.gateway_mac = Some(mac);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if t.starts_with("interface:") {
+                        let iface = t.replace("interface:", "").trim().to_string();
+                        if iface.starts_with("en0") {
+                            dto.connection_medium = "Wi-Fi".into();
+                        }
+                        if let Ok(ip_out) = silent_command("ipconfig").args(["getifaddr", &iface]).output() {
+                            let ip = String::from_utf8_lossy(&ip_out.stdout).trim().to_string();
+                            if !ip.is_empty() {
+                                dto.local_ip = Some(ip);
+                            }
+                        }
+                    }
+                }
+            }
+            if let Ok(dns_out) = silent_command("scutil").args(["--dns"]).output() {
+                let txt = String::from_utf8_lossy(&dns_out.stdout);
+                for line in txt.lines() {
+                    if line.contains("nameserver[") {
+                        let parts: Vec<&str> = line.split(':').collect();
+                        if parts.len() >= 2 {
+                            let ip = parts[1].trim().to_string();
+                            if !ip.is_empty() && !dto.dns_servers.contains(&ip) {
+                                dto.dns_servers.push(ip);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(dto)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn get_system_telemetry_hardware() -> SystemHardwareTelemetryDto {
-    let mut dto = SystemHardwareTelemetryDto {
-        os_version: None,
-        cpu_model: None,
-        gpu_model: None,
-        ram_total_gb: None,
-        network_interface: None,
-        link_speed_mbps: None,
-        mtu: None,
-    };
-
-    #[cfg(windows)]
-    {
-        // 0. OS Sürümü: HKLM SOFTWARE\Microsoft\Windows NT\CurrentVersion
-        if let Ok(key) = windows_registry::LOCAL_MACHINE.open("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion") {
-            let product_name = key.get_string("ProductName").unwrap_or_default();
-            let display_version = key.get_string("DisplayVersion").unwrap_or_default();
-            let current_build_str = key.get_string("CurrentBuild").unwrap_or_default();
-            let ubr = key.get_u32("UBR").unwrap_or(0);
-
-            let build_num: u32 = current_build_str.parse().unwrap_or(0);
-            let os_family = if build_num >= 22000 {
-                "Windows 11"
-            } else if build_num > 0 {
-                "Windows 10"
-            } else if product_name.to_lowercase().contains("windows 11") {
-                "Windows 11"
-            } else {
-                "Windows 10"
-            };
-
-            let edition = if product_name.to_lowercase().contains("pro") {
-                "Pro"
-            } else if product_name.to_lowercase().contains("home") {
-                "Home"
-            } else if product_name.to_lowercase().contains("enterprise") {
-                "Enterprise"
-            } else if product_name.to_lowercase().contains("education") {
-                "Education"
-            } else {
-                ""
-            };
-
-            let mut full_os = if !edition.is_empty() {
-                format!("{os_family} {edition}")
-            } else {
-                os_family.to_string()
-            };
-
-            if !display_version.is_empty() {
-                full_os = format!("{full_os} {display_version}");
-            }
-            if build_num > 0 {
-                if ubr > 0 {
-                    full_os = format!("{full_os} (Build {build_num}.{ubr})");
-                } else {
-                    full_os = format!("{full_os} (Build {build_num})");
-                }
-            }
-            dto.os_version = Some(full_os);
-        }
-
-        // 1. CPU: HKLM Registry ProcessorNameString
-        if let Ok(key) = windows_registry::LOCAL_MACHINE.open("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0") {
-            if let Ok(cpu) = key.get_string("ProcessorNameString") {
-                let trimmed = cpu.trim();
-                if !trimmed.is_empty() {
-                    dto.cpu_model = Some(trimmed.to_string());
-                }
-            }
-        }
-
-        // 2. GPU: VideoController class registry
-        let gpu_class = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}";
-        let mut candidates = Vec::new();
-        for sub in &["0000", "0001", "0002", "0003"] {
-            let path = format!("{gpu_class}\\{sub}");
-            if let Ok(key) = windows_registry::LOCAL_MACHINE.open(&path) {
-                if let Ok(desc) = key.get_string("DriverDesc") {
-                    let d = desc.trim().to_string();
-                    let d_lower = d.to_lowercase();
-                    if !d.is_empty() && !d_lower.contains("basic") && !d_lower.contains("virtual") && !d_lower.contains("remoting") {
-                        candidates.push(d);
-                    }
-                }
-            }
-        }
-        if let Some(discrete) = candidates.iter().find(|c| c.contains("NVIDIA") || c.contains("RTX") || c.contains("GTX") || c.contains("Radeon")) {
-            dto.gpu_model = Some(discrete.clone());
-        } else if let Some(first) = candidates.first() {
-            dto.gpu_model = Some(first.clone());
-        }
-
-        // 3. RAM: GlobalMemoryStatusEx (0ms native Win32 API)
-        #[repr(C)]
-        struct MemoryStatusEx {
-            length: u32,
-            memory_load: u32,
-            total_phys: u64,
-            avail_phys: u64,
-            total_page_file: u64,
-            avail_page_file: u64,
-            total_virtual: u64,
-            avail_virtual: u64,
-            avail_extended_virtual: u64,
-        }
-        extern "system" {
-            fn GlobalMemoryStatusEx(stat: *mut MemoryStatusEx) -> i32;
-        }
-        let mut stat = MemoryStatusEx {
-            length: std::mem::size_of::<MemoryStatusEx>() as u32,
-            memory_load: 0,
-            total_phys: 0,
-            avail_phys: 0,
-            total_page_file: 0,
-            avail_page_file: 0,
-            total_virtual: 0,
-            avail_virtual: 0,
-            avail_extended_virtual: 0,
+pub async fn get_system_telemetry_hardware() -> Result<SystemHardwareTelemetryDto, String> {
+    tokio::task::spawn_blocking(move || {
+        let mut dto = SystemHardwareTelemetryDto {
+            os_version: None,
+            cpu_model: None,
+            gpu_model: None,
+            ram_total_gb: None,
+            network_interface: None,
+            link_speed_mbps: None,
+            mtu: None,
         };
-        let ok = unsafe { GlobalMemoryStatusEx(&mut stat) };
-        if ok != 0 && stat.total_phys > 0 {
-            let gb = (stat.total_phys as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u32;
-            dto.ram_total_gb = Some(gb);
-        }
 
-        // 4. Ağ Adaptörü & MTU & Link Hızı
-        let net_cmd = "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1 Name, InterfaceDescription, LinkSpeed, MtuSize | ConvertTo-Json -Compress";
-        let net_output = run_powershell(net_cmd);
-        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&net_output) {
-            let name = parsed.get("Name").and_then(|v| v.as_str()).unwrap_or("");
-            let desc = parsed.get("InterfaceDescription").and_then(|v| v.as_str()).unwrap_or("");
-            if !name.is_empty() || !desc.is_empty() {
-                dto.network_interface = Some(format!("{name} ({desc})").trim().to_string());
-            }
-            if let Some(mtu) = parsed.get("MtuSize").and_then(|v| v.as_u64()) {
-                dto.mtu = Some(mtu as u32);
-            }
-            if let Some(speed_str) = parsed.get("LinkSpeed").and_then(|v| v.as_str()) {
-                if speed_str.contains("Gbps") {
-                    let num: f64 = speed_str.replace("Gbps", "").trim().parse().unwrap_or(1.0);
-                    dto.link_speed_mbps = Some((num * 1000.0) as u32);
-                } else if speed_str.contains("Mbps") {
-                    let num: u32 = speed_str.replace("Mbps", "").trim().parse().unwrap_or(100);
-                    dto.link_speed_mbps = Some(num);
-                }
-            }
-        }
-    }
+        #[cfg(windows)]
+        {
+            // 0. OS Sürümü: HKLM SOFTWARE\Microsoft\Windows NT\CurrentVersion
+            if let Ok(key) = windows_registry::LOCAL_MACHINE.open("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion") {
+                let product_name = key.get_string("ProductName").unwrap_or_default();
+                let display_version = key.get_string("DisplayVersion").unwrap_or_default();
+                let current_build_str = key.get_string("CurrentBuild").unwrap_or_default();
+                let ubr = key.get_u32("UBR").unwrap_or(0);
 
-    #[cfg(target_os = "macos")]
-    {
-        if let Ok(out) = silent_command("sw_vers").args(["-productVersion"]).output() {
-            let ver = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if !ver.is_empty() {
-                dto.os_version = Some(format!("macOS {ver}"));
-            }
-        }
-        if let Ok(out) = silent_command("sysctl").args(["-n", "machdep.cpu.brand_string"]).output() {
-            let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            if !s.is_empty() {
-                dto.cpu_model = Some(s);
-            }
-        }
-        if dto.cpu_model.is_none() {
-            if let Ok(out) = silent_command("sysctl").args(["-n", "hw.model"]).output() {
-                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                if !s.is_empty() {
-                    dto.cpu_model = Some(format!("Apple Silicon ({s})"));
+                let build_num: u32 = current_build_str.parse().unwrap_or(0);
+                let os_family = if build_num >= 22000 {
+                    "Windows 11"
+                } else if build_num > 0 {
+                    "Windows 10"
+                } else if product_name.to_lowercase().contains("windows 11") {
+                    "Windows 11"
+                } else {
+                    "Windows 10"
+                };
+
+                let edition = if product_name.to_lowercase().contains("pro") {
+                    "Pro"
+                } else if product_name.to_lowercase().contains("home") {
+                    "Home"
+                } else if product_name.to_lowercase().contains("enterprise") {
+                    "Enterprise"
+                } else if product_name.to_lowercase().contains("education") {
+                    "Education"
+                } else {
+                    ""
+                };
+
+                let mut full_os = if !edition.is_empty() {
+                    format!("{os_family} {edition}")
+                } else {
+                    os_family.to_string()
+                };
+
+                if !display_version.is_empty() {
+                    full_os = format!("{full_os} {display_version}");
                 }
+                if build_num > 0 {
+                    if ubr > 0 {
+                        full_os = format!("{full_os} (Build {build_num}.{ubr})");
+                    } else {
+                        full_os = format!("{full_os} (Build {build_num})");
+                    }
+                }
+                dto.os_version = Some(full_os);
             }
-        }
-        if let Ok(out) = silent_command("system_profiler").args(["SPDisplaysDataType"]).output() {
-            let txt = String::from_utf8_lossy(&out.stdout);
-            for line in txt.lines() {
-                if line.contains("Chipset Model:") {
-                    let model = line.replace("Chipset Model:", "").trim().to_string();
-                    if !model.is_empty() {
-                        dto.gpu_model = Some(model);
-                        break;
+
+            // 1. CPU: HKLM Registry ProcessorNameString
+            if let Ok(key) = windows_registry::LOCAL_MACHINE.open("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0") {
+                if let Ok(cpu) = key.get_string("ProcessorNameString") {
+                    let trimmed = cpu.trim();
+                    if !trimmed.is_empty() {
+                        dto.cpu_model = Some(trimmed.to_string());
                     }
                 }
             }
-        }
-        if let Ok(out) = silent_command("sysctl").args(["-n", "hw.memsize"]).output() {
-            if let Ok(bytes) = String::from_utf8_lossy(&out.stdout).trim().parse::<u64>() {
-                let gb = (bytes as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u32;
+
+            // 2. GPU: VideoController class registry
+            let gpu_class = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}";
+            let mut candidates = Vec::new();
+            for sub in &["0000", "0001", "0002", "0003"] {
+                let path = format!("{gpu_class}\\{sub}");
+                if let Ok(key) = windows_registry::LOCAL_MACHINE.open(&path) {
+                    if let Ok(desc) = key.get_string("DriverDesc") {
+                        let d = desc.trim().to_string();
+                        let d_lower = d.to_lowercase();
+                        if !d.is_empty() && !d_lower.contains("basic") && !d_lower.contains("virtual") && !d_lower.contains("remoting") {
+                            candidates.push(d);
+                        }
+                    }
+                }
+            }
+            if let Some(discrete) = candidates.iter().find(|c| c.contains("NVIDIA") || c.contains("RTX") || c.contains("GTX") || c.contains("Radeon")) {
+                dto.gpu_model = Some(discrete.clone());
+            } else if let Some(first) = candidates.first() {
+                dto.gpu_model = Some(first.clone());
+            }
+
+            // 3. RAM: GlobalMemoryStatusEx (0ms native Win32 API)
+            #[repr(C)]
+            struct MemoryStatusEx {
+                length: u32,
+                memory_load: u32,
+                total_phys: u64,
+                avail_phys: u64,
+                total_page_file: u64,
+                avail_page_file: u64,
+                total_virtual: u64,
+                avail_virtual: u64,
+                avail_extended_virtual: u64,
+            }
+            extern "system" {
+                fn GlobalMemoryStatusEx(stat: *mut MemoryStatusEx) -> i32;
+            }
+            let mut stat = MemoryStatusEx {
+                length: std::mem::size_of::<MemoryStatusEx>() as u32,
+                memory_load: 0,
+                total_phys: 0,
+                avail_phys: 0,
+                total_page_file: 0,
+                avail_page_file: 0,
+                total_virtual: 0,
+                avail_virtual: 0,
+                avail_extended_virtual: 0,
+            };
+            let ok = unsafe { GlobalMemoryStatusEx(&mut stat) };
+            if ok != 0 && stat.total_phys > 0 {
+                let gb = (stat.total_phys as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u32;
                 dto.ram_total_gb = Some(gb);
             }
-        }
-        dto.network_interface = Some("Wi-Fi / en0".into());
-        dto.mtu = Some(1500);
-        dto.link_speed_mbps = Some(1000);
-    }
 
-    dto
+            // 4. Ağ Adaptörü & MTU & Link Hızı
+            let net_cmd = "Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1 Name, InterfaceDescription, LinkSpeed, MtuSize | ConvertTo-Json -Compress";
+            let net_output = run_powershell(net_cmd);
+            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&net_output) {
+                let name = parsed.get("Name").and_then(|v| v.as_str()).unwrap_or("");
+                let desc = parsed.get("InterfaceDescription").and_then(|v| v.as_str()).unwrap_or("");
+                if !name.is_empty() || !desc.is_empty() {
+                    dto.network_interface = Some(format!("{name} ({desc})").trim().to_string());
+                }
+                if let Some(mtu) = parsed.get("MtuSize").and_then(|v| v.as_u64()) {
+                    dto.mtu = Some(mtu as u32);
+                }
+                if let Some(speed_str) = parsed.get("LinkSpeed").and_then(|v| v.as_str()) {
+                    if speed_str.contains("Gbps") {
+                        let num: f64 = speed_str.replace("Gbps", "").trim().parse().unwrap_or(1.0);
+                        dto.link_speed_mbps = Some((num * 1000.0) as u32);
+                    } else if speed_str.contains("Mbps") {
+                        let num: u32 = speed_str.replace("Mbps", "").trim().parse().unwrap_or(100);
+                        dto.link_speed_mbps = Some(num);
+                    }
+                }
+            }
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            if let Ok(out) = silent_command("sw_vers").args(["-productVersion"]).output() {
+                let ver = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !ver.is_empty() {
+                    dto.os_version = Some(format!("macOS {ver}"));
+                }
+            }
+            if let Ok(out) = silent_command("sysctl").args(["-n", "machdep.cpu.brand_string"]).output() {
+                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !s.is_empty() {
+                    dto.cpu_model = Some(s);
+                }
+            }
+            if dto.cpu_model.is_none() {
+                if let Ok(out) = silent_command("sysctl").args(["-n", "hw.model"]).output() {
+                    let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                    if !s.is_empty() {
+                        dto.cpu_model = Some(format!("Apple Silicon ({s})"));
+                    }
+                }
+            }
+            if let Ok(out) = silent_command("system_profiler").args(["SPDisplaysDataType"]).output() {
+                let txt = String::from_utf8_lossy(&out.stdout);
+                for line in txt.lines() {
+                    if line.contains("Chipset Model:") {
+                        let model = line.replace("Chipset Model:", "").trim().to_string();
+                        if !model.is_empty() {
+                            dto.gpu_model = Some(model);
+                            break;
+                        }
+                    }
+                }
+            }
+            if let Ok(out) = silent_command("sysctl").args(["-n", "hw.memsize"]).output() {
+                if let Ok(bytes) = String::from_utf8_lossy(&out.stdout).trim().parse::<u64>() {
+                    let gb = (bytes as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u32;
+                    dto.ram_total_gb = Some(gb);
+                }
+            }
+            dto.network_interface = Some("Wi-Fi / en0".into());
+            dto.mtu = Some(1500);
+            dto.link_speed_mbps = Some(1000);
+        }
+
+        Ok(dto)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn send_telemetry_beacon(endpoint: Option<String>, payload: String) -> Result<String, String> {
-    let target_url = endpoint.unwrap_or_else(|| "https://anticore.monolithworks.com.tr/api/v1/telemetry/beacon".to_string());
-    let resp = ureq::post(&target_url)
-        .set("Content-Type", "application/json")
-        .set("X-Anticore-Ingest-Key", "anticore-stealth-key-2026")
-        .timeout(std::time::Duration::from_millis(3500))
-        .send_string(&payload)
-        .map_err(|e| format!("Telemetry ingest error: {e}"))?;
+pub async fn send_telemetry_beacon(endpoint: Option<String>, payload: String) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        let target_url = endpoint.unwrap_or_else(|| "https://anticore.monolithworks.com.tr/api/v1/telemetry/beacon".to_string());
+        let resp = ureq::post(&target_url)
+            .set("Content-Type", "application/json")
+            .set("X-Anticore-Ingest-Key", "anticore-stealth-key-2026")
+            .timeout(std::time::Duration::from_millis(3500))
+            .send_string(&payload)
+            .map_err(|e| format!("Telemetry ingest error: {e}"))?;
 
-    let body = resp.into_string().map_err(|e| format!("Response parse error: {e}"))?;
-    Ok(body)
+        let body = resp.into_string().map_err(|e| format!("Response parse error: {e}"))?;
+        Ok(body)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]

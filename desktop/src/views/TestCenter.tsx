@@ -242,11 +242,11 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
         )}
 
         {blockcheckResults.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 tabular-nums">
             {blockcheckResults.map((r) => (
               <div
                 key={r.profile_id}
-                className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                className={`flex items-center justify-between p-3.5 rounded-xl border transition-opacity duration-150 ${
                   r.success
                     ? "bg-live/[0.06] border-live/30 text-live"
                     : "bg-surface-subtle/50 border-white/[0.06] text-paper-faint"
@@ -272,7 +272,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
                         pushLog(`[!] Profil başlatma hatası: ${String(e)}`);
                       }
                     }}
-                    className="btn btn-primary !py-1 !px-2.5 text-[11px] shrink-0 ml-2"
+                    className="btn btn-primary !py-1 !px-2.5 text-[11px] shrink-0 ml-2 active:scale-[0.97] transition-transform duration-150"
                   >
                     {t("test_apply_btn")}
                   </button>
@@ -284,7 +284,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
       </section>
 
       {/* Manuel Sonda */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-3">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-3" aria-busy={busy || batchBusy || compareBusy}>
         <form
           className="flex flex-col sm:flex-row gap-2.5"
           onSubmit={(e) => {
@@ -333,7 +333,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
         <p className="text-[11px] text-paper-faint">{t("test_compare_hint")}</p>
 
         {compareResult && (
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-2 gap-3 pt-2 tabular-nums">
             {(["off", "on"] as const).map((k) => {
               const r = compareResult[k];
               const isOpen = r.result.startsWith("open");
@@ -364,7 +364,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
       </section>
 
       {/* Sonda Sonuç Listesi */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl min-h-[12rem] space-y-3" aria-label="Probe sonuçları">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl min-h-[12rem] space-y-3 tabular-nums" aria-label="Probe sonuçları">
         {rows.length === 0 ? (
           <EmptyState
             icon={<FlaskConical size={30} aria-hidden />}
@@ -379,7 +379,7 @@ export default function TestCenter({ pushLog }: { pushLog: (l: string) => void }
                   <button
                     key={f}
                     onClick={() => setResultFilter(f)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-transform duration-150 active:scale-[0.97] cursor-pointer ${
                       resultFilter === f ? "bg-white/[0.12] text-paper-bright shadow-sm" : "text-paper-muted hover:text-paper"
                     }`}
                   >

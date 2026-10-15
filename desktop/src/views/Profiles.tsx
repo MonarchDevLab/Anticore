@@ -139,7 +139,7 @@ export default function Profiles() {
         </p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[19rem_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[19rem_1fr]" aria-busy="false">
         {/* Profil Listesi */}
         <section className="card p-3 max-h-[18rem] lg:max-h-[32rem] overflow-y-auto space-y-1.5" aria-label="Profil listesi">
           {profiles.length === 0 && (
@@ -153,7 +153,7 @@ export default function Profiles() {
                   <button
                     onClick={() => setSelectedId(p.id)}
                     aria-current={active ? "true" : undefined}
-                    className={`w-full cursor-pointer rounded-xl p-3 text-left transition-all border ${
+                    className={`w-full cursor-pointer rounded-xl p-3 text-left transition-[transform,opacity] duration-150 active:scale-[0.97] border ${
                       active
                         ? "bg-live/10 border-live/30 text-paper-bright shadow-sm"
                         : "border-white/[0.06] bg-surface-subtle/50 text-paper-muted hover:border-white/[0.14] hover:text-paper"

@@ -100,16 +100,16 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
   const isCustom = dns?.some((d) => KNOWN_SECURE_SERVERS.has(d));
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-8">
+    <div className="mx-auto max-w-5xl space-y-6 pb-8 tabular-nums" aria-busy={busy}>
       <header className="pb-3 border-b border-white/[0.08]">
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("net_title")}</h2>
         <p className="mt-0.5 text-xs text-paper-muted">{t("net_desc")}</p>
       </header>
 
       {isAdmin === false && (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
               <ShieldAlert size={18} aria-hidden strokeWidth={2} />
             </div>
             <div>
@@ -119,7 +119,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
           </div>
           <button
             onClick={() => void api.restartAsAdmin()}
-            className="btn btn-primary text-xs shrink-0 whitespace-nowrap bg-amber-600 hover:bg-amber-500 border-amber-500/40 text-black font-semibold cursor-pointer"
+            className="btn btn-primary text-xs shrink-0 whitespace-nowrap bg-amber-600 hover:bg-amber-500 border-amber-500/40 text-void font-semibold active:scale-[0.97] transition-transform duration-150 cursor-pointer"
           >
             {isMac ? t("net_admin_restart_btn_mac") : t("net_admin_restart_btn")}
           </button>
@@ -127,7 +127,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
       )}
 
       {errorMessage && (
-        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs flex items-center justify-between gap-3 text-rose-300">
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs flex items-center justify-between gap-3 text-rose-300">
           <div className="flex items-center gap-2.5">
             <ShieldAlert size={16} className="text-rose-400 shrink-0" aria-hidden />
             <span>{errorMessage}</span>
@@ -142,7 +142,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
       )}
 
       {successMessage && (
-        <div className="rounded-2xl border border-live/30 bg-live/10 p-4 text-xs flex items-center justify-between gap-3 text-live">
+        <div className="rounded-xl border border-live/30 bg-live/10 p-4 text-xs flex items-center justify-between gap-3 text-live">
           <div className="flex items-center gap-2.5">
             <CheckCircle2 size={16} className="text-live shrink-0" aria-hidden />
             <span>{successMessage}</span>
@@ -229,7 +229,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
                 <button
                   key={p.id}
                   onClick={() => setProvider(p.id)}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer border ${
+                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-[transform,opacity] duration-150 active:scale-[0.97] cursor-pointer border ${
                     active
                       ? "bg-live/15 text-live border-live/35 shadow-sm"
                       : "bg-surface-subtle text-paper-muted border-white/[0.06] hover:text-paper hover:border-white/[0.12]"
@@ -266,7 +266,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
       </section>
 
       {/* Ağ Yığını & Paket Filtresi Onarımı */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
             <Wrench size={18} aria-hidden strokeWidth={2} />
@@ -301,7 +301,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
       </section>
 
       {/* Ağ Adaptörleri */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
             <Network size={18} aria-hidden strokeWidth={2} />
@@ -319,7 +319,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         ) : (
           <ul className="space-y-2">
             {adapters.map((a) => (
-              <li key={a.interface_index} className="rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3.5 hover:border-white/[0.12] transition-all">
+              <li key={a.interface_index} className="rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3.5 hover:border-white/[0.12] transition-opacity duration-150">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-mono text-xs font-semibold text-paper-bright">{a.name}</span>
                   <span className={`badge ${a.is_dhcp ? "badge-muted" : "badge-live"}`}>
@@ -337,7 +337,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
 
       {/* Windows DoH Registry (Yalnızca Windows) */}
       {!isMac && (
-        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
           <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
@@ -409,7 +409,7 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
       )}
 
       {/* Discord Özel Onarım Paketi */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl space-y-4">
+      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
             <RefreshCw size={18} aria-hidden strokeWidth={2} />

@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
 import { api, type DnsHealthDto, type Profile } from "../../lib/tauri";
 
+const INITIAL_FALLBACK_PROFILES: Profile[] = [
+  {
+    id: "universal",
+    name: "Türkiye — Evrensel (Önerilen)",
+    description: "Türk Telekom, Superonline, TurkNet, Kablonet ve Vodafone için birleşik profil. İlk denenecek profil.",
+    builtin: true,
+    steps: [],
+  },
+];
+
 export function useConnectionData() {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>(INITIAL_FALLBACK_PROFILES);
   const [hosts, setHosts] = useState<string[]>([]);
   const [dns, setDns] = useState<DnsHealthDto | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let alive = true;
-    setLoading(true);
     setError(false);
 
     // 1. Kritik başlatıcı verileri (Profiller & Hedefler) DERHAL yükle.
@@ -19,7 +28,13 @@ export function useConnectionData() {
       if (!alive) return;
       const profilesOk = p.status === "fulfilled";
       const hostsOk = h.status === "fulfilled";
-      setProfiles(profilesOk ? p.value : []);
+      if (profilesOk) {
+        if (p.value.length > 0 || revision > 0) {
+          setProfiles(p.value);
+        }
+      } else {
+        setProfiles([]);
+      }
       setHosts(hostsOk ? h.value : []);
       if (!profilesOk || !hostsOk) {
         setError(true);
@@ -36,10 +51,10 @@ export function useConnectionData() {
       .catch(() => {
         if (!alive) return;
         setDns(null);
-        setError(true);
       });
 
     return () => { alive = false; };
   }, [revision]);
   return { profiles, hosts, dns, loading, error, reload: () => setRevision((value) => value + 1) };
 }
+

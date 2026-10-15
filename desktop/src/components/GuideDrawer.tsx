@@ -71,11 +71,12 @@ export default function GuideDrawer({ open, onClose }: Props) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex justify-end bg-void/60 backdrop-blur-sm animate-fade-in">
       <div
         className="w-full max-w-md h-full bg-surface-card border-l border-border-brutal p-6 shadow-2xl flex flex-col justify-between overflow-y-auto"
         role="dialog"
         aria-modal="true"
+        aria-busy="false"
       >
         <div className="space-y-6">
           {/* Başlık */}
@@ -95,7 +96,7 @@ export default function GuideDrawer({ open, onClose }: Props) {
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-paper-muted hover:text-paper-bright hover:bg-white/[0.06] transition-transform duration-150 active:scale-[0.97] cursor-pointer"
               aria-label="Kapat"
             >
               <X size={16} />
@@ -104,7 +105,7 @@ export default function GuideDrawer({ open, onClose }: Props) {
 
           {/* Soru-Cevap Listesi */}
           <div className="space-y-4">
-            {FAQ.map((item, idx) => (
+            {FAQ.length === 0 ? null : FAQ.map((item, idx) => (
               <div
                 key={idx}
                 className="p-4 rounded-xl bg-surface-subtle border border-white/[0.06] space-y-2"

@@ -5,6 +5,10 @@ import type { ConnectionCopy } from "./copy";
 
 function ActivityChart3D({ samples, copy, running }: { samples: number[]; copy: ConnectionCopy; running: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const smoothHeightsRef = useRef<number[]>(Array(30).fill(1));
+  const dataRef = useRef({ samples, running });
+  dataRef.current.samples = samples;
+  dataRef.current.running = running;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,7 +24,9 @@ function ActivityChart3D({ samples, copy, running }: { samples: number[]; copy: 
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      const active = running && samples.length > 0;
+      const curSamples = dataRef.current.samples;
+      const isRunning = dataRef.current.running;
+      const active = isRunning && curSamples.length > 0;
       const front = active ? "#10b981" : "#475569";
       const top = active ? "#34d399" : "#64748b";
       const right = active ? "#059669" : "#334155";
@@ -40,27 +46,31 @@ function ActivityChart3D({ samples, copy, running }: { samples: number[]; copy: 
       drawIsoLine(h * 0.8);
 
       const maxSamples = 30;
-      const peak = Math.max(...samples, 5); 
-      
+      const peak = Math.max(...curSamples, 5);
+
       const step = w / maxSamples;
       const barW = step * 0.6;
       const depth = barW * 0.8;
-      
+
       const baseY = h * 0.9;
       const maxH = h * 0.7;
 
-      const padded = [...Array(Math.max(0, maxSamples - samples.length)).fill(0), ...samples.slice(-maxSamples)];
+      const padded = [...Array(Math.max(0, maxSamples - curSamples.length)).fill(0), ...curSamples.slice(-maxSamples)];
 
       for (let i = 0; i < maxSamples; i++) {
         const val = padded[i];
-        let barH = (val / peak) * maxH;
+        let targetH = (val / peak) * maxH;
         // Duran veya sıfır olan kısımlarda ufak bir canlılık hissi için 1px'lik bir taban
-        if (active && val === 0) barH = 1.5 + Math.sin(time + i) * 0.5; 
-        if (!active && val === 0) barH = 1;
+        if (active && val === 0) targetH = 1.5 + Math.sin(time + i) * 0.5;
+        if (!active && val === 0) targetH = 1;
+
+        const prevH = smoothHeightsRef.current[i] ?? 1;
+        const barH = prevH + (targetH - prevH) * 0.18;
+        smoothHeightsRef.current[i] = barH;
 
         const x = i * step + (step - barW) / 2;
         const y = baseY;
-        
+
         if (active && val > 0) {
           ctx.shadowBlur = 12;
           ctx.shadowColor = top;
@@ -71,7 +81,7 @@ function ActivityChart3D({ samples, copy, running }: { samples: number[]; copy: 
         // Ön Yüz
         ctx.fillStyle = front;
         ctx.fillRect(x, y - barH, barW, barH);
-        
+
         ctx.shadowBlur = 0;
 
         // Üst Yüz (İzometrik paralelkenar)
@@ -98,7 +108,7 @@ function ActivityChart3D({ samples, copy, running }: { samples: number[]; copy: 
     render();
 
     return () => cancelAnimationFrame(req);
-  }, [samples, running]);
+  }, []);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -128,11 +138,11 @@ export default function ConnectionActivity({ status, copy }: { status: Status | 
     if (seconds > 0) setSamples((values) => [...values.slice(-29), Math.round((status.packets_touched - previous.count) / seconds)]);
   }, [status, paused]);
   return (
-    <section className="workspace-panel activity-panel" aria-label={copy.activity}>
+    <section className="workspace-panel activity-panel" aria-label={copy.activity} aria-busy={!status}>
       <div className="panel-heading"><div><h2>{copy.activity}</h2><p>{copy.activityHint}</p></div>
-        <button className="workspace-icon-button" aria-label={paused ? copy.resume : copy.paused} aria-pressed={paused} onClick={() => setPaused(!paused)}>{paused ? <Play size={16} /> : <Pause size={16} />}</button>
+        <button className="workspace-icon-button transition-transform duration-150 active:scale-[0.97]" aria-label={paused ? copy.resume : copy.paused} aria-pressed={paused} onClick={() => setPaused(!paused)}>{paused ? <Play size={16} /> : <Pause size={16} />}</button>
       </div>
-      <div className="activity-value">{status?.running && samples.length ? samples[samples.length - 1].toLocaleString() : "—"}<span>PPS</span></div>
+      <div className="activity-value tabular-nums">{status?.running && samples.length ? samples[samples.length - 1].toLocaleString() : "—"}<span>PPS</span></div>
       <div className="activity-chart" style={{ height: "100px", padding: 0 }}>
         <ActivityChart3D samples={samples} copy={copy} running={status?.running ?? false} />
       </div>

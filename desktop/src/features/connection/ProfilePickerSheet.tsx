@@ -74,7 +74,7 @@ export default function ProfilePickerSheet({
                   onSelect(p.id);
                   onClose();
                 }}
-                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 active:scale-[0.98] ${
+                className={`w-full text-left p-3.5 rounded-xl border transition-transform duration-150 cursor-pointer flex items-start justify-between gap-3 active:scale-[0.97] ${
                   isSelected
                     ? "bg-live/15 border-live/50 text-paper-bright shadow-[0_0_15px_rgba(16,185,129,0.15)]"
                     : "bg-surface-subtle/60 border-white/[0.06] hover:border-white/[0.15] text-paper-muted hover:text-paper"

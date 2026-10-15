@@ -321,13 +321,19 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
                 let engine = app.state::<Engine>();
                 if !engine.running.load(Ordering::SeqCst) {
                     let profile_id = engine.profile_id.lock().unwrap().clone();
-                    let _ = crate::commands::start_engine(app.clone(), engine, profile_id);
+                    let app_clone = app.clone();
+                    std::thread::spawn(move || {
+                        let _ = crate::commands::start_engine_sync(app_clone, profile_id);
+                    });
                 }
             }
             "stop" => {
                 let engine = app.state::<Engine>();
                 if engine.running.load(Ordering::SeqCst) {
-                    let _ = crate::commands::stop_engine(app.clone(), engine);
+                    let app_clone = app.clone();
+                    std::thread::spawn(move || {
+                        let _ = crate::commands::stop_engine_sync(app_clone);
+                    });
                 }
             }
             "check_update" => {
