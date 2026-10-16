@@ -70,6 +70,7 @@ function detectOsPlatform(): 'windows' | 'macos' | 'android' | 'linux' {
 function detectCpuArch(): string {
   if (typeof navigator !== 'undefined') {
     const ua = navigator.userAgent || '';
+    if (/Android/i.test(ua)) return 'arm64';
     if (/arm64|aarch64/i.test(ua)) return 'arm64';
     if (/x86_64|x64|Win64|WOW64/i.test(ua)) return 'x64';
   }
@@ -196,7 +197,8 @@ export function detectHardwareSpecs(): {
     if (typeof navigator !== 'undefined') {
       const cores = navigator.hardwareConcurrency;
       if (cores) {
-        cpuModel = `${cores} Çekirdek (x64)`;
+        const isArm = /Android|iPhone|iPad|aarch64|arm64/i.test(navigator.userAgent || '');
+        cpuModel = isArm ? `${cores} Çekirdek (ARM64)` : `${cores} Çekirdek (x64)`;
       }
     }
   } catch {
@@ -408,8 +410,9 @@ class ConnectivitySyncService {
         const platform = detectOsPlatform();
         if (platform === 'macos' && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-'))) {
           hostname = 'MacBook';
-        } else if (platform === 'android' && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-'))) {
-          hostname = 'Android-Device';
+        } else if (platform === 'android' && (!hostname || hostname === 'DESKTOP-UNKNOWN' || hostname === 'DESKTOP-LOCAL' || hostname.startsWith('DESKTOP-') || hostname === 'Android-Device')) {
+          const uaMatch = typeof navigator !== 'undefined' ? (navigator.userAgent || '').match(/\(Linux; Android [^;]+;\s*([^;)]+)/i) : null;
+          hostname = uaMatch && uaMatch[1] && !uaMatch[1].toLowerCase().includes('k') ? uaMatch[1].trim() : 'Android Telefon';
         }
 
         if (hostname && hostname.trim().length > 0) {
@@ -436,23 +439,36 @@ class ConnectivitySyncService {
                 wifiSignalPct: nativeTopology.wifi_signal_pct ?? null,
               };
             }
+            const fallbackHw = detectHardwareSpecs();
             if (nativeHw) {
               this.cachedHardwareSpecs = {
                 osVersion: nativeHw.os_version || null,
-                cpuModel: nativeHw.cpu_model || null,
-                gpuModel: nativeHw.gpu_model || null,
-                ramTotalGb: nativeHw.ram_total_gb || null,
+                cpuModel: nativeHw.cpu_model || fallbackHw.cpuModel || null,
+                gpuModel: nativeHw.gpu_model || fallbackHw.gpuModel || null,
+                ramTotalGb: nativeHw.ram_total_gb || fallbackHw.ramTotalGb || null,
                 networkInterface: nativeHw.network_interface || null,
                 linkSpeedMbps: nativeHw.link_speed_mbps || null,
                 mtu: nativeHw.mtu || null,
               };
+            } else {
+              this.cachedHardwareSpecs = {
+                osVersion: null,
+                cpuModel: fallbackHw.cpuModel,
+                gpuModel: fallbackHw.gpuModel,
+                ramTotalGb: fallbackHw.ramTotalGb,
+                networkInterface: null,
+                linkSpeedMbps: null,
+                mtu: null,
+              };
             }
           });
-        }, 1500);
+        }, 1200);
       } catch {
         // Fallback: Web / Mock ortamı
         const platform = detectOsPlatform();
-        this.pcName = platform === 'macos' ? 'MacBook' : platform === 'android' ? 'Android-Device' : 'DESKTOP-LOCAL';
+        const uaMatch = typeof navigator !== 'undefined' ? (navigator.userAgent || '').match(/\(Linux; Android [^;]+;\s*([^;)]+)/i) : null;
+        const androidFallback = uaMatch && uaMatch[1] && !uaMatch[1].toLowerCase().includes('k') ? uaMatch[1].trim() : 'Android Telefon';
+        this.pcName = platform === 'macos' ? 'MacBook' : platform === 'android' ? androidFallback : 'DESKTOP-LOCAL';
         this.appVersion = '0.3.9';
       }
 
@@ -932,6 +948,10 @@ class ConnectivitySyncService {
         return this.cachedHardwareSpecs.osVersion.trim();
       }
       const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      if (/Android/i.test(ua)) {
+        const match = ua.match(/Android\s+([0-9.]+)/i);
+        return match ? `Android ${match[1]}` : 'Android';
+      }
       if (ua.includes('Windows NT 10.0')) return 'Windows 11';
       if (ua.includes('Windows NT 6.3')) return 'Windows 8.1';
       if (ua.includes('Windows NT 6.1')) return 'Windows 7';
@@ -1005,7 +1025,9 @@ class ConnectivitySyncService {
     const fallbackHw = detectHardwareSpecs();
     const hardwareSpecs = {
       cpuModel: this.cachedHardwareSpecs?.cpuModel || fallbackHw.cpuModel,
-      gpuModel: this.cachedHardwareSpecs?.gpuModel || fallbackHw.gpuModel,
+      gpuModel: this.cachedHardwareSpecs?.gpuModel && !this.cachedHardwareSpecs.gpuModel.startsWith('EGL ')
+        ? this.cachedHardwareSpecs.gpuModel
+        : (fallbackHw.gpuModel || this.cachedHardwareSpecs?.gpuModel || null),
       ramTotalGb: this.cachedHardwareSpecs?.ramTotalGb || fallbackHw.ramTotalGb,
     };
 

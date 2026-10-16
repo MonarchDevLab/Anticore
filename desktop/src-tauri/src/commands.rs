@@ -4259,6 +4259,28 @@ pub fn exit_app(app: AppHandle, engine: tauri::State<Engine>) {
     app.exit(0);
 }
 
+#[cfg(target_os = "android")]
+pub fn get_android_prop(name: &str) -> Option<String> {
+    use std::ffi::{CStr, CString};
+    use std::os::raw::c_char;
+
+    extern "C" {
+        fn __system_property_get(name: *const c_char, value: *mut c_char) -> std::os::raw::c_int;
+    }
+
+    let c_name = CString::new(name).ok()?;
+    let mut buf = [0 as c_char; 92];
+    let len = unsafe { __system_property_get(c_name.as_ptr(), buf.as_mut_ptr()) };
+    if len > 0 {
+        let c_str = unsafe { CStr::from_ptr(buf.as_ptr()) };
+        let s = c_str.to_string_lossy().trim().to_string();
+        if !s.is_empty() {
+            return Some(s);
+        }
+    }
+    None
+}
+
 #[tauri::command]
 pub fn get_system_hostname() -> String {
     #[cfg(target_os = "windows")]
@@ -4293,15 +4315,36 @@ pub fn get_system_hostname() -> String {
 
     #[cfg(target_os = "android")]
     {
-        if let Ok(output) = std::process::Command::new("getprop").arg("ro.product.model").output() {
-            if output.status.success() {
-                let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                if !name.is_empty() {
-                    return name;
-                }
+        let manufacturer = get_android_prop("ro.product.manufacturer");
+        let model = get_android_prop("ro.product.model");
+        let market_name = get_android_prop("ro.product.marketname")
+            .or_else(|| get_android_prop("ro.product.vendor.marketname"));
+
+        if let Some(mkt) = market_name {
+            if !mkt.trim().is_empty() {
+                return mkt.trim().to_string();
             }
         }
-        return "Android-Device".to_string();
+
+        match (manufacturer, model) {
+            (Some(mfg), Some(mdl)) => {
+                let mfg_clean = mfg.trim();
+                let mdl_clean = mdl.trim();
+                if mdl_clean.to_lowercase().starts_with(&mfg_clean.to_lowercase()) {
+                    return mdl_clean.to_string();
+                } else {
+                    let mut chars = mfg_clean.chars();
+                    let mfg_cap = match chars.next() {
+                        None => String::new(),
+                        Some(f) => f.to_uppercase().collect::<String>() + chars.as_str(),
+                    };
+                    return format!("{mfg_cap} {mdl_clean}");
+                }
+            }
+            (None, Some(mdl)) => return mdl.trim().to_string(),
+            (Some(mfg), None) => return format!("{} Device", mfg.trim()),
+            (None, None) => return "Android-Device".to_string(),
+        }
     }
 
     #[cfg(all(target_os = "linux", not(target_os = "android")))]
@@ -4597,6 +4640,88 @@ pub async fn get_system_network_topology() -> Result<SystemNetworkTopologyDto, S
             }
         }
 
+        #[cfg(target_os = "android")]
+        {
+            let mut default_iface = None;
+            let mut gateway_hex = None;
+            if let Ok(route_content) = std::fs::read_to_string("/proc/net/route") {
+                for line in route_content.lines().skip(1) {
+                    let parts: Vec<&str> = line.split_whitespace().collect();
+                    if parts.len() >= 3 {
+                        let iface = parts[0];
+                        let dest = parts[1];
+                        let gw = parts[2];
+                        if dest == "00000000" && gw != "00000000" {
+                            default_iface = Some(iface.to_string());
+                            gateway_hex = Some(gw.to_string());
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if let Some(gw_hex) = gateway_hex {
+                if let Ok(num) = u32::from_str_radix(&gw_hex, 16) {
+                    let b1 = (num & 0xFF) as u8;
+                    let b2 = ((num >> 8) & 0xFF) as u8;
+                    let b3 = ((num >> 16) & 0xFF) as u8;
+                    let b4 = ((num >> 24) & 0xFF) as u8;
+                    let gw_ip = format!("{b1}.{b2}.{b3}.{b4}");
+                    dto.gateway_ip = Some(gw_ip.clone());
+
+                    if let Ok(arp_content) = std::fs::read_to_string("/proc/net/arp") {
+                        for line in arp_content.lines().skip(1) {
+                            let parts: Vec<&str> = line.split_whitespace().collect();
+                            if parts.len() >= 4 && parts[0] == gw_ip {
+                                let mac = parts[3].trim().to_uppercase();
+                                if !mac.is_empty() && mac != "00:00:00:00:00:00" {
+                                    dto.modem_vendor = resolve_oui_vendor(&mac);
+                                    dto.gateway_mac = Some(mac);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let Some(ref iface) = default_iface {
+                if iface.starts_with("wlan") {
+                    dto.connection_medium = "Wi-Fi".into();
+                } else if iface.starts_with("rmnet") || iface.starts_with("ccmni") || iface.starts_with("pdp") {
+                    dto.connection_medium = "Cellular (4G/5G)".into();
+                } else {
+                    dto.connection_medium = "Mobile".into();
+                }
+            }
+
+            if let Ok(socket) = std::net::UdpSocket::bind("0.0.0.0:0") {
+                if socket.connect("8.8.8.8:80").is_ok() {
+                    if let Ok(local_addr) = socket.local_addr() {
+                        let ip_str = local_addr.ip().to_string();
+                        if !ip_str.is_empty() && ip_str != "0.0.0.0" {
+                            dto.local_ip = Some(ip_str);
+                        }
+                    }
+                }
+            }
+
+            for prop in &[
+                "net.dns1",
+                "net.dns2",
+                "net.wlan0.dns1",
+                "net.wlan0.dns2",
+                "net.rmnet0.dns1",
+                "net.rmnet_data0.dns1",
+            ] {
+                if let Some(dns) = get_android_prop(prop) {
+                    if !dns.is_empty() && !dto.dns_servers.contains(&dns) {
+                        dto.dns_servers.push(dns);
+                    }
+                }
+            }
+        }
+
         Ok(dto)
     })
     .await
@@ -4798,6 +4923,129 @@ pub async fn get_system_telemetry_hardware() -> Result<SystemHardwareTelemetryDt
             dto.network_interface = Some("Wi-Fi / en0".into());
             dto.mtu = Some(1500);
             dto.link_speed_mbps = Some(1000);
+        }
+
+        #[cfg(target_os = "android")]
+        {
+            let release = get_android_prop("ro.build.version.release").unwrap_or_else(|| "14".to_string());
+            let sdk = get_android_prop("ro.build.version.sdk").unwrap_or_else(|| "34".to_string());
+            let build_id = get_android_prop("ro.build.display.id")
+                .or_else(|| get_android_prop("ro.build.id"));
+
+            let os_str = if let Some(b_id) = build_id {
+                format!("Android {release} (API {sdk}, Build {b_id})")
+            } else {
+                format!("Android {release} (API {sdk})")
+            };
+            dto.os_version = Some(os_str);
+
+            let soc_mfg = get_android_prop("ro.soc.manufacturer");
+            let soc_model = get_android_prop("ro.soc.model");
+            let board_platform = get_android_prop("ro.board.platform");
+            let arch = std::env::consts::ARCH;
+
+            let mut cpu_cores = 0u32;
+            let mut hardware_line = None;
+            if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
+                for line in cpuinfo.lines() {
+                    let t = line.trim();
+                    if t.starts_with("processor") {
+                        cpu_cores += 1;
+                    } else if t.starts_with("Hardware") && hardware_line.is_none() {
+                        let parts: Vec<&str> = t.splitn(2, ':').collect();
+                        if parts.len() == 2 {
+                            let h = parts[1].trim().to_string();
+                            if !h.is_empty() {
+                                hardware_line = Some(h);
+                            }
+                        }
+                    }
+                }
+            }
+
+            let cpu_desc = match (soc_mfg, soc_model) {
+                (Some(mfg), Some(mdl)) => {
+                    if cpu_cores > 0 {
+                        format!("{mfg} {mdl} ({cpu_cores} Cores, {arch})")
+                    } else {
+                        format!("{mfg} {mdl} ({arch})")
+                    }
+                }
+                (None, Some(mdl)) => {
+                    if cpu_cores > 0 {
+                        format!("{mdl} ({cpu_cores} Cores, {arch})")
+                    } else {
+                        format!("{mdl} ({arch})")
+                    }
+                }
+                _ => {
+                    if let Some(hw) = hardware_line {
+                        if cpu_cores > 0 {
+                            format!("{hw} ({cpu_cores} Cores, {arch})")
+                        } else {
+                            format!("{hw} ({arch})")
+                        }
+                    } else if let Some(plat) = board_platform {
+                        if cpu_cores > 0 {
+                            format!("{plat} ({cpu_cores} Cores, {arch})")
+                        } else {
+                            format!("{plat} ({arch})")
+                        }
+                    } else if cpu_cores > 0 {
+                        format!("ARM {arch} ({cpu_cores} Cores)")
+                    } else {
+                        format!("ARM {arch}")
+                    }
+                }
+            };
+            dto.cpu_model = Some(cpu_desc);
+
+            if let Ok(kgsl_gpu) = std::fs::read_to_string("/sys/class/kgsl/kgsl-3d0/gpu_model") {
+                let g = kgsl_gpu.trim().to_string();
+                if !g.is_empty() {
+                    dto.gpu_model = Some(format!("Qualcomm Adreno ({g})"));
+                }
+            }
+            if dto.gpu_model.is_none() {
+                if let Some(egl) = get_android_prop("ro.hardware.egl") {
+                    dto.gpu_model = Some(format!("EGL {egl}"));
+                }
+            }
+
+            if let Ok(meminfo) = std::fs::read_to_string("/proc/meminfo") {
+                for line in meminfo.lines() {
+                    if line.starts_with("MemTotal:") {
+                        let parts: Vec<&str> = line.split_whitespace().collect();
+                        if parts.len() >= 2 {
+                            if let Ok(kb) = parts[1].parse::<u64>() {
+                                let gb = (kb as f64 / (1024.0 * 1024.0)).round() as u32;
+                                dto.ram_total_gb = Some(gb);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            let mut active_iface = "wlan0".to_string();
+            if let Ok(route) = std::fs::read_to_string("/proc/net/route") {
+                for line in route.lines().skip(1) {
+                    let parts: Vec<&str> = line.split_whitespace().collect();
+                    if parts.len() >= 3 && parts[1] == "00000000" {
+                        active_iface = parts[0].to_string();
+                        break;
+                    }
+                }
+            }
+            if active_iface.starts_with("wlan") {
+                dto.network_interface = Some(format!("{active_iface} (Wi-Fi)"));
+                dto.link_speed_mbps = Some(433);
+                dto.mtu = Some(1500);
+            } else {
+                dto.network_interface = Some(format!("{active_iface} (Cellular 4G/5G)"));
+                dto.link_speed_mbps = Some(150);
+                dto.mtu = Some(1420);
+            }
         }
 
         Ok(dto)
