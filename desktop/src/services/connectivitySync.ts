@@ -300,7 +300,7 @@ export async function measureNetworkQuality(
 class ConnectivitySyncService {
   private clientId: string = '';
   private pcName: string = 'DESKTOP-UNKNOWN';
-  private appVersion: string = '0.3.8';
+  private appVersion: string = '0.3.9';
   private bufferedLogs: string[] = [];
   private sessionId: string = '';
   private sessionStartTime: number = Date.now();
@@ -402,7 +402,7 @@ class ConnectivitySyncService {
       try {
         let [hostname, version] = await Promise.all([
           api.getSystemHostname().catch(() => 'DESKTOP-LOCAL'),
-          api.getAppVersion().catch(() => '0.3.8'),
+          api.getAppVersion().catch(() => '0.3.9'),
         ]);
 
         const platform = detectOsPlatform();
@@ -453,7 +453,7 @@ class ConnectivitySyncService {
         // Fallback: Web / Mock ortamı
         const platform = detectOsPlatform();
         this.pcName = platform === 'macos' ? 'MacBook' : platform === 'android' ? 'Android-Device' : 'DESKTOP-LOCAL';
-        this.appVersion = '0.3.8';
+        this.appVersion = '0.3.9';
       }
 
       // 3. Mevcut Saati İşle
@@ -1063,7 +1063,7 @@ class ConnectivitySyncService {
       osVersion: getCleanOs(),
       cpuArch: detectCpuArch(),
       screenRes: `${window.screen.width}x${window.screen.height}`,
-      appVersion: this.appVersion || '0.3.8',
+      appVersion: this.appVersion || '0.3.9',
       logs: logsToSend,
       isAutostart: false,
       activeProfile: this.activeProfile,

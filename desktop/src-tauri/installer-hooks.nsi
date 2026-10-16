@@ -4,6 +4,9 @@
 
 !macro customInit
   nsExec::Exec 'taskkill /F /IM Anticore.exe'
+  nsExec::Exec 'taskkill /F /IM anticore-desktop.exe'
   nsExec::Exec 'taskkill /F /IM anticore-cli.exe'
   nsExec::Exec 'net stop AnticoreService'
+  nsExec::Exec 'net stop WinDivert'
+  nsExec::Exec 'net stop WinDivert14'
 !macroend

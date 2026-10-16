@@ -94,5 +94,67 @@ Compress-Archive -Path "$root\dist-portable\Anticore\*" -DestinationPath $zipSta
 Safe-Replace-Exe $zipStaging $zipTarget
 Safe-Replace-Exe $zipStaging "$root\dist\Anticore_${ver}_x64-portable.zip"
 
+# 7. Tauri Minisign (.sig) ve latest.json OTA Manifest Uretimi
+$keyFile = "$root\keys\anticore.key"
+if (Test-Path -LiteralPath $keyFile) {
+    Write-Host "OTA paketleri imzalaniyor ve latest.json uretiliyor..."
+    $setupDest = "$root\dist\Anticore_${ver}_x64-setup.exe"
+    $msiDest   = "$root\dist\Anticore_${ver}_x64_en-US.msi"
+    $sigSetup  = ""
+    $sigMsi    = ""
+
+    if (Test-Path -LiteralPath $setupDest) {
+        Push-Location "$root\desktop"
+        try {
+            npx tauri signer sign -f $keyFile -p "" $setupDest | Out-Null
+        } finally {
+            Pop-Location
+        }
+        if (Test-Path -LiteralPath "$setupDest.sig") {
+            $sigSetup = (Get-Content -LiteralPath "$setupDest.sig" -Raw).Trim()
+        }
+    }
+
+    if (Test-Path -LiteralPath $msiDest) {
+        Push-Location "$root\desktop"
+        try {
+            npx tauri signer sign -f $keyFile -p "" $msiDest | Out-Null
+        } finally {
+            Pop-Location
+        }
+        if (Test-Path -LiteralPath "$msiDest.sig") {
+            $sigMsi = (Get-Content -LiteralPath "$msiDest.sig" -Raw).Trim()
+        }
+    }
+
+    $baseUrl = "https://github.com/MonarchDevLab/Anticore/releases/download/v$ver"
+    $platforms = [ordered]@{}
+    if ($sigSetup) {
+        $platforms["windows-x86_64"] = [ordered]@{
+            signature = $sigSetup
+            url       = "$baseUrl/Anticore_${ver}_x64-setup.exe"
+        }
+        $platforms["windows-x86_64-nsis"] = [ordered]@{
+            signature = $sigSetup
+            url       = "$baseUrl/Anticore_${ver}_x64-setup.exe"
+        }
+    }
+    if ($sigMsi) {
+        $platforms["windows-x86_64-msi"] = [ordered]@{
+            signature = $sigMsi
+            url       = "$baseUrl/Anticore_${ver}_x64_en-US.msi"
+        }
+    }
+
+    $manifest = [ordered]@{
+        version   = $ver
+        notes     = "Anticore v$ver - Multi-platform OTA update hardening, mandatory broadcast shield & kernel driver stability."
+        pub_date  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        platforms = $platforms
+    }
+    $manifestJson = $manifest | ConvertTo-Json -Depth 5
+    Set-Content -LiteralPath "$root\dist\latest.json" -Value $manifestJson -Encoding UTF8
+}
+
 Write-Host "Paketler hazirlandi."
 Get-ChildItem -Path "$root\dist" | Select-Object Name, Length, LastWriteTime

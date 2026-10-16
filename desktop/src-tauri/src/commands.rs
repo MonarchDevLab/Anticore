@@ -3442,22 +3442,39 @@ pub async fn check_update(
                 let has_update = is_newer_version(current_ver, &clean_tag);
                 let is_portable = is_current_app_portable();
 
-                let mut setup_url = None;
-                let mut portable_exe_url = None;
-                let mut portable_zip_url = None;
+                let mut win_setup_url = None;
+                let mut win_portable_exe_url = None;
+                let mut win_portable_zip_url = None;
+                let mut android_apk_url = None;
 
                 for a in &parsed.assets {
                     if a.name.contains("cli") || a.name.contains("daemon") {
                         continue;
                     }
                     if a.name.ends_with("-setup.exe") {
-                        setup_url = Some(a.browser_download_url.clone());
+                        win_setup_url = Some(a.browser_download_url.clone());
                     } else if a.name.ends_with("-portable.zip") {
-                        portable_zip_url = Some(a.browser_download_url.clone());
+                        win_portable_zip_url = Some(a.browser_download_url.clone());
                     } else if a.name == "Anticore.exe" || a.name.ends_with("_portable.exe") {
-                        portable_exe_url = Some(a.browser_download_url.clone());
+                        win_portable_exe_url = Some(a.browser_download_url.clone());
+                    } else if a.name.ends_with(".apk") {
+                        android_apk_url = Some(a.browser_download_url.clone());
                     }
                 }
+
+                #[cfg(windows)]
+                let (setup_url, portable_exe_url, portable_zip_url) = (
+                    win_setup_url.clone(),
+                    win_portable_exe_url.clone(),
+                    win_portable_zip_url.clone(),
+                );
+                #[cfg(not(windows))]
+                let (setup_url, portable_exe_url, portable_zip_url): (Option<String>, Option<String>, Option<String>) = (
+                    None,
+                    None,
+                    None,
+                );
+                let _ = (&win_setup_url, &win_portable_exe_url, &win_portable_zip_url, &android_apk_url);
 
                 let download_url = {
                     #[cfg(target_os = "macos")]
@@ -3489,10 +3506,19 @@ pub async fn check_update(
                                 .map(|a| a.browser_download_url.clone())
                         }
                     }
-                    #[cfg(not(target_os = "macos"))]
+                    #[cfg(target_os = "android")]
                     {
-                        setup_url.clone()
-                            .or_else(|| portable_exe_url.clone())
+                        android_apk_url.clone().or_else(|| {
+                            Some(format!(
+                                "https://github.com/{}/releases/download/v{clean_tag}/Anticore-v{clean_tag}.apk",
+                                repo.trim()
+                            ))
+                        })
+                    }
+                    #[cfg(all(not(target_os = "macos"), not(target_os = "android")))]
+                    {
+                        win_setup_url.clone()
+                            .or_else(|| win_portable_exe_url.clone())
                     }
                 };
 
@@ -3535,18 +3561,32 @@ pub async fn check_update(
                 let has_update = is_newer_version(current_ver, &clean_ver);
                 let is_portable = is_current_app_portable();
 
-                let setup_url = Some(format!(
+                let win_setup_url = Some(format!(
                     "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-setup.exe",
                     repo.trim()
                 ));
-                let portable_exe_url = Some(format!(
+                let win_portable_exe_url = Some(format!(
                     "https://github.com/{}/releases/download/v{clean_ver}/Anticore.exe",
                     repo.trim()
                 ));
-                let portable_zip_url = Some(format!(
+                let win_portable_zip_url = Some(format!(
                     "https://github.com/{}/releases/download/v{clean_ver}/Anticore_{clean_ver}_x64-portable.zip",
                     repo.trim()
                 ));
+
+                #[cfg(windows)]
+                let (setup_url, portable_exe_url, portable_zip_url) = (
+                    win_setup_url.clone(),
+                    win_portable_exe_url.clone(),
+                    win_portable_zip_url.clone(),
+                );
+                #[cfg(not(windows))]
+                let (setup_url, portable_exe_url, portable_zip_url): (Option<String>, Option<String>, Option<String>) = (
+                    None,
+                    None,
+                    None,
+                );
+                let _ = (&win_setup_url, &win_portable_exe_url, &win_portable_zip_url);
 
                 let download_url = {
                     #[cfg(target_os = "macos")]
@@ -3569,10 +3609,17 @@ pub async fn check_update(
                                 .or_else(|| Some(format!("https://github.com/{}/releases/latest", repo.trim())))
                         }
                     }
-                    #[cfg(not(target_os = "macos"))]
+                    #[cfg(target_os = "android")]
                     {
-                        setup_url.clone()
-                            .or_else(|| portable_exe_url.clone())
+                        Some(format!(
+                            "https://github.com/{}/releases/download/v{clean_ver}/Anticore-v{clean_ver}.apk",
+                            repo.trim()
+                        ))
+                    }
+                    #[cfg(all(not(target_os = "macos"), not(target_os = "android")))]
+                    {
+                        win_setup_url.clone()
+                            .or_else(|| win_portable_exe_url.clone())
                     }
                 };
 
@@ -3610,276 +3657,287 @@ pub async fn check_update(
 #[tauri::command]
 pub async fn install_update_direct(
     app: AppHandle,
-    engine: tauri::State<'_, Engine>,
     download_url: String,
 ) -> Result<(), String> {
-    use std::io::{Read, Write};
+    tokio::task::spawn_blocking(move || {
+        use std::io::{Read, Write};
 
-    if !download_url.starts_with("http://") && !download_url.starts_with("https://") {
-        return Err("Geçersiz indirme bağlantısı".into());
-    }
+        if !download_url.starts_with("http://") && !download_url.starts_with("https://") {
+            return Err("Geçersiz indirme bağlantısı".into());
+        }
 
-    if download_url.ends_with(".zip") {
-        return Err("Taşınabilir ZIP arşivleri doğrudan güncellenemez. Lütfen Kurulum Paketi (.exe) kullanın veya Ayarlar menüsünden manuel indirin.".into());
-    }
+        #[cfg(target_os = "android")]
+        {
+            return open_browser_url(app, download_url);
+        }
 
-    let is_portable = is_current_app_portable();
-    let temp_dir = std::env::temp_dir();
+        #[cfg(not(target_os = "android"))]
+        {
+            if download_url.ends_with(".zip") {
+                return Err("Taşınabilir ZIP arşivleri doğrudan güncellenemez. Lütfen Kurulum Paketi (.exe) kullanın veya Ayarlar menüsünden manuel indirin.".into());
+            }
 
-    let is_portable_exe = is_portable && (download_url.ends_with("Anticore.exe") || (!download_url.ends_with("-setup.exe") && download_url.ends_with(".exe")));
+            let is_portable = is_current_app_portable();
+            let temp_dir = std::env::temp_dir();
 
-    let pid = std::process::id();
-    let ts = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis();
+            let is_portable_exe = is_portable && (download_url.ends_with("Anticore.exe") || (!download_url.ends_with("-setup.exe") && download_url.ends_with(".exe")));
 
-    let filename = if is_portable_exe {
-        format!("Anticore_New_Update_{}_{}.exe", pid, ts)
-    } else if download_url.ends_with(".pkg") {
-        format!("Anticore_Update_{}_{}.pkg", pid, ts)
-    } else if download_url.ends_with(".dmg") {
-        format!("Anticore_Update_{}_{}.dmg", pid, ts)
-    } else {
-        format!("Anticore_Update_Setup_{}_{}.exe", pid, ts)
-    };
+            let pid = std::process::id();
+            let ts = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis();
 
-    let mut target_file_path = temp_dir.join(&filename);
-
-    let resp = ureq::get(&download_url)
-        .set("User-Agent", &format!("Anticore-Desktop/{}", APP_VERSION))
-        .timeout(std::time::Duration::from_secs(180))
-        .call()
-        .map_err(|e| format!("İndirme başlatılamadı: {e}"))?;
-
-    let total_bytes: u64 = resp.header("Content-Length")
-        .and_then(|h| h.parse().ok())
-        .unwrap_or(0);
-
-    let mut reader = resp.into_reader();
-    let mut file = match std::fs::File::create(&target_file_path) {
-        Ok(f) => f,
-        Err(e) => {
-            // temp_dir izin kısıtlamasına takıldıysa app_cache_dir'e geç
-            if let Ok(cache) = app.path().app_cache_dir() {
-                let _ = std::fs::create_dir_all(&cache);
-                let fallback = cache.join(&filename);
-                match std::fs::File::create(&fallback) {
-                    Ok(f) => {
-                        target_file_path = fallback;
-                        f
-                    }
-                    Err(e2) => return Err(format!("Geçici dosya oluşturulamadı (İzin hatası: {e} / {e2})")),
-                }
+            let filename = if is_portable_exe {
+                format!("Anticore_New_Update_{}_{}.exe", pid, ts)
+            } else if download_url.ends_with(".pkg") {
+                format!("Anticore_Update_{}_{}.pkg", pid, ts)
+            } else if download_url.ends_with(".dmg") {
+                format!("Anticore_Update_{}_{}.dmg", pid, ts)
             } else {
-                return Err(format!("Geçici dosya oluşturulamadı (İzin hatası: {e})"));
-            }
-        }
-    };
+                format!("Anticore_Update_Setup_{}_{}.exe", pid, ts)
+            };
 
-    let mut buffer = [0u8; 64 * 1024];
-    let mut downloaded: u64 = 0;
+            let mut target_file_path = temp_dir.join(&filename);
 
-    #[derive(Clone, Serialize)]
-    struct ProgressPayload {
-        downloaded: u64,
-        total: u64,
-    }
+            let resp = ureq::get(&download_url)
+                .set("User-Agent", &format!("Anticore-Desktop/{}", APP_VERSION))
+                .timeout(std::time::Duration::from_secs(180))
+                .call()
+                .map_err(|e| format!("İndirme başlatılamadı: {e}"))?;
 
-    loop {
-        let bytes_read = reader.read(&mut buffer)
-            .map_err(|e| format!("İndirme sırasında veri okuma hatası: {e}"))?;
-        if bytes_read == 0 {
-            break;
-        }
-        file.write_all(&buffer[..bytes_read])
-            .map_err(|e| format!("Diske yazma hatası: {e}"))?;
-        downloaded += bytes_read as u64;
+            let total_bytes: u64 = resp.header("Content-Length")
+                .and_then(|h| h.parse().ok())
+                .unwrap_or(0);
 
-        let _ = app.emit("update_download_progress", ProgressPayload {
-            downloaded,
-            total: total_bytes,
-        });
-    }
+            let mut reader = resp.into_reader();
+            let mut file = match std::fs::File::create(&target_file_path) {
+                Ok(f) => f,
+                Err(e) => {
+                    // temp_dir izin kısıtlamasına takıldıysa app_cache_dir'e geç
+                    if let Ok(cache) = app.path().app_cache_dir() {
+                        let _ = std::fs::create_dir_all(&cache);
+                        let fallback = cache.join(&filename);
+                        match std::fs::File::create(&fallback) {
+                            Ok(f) => {
+                                target_file_path = fallback;
+                                f
+                            }
+                            Err(e2) => return Err(format!("Geçici dosya oluşturulamadı (İzin hatası: {e} / {e2})")),
+                        }
+                    } else {
+                        return Err(format!("Geçici dosya oluşturulamadı (İzin hatası: {e})"));
+                    }
+                }
+            };
 
-    drop(file);
+            let mut buffer = [0u8; 64 * 1024];
+            let mut downloaded: u64 = 0;
 
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let _ = std::fs::set_permissions(&target_file_path, std::fs::Permissions::from_mode(0o644));
-    }
-
-    // Motoru ve çalışan alt servisleri zarifçe kapat
-    let _ = prepare_for_update(app.clone(), engine);
-
-    #[cfg(windows)]
-    {
-        let current_exe = std::env::current_exe().map_err(|e| format!("Mevcut uygulama yolu alınamadı: {e}"))?;
-
-        if is_portable_exe {
-            let bat_path = temp_dir.join("anticore_portable_updater.bat");
-            let bat_content = format!(
-                "@echo off\r\ntimeout /t 1 /nobreak > nul\r\n:retry\r\nmove /y \"{}\" \"{}\" > nul 2>&1\r\nif errorlevel 1 (\r\n    timeout /t 1 /nobreak > nul\r\n    goto retry\r\n)\r\nstart \"\" \"{}\"\r\ndel \"%~f0\"\r\nexit\r\n",
-                target_file_path.display(),
-                current_exe.display(),
-                current_exe.display()
-            );
-            std::fs::write(&bat_path, bat_content).map_err(|e| format!("Güncelleme betiği yazılamadı: {e}"))?;
-
-            let _ = silent_command("cmd.exe")
-                .args(["/c", &bat_path.to_string_lossy()])
-                .spawn();
-
-            std::process::exit(0);
-        } else {
-            // İndirilen dosyanın geçerli bir Windows PE (MZ) yürütülebilir dosyası olduğunu doğrula.
-            // Bozuk indirme, 404 HTML yanıtı veya .zip dosyalarının çalıştırılmasını ve 16-bit sistem hatasını engeller.
-            use std::io::Read;
-            let mut magic = [0u8; 2];
-            if let Ok(mut f) = std::fs::File::open(&target_file_path) {
-                let _ = f.read_exact(&mut magic);
-            }
-            if magic != *b"MZ" {
-                let _ = std::fs::remove_file(&target_file_path);
-                return Err("İndirilen güncelleme paketi geçerli bir Windows yürütülebilir dosyası (.exe) değil. İndirme bozulmuş veya bağlantı hatalı olabilir.".into());
+            #[derive(Clone, Serialize)]
+            struct ProgressPayload {
+                downloaded: u64,
+                total: u64,
             }
 
-            let _ = silent_command(target_file_path.to_str().unwrap_or_default())
-                .spawn();
+            loop {
+                let bytes_read = reader.read(&mut buffer)
+                    .map_err(|e| format!("İndirme sırasında veri okuma hatası: {e}"))?;
+                if bytes_read == 0 {
+                    break;
+                }
+                file.write_all(&buffer[..bytes_read])
+                    .map_err(|e| format!("Diske yazma hatası: {e}"))?;
+                downloaded += bytes_read as u64;
 
-            std::process::exit(0);
-        }
-    }
+                let _ = app.emit("update_download_progress", ProgressPayload {
+                    downloaded,
+                    total: total_bytes,
+                });
+            }
 
-    #[cfg(target_os = "macos")]
-    {
-        let target_str = target_file_path.to_string_lossy().to_string();
-        if target_str.ends_with(".pkg") {
-            // 1. Kademe: Süreç zaten root ise doğrudan çalıştır
-            let is_root = unsafe { libc::geteuid() == 0 };
-            if is_root {
-                let status = silent_command("installer")
-                    .args(["-pkg", &target_str, "-target", "/"])
-                    .status();
-                if let Ok(st) = status {
-                    if st.success() {
-                        let _ = silent_command("open")
-                            .args(["-n", "/Applications/Anticore.app"])
-                            .spawn();
+            drop(file);
+
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(&target_file_path, std::fs::Permissions::from_mode(0o644));
+            }
+
+            // Motoru ve çalışan alt servisleri zarifçe kapat
+            let engine = app.state::<Engine>();
+            let _ = prepare_for_update(app.clone(), engine);
+
+            #[cfg(windows)]
+            {
+                let current_exe = std::env::current_exe().map_err(|e| format!("Mevcut uygulama yolu alınamadı: {e}"))?;
+
+                if is_portable_exe {
+                    let bat_path = temp_dir.join("anticore_portable_updater.bat");
+                    let bat_content = format!(
+                        "@echo off\r\ntimeout /t 1 /nobreak > nul\r\n:retry\r\nmove /y \"{}\" \"{}\" > nul 2>&1\r\nif errorlevel 1 (\r\n    timeout /t 1 /nobreak > nul\r\n    goto retry\r\n)\r\nstart \"\" \"{}\"\r\ndel \"%~f0\"\r\nexit\r\n",
+                        target_file_path.display(),
+                        current_exe.display(),
+                        current_exe.display()
+                    );
+                    std::fs::write(&bat_path, bat_content).map_err(|e| format!("Güncelleme betiği yazılamadı: {e}"))?;
+
+                    let _ = silent_command("cmd.exe")
+                        .args(["/c", &bat_path.to_string_lossy()])
+                        .spawn();
+
+                    std::process::exit(0);
+                } else {
+                    // İndirilen dosyanın geçerli bir Windows PE (MZ) yürütülebilir dosyası olduğunu doğrula.
+                    // Bozuk indirme, 404 HTML yanıtı veya .zip dosyalarının çalıştırılmasını ve 16-bit sistem hatasını engeller.
+                    let mut magic = [0u8; 2];
+                    if let Ok(mut f) = std::fs::File::open(&target_file_path) {
+                        let _ = f.read_exact(&mut magic);
+                    }
+                    if magic != *b"MZ" {
                         let _ = std::fs::remove_file(&target_file_path);
-                        std::process::exit(0);
+                        return Err("İndirilen güncelleme paketi geçerli bir Windows yürütülebilir dosyası (.exe) değil. İndirme bozulmuş veya bağlantı hatalı olabilir.".into());
                     }
-                }
-            }
 
-            // 2. Kademe: Parolasız sudo yetkisi varsa (/etc/sudoers.d/com.monolithworks.anticore) sıfır diyalogla kur
-            let sudo_st = silent_command("sudo")
-                .args(["-n", "installer", "-pkg", &target_str, "-target", "/"])
-                .status();
-            if let Ok(st) = sudo_st {
-                if st.success() {
-                    let _ = silent_command("open")
-                        .args(["-n", "/Applications/Anticore.app"])
+                    let _ = silent_command(target_file_path.to_str().unwrap_or_default())
                         .spawn();
-                    let _ = std::fs::remove_file(&target_file_path);
+
                     std::process::exit(0);
                 }
             }
 
-            // 3. Kademe: Henüz sudoers kuralı yoksa yerel macOS Touch ID / Yönetici Parolası istemiyle kur
-            let script = format!(
-                "tell application \"System Events\" to activate\ndo shell script \"installer -pkg '{}' -target /\" with administrator privileges",
-                target_str
-            );
-            let status = std::process::Command::new("osascript")
-                .arg("-e")
-                .arg(&script)
-                .status();
-
-            if let Ok(st) = status {
-                if st.success() {
-                    let _ = silent_command("open")
-                        .args(["-n", "/Applications/Anticore.app"])
-                        .spawn();
-                    let _ = std::fs::remove_file(&target_file_path);
-                    std::process::exit(0);
-                }
-            }
-            return Err("macOS güncelleme paketi kurulamadı veya sistem yönetici yetkisi verilmedi.".into());
-        } else if target_str.ends_with(".dmg") {
-            let mount_dir = temp_dir.join(format!("anticore_dmg_mount_{}_{}", pid, ts));
-            let _ = std::fs::create_dir_all(&mount_dir);
-            let mount_str = mount_dir.to_string_lossy().to_string();
-            let attach = silent_command("hdiutil")
-                .args(["attach", &target_str, "-mountpoint", &mount_str, "-nobrowse", "-quiet"])
-                .status();
-
-            if let Ok(st) = attach {
-                if st.success() {
-                    let source_app = mount_dir.join("Anticore.app");
-                    let src_str = source_app.to_string_lossy().to_string();
-
-                    // Standart kopyalama dene
-                    let mut copied = silent_command("cp")
-                        .args(["-R", &src_str, "/Applications/"])
-                        .status()
-                        .map(|s| s.success())
-                        .unwrap_or(false);
-
-                    // Başarısız olursa parolasız sudo dene
-                    if !copied {
-                        copied = silent_command("sudo")
-                            .args(["-n", "cp", "-R", &src_str, "/Applications/"])
-                            .status()
-                            .map(|s| s.success())
-                            .unwrap_or(false);
+            #[cfg(target_os = "macos")]
+            {
+                let target_str = target_file_path.to_string_lossy().to_string();
+                if target_str.ends_with(".pkg") {
+                    // 1. Kademe: Süreç zaten root ise doğrudan çalıştır
+                    let is_root = unsafe { libc::geteuid() == 0 };
+                    if is_root {
+                        let status = silent_command("installer")
+                            .args(["-pkg", &target_str, "-target", "/"])
+                            .status();
+                        if let Ok(st) = status {
+                            if st.success() {
+                                let _ = silent_command("open")
+                                    .args(["-n", "/Applications/Anticore.app"])
+                                    .spawn();
+                                let _ = std::fs::remove_file(&target_file_path);
+                                std::process::exit(0);
+                            }
+                        }
                     }
 
-                    // Hâlâ başarısızsa osascript ile yetkili kopyalama dene
-                    if !copied {
-                        let cp_script = format!(
-                            "tell application \"System Events\" to activate\ndo shell script \"cp -R '{}' /Applications/\" with administrator privileges",
-                            src_str
-                        );
-                        copied = std::process::Command::new("osascript")
-                            .arg("-e")
-                            .arg(&cp_script)
-                            .status()
-                            .map(|s| s.success())
-                            .unwrap_or(false);
+                    // 2. Kademe: Parolasız sudo yetkisi varsa (/etc/sudoers.d/com.monolithworks.anticore) sıfır diyalogla kur
+                    let sudo_st = silent_command("sudo")
+                        .args(["-n", "installer", "-pkg", &target_str, "-target", "/"])
+                        .status();
+                    if let Ok(st) = sudo_st {
+                        if st.success() {
+                            let _ = silent_command("open")
+                                .args(["-n", "/Applications/Anticore.app"])
+                                .spawn();
+                            let _ = std::fs::remove_file(&target_file_path);
+                            std::process::exit(0);
+                        }
                     }
 
-                    let _ = silent_command("hdiutil")
-                        .args(["detach", &mount_str, "-quiet"])
+                    // 3. Kademe: Henüz sudoers kuralı yoksa yerel macOS Touch ID / Yönetici Parolası istemiyle kur
+                    let script = format!(
+                        "tell application \"System Events\" to activate\ndo shell script \"installer -pkg '{}' -target /\" with administrator privileges",
+                        target_str
+                    );
+                    let status = std::process::Command::new("osascript")
+                        .arg("-e")
+                        .arg(&script)
                         .status();
 
-                    if copied {
-                        let _ = silent_command("xattr")
-                            .args(["-cr", "/Applications/Anticore.app"])
-                            .status();
-                        let _ = silent_command("open")
-                            .args(["-n", "/Applications/Anticore.app"])
-                            .spawn();
-                        let _ = std::fs::remove_file(&target_file_path);
-                        let _ = std::fs::remove_dir_all(&mount_dir);
-                        std::process::exit(0);
+                    if let Ok(st) = status {
+                        if st.success() {
+                            let _ = silent_command("open")
+                                .args(["-n", "/Applications/Anticore.app"])
+                                .spawn();
+                            let _ = std::fs::remove_file(&target_file_path);
+                            std::process::exit(0);
+                        }
                     }
+                    return Err("macOS güncelleme paketi kurulamadı veya sistem yönetici yetkisi verilmedi.".into());
+                } else if target_str.ends_with(".dmg") {
+                    let mount_dir = temp_dir.join(format!("anticore_dmg_mount_{}_{}", pid, ts));
+                    let _ = std::fs::create_dir_all(&mount_dir);
+                    let mount_str = mount_dir.to_string_lossy().to_string();
+                    let attach = silent_command("hdiutil")
+                        .args(["attach", &target_str, "-mountpoint", &mount_str, "-nobrowse", "-quiet"])
+                        .status();
+
+                    if let Ok(st) = attach {
+                        if st.success() {
+                            let source_app = mount_dir.join("Anticore.app");
+                            let src_str = source_app.to_string_lossy().to_string();
+
+                            // Standart kopyalama dene
+                            let mut copied = silent_command("cp")
+                                .args(["-R", &src_str, "/Applications/"])
+                                .status()
+                                .map(|s| s.success())
+                                .unwrap_or(false);
+
+                            // Başarısız olursa parolasız sudo dene
+                            if !copied {
+                                copied = silent_command("sudo")
+                                    .args(["-n", "cp", "-R", &src_str, "/Applications/"])
+                                    .status()
+                                    .map(|s| s.success())
+                                    .unwrap_or(false);
+                            }
+
+                            // Hâlâ başarısızsa osascript ile yetkili kopyalama dene
+                            if !copied {
+                                let cp_script = format!(
+                                    "tell application \"System Events\" to activate\ndo shell script \"cp -R '{}' /Applications/\" with administrator privileges",
+                                    src_str
+                                );
+                                copied = std::process::Command::new("osascript")
+                                    .arg("-e")
+                                    .arg(&cp_script)
+                                    .status()
+                                    .map(|s| s.success())
+                                    .unwrap_or(false);
+                            }
+
+                            let _ = silent_command("hdiutil")
+                                .args(["detach", &mount_str, "-quiet"])
+                                .status();
+
+                            if copied {
+                                let _ = silent_command("xattr")
+                                    .args(["-cr", "/Applications/Anticore.app"])
+                                    .status();
+                                let _ = silent_command("open")
+                                    .args(["-n", "/Applications/Anticore.app"])
+                                    .spawn();
+                                let _ = std::fs::remove_file(&target_file_path);
+                                let _ = std::fs::remove_dir_all(&mount_dir);
+                                std::process::exit(0);
+                            }
+                        }
+                    }
+                    return Err("macOS DMG güncelleme paketi açılamadı veya kopyalanamadı.".into());
+                } else {
+                    return Err("Desteklenmeyen macOS güncelleme paketi formatı.".into());
                 }
             }
-            return Err("macOS DMG güncelleme paketi açılamadı veya kopyalanamadı.".into());
-        } else {
-            return Err("Desteklenmeyen macOS güncelleme paketi formatı.".into());
+
+            #[cfg(all(not(windows), not(target_os = "macos")))]
+            {
+                return Err("Doğrudan kurulum şu anda bu platformda desteklenmemektedir.".into());
+            }
+
+            #[allow(unreachable_code)]
+            Ok(())
         }
-    }
-
-    #[cfg(all(not(windows), not(target_os = "macos")))]
-    {
-        return Err("Doğrudan kurulum şu anda bu platformda desteklenmemektedir.".into());
-    }
-
-    #[allow(unreachable_code)]
-    Ok(())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -3907,7 +3965,7 @@ pub fn test_update_notification(app: AppHandle) -> Result<(), String> {
     use tauri_plugin_notification::NotificationExt;
     app.notification()
         .builder()
-        .title("Anticore v0.3.3 Test Bildirimi")
+        .title(&format!("Anticore v{} Test Bildirimi", APP_VERSION))
         .body("Kesintisiz yerel bildirim motoru aktif. Güncelleme bildirimleri başarıyla iletiliyor.")
         .show()
         .map_err(|e| format!("Test bildirimi gönderilemedi: {e}"))?;
@@ -3925,7 +3983,7 @@ pub async fn fetch_community_blacklist(app: AppHandle, source_url: Option<String
             });
 
         let remote_text = ureq::get(&url)
-            .set("User-Agent", "Anticore-Desktop/0.3.0")
+            .set("User-Agent", &format!("Anticore-Desktop/{}", APP_VERSION))
             .timeout(std::time::Duration::from_secs(6))
             .call()
             .ok()

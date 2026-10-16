@@ -32,11 +32,42 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.3.9",
+    titleTr: "Çoklu Platform OTA GüncellemeTahkimi, Zorunlu Yayın Kalkanı ve Otomatik İmzalama",
+    titleEn: "Multi-Platform OTA Update Hardening, Mandatory Broadcast Shield & Automated Signing",
+    date: "15 Ekim 2026",
+    isLatest: true,
+    highlightTr: "Güncelleme bildirim bandındaki sürüm etiketi hatası ('vavailable') giderildi; Filo Yönetim Paneli'nden gönderilen zorunlu (mandatory) güncellemeler için kapatılamaz kilitli kurulum akışı eklendi; Windows, macOS ve Android paket seçicileri platforma duyarlı hale getirildi ve NSIS kurulum kancaları WinDivert sürücü kilidine karşı tahkim edildi.",
+    highlightEn: "Fixed the update banner version tag regression ('vavailable'); enforced un-dismissible installation flow for mandatory fleet OTA broadcasts; made Windows, macOS, and Android package selectors strictly platform-aware; and hardened NSIS installer hooks against WinDivert kernel driver locks.",
+    changes: [
+      {
+        type: "fix",
+        textTr: "Güncelleme Bandı Sürüm Etiketi: UpdateModal ve UpdateBanner arasındaki sürüm aktarımı düzeltilerek 'vavailable' yerine gerçek SemVer numarasının (v0.3.9) gösterilmesi sağlandı.",
+        textEn: "Update Banner Version Tag: Fixed callback state synchronization between UpdateModal and UpdateBanner so the exact SemVer string (v0.3.9) is rendered instead of 'vavailable'.",
+      },
+      {
+        type: "feature",
+        textTr: "Zorunlu (Mandatory) OTA Yayın Kalkanı: Yönetim panelinden 'Zorunlu Güncelleme' bayrağıyla gönderilen yayınlar kapatılamaz modal olarak açılır ve GitHub API hız limitine takılsa dahi doğrudan yedek indirme bağlantısıyla kurulur.",
+        textEn: "Mandatory OTA Broadcast Shield: Broadcasts flagged as mandatory by the Fleet Dashboard now enforce an un-dismissible modal and seamlessly fall back to the direct broadcast payload if GitHub API is rate-limited.",
+      },
+      {
+        type: "perf",
+        textTr: "Asenkron İndirme ve Platform İzolasyonu: Büyük kurulum paketlerinin indirilmesi Tokio spawn_blocking iş parçacığına taşındı; macOS (.pkg), Android (.apk) ve Windows (.exe/.zip) indirme bağlantıları işletim sistemine göre tam izole edildi.",
+        textEn: "Async Download & Platform Isolation: Offloaded binary streaming to Tokio spawn_blocking threads and strictly isolated macOS (.pkg), Android (.apk), and Windows (.exe/.zip) asset URLs per client OS.",
+      },
+      {
+        type: "security",
+        textTr: "NSIS WinDivert Sürücü Tahkimi ve Minisign İmzalama: Kurulum öncesinde anticore-desktop.exe ve WinDivert çekirdek sürücüsü otomatik durdurularak dosya kilidi hataları önlendi; paketleme betiğine otomatik .sig ve latest.json üretimi eklendi.",
+        textEn: "NSIS WinDivert Driver Hardening & Minisign Signing: Added pre-install hooks to terminate anticore-desktop.exe and stop WinDivert kernel services before file extraction, and automated .sig and latest.json generation in packaging scripts.",
+      },
+    ],
+  },
+  {
     version: "v0.3.8",
     titleTr: "Discord Voice Sensör Onarımı, Çoklu Platform Telemetri Kalkanı ve Dinamik Android Desteği",
     titleEn: "Discord Voice Probe Fix, Multi-Platform Telemetry Shield & Dynamic Android Support",
     date: "8 Ekim 2026",
-    isLatest: true,
+    isLatest: false,
     highlightTr: "Discord ses sunucularındaki sahte DNS zehirlenmesi alarmı giderildi; Android ve macOS cihazlar için dinamik platform ve donanım tespiti sağlandı; oyun ve kullanıcı uygulamalarının telemetri görünürlüğü tahkim edildi.",
     highlightEn: "Resolved false-positive DNS poisoning alerts on Discord voice probes; added dynamic platform and device model resolution for Android and macOS; reinforced telemetry visibility for gaming and communication apps.",
     changes: [

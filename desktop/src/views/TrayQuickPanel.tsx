@@ -215,12 +215,14 @@ export default function TrayQuickPanel() {
       const repo = localStorage.getItem("anticore_github_repo") || undefined;
       const token = localStorage.getItem("anticore_gh_token") || undefined;
       const info = await api.checkUpdate(repo, token);
-      if (info.has_update) {
+      const reallyHasUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
+      if (reallyHasUpdate) {
         setUpdateAvailable(true);
         setUpdateInfo({ version: info.latest_version, downloadUrl: info.download_url });
         setFeedback(lang === "tr" ? `Yeni sürüm hazır: ${info.latest_version}` : `New update: ${info.latest_version}`);
       } else {
         setUpdateAvailable(false);
+        setUpdateInfo(null);
         setFeedback(lang === "tr" ? `Anticore güncel (v${info.current_version})` : `Up to date (v${info.current_version})`);
       }
       setTimeout(() => setFeedback(null), 3500);
@@ -245,7 +247,7 @@ export default function TrayQuickPanel() {
           <div className="flex items-baseline gap-1.5">
             <span className="font-extrabold tracking-wider text-xs text-paper-bright">ANTICORE</span>
             <span className="text-[10px] text-paper-faint font-mono font-medium">
-              v{appVersion || "0.3.8"}
+              v{appVersion || "0.3.9"}
             </span>
             {updateAvailable && (
               <button

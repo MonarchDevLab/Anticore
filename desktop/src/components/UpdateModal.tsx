@@ -13,15 +13,24 @@ import { api, downloadAndInstallUpdate, type UpdateInfoDto } from "../lib/tauri"
 import { useI18n } from "../lib/i18n";
 import { isNewerVersion } from "../lib/version";
 
+export interface BroadcastUpdatePayload {
+  version: string;
+  mandatory?: boolean;
+  title?: string;
+  message?: string;
+  downloadUrl?: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
-  onUpdateDetected?: (hasUpdate: boolean) => void;
+  onUpdateDetected?: (latestVersion: string | null) => void;
+  broadcast?: BroadcastUpdatePayload | null;
 }
 
 type ModalState = "idle" | "checking" | "up_to_date" | "available" | "installing" | "error";
 
-export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) {
+export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast }: Props) {
   const { t, lang } = useI18n();
   const [status, setStatus] = useState<ModalState>("idle");
   const [updateInfo, setUpdateInfo] = useState<UpdateInfoDto | null>(null);
@@ -29,6 +38,27 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
   const [progress, setProgress] = useState<{ downloaded: number; total: number } | null>(null);
   const [tokenInput, setTokenInput] = useState(() => localStorage.getItem("anticore_gh_token") || "");
   const [showTokenField, setShowTokenField] = useState(false);
+  const isMandatory = Boolean(broadcast?.mandatory);
+
+  const buildBroadcastFallbackInfo = (currentVer: string): UpdateInfoDto | null => {
+    if (!broadcast || !broadcast.version) return null;
+    const cleanVer = broadcast.version.trim().replace(/^v+/i, "");
+    if (!isNewerVersion(currentVer, cleanVer)) return null;
+    return {
+      has_update: true,
+      current_version: currentVer,
+      latest_version: cleanVer,
+      release_name: broadcast.title || `Anticore v${cleanVer}`,
+      release_notes: broadcast.message || "",
+      html_url: "https://github.com/MonarchDevLab/Anticore/releases/latest",
+      download_url: broadcast.downloadUrl || null,
+      setup_url: null,
+      portable_exe_url: null,
+      portable_zip_url: null,
+      is_portable: false,
+      published_at: new Date().toISOString(),
+    };
+  };
 
   const checkUpdates = async (overrideToken?: string) => {
     setStatus("checking");
@@ -39,26 +69,50 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
       const token = overrideToken ?? (localStorage.getItem("anticore_gh_token") || undefined);
       const info = await api.checkUpdate(repo, token);
       const reallyHasUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
-      const safeInfo = { ...info, has_update: reallyHasUpdate };
-      setUpdateInfo(safeInfo);
       if (reallyHasUpdate) {
+        const cleanVer = info.latest_version.trim().replace(/^v+/i, "");
+        const mergedInfo: UpdateInfoDto = {
+          ...info,
+          has_update: true,
+          latest_version: cleanVer,
+          release_name: broadcast?.title || info.release_name,
+          release_notes: info.release_notes || broadcast?.message || "",
+          download_url: info.download_url || broadcast?.downloadUrl || null,
+        };
+        setUpdateInfo(mergedInfo);
         setStatus("available");
-        onUpdateDetected?.(true);
+        onUpdateDetected?.(cleanVer);
       } else {
-        setStatus("up_to_date");
-        onUpdateDetected?.(false);
+        const fallback = buildBroadcastFallbackInfo(info.current_version);
+        if (fallback) {
+          setUpdateInfo(fallback);
+          setStatus("available");
+          onUpdateDetected?.(fallback.latest_version);
+        } else {
+          setUpdateInfo({ ...info, has_update: false });
+          setStatus("up_to_date");
+          onUpdateDetected?.(null);
+        }
       }
     } catch (err) {
-      setErrorMsg(String(err));
-      setStatus("error");
+      const currentVer = await api.getAppVersion().catch(() => "0.3.9");
+      const fallback = buildBroadcastFallbackInfo(currentVer);
+      if (fallback) {
+        setUpdateInfo(fallback);
+        setStatus("available");
+        onUpdateDetected?.(fallback.latest_version);
+      } else {
+        setErrorMsg(String(err));
+        setStatus("error");
+      }
     }
   };
 
   useEffect(() => {
-    if (open && status === "idle") {
+    if (open) {
       void checkUpdates();
     }
-  }, [open]);
+  }, [open, broadcast?.version, broadcast?.mandatory]);
 
   const handleSaveToken = () => {
     if (tokenInput.trim()) {
@@ -74,7 +128,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
     setProgress(null);
     setErrorMsg(null);
     try {
-      await downloadAndInstallUpdate(updateInfo?.download_url, (downloaded, total) => {
+      await downloadAndInstallUpdate(updateInfo?.download_url || broadcast?.downloadUrl, (downloaded, total) => {
         setProgress({ downloaded, total });
       });
     } catch (err) {
@@ -91,7 +145,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
       aria-modal="true"
       aria-label={t("update_modal_title")}
       className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4"
-      onClick={status !== "installing" ? onClose : undefined}
+      onClick={status !== "installing" && !isMandatory ? onClose : undefined}
     >
       <div
         className="card rounded-2xl p-6 bg-surface-card border border-white/[0.12] shadow-2xl w-full max-w-lg relative overflow-hidden"
@@ -100,14 +154,14 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-live/10 border border-live/25 text-live">
+            <div className={`p-1.5 rounded-lg border ${isMandatory ? "bg-alert/15 border-alert/30 text-alert" : "bg-live/10 border-live/25 text-live"}`}>
               <ArrowDownCircle size={16} strokeWidth={2} />
             </div>
             <h3 className="text-sm font-bold text-paper-bright">
-              {t("update_modal_title")}
+              {broadcast?.title || t("update_modal_title")}
             </h3>
           </div>
-          {status !== "installing" && (
+          {status !== "installing" && !isMandatory && (
             <button
               onClick={onClose}
               className="text-paper-muted hover:text-paper p-1 rounded-lg hover:bg-white/[0.06] transition-colors cursor-pointer"
@@ -117,6 +171,17 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
             </button>
           )}
         </div>
+
+        {isMandatory && (
+          <div className="mb-3 p-2.5 rounded-xl bg-alert/15 border border-alert/30 text-alert text-[11px] font-semibold flex items-center gap-2">
+            <AlertTriangle size={14} className="shrink-0" />
+            <span>
+              {lang === "tr"
+                ? "Kritik güvenlik ve protokol güncellemesi. Devam etmek için güncellemeyi tamamlayın."
+                : "Mandatory security and protocol update required to continue."}
+            </span>
+          </div>
+        )}
 
         {/* Content States */}
         <div className="space-y-4">
@@ -367,12 +432,14 @@ export default function UpdateModal({ open, onClose, onUpdateDetected }: Props) 
               </>
             )}
 
-            <button
-              onClick={onClose}
-              className="btn btn-secondary text-xs"
-            >
-              {t("update_modal_close")}
-            </button>
+            {!isMandatory && (
+              <button
+                onClick={onClose}
+                className="btn btn-secondary text-xs"
+              >
+                {t("update_modal_close")}
+              </button>
+            )}
           </div>
         )}
       </div>

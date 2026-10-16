@@ -62,7 +62,7 @@ export default function SettingsView({
 
   // GitHub Updater State
   const [repoInput, setRepoInput] = useState(() => localStorage.getItem("anticore_github_repo") || "MonarchDevLab/Anticore");
-  const [autoUpdate, setAutoUpdate] = useState(() => localStorage.getItem("anticore_auto_update") === "true");
+  const [autoUpdate, setAutoUpdate] = useState(() => localStorage.getItem("anticore_auto_update") !== "false");
   const [updState, setUpdState] = useState<"idle" | "checking" | "done" | "error">("idle");
   const [updInfo, setUpdInfo] = useState<UpdateInfoDto | null>(null);
   const [updError, setUpdError] = useState<string | null>(null);

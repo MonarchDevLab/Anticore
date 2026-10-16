@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { check as checkPluginUpdate } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { isMac } from "./platform";
+import { isMac, isAndroid } from "./platform";
 
 export interface Status {
   running: boolean;
@@ -348,6 +348,19 @@ export async function downloadAndInstallUpdate(
   fallbackDownloadUrl?: string | null,
   onProgress?: (downloadedBytes: number, totalBytes: number) => void,
 ): Promise<void> {
+  if (isAndroid) {
+    let targetUrl = fallbackDownloadUrl;
+    if (!targetUrl) {
+      const info = await api.checkUpdate();
+      targetUrl = info.download_url || info.html_url;
+    }
+    if (!targetUrl) {
+      throw new Error("Android güncelleme paketi (.apk) bağlantısı bulunamadı.");
+    }
+    await api.openBrowserUrl(targetUrl);
+    return;
+  }
+
   // macOS üzerinde Tauri Plugin Updater yerine doğrudan yerel Installer (.pkg) akışını kullan.
   // Tauri updater unprivileged modda /Applications/Anticore.app üzerine yazmaya çalışarak
   // "os error 13 (Permission denied)" hatası verir. Doğrudan kurulum ise macOS yönetici

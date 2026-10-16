@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.svg?v=0.3.8" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -37,7 +37,7 @@
 <table width="100%" align="center">
   <tr>
     <td width="25%" align="center">
-      <a href="#download-options-v038"><img src="https://img.shields.io/badge/01-DISTRIBUTION-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Distribution" /></a>
+      <a href="#download-options-v039"><img src="https://img.shields.io/badge/01-DISTRIBUTION-20ffa0?style=for-the-badge&labelColor=08090D" alt="01 Distribution" /></a>
     </td>
     <td width="25%" align="center">
       <a href="#what-anticore-is-and-is-not"><img src="https://img.shields.io/badge/02-CORE_ARCH-20f2ff?style=for-the-badge&labelColor=08090D" alt="02 Core Architecture" /></a>
@@ -69,7 +69,7 @@
 
 ---
 
-## Download Options (v0.3.8)
+## Download Options (v0.3.9)
 
 All distribution binaries are built cleanly, stripped of developer workstation paths (Zero Leakage), and verified via Minisign.
 
@@ -96,13 +96,13 @@ All distribution binaries are built cleanly, stripped of developer workstation p
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/anticore-desktop.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-16.8_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-desktop.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-16.8_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.65_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/DOWNLOAD_.EXE-4.65_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64_en-US.msi"><img src="https://img.shields.io/badge/DOWNLOAD_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Download MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -118,10 +118,10 @@ All distribution binaries are built cleanly, stripped of developer workstation p
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/anticore-desktop.exe"><img src="https://img.shields.io/badge/STANDALONE-anticore--desktop.exe_(16.8_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="anticore-desktop.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-desktop.exe"><img src="https://img.shields.io/badge/STANDALONE-anticore--desktop.exe_(16.8_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="anticore-desktop.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64-setup.exe"><img src="https://img.shields.io/badge/SETUP_INSTALLER-Anticore__0.3.8__x64--setup.exe-20f2ff?style=flat-square&labelColor=08090D" alt="Setup" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/SETUP_INSTALLER-Anticore__0.3.9__x64--setup.exe-20f2ff?style=flat-square&labelColor=08090D" alt="Setup" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/ARCHIVE-GitHub_All_Releases-FFFFFF?style=flat-square&labelColor=08090D" alt="All Releases" /></a>
@@ -130,7 +130,7 @@ All distribution binaries are built cleanly, stripped of developer workstation p
   </tbody>
 </table>
 
-### Android Mobile Station (v0.3.8)
+### Android Mobile Station (v0.3.9)
 
 Native DNS & DPI circumvention client for Android (API 26 / Android 8.0+):
 
@@ -152,7 +152,7 @@ Native DNS & DPI circumvention client for Android (API 26 / Android 8.0+):
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore-v0.3.8.apk"><img src="https://img.shields.io/badge/DOWNLOAD_.APK-Universal_(Android_8.0+)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download APK" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore-v0.3.9.apk"><img src="https://img.shields.io/badge/DOWNLOAD_.APK-Universal_(Android_8.0+)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download APK" /></a>
       </td>
       <td align="center" valign="middle">
         <img src="https://img.shields.io/badge/SECURITY-NO_ROOT_%E2%80%A2_ZERO_LOG-20f2ff?style=flat-square&labelColor=08090D" alt="No Root" />
@@ -163,7 +163,7 @@ Native DNS & DPI circumvention client for Android (API 26 / Android 8.0+):
 
 <br />
 
-### macOS Distribution & Setup (v0.3.8)
+### macOS Distribution & Setup (v0.3.9)
 
 For macOS (11.0 Big Sur and newer), the native `utun` + `pfctl` core engine and menu bar Quick Panel (`quick-panel`) packages are compiled natively per architecture:
 
@@ -208,34 +208,34 @@ For macOS (11.0 Big Sur and newer), the native `utun` + `pfctl` core engine and 
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_arm64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download PKG ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_arm64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Download PKG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download PKG Intel x64" /></a>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="Download DMG ARM64" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="Download DMG Intel x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.pkg"><img src="https://img.shields.io/badge/DOWNLOAD_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="Download PKG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_aarch64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="Download DMG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.dmg"><img src="https://img.shields.io/badge/DOWNLOAD_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="Download DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/anticore-cli-macos-arm64-0.3.8.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/anticore-cli-macos-x64-0.3.8.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-cli-macos-arm64-0.3.9.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-cli-macos-x64-0.3.9.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
       </td>
     </tr>
     <tr>
@@ -260,10 +260,10 @@ Download and install the native `.pkg` package via Terminal using macOS built-in
 
 ```bash
 # Apple Silicon Mac (M1 / M2 / M3 / M4)
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_arm64.pkg && sudo installer -pkg Anticore_0.3.8_arm64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_arm64.pkg && sudo installer -pkg Anticore_0.3.9_arm64.pkg -target /
 
 # Intel-Based Mac
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anticore_0.3.8_x64.pkg && sudo installer -pkg Anticore_0.3.8_x64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.pkg && sudo installer -pkg Anticore_0.3.9_x64.pkg -target /
 ```
 
 > [!IMPORTANT]
@@ -287,18 +287,18 @@ curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.8/Anti
 
 | Package File | Size | SHA-256 Checksum |
 |---|:---:|---|
-| `Anticore_0.3.8_x64-setup.exe` | 4.5 MB | `7FB3D04DEBA95119F1D53D7485AD8A46D5473BE8DDDE286E1C9E25D4FC6CDE76` |
+| `Anticore_0.3.9_x64-setup.exe` | 4.5 MB | `7FB3D04DEBA95119F1D53D7485AD8A46D5473BE8DDDE286E1C9E25D4FC6CDE76` |
 | `anticore-desktop.exe` (Standalone GUI) | 16.8 MB | `FC805530210112B62A12CA9FCCE3AD91122F40C6C0426E44C86B4D1568F523AC` |
-| `Anticore_0.3.8_x64_en-US.msi` | 6.5 MB | `AD11DD3157FAC530A8C0ED5F299CC9AA8EEC0B8843B8981DDA70226BAF58E9FB` |
-| `Anticore-v0.3.8.apk` (Android Universal) | 42.3 MB | `D036DCC5B434DA7C3EE3998A2DCEB9282FDC5363FB36B9BA933263E2B138EA68` |
-| `Anticore_0.3.8_arm64.pkg` | 6.8 MB | `053C1DF92BC6691AA0FEEACE47D775D099790BEBF2A0AC1F82372D6183CEB8F5` |
-| `Anticore_0.3.8_aarch64.dmg` | 6.8 MB | `9D490A4CF49EC721BB980ABE586C50D3937743D8C5B2DD106038B95874B10EFA` |
-| `Anticore_0.3.8_x64.pkg` | 7.1 MB | `68461BE56EAF7AC1FD69D399EA1A3013F30B8DFA3427DCB91D6803D04470AA13` |
-| `Anticore_0.3.8_x64.dmg` | 7.0 MB | `BB5C69A369F291B07E8CE790665FB8A9DF2C9A401212D2629AB33E54D68F6F7A` |
+| `Anticore_0.3.9_x64_en-US.msi` | 6.5 MB | `AD11DD3157FAC530A8C0ED5F299CC9AA8EEC0B8843B8981DDA70226BAF58E9FB` |
+| `Anticore-v0.3.9.apk` (Android Universal) | 42.3 MB | `D036DCC5B434DA7C3EE3998A2DCEB9282FDC5363FB36B9BA933263E2B138EA68` |
+| `Anticore_0.3.9_arm64.pkg` | 6.8 MB | `053C1DF92BC6691AA0FEEACE47D775D099790BEBF2A0AC1F82372D6183CEB8F5` |
+| `Anticore_0.3.9_aarch64.dmg` | 6.8 MB | `9D490A4CF49EC721BB980ABE586C50D3937743D8C5B2DD106038B95874B10EFA` |
+| `Anticore_0.3.9_x64.pkg` | 7.1 MB | `68461BE56EAF7AC1FD69D399EA1A3013F30B8DFA3427DCB91D6803D04470AA13` |
+| `Anticore_0.3.9_x64.dmg` | 7.0 MB | `BB5C69A369F291B07E8CE790665FB8A9DF2C9A401212D2629AB33E54D68F6F7A` |
 
 ```powershell
 # Verify downloaded package via PowerShell:
-Get-FileHash .\Anticore_0.3.8_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\Anticore_0.3.9_x64-setup.exe -Algorithm SHA256
 ```
 </details>
 

@@ -17,7 +17,7 @@ import Setup from "./views/Setup";
 import SettingsView from "./views/SettingsView";
 import Wizard from "./views/Wizard";
 import CompatWarning from "./components/CompatWarning";
-import UpdateModal from "./components/UpdateModal";
+import UpdateModal, { type BroadcastUpdatePayload } from "./components/UpdateModal";
 import UpdateBanner from "./components/UpdateBanner";
 import Titlebar from "./components/Titlebar";
 import GuideDrawer from "./components/GuideDrawer";
@@ -46,8 +46,9 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
   const [elevating, setElevating] = useState(false);
-  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.8");
+  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.9");
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
+  const [broadcastUpdate, setBroadcastUpdate] = useState<BroadcastUpdatePayload | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -224,12 +225,19 @@ export default function App() {
       onUpdateBroadcast: (update) => {
         if (!update || !update.version) return;
         void api.getAppVersion().then((ver) => {
-          const effectiveCurrent = (ver || currentAppVersion || "0.3.8").trim().replace(/^v+/i, "");
+          const effectiveCurrent = (ver || currentAppVersion || "0.3.9").trim().replace(/^v+/i, "");
           const candidateVer = update.version.trim().replace(/^v+/i, "");
           if (isNewerVersion(effectiveCurrent, candidateVer)) {
             setUpdateAvailable(candidateVer);
+            setBroadcastUpdate({
+              version: candidateVer,
+              mandatory: Boolean(update.mandatory),
+              title: update.title,
+              message: update.message,
+              downloadUrl: update.downloadUrl,
+            });
             const isDismissed = sessionStorage.getItem(`anticore_update_dismissed_${candidateVer}`) === "1";
-            if (!isDismissed) {
+            if (update.mandatory || !isDismissed) {
               setBannerDismissed(false);
               setUpdateModalOpen(true);
             }
@@ -289,6 +297,7 @@ export default function App() {
     ]);
 
     const doCheck = () => {
+      if (localStorage.getItem("anticore_auto_update") === "false") return;
       const repo = localStorage.getItem("anticore_github_repo") || undefined;
       const token = localStorage.getItem("anticore_gh_token") || undefined;
       void api
@@ -599,14 +608,16 @@ export default function App() {
       {/* ── 5. Güncelleme Modalı ── */}
       <UpdateModal
         open={updateModalOpen}
+        broadcast={broadcastUpdate}
         onClose={() => {
+          if (broadcastUpdate?.mandatory) return;
           setUpdateModalOpen(false);
           if (updateAvailable) {
             const clean = updateAvailable.trim().replace(/^v+/i, "");
             sessionStorage.setItem(`anticore_update_dismissed_${clean}`, "1");
           }
         }}
-        onUpdateDetected={(has) => setUpdateAvailable(has ? "available" : null)}
+        onUpdateDetected={(ver) => setUpdateAvailable(ver)}
       />
 
       {/* ── 6. 3D Gri Orb Küresel Bakım Ekranı & Geri Sayım Saati ── */}
