@@ -4,6 +4,10 @@
   <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
+<p align="center">
+  <img src="assets/anticore-3d-logo-transparent.png" alt="ANTICORE 3D Taktik Kalkan Amblemi" width="150" />
+</p>
+
 # ANTICORE
 
 ### Windows ve macOS İçin Sıfır Hız Kayıplı Açık Kaynak DPI Aşma ve Ağ Özgürlüğü Motoru
@@ -1032,6 +1036,35 @@ cd Anticore/antikor
 chmod +x scripts/macos-package.sh
 ./scripts/macos-package.sh all
 ```
+
+---
+
+## Marka Kimliği ve Görsel Varlıklar
+
+Anticore marka kimliği, taktik siber güvenlik kalkanı ve kuantum reaktör çekirdeği konsepti üzerine inşa edilmiştir. Tüm varlıklar şeffaf ve yüksek çözünürlüklü olarak depoda mevcuttur:
+
+<table width="100%" align="center">
+  <tr>
+    <td width="33.3%" align="center" bgcolor="#090E17">
+      <img src="assets/anticore-3d-logo-transparent.png" width="130" alt="Anticore 3D Amblem" /><br /><br />
+      <b>3D Taktik Kalkan (Transparan PNG)</b><br />
+      <small>Obsidyen karbon kompozit, fırçalanmış titanyum ve kuantum reaktör çekirdeği.</small><br /><br />
+      <a href="assets/anticore-3d-logo-transparent.png"><code>assets/anticore-3d-logo-transparent.png</code></a>
+    </td>
+    <td width="33.3%" align="center" bgcolor="#090E17">
+      <img src="desktop/src-tauri/icons/icon-inactive.png" width="130" alt="Anticore Çevrimdışı Amblemi" /><br /><br />
+      <b>İnaktif / Çevrimdışı Amblemi</b><br />
+      <small>DPI motoru durdurulduğunda tray alanında taktik kırmızı uyarı çekirdeği.</small><br /><br />
+      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>desktop/src-tauri/icons/icon-inactive.png</code></a>
+    </td>
+    <td width="33.3%" align="center" bgcolor="#090E17">
+      <img src="assets/banner.svg?v=0.3.9" width="220" alt="Anticore Vektör Banner" /><br /><br />
+      <b>Resmi Banner (SVG)</b><br />
+      <small>Gömülü 3D amblem, ISP telemetri göstergeleri ve donanım kartları dock'u.</small><br /><br />
+      <a href="assets/banner.svg"><code>assets/banner.svg</code></a>
+    </td>
+  </tr>
+</table>
 
 ---
 

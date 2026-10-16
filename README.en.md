@@ -4,6 +4,10 @@
   <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
+<p align="center">
+  <img src="assets/anticore-3d-logo-transparent.png" alt="ANTICORE 3D Tactical Shield Emblem" width="150" />
+</p>
+
 # ANTICORE
 
 ### Zero-Loss, High-Performance Open Source DPI Circumvention Suite for Windows & macOS
@@ -1050,6 +1054,35 @@ cd Anticore/antikor
 chmod +x scripts/macos-package.sh
 ./scripts/macos-package.sh all
 ```
+
+---
+
+## Brand Identity & Visual Assets
+
+The Anticore brand identity represents a tactical cybernetic shield integrated with a high-energy quantum reactor core. High-resolution transparent assets are available in the repository:
+
+<table width="100%" align="center">
+  <tr>
+    <td width="33.3%" align="center" bgcolor="#090E17">
+      <img src="assets/anticore-3d-logo-transparent.png" width="130" alt="Anticore 3D Emblem" /><br /><br />
+      <b>3D Tactical Shield (Transparent PNG)</b><br />
+      <small>Obsidian carbon composite, brushed titanium &amp; quantum core.</small><br /><br />
+      <a href="assets/anticore-3d-logo-transparent.png"><code>assets/anticore-3d-logo-transparent.png</code></a>
+    </td>
+    <td width="33.3%" align="center" bgcolor="#090E17">
+      <img src="desktop/src-tauri/icons/icon-inactive.png" width="130" alt="Anticore Offline State Emblem" /><br /><br />
+      <b>Inactive / Offline State Emblem</b><br />
+      <small>Tactical crimson warning core activated when DPI engine stops.</small><br /><br />
+      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>desktop/src-tauri/icons/icon-inactive.png</code></a>
+    </td>
+    <td width="33.3%" align="center" bgcolor="#090E17">
+      <img src="assets/banner.svg?v=0.3.9" width="220" alt="Anticore Vector Banner" /><br /><br />
+      <b>Official Banner (SVG)</b><br />
+      <small>Embedded 3D emblem, ISP telemetry indicators &amp; hardware dock.</small><br /><br />
+      <a href="assets/banner.svg"><code>assets/banner.svg</code></a>
+    </td>
+  </tr>
+</table>
 
 ---
 

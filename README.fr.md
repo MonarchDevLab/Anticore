@@ -4,6 +4,10 @@
   <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
+<p align="center">
+  <img src="assets/anticore-3d-logo-transparent.png" alt="ANTICORE 3D Tactical Shield Emblem" width="150" />
+</p>
+
 # ANTICORE
 
 ### Suite open-source haute performance de contournement DPI et de liberté réseau pour Windows et macOS sans perte de débit
