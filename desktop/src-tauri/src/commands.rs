@@ -1645,8 +1645,10 @@ pub async fn probe_target(app: AppHandle, req: ProbeRequest) -> ProbeDto {
 
     tokio::task::spawn_blocking(move || {
         let r = if is_running {
-            // Motor aktifken yerel SOCKS5 proxy (127.0.0.1:10808) üzerinden bypass etkinliğini doğrula
-            let socks_probe = anticore_core::tester::probe_via_socks5(&host, 443, "127.0.0.1:10808", 3000);
+            // Motor aktifken yerel SOCKS5 proxy üzerinden bypass etkinliğini doğrula
+            let socks_port = crate::android_bridge::get_socks_port();
+            let socks_addr = format!("127.0.0.1:{socks_port}");
+            let socks_probe = anticore_core::tester::probe_via_socks5(&host, 443, &socks_addr, 3000);
             if matches!(socks_probe, anticore_core::tester::ProbeResult::Open { .. }) {
                 socks_probe
             } else {

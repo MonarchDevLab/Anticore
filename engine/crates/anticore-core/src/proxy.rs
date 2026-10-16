@@ -172,6 +172,7 @@ pub struct LanProxy {
     config: ProxyConfig,
     stats: Arc<ProxyStats>,
     shutdown_tx: Option<watch::Sender<bool>>,
+    accept_task: Option<tokio::task::JoinHandle<()>>,
     bound_port: Option<u16>,
 }
 
@@ -181,6 +182,7 @@ impl LanProxy {
             config,
             stats: Arc::new(ProxyStats::default()),
             shutdown_tx: None,
+            accept_task: None,
             bound_port: None,
         }
     }
@@ -193,12 +195,28 @@ impl LanProxy {
         self.bound_port
     }
 
-    /// Proxy sunucusunu arka planda başlatır.
-    pub async fn start(&mut self) -> Result<(), String> {
-        let listener = TcpListener::bind(self.config.bind_addr)
-            .await
-            .map_err(|e| format!("Proxy soketi bağlanamadı ({}): {e}", self.config.bind_addr))?;
+    async fn bind_listener_with_retry(addr: SocketAddr) -> Result<TcpListener, std::io::Error> {
+        let mut last_err = None;
+        for attempt in 0..6 {
+            match TcpListener::bind(addr).await {
+                Ok(listener) => return Ok(listener),
+                Err(e) => {
+                    let is_addr_in_use = e.kind() == std::io::ErrorKind::AddrInUse;
+                    last_err = Some(e);
+                    if is_addr_in_use && attempt < 5 {
+                        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+                        continue;
+                    }
+                    break;
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::AddrInUse, "Address already in use")
+        }))
+    }
 
+    fn spawn_accept_loop(&mut self, listener: TcpListener) {
         let actual_port = listener
             .local_addr()
             .map(|a| a.port())
@@ -213,7 +231,7 @@ impl LanProxy {
         let port = actual_port;
         let steps = Arc::new(self.config.steps.clone());
 
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             let mut rx = shutdown_rx;
             loop {
                 tokio::select! {
@@ -238,15 +256,76 @@ impl LanProxy {
                 }
             }
         });
+        self.accept_task = Some(handle);
+    }
 
+    /// Proxy sunucusunu arka planda başlatır.
+    pub async fn start(&mut self) -> Result<(), String> {
+        self.stop_and_wait().await;
+        let listener = Self::bind_listener_with_retry(self.config.bind_addr)
+            .await
+            .map_err(|e| format!("Proxy soketi bağlanamadı ({}): {e}", self.config.bind_addr))?;
+
+        self.spawn_accept_loop(listener);
         Ok(())
     }
 
-    /// Proxy sunucusunu durdurur.
+    /// Birincil port (örn. 10808) başka bir süreç tarafından tutuluyorsa otomatik olarak
+    /// ardışık boş porta (veya işletim sisteminin atadığı dinamik porta) geçerek başlatır.
+    pub async fn start_with_fallback(&mut self) -> Result<u16, String> {
+        self.stop_and_wait().await;
+        let primary_addr = self.config.bind_addr;
+        if let Ok(listener) = Self::bind_listener_with_retry(primary_addr).await {
+            self.spawn_accept_loop(listener);
+            return Ok(self.bound_port.unwrap_or(primary_addr.port()));
+        }
+
+        let ip = primary_addr.ip();
+        let base_port = primary_addr.port();
+        for offset in 1..=20u16 {
+            let candidate_port = base_port.saturating_add(offset);
+            let candidate_addr = SocketAddr::new(ip, candidate_port);
+            if let Ok(listener) = TcpListener::bind(candidate_addr).await {
+                self.spawn_accept_loop(listener);
+                return Ok(self.bound_port.unwrap_or(candidate_port));
+            }
+        }
+
+        let dynamic_addr = SocketAddr::new(ip, 0);
+        let listener = TcpListener::bind(dynamic_addr)
+            .await
+            .map_err(|e| format!("Proxy soketi bağlanamadı ({primary_addr}): {e}"))?;
+        self.spawn_accept_loop(listener);
+        Ok(self.bound_port.unwrap_or(0))
+    }
+
+    /// Proxy sunucusunu durdurur ve dinleyici görevini iptal eder.
     pub fn stop(&mut self) {
         if let Some(tx) = self.shutdown_tx.take() {
             let _ = tx.send(true);
         }
+        if let Some(handle) = self.accept_task.take() {
+            handle.abort();
+        }
+        self.bound_port = None;
+    }
+
+    /// Proxy sunucusunu durdurur ve dinleyici soketin işletim sistemi düzeyinde kapanmasını bekler.
+    pub async fn stop_and_wait(&mut self) {
+        if let Some(tx) = self.shutdown_tx.take() {
+            let _ = tx.send(true);
+        }
+        if let Some(handle) = self.accept_task.take() {
+            handle.abort();
+            let _ = handle.await;
+        }
+        self.bound_port = None;
+    }
+}
+
+impl Drop for LanProxy {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 
@@ -1366,5 +1445,47 @@ mod tests {
         let len = poisoned_resp.len();
         poisoned_resp[len - 4..].copy_from_slice(&[0, 0, 0, 0]);
         assert!(parse_dns_a_response(&poisoned_resp).is_err());
+    }
+
+    #[tokio::test]
+    async fn test_proxy_restart_same_port_and_fallback() {
+        let mut proxy1 = LanProxy::new(ProxyConfig {
+            bind_addr: SocketAddr::from(([127, 0, 0, 1], 0)),
+            lan_ip: "127.0.0.1".into(),
+            steps: Vec::new(),
+        });
+        proxy1.start().await.expect("Ilk proxy baslatilmali");
+        let port = proxy1.bound_port().expect("Port atanmali");
+
+        // Durdur ve soketin tamamen kapandigini garanti et
+        proxy1.stop_and_wait().await;
+
+        // Ayni porta aninda yeniden baglanabilmeli (Address already in use hatasi olmamali)
+        let mut proxy2 = LanProxy::new(ProxyConfig {
+            bind_addr: SocketAddr::from(([127, 0, 0, 1], port)),
+            lan_ip: "127.0.0.1".into(),
+            steps: Vec::new(),
+        });
+        proxy2
+            .start()
+            .await
+            .expect("stop_and_wait sonrasi ayni port hemen yeniden baglanabilmeli");
+        assert_eq!(proxy2.bound_port(), Some(port));
+
+        // proxy2 hala calisiyorken ayni portla baslatilan proxy3 start_with_fallback ile yedek porta gecmeli
+        let mut proxy3 = LanProxy::new(ProxyConfig {
+            bind_addr: SocketAddr::from(([127, 0, 0, 1], port)),
+            lan_ip: "127.0.0.1".into(),
+            steps: Vec::new(),
+        });
+        let fallback_port = proxy3
+            .start_with_fallback()
+            .await
+            .expect("Port dolu oldugunda yedek porta gecmeli");
+        assert_ne!(fallback_port, port);
+        assert!(fallback_port > 0);
+
+        proxy2.stop_and_wait().await;
+        proxy3.stop_and_wait().await;
     }
 }

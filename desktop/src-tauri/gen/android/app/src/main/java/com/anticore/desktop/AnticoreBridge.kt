@@ -24,6 +24,17 @@ object AnticoreBridge {
         }
     }
 
+    @Volatile
+    var socksPort: Int = 10808
+
+    @JvmStatic
+    fun setSocksPortFromNative(port: Int) {
+        if (port in 1..65535) {
+            socksPort = port
+            Log.d(TAG, "SOCKS5 port set from native: $port")
+        }
+    }
+
     @JvmStatic
     fun startVpnFromNative(): Boolean {
         return MainActivity.prepareAndStartVpn()

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-16T10:31:49.981Z",
+  "instincts": [
+    {
+      "id": "HIVE-001",
+      "skill": "hive-insa",
+      "domain": "android-vpn-proxy",
+      "symptom": "Android VPN yeniden baslatmada SOCKS5 127.0.0.1:10808 Address already in use (os error 98) ve One UI ana ekranda kesik beyaz koseli ikon",
+      "cause": "Yeni LanProxy baslatilmadan once eski proxy JoinHandle'i beklenmiyor ve Adaptive Icon foreground 108dp tuvalde %61 safe zone disina tasiyor",
+      "reflex": "Android'de yeni proxy baslatmadan once stop_and_wait() + port fallback (10808..10828) uygula; Adaptive Icon foreground icerigini %54 safe zone icinde ve #070B12 arka planla uret",
+      "weight": 85,
+      "verifiedCount": 1,
+      "projects": [
+        "antikor"
+      ],
+      "lastSeen": "2026-10-16",
+      "targetPatterns": [
+        "android",
+        "yeniden",
+        "baslatmada",
+        "socks5",
+        "10808",
+        "address",
+        "already",
+        "error"
+      ],
+      "scope": "project",
+      "status": "active"
+    }
+  ]
+}

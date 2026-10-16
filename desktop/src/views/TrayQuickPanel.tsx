@@ -12,7 +12,6 @@ import {
   LogOut,
   LoaderCircle,
   Check,
-  Radio,
   Download,
   RefreshCw,
 } from "lucide-react";
@@ -20,6 +19,7 @@ import { api, onStatusChange, type Profile, type Status } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
 import { isMac } from "../lib/platform";
 import { isNewerVersion } from "../lib/version";
+import BrandLogo from "../components/BrandLogo";
 
 export default function TrayQuickPanel() {
   const [status, setStatus] = useState<Status | null>(null);
@@ -241,9 +241,7 @@ export default function TrayQuickPanel() {
       <div className="flex items-center justify-between pb-2.5 border-b border-border-brutal">
         <div className="flex items-center gap-2">
           {/* Logo */}
-          <div className="h-6 w-6 rounded-lg bg-surface-elevated border border-border-brutal flex items-center justify-center text-live shadow-sm">
-            <Radio size={13} className={running ? "animate-pulse" : ""} />
-          </div>
+          <BrandLogo size={22} running={running} showText={false} />
           <div className="flex items-baseline gap-1.5">
             <span className="font-extrabold tracking-wider text-xs text-paper-bright">ANTICORE</span>
             <span className="text-[10px] text-paper-faint font-mono font-medium">

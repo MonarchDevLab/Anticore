@@ -175,10 +175,45 @@ class AnticoreVpnService : VpnService() {
         }
     }
 
+    private var activeHevPort: Int = -1
+
+    private fun startHevTunnelWithPort(fd: Int) {
+        val socksPort = AnticoreBridge.socksPort
+        val tun2socksConfig = """
+            |misc:
+            |  task-stack-size: 81920
+            |socks5:
+            |  port: $socksPort
+            |  address: 127.0.0.1
+            |  udp: udp
+            |  mtu: 8500
+        """.trimMargin("|")
+
+        val configFile = File(cacheDir, "hevtunnel.yaml")
+        configFile.writeText(tun2socksConfig)
+
+        Log.i(TAG, "Starting hevtunnel with config: ${configFile.absolutePath} (fd=$fd, port=$socksPort)")
+        try {
+            TProxyService.TProxyStartService(configFile.absolutePath, fd)
+            activeHevPort = socksPort
+            Log.i(TAG, "hevtunnel başarıyla başlatıldı (port=$socksPort)")
+        } catch (t: Throwable) {
+            Log.e(TAG, "hevtunnel başlatma hatası: ${t.message}", t)
+        }
+    }
+
     private fun establishTunnel() {
         if (vpnInterface != null && isRunning) {
             Log.i(TAG, "VPN tüneli zaten kurulu, TUN fd yeniden bildiriliyor")
-            vpnInterface?.let { AnticoreBridge.onTunReady(it.fd) }
+            vpnInterface?.let { pfd ->
+                if (activeHevPort != AnticoreBridge.socksPort) {
+                    try {
+                        TProxyService.TProxyStopService()
+                    } catch (_: Throwable) {}
+                    startHevTunnelWithPort(pfd.fd)
+                }
+                AnticoreBridge.onTunReady(pfd.fd)
+            }
             return
         }
 
@@ -223,26 +258,7 @@ class AnticoreVpnService : VpnService() {
             val fd = pfd.fd
             Log.i(TAG, "VPN tüneli başarıyla açıldı, TUN fd=$fd")
 
-            val tun2socksConfig = """
-                |misc:
-                |  task-stack-size: 81920
-                |socks5:
-                |  port: 10808
-                |  address: 127.0.0.1
-                |  udp: udp
-                |  mtu: 8500
-            """.trimMargin("|")
-
-            val configFile = File(cacheDir, "hevtunnel.yaml")
-            configFile.writeText(tun2socksConfig)
-
-            Log.i(TAG, "Starting hevtunnel with config: ${configFile.absolutePath} (fd=$fd)")
-            try {
-                TProxyService.TProxyStartService(configFile.absolutePath, fd)
-                Log.i(TAG, "hevtunnel başarıyla başlatıldı")
-            } catch (t: Throwable) {
-                Log.e(TAG, "hevtunnel başlatma hatası: ${t.message}", t)
-            }
+            startHevTunnelWithPort(fd)
 
             // TUN tanıtıcısını doğrudan yerel Rust motoruna aktar
             AnticoreBridge.onTunReady(fd)

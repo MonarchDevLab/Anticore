@@ -543,8 +543,18 @@ impl Engine {
         on_log: impl Fn(String) + Send + 'static,
     ) -> Result<(), String> {
         let mut worker = self.worker.lock().unwrap();
+        self.stop_flag.store(true, Ordering::SeqCst);
         if let Some(previous) = worker.take() {
             let _ = previous.join();
+        }
+
+        // Önceki çalışmadan kalan yerel SOCKS5 proxy örneği varsa önce tamamen kapat ve portun boşalmasını bekle
+        if let Ok(mut lock) = self.android_proxy.lock() {
+            if let Some(mut old) = lock.take() {
+                tauri::async_runtime::block_on(async {
+                    old.stop_and_wait().await;
+                });
+            }
         }
 
         // 0. Dış ağ soketlerini Android VpnService tünel döngüsünden muaf tut (protect)
@@ -552,7 +562,7 @@ impl Engine {
             crate::android_bridge::protect_socket(fd)
         });
 
-        // 1. Android yerel SOCKS5 proxy motorunu başlat (127.0.0.1:10808)
+        // 1. Android yerel SOCKS5 proxy motorunu başlat (127.0.0.1:10808 veya yedek port)
         let proxy_config = anticore_core::proxy::ProxyConfig {
             bind_addr: std::net::SocketAddr::from(([127, 0, 0, 1], 10808)),
             lan_ip: "127.0.0.1".into(),
@@ -561,19 +571,31 @@ impl Engine {
         let mut proxy = anticore_core::proxy::LanProxy::new(proxy_config);
         let proxy_stats = proxy.stats();
 
-        tauri::async_runtime::block_on(async {
-            proxy.start().await
+        let bound_port = tauri::async_runtime::block_on(async {
+            proxy.start_with_fallback().await
         }).map_err(|e| format!("Yerel Android SOCKS5 proxy sunucusu başlatılamadı: {e}"))?;
 
+        crate::android_bridge::set_socks_port(bound_port);
+
         if let Ok(mut lock) = self.android_proxy.lock() {
-            if let Some(mut old) = lock.take() {
-                old.stop();
-            }
             *lock = Some(proxy);
         }
 
-        // 2. Android VpnService'i başlat (hevtunnel 127.0.0.1:10808 üzerinden çalışacak)
-        crate::android_bridge::start_vpn_service()?;
+        let cleanup_proxy_on_err = || {
+            if let Ok(mut lock) = self.android_proxy.lock() {
+                if let Some(mut p) = lock.take() {
+                    tauri::async_runtime::block_on(async {
+                        p.stop_and_wait().await;
+                    });
+                }
+            }
+        };
+
+        // 2. Android VpnService'i başlat (hevtunnel aktif SOCKS5 portu üzerinden çalışacak)
+        if let Err(e) = crate::android_bridge::start_vpn_service() {
+            cleanup_proxy_on_err();
+            return Err(e);
+        }
 
         // TUN tanıtıcısının (fd) hazır olmasını bekle (kullanıcı izin onayı için 30 saniye)
         let mut tun_fd = crate::android_bridge::get_tun_fd();
@@ -582,6 +604,7 @@ impl Engine {
                 break;
             }
             if crate::android_bridge::is_permission_denied() {
+                cleanup_proxy_on_err();
                 return Err("VPN izni kullanıcı tarafından reddedildi".into());
             }
             std::thread::sleep(std::time::Duration::from_millis(100));
@@ -589,6 +612,7 @@ impl Engine {
         }
 
         if tun_fd < 0 {
+            cleanup_proxy_on_err();
             return Err("Android TUN arabirimi zaman aşımına uğradı (İzin onaylanmamış olabilir)".into());
         }
 
@@ -735,7 +759,9 @@ impl Engine {
 
         if let Ok(mut lock) = self.android_proxy.lock() {
             if let Some(mut proxy) = lock.take() {
-                proxy.stop();
+                tauri::async_runtime::block_on(async {
+                    proxy.stop_and_wait().await;
+                });
             }
         }
 

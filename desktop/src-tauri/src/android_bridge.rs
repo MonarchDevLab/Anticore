@@ -5,7 +5,7 @@
 //! 1. Kotlin -> Rust: `onTunReady(fd)`, `onTunClosed()`, `onVpnPermissionDenied()`
 //! 2. Rust -> Kotlin: `start_vpn_service()`, `stop_vpn_service()`, `protect_socket(fd)`
 
-use std::sync::atomic::{AtomicBool, AtomicI32};
+use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU16};
 #[allow(unused_imports)]
 use std::sync::atomic::Ordering;
 #[cfg(target_os = "android")]
@@ -20,6 +20,15 @@ static TUN_FD: AtomicI32 = AtomicI32::new(-1);
 static VPN_ACTIVE: AtomicBool = AtomicBool::new(false);
 #[allow(dead_code)]
 static PERMISSION_DENIED: AtomicBool = AtomicBool::new(false);
+static SOCKS_PORT: AtomicU16 = AtomicU16::new(10808);
+
+pub fn set_socks_port(port: u16) {
+    SOCKS_PORT.store(port, Ordering::SeqCst);
+}
+
+pub fn get_socks_port() -> u16 {
+    SOCKS_PORT.load(Ordering::SeqCst)
+}
 
 #[cfg(target_os = "android")]
 #[no_mangle]
@@ -102,6 +111,17 @@ pub fn start_vpn_service() -> Result<(), String> {
         .map_err(|e| format!("JVM iş parçacığı bağlanamadı: {e}"))?;
 
     let class_name = "com/anticore/desktop/AnticoreBridge";
+    let port = SOCKS_PORT.load(Ordering::SeqCst) as i32;
+    let _ = env.call_static_method(
+        class_name,
+        "setSocksPortFromNative",
+        "(I)V",
+        &[jni::objects::JValue::Int(port)],
+    );
+    if env.exception_check().unwrap_or(false) {
+        let _ = env.exception_clear();
+    }
+
     let res = env.call_static_method(class_name, "startVpnFromNative", "()Z", &[])
         .map_err(|e| {
             if env.exception_check().unwrap_or(false) {
