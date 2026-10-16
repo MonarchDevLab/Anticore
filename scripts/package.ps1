@@ -106,7 +106,7 @@ if (Test-Path -LiteralPath $keyFile) {
     if (Test-Path -LiteralPath $setupDest) {
         Push-Location "$root\desktop"
         try {
-            npx tauri signer sign -f $keyFile -p "" $setupDest | Out-Null
+            cmd.exe /c "npm run tauri -- signer sign -f ../keys/anticore.key -p `"`" `"$setupDest`"" | Out-Null
         } finally {
             Pop-Location
         }
@@ -118,7 +118,7 @@ if (Test-Path -LiteralPath $keyFile) {
     if (Test-Path -LiteralPath $msiDest) {
         Push-Location "$root\desktop"
         try {
-            npx tauri signer sign -f $keyFile -p "" $msiDest | Out-Null
+            cmd.exe /c "npm run tauri -- signer sign -f ../keys/anticore.key -p `"`" `"$msiDest`"" | Out-Null
         } finally {
             Pop-Location
         }
