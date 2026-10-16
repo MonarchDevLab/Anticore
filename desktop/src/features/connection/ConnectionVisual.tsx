@@ -1,4 +1,5 @@
-import { Globe2, Monitor, Split } from "lucide-react";
+import { Globe2, Monitor, Smartphone, Split } from "lucide-react";
+import { isAndroid, isMobile } from "../../lib/platform";
 import type { ConnectionCopy } from "./copy";
 
 export default function ConnectionVisual({ active, copy }: { active: boolean; copy: ConnectionCopy }) {
@@ -10,7 +11,7 @@ export default function ConnectionVisual({ active, copy }: { active: boolean; co
         <path className="path-signal" d="M40 60H145C180 60 180 25 220 25S260 60 295 60H400" />
         <path className="path-signal path-secondary" d="M40 60H145C180 60 180 95 220 95S260 60 295 60H400" />
       </svg>
-      <div className="path-node path-device"><Monitor size={20} /><span>{copy.device}</span></div>
+      <div className="path-node path-device">{isAndroid || isMobile ? <Smartphone size={20} /> : <Monitor size={20} />}<span>{copy.device}</span></div>
       <div className="path-node path-engine"><Split size={28} strokeWidth={1.7} /><span>{copy.engine}</span></div>
       <div className="path-node path-destination"><Globe2 size={20} /><span>{copy.destination}</span></div>
     </div>

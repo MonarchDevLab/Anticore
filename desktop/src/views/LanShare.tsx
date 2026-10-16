@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { api, type LanInfoDto, type ConnectedClientDto } from "../lib/tauri";
 import { useI18n, type TranslationKey } from "../lib/i18n";
-import { isMac } from "../lib/platform";
+import { isMac, isAndroid } from "../lib/platform";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -244,8 +244,8 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
         </div>
       )}
 
-      {/* Windows Güvenlik Duvarı Durum Bildirimi */}
-      {!isMac && lanInfo && (
+      {/* Windows Güvenlik Duvarı Durum Bildirimi (Sadece Windows) */}
+      {!isMac && !isAndroid && lanInfo && (
         <div
           className={`rounded-lg border p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
             lanInfo.firewall_allowed
@@ -724,8 +724,16 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
           </div>
 
           <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 space-y-1.5">
-            <div className="font-semibold text-paper-bright">{t("lan_troubleshoot_3_title")}</div>
-            <p className="text-paper-muted leading-relaxed">{t("lan_troubleshoot_3_desc")}</p>
+            <div className="font-semibold text-paper-bright">
+              {isAndroid
+                ? "3. Mobil Erişim Noktası (Hotspot) ve Wi-Fi İzolasyonu"
+                : t("lan_troubleshoot_3_title")}
+            </div>
+            <p className="text-paper-muted leading-relaxed">
+              {isAndroid
+                ? "Telefonunuzun Kişisel Erişim Noktası (Hotspot) özelliğini açarak veya aynı Wi-Fi ağına bağlanarak diğer cihazlardan bu IP ve 10808 portuna bağlanabilirsiniz."
+                : t("lan_troubleshoot_3_desc")}
+            </p>
           </div>
 
           <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 space-y-1.5">
@@ -735,51 +743,53 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
         </div>
       </div>
 
-      {/* MOD B: Mobil Etkin Nokta (Hotspot Transit Ağ Geçidi) */}
-      <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-lg bg-anticore-primary/10 text-anticore-primary border border-anticore-primary/30">
-              <Radio size={20} />
+      {/* MOD B: Mobil Etkin Nokta (Hotspot Transit Ağ Geçidi - Sadece Masaüstü) */}
+      {!isAndroid && (
+        <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-lg bg-anticore-primary/10 text-anticore-primary border border-anticore-primary/30">
+                <Radio size={20} />
+              </div>
+              <div>
+                <h2 className="text-sm font-medium text-paper-bright">
+                  {isMac ? t("lan_hotspot_card_title_mac") : t("lan_hotspot_card_title")}
+                </h2>
+                <p className="text-xs text-paper-muted mt-1 max-w-xl">
+                  {isMac ? t("lan_hotspot_card_desc_mac") : t("lan_hotspot_card_desc")}
+                </p>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={openHotspot}
+              className="px-4 py-2 rounded-lg text-xs font-medium bg-paper-border/30 hover:bg-paper-border/50 text-paper-bright border border-paper-border/40 flex items-center gap-1.5 transition-transform duration-150 active:scale-[0.97] shrink-0"
+            >
+              <span>{isMac ? t("lan_btn_open_hotspot_mac") : t("lan_btn_open_hotspot")}</span>
+              <ExternalLink size={13} />
+            </button>
+          </div>
+
+          {/* Hotspot Transit Filtreleme Ayarı */}
+          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-sm font-medium text-paper-bright">
-                {isMac ? t("lan_hotspot_card_title_mac") : t("lan_hotspot_card_title")}
-              </h2>
-              <p className="text-xs text-paper-muted mt-1 max-w-xl">
-                {isMac ? t("lan_hotspot_card_desc_mac") : t("lan_hotspot_card_desc")}
-              </p>
+              <div className="text-xs font-medium text-paper-bright">{t("lan_hotspot_mode_label")}</div>
+              <div className="text-[11px] text-paper-muted mt-0.5">{t("lan_hotspot_mode_desc")}</div>
             </div>
+
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                checked={lanInfo?.hotspot_mode_enabled ?? false}
+                onChange={(e) => toggleHotspotMode(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-10 h-5 bg-paper-border/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:bg-anticore-primary" />
+            </label>
           </div>
-
-          <button
-            type="button"
-            onClick={openHotspot}
-            className="px-4 py-2 rounded-lg text-xs font-medium bg-paper-border/30 hover:bg-paper-border/50 text-paper-bright border border-paper-border/40 flex items-center gap-1.5 transition-transform duration-150 active:scale-[0.97] shrink-0"
-          >
-            <span>{isMac ? t("lan_btn_open_hotspot_mac") : t("lan_btn_open_hotspot")}</span>
-            <ExternalLink size={13} />
-          </button>
         </div>
-
-        {/* Hotspot Transit Filtreleme Ayarı */}
-        <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 flex items-center justify-between gap-4">
-          <div>
-            <div className="text-xs font-medium text-paper-bright">{t("lan_hotspot_mode_label")}</div>
-            <div className="text-[11px] text-paper-muted mt-0.5">{t("lan_hotspot_mode_desc")}</div>
-          </div>
-
-          <label className="relative inline-flex items-center cursor-pointer shrink-0">
-            <input
-              type="checkbox"
-              checked={lanInfo?.hotspot_mode_enabled ?? false}
-              onChange={(e) => toggleHotspotMode(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-10 h-5 bg-paper-border/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:bg-anticore-primary" />
-          </label>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, LoaderCircle, Network, RefreshCw, RotateCcw, ShieldAlert, ShieldCheck, Wifi, Wrench } from "lucide-react";
+import { CheckCircle2, LoaderCircle, Network, RefreshCw, RotateCcw, ShieldAlert, ShieldCheck, Smartphone, Wifi, Wrench } from "lucide-react";
 import { api, type AdapterDnsInfo, type DohStatusDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
-import { isMac } from "../lib/platform";
+import { isMac, isAndroid } from "../lib/platform";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Guide from "../components/Guide";
 
@@ -28,15 +28,21 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
 
   const refreshDns = () =>
     void api.getDnsServers().then((d) => setDns(d.servers));
-  const refreshAdapters = () =>
+  const refreshAdapters = () => {
+    if (isAndroid) return;
     void api.getAdapterDnsInfo().then(setAdapters).catch(() => setAdapters([]));
-  const refreshDoh = () =>
+  };
+  const refreshDoh = () => {
+    if (isAndroid || isMac) return;
     void api.getDohStatus().then(setDohStatus).catch(() => {});
+  };
   useEffect(() => {
     refreshDns();
     refreshAdapters();
     refreshDoh();
-    void api.checkIsAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
+    if (!isAndroid) {
+      void api.checkIsAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
+    }
   }, []);
 
   const handleFlushRenew = async () => {
@@ -103,10 +109,16 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
     <div className="mx-auto max-w-5xl space-y-6 pb-8 tabular-nums" aria-busy={busy}>
       <header className="pb-3 border-b border-white/[0.08]">
         <h2 className="text-xl font-bold tracking-tight text-paper-bright">{t("net_title")}</h2>
-        <p className="mt-0.5 text-xs text-paper-muted">{t("net_desc")}</p>
+        <p className="mt-0.5 text-xs text-paper-muted">
+          {isAndroid
+            ? (lang === "tr"
+                ? "Android VpnService tünel çözümleyicisini, mobil DNS sunucularını ve soket önbelleğini yönetin."
+                : "Manage Android VpnService tunnel resolver, mobile DNS servers, and socket cache.")
+            : t("net_desc")}
+        </p>
       </header>
 
-      {isAdmin === false && (
+      {!isAndroid && isAdmin === false && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-start sm:items-center gap-3">
             <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
@@ -167,7 +179,9 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
                 },
                 {
                   q: "Geri alabilir miyim?",
-                  a: "Evet. 'Sıfırla' düğmesine basarak tüm ağ bağdaştırıcılarınızı anında varsayılan otomatik (DHCP) ayarına döndürebilirsiniz.",
+                  a: isAndroid
+                    ? "Evet. 'Sıfırla' düğmesine basarak VpnService tünel DNS yönlendirmesini anında varsayılan mobil ağ ayarlarına döndürebilirsiniz."
+                    : "Evet. 'Sıfırla' düğmesine basarak tüm ağ bağdaştırıcılarınızı anında varsayılan otomatik (DHCP) ayarına döndürebilirsiniz.",
                 },
               ]
             : [
@@ -177,7 +191,9 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
                 },
                 {
                   q: "Can I undo it?",
-                  a: "Yes. Pressing 'Reset' instantly returns all network adapters to the default automatic (DHCP) setting.",
+                  a: isAndroid
+                    ? "Yes. Pressing 'Reset' instantly restores the VpnService tunnel DNS to your default mobile carrier/Wi-Fi settings."
+                    : "Yes. Pressing 'Reset' instantly returns all network adapters to the default automatic (DHCP) setting.",
                 },
               ]
         }
@@ -261,19 +277,37 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
           </button>
         </div>
         <p className="text-[11px] text-paper-faint">
-          {t("net_dns_hint")}
+          {isAndroid
+            ? (lang === "tr"
+                ? "Seçilen DNS sunucusu Android VpnService yerel tüneli üzerinden uygulanır; cihazınızın Wi-Fi/Mobil Veri sistem ayarlarını kalıcı olarak bozmaz."
+                : "Selected DNS resolver is routed via the local Android VpnService tunnel without altering system network settings.")
+            : t("net_dns_hint")}
         </p>
       </section>
 
-      {/* Ağ Yığını & Paket Filtresi Onarımı */}
+      {/* Ağ Yığını & DNS Önbelleği Onarımı */}
       <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
           <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
-            <Wrench size={18} aria-hidden strokeWidth={2} />
+            {isAndroid ? <Smartphone size={18} aria-hidden strokeWidth={2} /> : <Wrench size={18} aria-hidden strokeWidth={2} />}
           </div>
           <div>
-            <h3 className="text-sm font-bold text-paper-bright">{isMac ? t("net_stack_title_mac") : t("net_stack_title")}</h3>
-            <p className="text-xs text-paper-muted mt-0.5">{isMac ? t("net_stack_desc_mac") : t("net_stack_desc")}</p>
+            <h3 className="text-sm font-bold text-paper-bright">
+              {isAndroid
+                ? (lang === "tr" ? "Mobil Soket & DNS Önbelleği Yenileme" : "Mobile Socket & DNS Cache Refresh")
+                : isMac
+                  ? t("net_stack_title_mac")
+                  : t("net_stack_title")}
+            </h3>
+            <p className="text-xs text-paper-muted mt-0.5">
+              {isAndroid
+                ? (lang === "tr"
+                    ? "Hücresel veri (4.5G/5G) ve Wi-Fi geçişlerinde asılı kalan DNS sorgularını ve VpnService soket önbelleğini temizler."
+                    : "Clears stale DNS queries and VpnService socket state across cellular and Wi-Fi handovers.")
+                : isMac
+                  ? t("net_stack_desc_mac")
+                  : t("net_stack_desc")}
+            </p>
           </div>
         </div>
 
@@ -284,59 +318,71 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
             disabled={busy}
           >
             <RefreshCw size={14} aria-hidden strokeWidth={2} />
-            <span>{t("net_flush_renew_btn")}</span>
+            <span>
+              {isAndroid
+                ? (lang === "tr" ? "Mobil DNS Önbelleğini Temizle" : "Flush Mobile DNS Cache")
+                : t("net_flush_renew_btn")}
+            </span>
           </button>
-          <button
-            className="btn btn-danger text-xs"
-            onClick={() => setDialog("reset-stack")}
-            disabled={busy}
-          >
-            <RotateCcw size={14} aria-hidden strokeWidth={2} />
-            <span>{t("net_reset_stack_btn")}</span>
-          </button>
+          {!isAndroid && (
+            <button
+              className="btn btn-danger text-xs"
+              onClick={() => setDialog("reset-stack")}
+              disabled={busy}
+            >
+              <RotateCcw size={14} aria-hidden strokeWidth={2} />
+              <span>{t("net_reset_stack_btn")}</span>
+            </button>
+          )}
         </div>
         <p className="text-[11px] text-paper-faint">
-          {t("net_flush_renew_hint")}
+          {isAndroid
+            ? (lang === "tr"
+                ? "Wi-Fi ile mobil veri arasında geçiş yaptıktan sonra bağlantı gecikmesi yaşıyorsanız önbelleği yenileyin."
+                : "Refresh the cache if you experience connection delays after switching between Wi-Fi and cellular data.")
+            : t("net_flush_renew_hint")}
         </p>
       </section>
 
-      {/* Ağ Adaptörleri */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
-        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
-          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
-            <Network size={18} aria-hidden strokeWidth={2} />
+      {/* Ağ Adaptörleri (Sadece Masaüstü) */}
+      {!isAndroid && (
+        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
+          <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <Network size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <h3 className="text-sm font-bold text-paper-bright">{t("net_adapters_title")}</h3>
           </div>
-          <h3 className="text-sm font-bold text-paper-bright">{t("net_adapters_title")}</h3>
-        </div>
 
-        {adapters === null ? (
-          <p className="flex items-center gap-2 text-xs text-paper-muted">
-            <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={2.5} />
-            <span>{t("net_reading")}</span>
-          </p>
-        ) : adapters.length === 0 ? (
-          <p className="text-xs text-paper-muted">{t("net_adapters_empty")}</p>
-        ) : (
-          <ul className="space-y-2">
-            {adapters.map((a) => (
-              <li key={a.interface_index} className="rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3.5 hover:border-white/[0.12] transition-opacity duration-150">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-semibold text-paper-bright">{a.name}</span>
-                  <span className={`badge ${a.is_dhcp ? "badge-muted" : "badge-live"}`}>
-                    {a.is_dhcp ? t("net_adapter_dhcp") : t("net_adapter_manual")}
-                  </span>
-                </div>
-                <p className="mt-1 font-mono text-xs text-paper-muted">
-                  {a.ipv4_servers.length > 0 ? a.ipv4_servers.join(", ") : t("net_adapter_no_servers")}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {adapters === null ? (
+            <p className="flex items-center gap-2 text-xs text-paper-muted">
+              <LoaderCircle size={14} className="animate-spin text-live" aria-hidden strokeWidth={2.5} />
+              <span>{t("net_reading")}</span>
+            </p>
+          ) : adapters.length === 0 ? (
+            <p className="text-xs text-paper-muted">{t("net_adapters_empty")}</p>
+          ) : (
+            <ul className="space-y-2">
+              {adapters.map((a) => (
+                <li key={a.interface_index} className="rounded-xl border border-white/[0.06] bg-surface-subtle/50 p-3.5 hover:border-white/[0.12] transition-opacity duration-150">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-semibold text-paper-bright">{a.name}</span>
+                    <span className={`badge ${a.is_dhcp ? "badge-muted" : "badge-live"}`}>
+                      {a.is_dhcp ? t("net_adapter_dhcp") : t("net_adapter_manual")}
+                    </span>
+                  </div>
+                  <p className="mt-1 font-mono text-xs text-paper-muted">
+                    {a.ipv4_servers.length > 0 ? a.ipv4_servers.join(", ") : t("net_adapter_no_servers")}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* Windows DoH Registry (Yalnızca Windows) */}
-      {!isMac && (
+      {!isMac && !isAndroid && (
         <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
           <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
             <div className="flex items-center gap-3">
@@ -408,35 +454,37 @@ export default function NetworkRepair({ pushLog }: { pushLog: (l: string) => voi
         </section>
       )}
 
-      {/* Discord Özel Onarım Paketi */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
-        <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
-          <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
-            <RefreshCw size={18} aria-hidden strokeWidth={2} />
+      {/* Discord Özel Onarım Paketi (Sadece Masaüstü) */}
+      {!isAndroid && (
+        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-xl space-y-4">
+          <div className="flex items-center gap-3 border-b border-white/[0.08] pb-3">
+            <div className="p-2 rounded-xl bg-live/10 border border-live/25 text-live">
+              <RefreshCw size={18} aria-hidden strokeWidth={2} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-paper-bright">{t("net_discord_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{t("net_discord_desc")}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-paper-bright">{t("net_discord_title")}</h3>
-            <p className="text-xs text-paper-muted mt-0.5">{t("net_discord_desc")}</p>
-          </div>
-        </div>
 
-        <div className="flex flex-wrap gap-2.5 pt-1">
-          <button
-            className="btn btn-primary text-xs"
-            onClick={() => setDialog("discord-repair")}
-            disabled={busy}
-          >
-            {t("net_discord_update_btn")}
-          </button>
-          <button
-            className="btn btn-secondary text-xs"
-            onClick={() => setDialog("discord-cache")}
-            disabled={busy}
-          >
-            {t("net_discord_cache_btn")}
-          </button>
-        </div>
-      </section>
+          <div className="flex flex-wrap gap-2.5 pt-1">
+            <button
+              className="btn btn-primary text-xs"
+              onClick={() => setDialog("discord-repair")}
+              disabled={busy}
+            >
+              {t("net_discord_update_btn")}
+            </button>
+            <button
+              className="btn btn-secondary text-xs"
+              onClick={() => setDialog("discord-cache")}
+              disabled={busy}
+            >
+              {t("net_discord_cache_btn")}
+            </button>
+          </div>
+        </section>
+      )}
 
       <ConfirmDialog
         open={dialog !== null}

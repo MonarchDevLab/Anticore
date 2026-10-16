@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { X, HelpCircle, Shield, Zap, Sliders, ArrowRightLeft } from "lucide-react";
 import { useI18n } from "../lib/i18n";
+import { isAndroid, isMobile } from "../lib/platform";
 
 interface Props {
   open: boolean;
@@ -123,9 +124,11 @@ export default function GuideDrawer({ open, onClose }: Props) {
         </div>
 
         {/* Alt Bilgi */}
-        <div className="pt-6 border-t border-white/[0.08] text-center text-[11px] text-paper-faint font-mono">
-          <span>ESC veya F1 ile kapatabilirsiniz</span>
-        </div>
+        {!isAndroid && !isMobile && (
+          <div className="pt-6 border-t border-white/[0.08] text-center text-[11px] text-paper-faint font-mono">
+            <span>ESC veya F1 ile kapatabilirsiniz</span>
+          </div>
+        )}
       </div>
     </div>
   );

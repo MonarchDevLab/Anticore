@@ -21,7 +21,7 @@ import UpdateModal, { type BroadcastUpdatePayload } from "./components/UpdateMod
 import UpdateBanner from "./components/UpdateBanner";
 import Titlebar from "./components/Titlebar";
 import GuideDrawer from "./components/GuideDrawer";
-import { isMac } from "./lib/platform";
+import { isMac, isAndroid } from "./lib/platform";
 import { isNewerVersion } from "./lib/version";
 
 import AppNavigation, { type ViewId } from "./components/AppNavigation";
@@ -252,7 +252,10 @@ export default function App() {
       },
     });
 
-    // Sürücü ve AV uyumluluk durumunu tek merkezden sessizce denetle
+    // Sürücü ve AV uyumluluk durumunu tek merkezden sessizce denetle (Masaüstü)
+    if (isAndroid) {
+      return;
+    }
     const refreshCompat = async () => {
       try {
         const report = await api.checkCompatibility();
@@ -291,9 +294,11 @@ export default function App() {
     }).catch(() => {});
 
     setLogs([
-      isMac
-        ? `[i] Anticore hazır — macOS ağ çekirdeği bekleniyor`
-        : `[i] Anticore hazır — WinDivert çekirdeği bekleniyor`,
+      isAndroid
+        ? `[i] Anticore Mobil hazır — Android VpnService tüneli bekleniyor`
+        : isMac
+          ? `[i] Anticore hazır — macOS ağ çekirdeği bekleniyor`
+          : `[i] Anticore hazır — WinDivert çekirdeği bekleniyor`,
     ]);
 
     const doCheck = () => {
@@ -468,20 +473,23 @@ export default function App() {
       <div className="workspace-layout">
         <AppNavigation view={view} onNavigate={setView} running={running} known={status !== null} busy={toggling} onToggle={() => void quickToggle()} />
         <div className="workspace-content">
-      <CompatWarning
-        initialReport={compatReport}
-        onRefresh={async () => {
-          try {
-            const rep = await api.checkCompatibility();
-            setCompatReport(rep);
-          } catch {
-            // fail-safe
-          }
-        }}
-      />
+      {!isAndroid && (
+        <CompatWarning
+          initialReport={compatReport}
+          onRefresh={async () => {
+            try {
+              const rep = await api.checkCompatibility();
+              setCompatReport(rep);
+            } catch {
+              // fail-safe
+            }
+          }}
+        />
+      )}
       {topError && (() => {
         const lower = topError.toLowerCase();
         const isAdminError =
+          !isAndroid &&
           (lower.includes("yönetici") ||
             lower.includes("admin") ||
             lower.includes("root") ||

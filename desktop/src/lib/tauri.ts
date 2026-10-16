@@ -344,20 +344,43 @@ export function onUpdateDownloadProgress(
  * veya taşınabilir tek dosya kısıtlarında doğrudan güvenli indirme motoruna
  * (Direct Fallback) geçiş yaparak kesintisiz kurulumu garanti eder.
  */
+export function resolveAndroidApkUrl(rawUrl?: string | null, latestVersion?: string | null): string {
+  const cleanVer = (latestVersion || "").trim().replace(/^v+/i, "");
+  if (rawUrl) {
+    const lower = rawUrl.toLowerCase();
+    if (lower.endsWith(".apk")) {
+      return rawUrl;
+    }
+    const match = rawUrl.match(/^(https:\/\/github\.com\/[^/]+\/[^/]+)\/releases\/download\/v([^/]+)\//i);
+    if (match) {
+      const [, repoBase, ver] = match;
+      return `${repoBase}/releases/download/v${ver}/Anticore-v${ver}.apk`;
+    }
+  }
+  if (cleanVer) {
+    return `https://github.com/MonarchDevLab/Anticore/releases/download/v${cleanVer}/Anticore-v${cleanVer}.apk`;
+  }
+  return "https://github.com/MonarchDevLab/Anticore/releases/latest";
+}
+
 export async function downloadAndInstallUpdate(
   fallbackDownloadUrl?: string | null,
   onProgress?: (downloadedBytes: number, totalBytes: number) => void,
 ): Promise<void> {
   if (isAndroid) {
     let targetUrl = fallbackDownloadUrl;
-    if (!targetUrl) {
-      const info = await api.checkUpdate();
-      targetUrl = info.download_url || info.html_url;
+    let detectedVer: string | null = null;
+    if (!targetUrl || !targetUrl.toLowerCase().endsWith(".apk")) {
+      try {
+        const info = await api.checkUpdate();
+        detectedVer = info.latest_version;
+        targetUrl = info.download_url || targetUrl || info.html_url;
+      } catch {
+        // Fallback URL ile devam et
+      }
     }
-    if (!targetUrl) {
-      throw new Error("Android güncelleme paketi (.apk) bağlantısı bulunamadı.");
-    }
-    await api.openBrowserUrl(targetUrl);
+    const finalApkUrl = resolveAndroidApkUrl(targetUrl, detectedVer);
+    await api.openBrowserUrl(finalApkUrl);
     return;
   }
 

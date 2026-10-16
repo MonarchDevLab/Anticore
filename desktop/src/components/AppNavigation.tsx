@@ -1,5 +1,6 @@
 import { Activity, Globe2, Layers, LayoutDashboard, LoaderCircle, Power, Settings, Share2, Shield, FileText, Wrench, LifeBuoy } from "lucide-react";
 import { useI18n } from "../lib/i18n";
+import { isAndroid } from "../lib/platform";
 import { connectionCopy } from "../features/connection/copy";
 
 export type ViewId = "dashboard" | "sites" | "profiles" | "test" | "network" | "lan_share" | "setup" | "destek" | "settings" | "wizard" | "logs" | "changelog" | "support";
@@ -8,10 +9,16 @@ interface Props { view: ViewId; onNavigate: (view: ViewId) => void; running: boo
 export default function AppNavigation({ view, onNavigate, running, known, busy, onToggle }: Props) {
   const { t, lang } = useI18n();
   const copy = connectionCopy[lang];
+  const supportItems = [
+    { id: "changelog", label: t("nav_changelog"), icon: FileText },
+    ...(!isAndroid ? [{ id: "setup", label: t("nav_setup"), icon: Shield }] : []),
+    { id: "destek", label: t("nav_destek"), icon: LifeBuoy },
+    { id: "settings", label: t("nav_settings"), icon: Settings },
+  ];
   const groups = [
     { label: copy.workspace, items: [{ id: "dashboard", label: t("nav_dashboard"), icon: LayoutDashboard }, { id: "sites", label: t("nav_sites"), icon: Globe2 }, { id: "profiles", label: t("nav_profiles"), icon: Layers }] },
     { label: copy.tools, items: [{ id: "test", label: t("nav_test"), icon: Activity }, { id: "network", label: t("nav_network"), icon: Wrench }, { id: "lan_share", label: t("nav_lan_share"), icon: Share2 }] },
-    { label: copy.support, items: [{ id: "changelog", label: t("nav_changelog"), icon: FileText }, { id: "setup", label: t("nav_setup"), icon: Shield }, { id: "destek", label: t("nav_destek"), icon: LifeBuoy }, { id: "settings", label: t("nav_settings"), icon: Settings }] },
+    { label: copy.support, items: supportItems },
   ];
   return (
     <aside className="workspace-sidebar hidden md:flex" aria-busy={busy}>

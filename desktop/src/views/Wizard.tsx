@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
+import { isAndroid } from "../lib/platform";
 
 interface Props {
   onComplete: () => void;
@@ -91,11 +92,13 @@ export default function Wizard({ onComplete, pushLog }: Props) {
         } catch (dnsErr) {
           pushLog(`[!] Güvenli DNS uyarısı: ${String(dnsErr)}`);
         }
-        try {
-          await api.applyDohRegistry();
-          pushLog("[+] DoH kaydı uygulandı.");
-        } catch (dohErr) {
-          pushLog(`[!] DoH kaydı uyarısı: ${String(dohErr)}`);
+        if (!isAndroid) {
+          try {
+            await api.applyDohRegistry();
+            pushLog("[+] DoH kaydı uygulandı.");
+          } catch (dohErr) {
+            pushLog(`[!] DoH kaydı uyarısı: ${String(dohErr)}`);
+          }
         }
       }
 
@@ -173,7 +176,13 @@ export default function Wizard({ onComplete, pushLog }: Props) {
                 <Layers size={18} strokeWidth={2} />
               </div>
               <h4 className="text-xs font-bold text-paper-bright">{t("wiz_feature_engine_title")}</h4>
-              <p className="text-xs text-paper-muted leading-relaxed">{t("wiz_feature_engine_desc")}</p>
+              <p className="text-xs text-paper-muted leading-relaxed">
+                {isAndroid
+                  ? (lang === "tr"
+                      ? "Android VpnService yerel TUN katmanı üzerinde root gerektirmeyen L4/L7 paket manipülasyonu."
+                      : "Rootless L4/L7 packet manipulation over the native Android VpnService TUN layer.")
+                  : t("wiz_feature_engine_desc")}
+              </p>
             </div>
             <div className="card-subtle p-4 space-y-2 rounded-xl border border-white/[0.06]">
               <div className="p-2 rounded-lg bg-live/10 text-live w-fit">

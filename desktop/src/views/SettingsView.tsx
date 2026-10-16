@@ -29,6 +29,7 @@ import {
 import {
   api,
   downloadAndInstallUpdate,
+  resolveAndroidApkUrl,
   type EngineConfig,
   type CompatReport,
   type LegacyServiceDto,
@@ -319,7 +320,14 @@ export default function SettingsView({
       const token = localStorage.getItem("anticore_gh_token") || undefined;
       const info = await api.checkUpdate(repoInput.trim(), token);
       const reallyHasUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
-      const safeInfo = { ...info, has_update: reallyHasUpdate };
+      const safeInfo: UpdateInfoDto = {
+        ...info,
+        has_update: reallyHasUpdate,
+        download_url: isAndroid ? resolveAndroidApkUrl(info.download_url, info.latest_version) : info.download_url,
+        setup_url: isAndroid ? null : info.setup_url,
+        portable_exe_url: isAndroid ? null : info.portable_exe_url,
+        portable_zip_url: isAndroid ? null : info.portable_zip_url,
+      };
       setUpdInfo(safeInfo);
       setUpdState("done");
       if (safeInfo.has_update) {
@@ -340,9 +348,15 @@ export default function SettingsView({
     setInstallProgress(null);
     try {
       pushLog("[*] Güncelleme indiriliyor ve kuruluyor...");
-      await downloadAndInstallUpdate(updInfo?.download_url, (downloaded, total) => {
+      const targetUrl = isAndroid
+        ? resolveAndroidApkUrl(updInfo?.download_url, updInfo?.latest_version)
+        : updInfo?.download_url;
+      await downloadAndInstallUpdate(targetUrl, (downloaded, total) => {
         setInstallProgress({ downloaded, total });
       });
+      if (isAndroid) {
+        setInstallState("idle");
+      }
     } catch (e) {
       const msg = String(e);
       setInstallState("error");
@@ -484,26 +498,28 @@ export default function SettingsView({
         </div>
       </section>
 
-      {/* Sistem Başlangıcı (Windows / macOS) */}
-      <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card shadow-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-paper-bright">{isMac ? t("settings_startup_title_mac") : t("settings_startup_title")}</h3>
-            <p className="text-xs text-paper-muted mt-0.5">{isMac ? t("settings_startup_desc_mac") : t("settings_startup_desc")}</p>
+      {/* Sistem Başlangıcı (Yalnızca Masaüstü: Windows / macOS) */}
+      {!isMobile && !isAndroid && (
+        <section className="card p-5 lg:p-6 border border-white/[0.08] rounded-2xl bg-surface-card shadow-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-paper-bright">{isMac ? t("settings_startup_title_mac") : t("settings_startup_title")}</h3>
+              <p className="text-xs text-paper-muted mt-0.5">{isMac ? t("settings_startup_desc_mac") : t("settings_startup_desc")}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={startup}
+              aria-label={isMac ? t("settings_startup_title_mac") : t("settings_startup_title")}
+              disabled={startupBusy}
+              onClick={() => void toggleStartup()}
+              className={`toggle-track ${startup ? "is-active" : ""}`}
+            >
+              <span className="toggle-thumb" />
+            </button>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={startup}
-            aria-label={isMac ? t("settings_startup_title_mac") : t("settings_startup_title")}
-            disabled={startupBusy}
-            onClick={() => void toggleStartup()}
-            className={`toggle-track ${startup ? "is-active" : ""}`}
-          >
-            <span className="toggle-thumb" />
-          </button>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Mobil Sistem Araçları & Destek Merkezi ($10K Siber Hub) */}
       {(isMobile || isAndroid) && onNavigate && (
@@ -1013,11 +1029,13 @@ export default function SettingsView({
                       ? installProgress && installProgress.total > 0
                         ? `${t("settings_downloading")}… ${Math.round((installProgress.downloaded / installProgress.total) * 100)}%`
                         : `${t("settings_downloading")}…`
-                      : t("settings_update_now_btn")}
+                      : isAndroid
+                        ? (lang === "tr" ? "APK Paketini İndir (.apk)" : "Download APK (.apk)")
+                        : t("settings_update_now_btn")}
                   </span>
                 </button>
-                {/* Ayrılmış Elle İndirme Seçenekleri */}
-                {updInfo.setup_url && (
+                {/* Ayrılmış Elle İndirme Seçenekleri (Sadece Masaüstü) */}
+                {!isAndroid && updInfo.setup_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updInfo.setup_url!)}
                     className="btn btn-secondary text-xs"
@@ -1027,7 +1045,7 @@ export default function SettingsView({
                   </button>
                 )}
 
-                {updInfo.portable_exe_url && (
+                {!isAndroid && updInfo.portable_exe_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updInfo.portable_exe_url!)}
                     className="btn btn-secondary text-xs"
@@ -1037,7 +1055,7 @@ export default function SettingsView({
                   </button>
                 )}
 
-                {updInfo.portable_zip_url && (
+                {!isAndroid && updInfo.portable_zip_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updInfo.portable_zip_url!)}
                     className="btn btn-secondary text-xs"
@@ -1047,7 +1065,7 @@ export default function SettingsView({
                   </button>
                 )}
 
-                {!updInfo.setup_url && !updInfo.portable_exe_url && !updInfo.portable_zip_url && updInfo.download_url && (
+                {!isAndroid && !updInfo.setup_url && !updInfo.portable_exe_url && !updInfo.portable_zip_url && updInfo.download_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updInfo.download_url!)}
                     className="btn btn-secondary text-xs"
@@ -1158,7 +1176,13 @@ export default function SettingsView({
         <ul className="list-disc space-y-2 pl-5 text-xs leading-relaxed text-paper-muted">
           <li>{t("settings_security_1")}</li>
           <li>{t("settings_security_2")}</li>
-          <li>{t("settings_security_3")}</li>
+          <li>
+            {isAndroid
+              ? (lang === "tr"
+                  ? "Android VpnService izni yalnızca seçici yerel paket parçalama (DPI bypass) tüneli oluşturmak için kullanılır; root erişimi gerekmez."
+                  : "Android VpnService permission is used solely for local surgical DPI packet fragmentation; no root access is required.")
+              : t("settings_security_3")}
+          </li>
         </ul>
       </section>
 
@@ -1189,7 +1213,13 @@ export default function SettingsView({
         </div>
         <dl className="grid grid-cols-[10rem_1fr] gap-y-2 text-xs">
           <dt className="text-paper-muted font-medium">{t("settings_about_engine")}</dt>
-          <dd className="text-paper-bright font-mono">{appVersion ? `Anticore v${appVersion} (Rust Kernel)` : t("settings_about_engine_value")}</dd>
+          <dd className="text-paper-bright font-mono">
+            {isAndroid
+              ? `Anticore Mobile v${appVersion || "0.3.9"} (Rust VpnService)`
+              : appVersion
+                ? `Anticore v${appVersion} (Rust Kernel)`
+                : t("settings_about_engine_value")}
+          </dd>
           <dt className="text-paper-muted font-medium">{t("settings_about_license")}</dt>
           <dd className="text-paper-bright font-semibold">MIT License — Monolith Works</dd>
         </dl>

@@ -3668,7 +3668,29 @@ pub async fn install_update_direct(
 
         #[cfg(target_os = "android")]
         {
-            return open_browser_url(app, download_url);
+            let lower = download_url.to_lowercase();
+            let safe_url = if lower.ends_with(".exe")
+                || lower.ends_with(".msi")
+                || lower.ends_with(".zip")
+                || lower.ends_with(".pkg")
+                || lower.ends_with(".dmg")
+            {
+                if let Some(idx) = download_url.find("/releases/download/v") {
+                    let after = &download_url[idx + "/releases/download/v".len()..];
+                    if let Some(slash) = after.find('/') {
+                        let ver = &after[..slash];
+                        let base = &download_url[..idx];
+                        format!("{base}/releases/download/v{ver}/Anticore-v{ver}.apk")
+                    } else {
+                        "https://github.com/MonarchDevLab/Anticore/releases/latest".to_string()
+                    }
+                } else {
+                    "https://github.com/MonarchDevLab/Anticore/releases/latest".to_string()
+                }
+            } else {
+                download_url
+            };
+            return open_browser_url(app, safe_url);
         }
 
         #[cfg(not(target_os = "android"))]

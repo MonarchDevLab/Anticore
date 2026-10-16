@@ -9,8 +9,9 @@ import {
   AlertTriangle,
   KeyRound,
 } from "lucide-react";
-import { api, downloadAndInstallUpdate, type UpdateInfoDto } from "../lib/tauri";
+import { api, downloadAndInstallUpdate, resolveAndroidApkUrl, type UpdateInfoDto } from "../lib/tauri";
 import { useI18n } from "../lib/i18n";
+import { isAndroid } from "../lib/platform";
 import { isNewerVersion } from "../lib/version";
 
 export interface BroadcastUpdatePayload {
@@ -44,6 +45,8 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
     if (!broadcast || !broadcast.version) return null;
     const cleanVer = broadcast.version.trim().replace(/^v+/i, "");
     if (!isNewerVersion(currentVer, cleanVer)) return null;
+    const rawDl = broadcast.downloadUrl || null;
+    const safeDl = isAndroid ? resolveAndroidApkUrl(rawDl, cleanVer) : rawDl;
     return {
       has_update: true,
       current_version: currentVer,
@@ -51,7 +54,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
       release_name: broadcast.title || `Anticore v${cleanVer}`,
       release_notes: broadcast.message || "",
       html_url: "https://github.com/MonarchDevLab/Anticore/releases/latest",
-      download_url: broadcast.downloadUrl || null,
+      download_url: safeDl,
       setup_url: null,
       portable_exe_url: null,
       portable_zip_url: null,
@@ -71,13 +74,17 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
       const reallyHasUpdate = info.has_update && isNewerVersion(info.current_version, info.latest_version);
       if (reallyHasUpdate) {
         const cleanVer = info.latest_version.trim().replace(/^v+/i, "");
+        const rawDl = info.download_url || broadcast?.downloadUrl || null;
         const mergedInfo: UpdateInfoDto = {
           ...info,
           has_update: true,
           latest_version: cleanVer,
           release_name: broadcast?.title || info.release_name,
           release_notes: info.release_notes || broadcast?.message || "",
-          download_url: info.download_url || broadcast?.downloadUrl || null,
+          download_url: isAndroid ? resolveAndroidApkUrl(rawDl, cleanVer) : rawDl,
+          setup_url: isAndroid ? null : info.setup_url,
+          portable_exe_url: isAndroid ? null : info.portable_exe_url,
+          portable_zip_url: isAndroid ? null : info.portable_zip_url,
         };
         setUpdateInfo(mergedInfo);
         setStatus("available");
@@ -128,9 +135,16 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
     setProgress(null);
     setErrorMsg(null);
     try {
-      await downloadAndInstallUpdate(updateInfo?.download_url || broadcast?.downloadUrl, (downloaded, total) => {
+      const rawUrl = updateInfo?.download_url || broadcast?.downloadUrl;
+      const targetUrl = isAndroid
+        ? resolveAndroidApkUrl(rawUrl, updateInfo?.latest_version || broadcast?.version)
+        : rawUrl;
+      await downloadAndInstallUpdate(targetUrl, (downloaded, total) => {
         setProgress({ downloaded, total });
       });
+      if (isAndroid) {
+        setStatus("available");
+      }
     } catch (err) {
       setErrorMsg(String(err));
       setStatus("error");
@@ -242,16 +256,22 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
               <LoaderCircle size={32} className="animate-spin text-live mx-auto" strokeWidth={2.5} />
               <div>
                 <p className="text-xs font-bold text-paper-bright">
-                  {progress && progress.total > 0 && progress.downloaded >= progress.total
-                    ? (lang === "tr" ? "Paket Sisteme Kuruluyor..." : "Installing Package...")
-                    : t("update_modal_downloading")}
+                  {isAndroid
+                    ? (lang === "tr" ? "Android APK Paketi İndiriliyor..." : "Downloading Android APK Package...")
+                    : progress && progress.total > 0 && progress.downloaded >= progress.total
+                      ? (lang === "tr" ? "Paket Sisteme Kuruluyor..." : "Installing Package...")
+                      : t("update_modal_downloading")}
                 </p>
                 <p className="text-xs text-paper-muted mt-1">
-                  {progress && progress.total > 0 && progress.downloaded >= progress.total
+                  {isAndroid
                     ? (lang === "tr"
-                        ? "Kurulum tamamlanıyor. İşletim sistemi yönetici parolası sorarsa lütfen onaylayın."
-                        : "Completing installation. Please approve if the system requests administrator privileges.")
-                    : t("update_modal_installing_sub")}
+                        ? "İndirme tamamlandığında Android paket yükleyicisi ile güncellemeyi onaylayın."
+                        : "Approve the installation via Android Package Installer once the APK finishes downloading.")
+                    : progress && progress.total > 0 && progress.downloaded >= progress.total
+                      ? (lang === "tr"
+                          ? "Kurulum tamamlanıyor. İşletim sistemi yönetici parolası sorarsa lütfen onaylayın."
+                          : "Completing installation. Please approve if the system requests administrator privileges.")
+                      : t("update_modal_installing_sub")}
                 </p>
               </div>
 
@@ -287,8 +307,8 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
                 {errorMsg || t("update_modal_error_sub")}
               </p>
 
-              {/* OS Yetki / Permission Rehberi */}
-              {errorMsg && (errorMsg.includes("13") || errorMsg.toLowerCase().includes("permission denied") || errorMsg.toLowerCase().includes("izin")) && (
+              {/* OS Yetki / Permission Rehberi (Sadece Masaüstü) */}
+              {!isAndroid && errorMsg && (errorMsg.includes("13") || errorMsg.toLowerCase().includes("permission denied") || errorMsg.toLowerCase().includes("izin")) && (
                 <div className="p-2.5 rounded-lg bg-live/10 border border-live/25 text-live text-[11px] leading-relaxed">
                   <p className="font-bold mb-0.5">
                     {lang === "tr" ? "İşletim Sistemi Yönetici Yetkisi Gereklidir" : "Operating System Admin Rights Required"}
@@ -369,17 +389,23 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
 
             {status === "error" && updateInfo && (
               <button
-                onClick={() => void api.openBrowserUrl(updateInfo.download_url || updateInfo.html_url)}
+                onClick={() =>
+                  void api.openBrowserUrl(
+                    isAndroid
+                      ? resolveAndroidApkUrl(updateInfo.download_url, updateInfo.latest_version)
+                      : updateInfo.download_url || updateInfo.html_url
+                  )
+                }
                 className="btn btn-primary text-xs flex items-center gap-1.5"
               >
                 <Download size={13} strokeWidth={2} />
-                <span>{t("update_modal_download_manual")}</span>
+                <span>{isAndroid ? (lang === "tr" ? "APK İndir (.apk)" : "Download APK (.apk)") : t("update_modal_download_manual")}</span>
               </button>
             )}
 
             {status === "available" && updateInfo && (
               <>
-                {updateInfo.setup_url && (
+                {!isAndroid && updateInfo.setup_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updateInfo.setup_url!)}
                     className="btn btn-secondary text-xs"
@@ -390,7 +416,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
                   </button>
                 )}
 
-                {updateInfo.portable_exe_url && (
+                {!isAndroid && updateInfo.portable_exe_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updateInfo.portable_exe_url!)}
                     className="btn btn-secondary text-xs"
@@ -401,7 +427,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
                   </button>
                 )}
 
-                {updateInfo.portable_zip_url && (
+                {!isAndroid && updateInfo.portable_zip_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updateInfo.portable_zip_url!)}
                     className="btn btn-secondary text-xs"
@@ -412,7 +438,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
                   </button>
                 )}
 
-                {!updateInfo.setup_url && !updateInfo.portable_exe_url && !updateInfo.portable_zip_url && updateInfo.download_url && (
+                {!isAndroid && !updateInfo.setup_url && !updateInfo.portable_exe_url && !updateInfo.portable_zip_url && updateInfo.download_url && (
                   <button
                     onClick={() => void api.openBrowserUrl(updateInfo.download_url!)}
                     className="btn btn-secondary text-xs"
@@ -427,7 +453,11 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
                   className="btn btn-primary text-xs"
                 >
                   <Download size={14} strokeWidth={2.5} />
-                  <span>{t("update_modal_update_btn")}</span>
+                  <span>
+                    {isAndroid
+                      ? (lang === "tr" ? "APK Paketini İndir (.apk)" : "Download APK (.apk)")
+                      : t("update_modal_update_btn")}
+                  </span>
                 </button>
               </>
             )}
