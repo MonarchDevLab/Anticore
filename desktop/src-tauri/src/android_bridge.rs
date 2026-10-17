@@ -13,6 +13,8 @@ use std::sync::OnceLock;
 
 #[cfg(target_os = "android")]
 static JVM: OnceLock<jni::JavaVM> = OnceLock::new();
+#[cfg(target_os = "android")]
+static BRIDGE_CLASS: OnceLock<jni::objects::GlobalRef> = OnceLock::new();
 
 #[allow(dead_code)]
 static TUN_FD: AtomicI32 = AtomicI32::new(-1);
@@ -31,6 +33,69 @@ pub fn get_socks_port() -> u16 {
 }
 
 #[cfg(target_os = "android")]
+fn cache_jvm_and_class(env: &mut jni::JNIEnv, class: &jni::objects::JClass) {
+    if let Ok(jvm) = env.get_java_vm() {
+        let _ = JVM.set(jvm);
+    }
+    if BRIDGE_CLASS.get().is_none() && !class.is_null() {
+        if let Ok(global_ref) = env.new_global_ref(class) {
+            let _ = BRIDGE_CLASS.set(global_ref);
+        }
+    }
+}
+
+#[cfg(target_os = "android")]
+fn clear_and_describe_exception(env: &mut jni::JNIEnv) -> Option<String> {
+    if !env.exception_check().unwrap_or(false) {
+        return None;
+    }
+    let exc = match env.exception_occurred() {
+        Ok(e) => e,
+        Err(_) => {
+            let _ = env.exception_clear();
+            return Some("Bilinmeyen JNI istisnası".into());
+        }
+    };
+    let _ = env.exception_clear();
+    if exc.is_null() {
+        return None;
+    }
+    if let Ok(val) = env.call_method(&exc, "toString", "()Ljava/lang/String;", &[]) {
+        if let Ok(obj) = val.l() {
+            if !obj.is_null() {
+                let jstr = jni::objects::JString::from(obj);
+                let msg = env.get_string(&jstr).ok().map(|s| s.to_string_lossy().into_owned());
+                if let Some(m) = msg {
+                    return Some(m);
+                }
+            }
+        }
+    }
+    let _ = env.exception_clear();
+    Some("Java istisnası fırlatıldı".into())
+}
+
+#[cfg(target_os = "android")]
+fn resolve_bridge_class<'a>(env: &mut jni::JNIEnv<'a>) -> Result<jni::objects::JClass<'a>, String> {
+    if let Some(global) = BRIDGE_CLASS.get() {
+        let obj = unsafe { jni::objects::JObject::from_raw(global.as_obj().as_raw()) };
+        return Ok(jni::objects::JClass::from(obj));
+    }
+    match env.find_class("com/anticore/desktop/AnticoreBridge") {
+        Ok(cls) => {
+            if let Ok(global_ref) = env.new_global_ref(&cls) {
+                let _ = BRIDGE_CLASS.set(global_ref);
+            }
+            Ok(cls)
+        }
+        Err(e) => {
+            let detail = clear_and_describe_exception(env).unwrap_or_else(|| e.to_string());
+            Err(format!("AnticoreBridge sınıfı çözümlenemedi: {detail}"))
+        }
+    }
+}
+
+#[cfg(target_os = "android")]
 #[no_mangle]
 pub extern "system" fn JNI_OnLoad(
     vm: *mut jni::sys::JavaVM,
@@ -44,19 +109,15 @@ pub extern "system" fn JNI_OnLoad(
     jni::sys::JNI_VERSION_1_6
 }
 
-/// JNI Callback: Kotlin initBridge çağrısından JVM referansını yakalar.
+/// JNI Callback: Kotlin initBridge çağrısından JVM ve sınıf referansını yakalar.
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_initNativeBridge(
     mut env: jni::JNIEnv,
-    _class: jni::objects::JClass,
+    class: jni::objects::JClass,
 ) -> bool {
-    if let Ok(jvm) = env.get_java_vm() {
-        let _ = JVM.set(jvm);
-        true
-    } else {
-        false
-    }
+    cache_jvm_and_class(&mut env, &class);
+    JVM.get().is_some() && BRIDGE_CLASS.get().is_some()
 }
 
 /// JNI Callback: Kotlin'den TUN dosya tanıtıcısı hazır olduğunda çağrılır.
@@ -64,12 +125,10 @@ pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_initNativeBridge
 #[no_mangle]
 pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_onTunReady(
     mut env: jni::JNIEnv,
-    _class: jni::objects::JClass,
+    class: jni::objects::JClass,
     fd: i32,
 ) -> bool {
-    if let Ok(jvm) = env.get_java_vm() {
-        let _ = JVM.set(jvm);
-    }
+    cache_jvm_and_class(&mut env, &class);
     TUN_FD.store(fd, Ordering::SeqCst);
     VPN_ACTIVE.store(true, Ordering::SeqCst);
     PERMISSION_DENIED.store(false, Ordering::SeqCst);
@@ -83,9 +142,10 @@ pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_onTunReady(
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_onTunClosed(
-    _env: jni::JNIEnv,
-    _class: jni::objects::JClass,
+    mut env: jni::JNIEnv,
+    class: jni::objects::JClass,
 ) {
+    cache_jvm_and_class(&mut env, &class);
     TUN_FD.store(-1, Ordering::SeqCst);
     VPN_ACTIVE.store(false, Ordering::SeqCst);
 }
@@ -94,9 +154,10 @@ pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_onTunClosed(
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_anticore_desktop_AnticoreBridge_onVpnPermissionDenied(
-    _env: jni::JNIEnv,
-    _class: jni::objects::JClass,
+    mut env: jni::JNIEnv,
+    class: jni::objects::JClass,
 ) {
+    cache_jvm_and_class(&mut env, &class);
     PERMISSION_DENIED.store(true, Ordering::SeqCst);
     VPN_ACTIVE.store(false, Ordering::SeqCst);
 }
@@ -110,29 +171,24 @@ pub fn start_vpn_service() -> Result<(), String> {
         .attach_current_thread()
         .map_err(|e| format!("JVM iş parçacığı bağlanamadı: {e}"))?;
 
-    let class_name = "com/anticore/desktop/AnticoreBridge";
+    let bridge_class = resolve_bridge_class(&mut env)?;
     let port = SOCKS_PORT.load(Ordering::SeqCst) as i32;
     let _ = env.call_static_method(
-        class_name,
+        &bridge_class,
         "setSocksPortFromNative",
         "(I)V",
         &[jni::objects::JValue::Int(port)],
     );
-    if env.exception_check().unwrap_or(false) {
-        let _ = env.exception_clear();
-    }
+    let _ = clear_and_describe_exception(&mut env);
 
-    let res = env.call_static_method(class_name, "startVpnFromNative", "()Z", &[])
+    let res = env
+        .call_static_method(&bridge_class, "startVpnFromNative", "()Z", &[])
         .map_err(|e| {
-            if env.exception_check().unwrap_or(false) {
-                let _ = env.exception_clear();
-            }
-            format!("startVpnFromNative çağrı hatası: {e}")
+            let detail = clear_and_describe_exception(&mut env).unwrap_or_else(|| e.to_string());
+            format!("startVpnFromNative çağrı hatası: {detail}")
         })?;
 
-    if env.exception_check().unwrap_or(false) {
-        let _ = env.exception_clear();
-    }
+    let _ = clear_and_describe_exception(&mut env);
 
     match res.z() {
         Ok(true) => Ok(()),
@@ -151,10 +207,9 @@ pub fn stop_vpn_service() -> Result<(), String> {
         None => return Ok(()),
     };
     if let Ok(mut env) = jvm.attach_current_thread() {
-        let class_name = "com/anticore/desktop/AnticoreBridge";
-        let _ = env.call_static_method(class_name, "stopVpnFromNative", "()Z", &[]);
-        if env.exception_check().unwrap_or(false) {
-            let _ = env.exception_clear();
+        if let Ok(bridge_class) = resolve_bridge_class(&mut env) {
+            let _ = env.call_static_method(&bridge_class, "stopVpnFromNative", "()Z", &[]);
+            let _ = clear_and_describe_exception(&mut env);
         }
     }
     Ok(())
@@ -168,21 +223,20 @@ pub fn protect_socket(socket_fd: i32) -> bool {
         None => return false,
     };
     if let Ok(mut env) = jvm.attach_current_thread() {
-        let class_name = "com/anticore/desktop/AnticoreBridge";
-        if let Ok(res) = env.call_static_method(
-            class_name,
-            "protectSocketFromNative",
-            "(I)Z",
-            &[jni::objects::JValue::Int(socket_fd)],
-        ) {
-            if env.exception_check().unwrap_or(false) {
-                let _ = env.exception_clear();
+        if let Ok(bridge_class) = resolve_bridge_class(&mut env) {
+            if let Ok(res) = env.call_static_method(
+                &bridge_class,
+                "protectSocketFromNative",
+                "(I)Z",
+                &[jni::objects::JValue::Int(socket_fd)],
+            ) {
+                let _ = clear_and_describe_exception(&mut env);
+                if let Ok(ok) = res.z() {
+                    return ok;
+                }
+            } else {
+                let _ = clear_and_describe_exception(&mut env);
             }
-            if let Ok(ok) = res.z() {
-                return ok;
-            }
-        } else if env.exception_check().unwrap_or(false) {
-            let _ = env.exception_clear();
         }
     }
     false
@@ -197,20 +251,19 @@ pub fn get_tun_fd() -> i32 {
     // JVM üzerinden doğrudan servisin dosya tanıtıcısını sorgula
     if let Some(jvm) = JVM.get() {
         if let Ok(mut env) = jvm.attach_current_thread() {
-            let class_name = "com/anticore/desktop/AnticoreBridge";
-            if let Ok(res) = env.call_static_method(class_name, "getTunFdFromNative", "()I", &[]) {
-                if env.exception_check().unwrap_or(false) {
-                    let _ = env.exception_clear();
-                }
-                if let Ok(fd) = res.i() {
-                    if fd >= 0 {
-                        TUN_FD.store(fd, Ordering::SeqCst);
-                        VPN_ACTIVE.store(true, Ordering::SeqCst);
-                        return fd;
+            if let Ok(bridge_class) = resolve_bridge_class(&mut env) {
+                if let Ok(res) = env.call_static_method(&bridge_class, "getTunFdFromNative", "()I", &[]) {
+                    let _ = clear_and_describe_exception(&mut env);
+                    if let Ok(fd) = res.i() {
+                        if fd >= 0 {
+                            TUN_FD.store(fd, Ordering::SeqCst);
+                            VPN_ACTIVE.store(true, Ordering::SeqCst);
+                            return fd;
+                        }
                     }
+                } else {
+                    let _ = clear_and_describe_exception(&mut env);
                 }
-            } else if env.exception_check().unwrap_or(false) {
-                let _ = env.exception_clear();
             }
         }
     }

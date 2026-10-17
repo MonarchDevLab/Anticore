@@ -9,16 +9,17 @@ object AnticoreBridge {
         try {
             System.loadLibrary("anticore_desktop_lib")
             Log.i(TAG, "anticore_desktop_lib native library loaded successfully")
-        } catch (e: UnsatisfiedLinkError) {
-            Log.e(TAG, "Failed to load anticore_desktop_lib: ${e.message}")
+            initNativeBridge()
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to initialize anticore_desktop_lib: ${e.message}")
         }
     }
 
     @JvmStatic
     fun initBridge() {
         try {
-            initNativeBridge()
-            Log.d(TAG, "AnticoreBridge initialized and native JVM bridge connected")
+            val ok = initNativeBridge()
+            Log.d(TAG, "AnticoreBridge initialized and native JVM bridge connected: $ok")
         } catch (e: Throwable) {
             Log.w(TAG, "initNativeBridge warning: ${e.message}")
         }

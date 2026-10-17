@@ -75,13 +75,12 @@ class MainActivity : TauriActivity() {
     private lateinit var vpnPermissionLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
         instance = this
         appContext = applicationContext
-
-        // JNI köprüsünü ve yerel kütüphaneyi erken yükle
         AnticoreBridge.initBridge()
+
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
 
         // Geri tuşu/hareketi ile aktivitenin yok edilmesini (finish) engelle;
         // uygulamayı arka plana taşıyarak VPN tünelinin ve arayüz durumunun
