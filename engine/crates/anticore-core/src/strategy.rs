@@ -102,23 +102,73 @@ pub fn apply_steps(view: &PacketView, steps: &[Step]) -> StrategyPlan {
         match step {
             Step::FragmentTls { mode } if real_segments.is_none() => {
                 // Sadece ilk veri paketinde (ClientHello) çalışır
-                if parse_client_hello(payload).is_some() {
+                if let Some(info) = parse_client_hello(payload) {
                     if let Some(off) = find_split_offset(payload, mode) {
-                        let seg1 =
-                            build_tcp_segment(view, view.seq(), &payload[..off], None, None, false, None, None);
-                        let seg2 = build_tcp_segment(
-                            view,
-                            view.seq() + off as u32,
-                            &payload[off..],
-                            None, None,
-                            false, None, None,
-                        );
-                        // Reverse: gönderim sırası ters — TCP birleştirmesi
-                        // host tarafında seq'le doğru yapılır.
-                        real_segments = Some(match mode {
-                            SplitMode::Reverse(_) | SplitMode::SniMidReverse => vec![seg2, seg1],
-                            _ => vec![seg1, seg2],
-                        });
+                        let is_reverse = matches!(mode, SplitMode::Reverse(_) | SplitMode::SniMidReverse);
+                        if is_reverse {
+                            let seg1 = build_tcp_segment(view, view.seq(), &payload[..off], None, None, false, None, None);
+                            let seg2 = build_tcp_segment(
+                                view,
+                                view.seq() + off as u32,
+                                &payload[off..],
+                                None, None,
+                                false, None, None,
+                            );
+                            real_segments = Some(vec![seg2, seg1]);
+                        } else {
+                            // Türkiye ISS (Türk Telekom / Superonline / TurkNet / Vodafone / Kablonet)
+                            // derin paket inceleme (DPI) kutuları tekil 2-bayt veya tekil SNI-ortası
+                            // bölmeyi stateful tamponda yeniden birleştirir; ancak SNI uzantı başlığı
+                            // (0x0000: sni_offset - 9), SNI başlangıcı ve SNI ortası aynı anda
+                            // parçalandığında (Cerrahi Çoklu Bölme) tüm sağlayıcılarda düşürme sıfırlanır.
+                            let mut cuts = vec![off];
+                            if payload.len() > 2 {
+                                cuts.push(2);
+                            }
+                            if info.sni_offset > 9 && info.sni_offset - 9 < payload.len() {
+                                cuts.push(info.sni_offset - 9);
+                            }
+                            let mid = info.sni_offset + info.sni_len / 2;
+                            if mid > 2 && mid < payload.len() {
+                                cuts.push(mid);
+                            }
+                            cuts.retain(|&p| p > 0 && p < payload.len());
+                            cuts.sort_unstable();
+                            cuts.dedup();
+
+                            let mut segs = Vec::with_capacity(cuts.len() + 1);
+                            let mut prev = 0usize;
+                            for &cut in &cuts {
+                                if cut > prev && cut <= payload.len() {
+                                    segs.push(build_tcp_segment(
+                                        view,
+                                        view.seq() + prev as u32,
+                                        &payload[prev..cut],
+                                        None,
+                                        None,
+                                        false,
+                                        None,
+                                        None,
+                                    ));
+                                    prev = cut;
+                                }
+                            }
+                            if prev < payload.len() {
+                                segs.push(build_tcp_segment(
+                                    view,
+                                    view.seq() + prev as u32,
+                                    &payload[prev..],
+                                    None,
+                                    None,
+                                    false,
+                                    None,
+                                    None,
+                                ));
+                            }
+                            if !segs.is_empty() {
+                                real_segments = Some(segs);
+                            }
+                        }
                     }
                 }
             }
@@ -399,7 +449,7 @@ mod tests {
     }
 
     #[test]
-    fn tls_fragment_produces_two_valid_segments_in_order() {
+    fn tls_fragment_emits_surgical_multi_split() {
         let payload = client_hello_payload(b"discord.com");
         let pkt = synthetic_packet(&payload);
         let view = PacketView::parse(&pkt).unwrap();
@@ -409,15 +459,45 @@ mod tests {
             &[Step::FragmentTls { mode: SplitMode::SniMid }],
         );
 
-        assert_eq!(plan.reals.len(), 2);
+        // Cerrahi Çoklu Bölme: kayıt başlığı (2), SNI uzantı başlığı
+        // (sni_offset - 9) ve SNI ortası olmak üzere üç kesim -> dört segment.
+        // Tekil bölmeyi stateful tamponda birleştiren DPI kutuları bu
+        // dağılımda eşleşme kuramaz.
+        assert_eq!(plan.reals.len(), 4);
         assert!(plan.fakes.is_empty());
-        let v1 = PacketView::parse(&plan.reals[0]).unwrap();
-        let v2 = PacketView::parse(&plan.reals[1]).unwrap();
-        assert!(v1.payload().len() > 0 && v2.payload().len() > 0);
-        assert_eq!(v1.seq() + v1.payload().len() as u32, v2.seq());
-        // Birleşik payload = orijinal
-        let mut joined = v1.payload().to_vec();
-        joined.extend_from_slice(v2.payload());
+
+        let mut joined = Vec::new();
+        let mut prev_end: Option<u32> = None;
+        for seg in &plan.reals {
+            let v = PacketView::parse(seg).unwrap();
+            assert!(!v.payload().is_empty(), "boş segment üretilmemeli");
+            if let Some(end) = prev_end {
+                assert_eq!(v.seq(), end, "segment seq'leri bitişik olmalı");
+            }
+            prev_end = Some(v.seq() + v.payload().len() as u32);
+            joined.extend_from_slice(v.payload());
+        }
+        // Birleşik payload = orijinal (bayt-tam yeniden kurulum)
+        assert_eq!(joined, payload);
+        // İlk segment TLS kayıt başlığının 2. baytında kesilir.
+        assert_eq!(PacketView::parse(&plan.reals[0]).unwrap().payload().len(), 2);
+    }
+
+    #[test]
+    fn fixed_mode_also_emits_surgical_multi_split() {
+        // Yerleşik ISP profillerinin tamamı Fixed(2) kullanır ve çoklu bölme
+        // bu modda da devrededir: 2 bayt + SNI uzantı başlığı + SNI ortası.
+        let payload = client_hello_payload(b"discord.com");
+        let pkt = synthetic_packet(&payload);
+        let view = PacketView::parse(&pkt).unwrap();
+
+        let plan = apply_steps(&view, &[Step::FragmentTls { mode: SplitMode::Fixed(2) }]);
+
+        assert_eq!(plan.reals.len(), 4);
+        let mut joined = Vec::new();
+        for seg in &plan.reals {
+            joined.extend_from_slice(PacketView::parse(seg).unwrap().payload());
+        }
         assert_eq!(joined, payload);
     }
 
@@ -436,7 +516,8 @@ mod tests {
         );
 
         assert_eq!(plan.fakes.len(), 1);
-        assert_eq!(plan.reals.len(), 2);
+        // Cerrahi Çoklu Bölme: SNI tabanlı üç kesim -> dört gerçek segment.
+        assert_eq!(plan.reals.len(), 4);
 
         // in_order: fake önce
         let order: Vec<usize> = plan.in_order()

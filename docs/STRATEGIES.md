@@ -7,17 +7,29 @@ motorun yetenek haritasını ve her tekniğin çalışma mantığını tutar.
 ## Bağlantı Kuruluşu Teknikleri (TLS/443)
 
 ### 1. SNI Parçalama (FragmentTls)
-TLS ClientHello, sunucu adının (SNI) ortasından ikiye bölünerek iki ayrı
-TCP segmenti olarak gönderilir. DPI cihazları tek pakette SNI beklediğinden
-kural eşleşmesi yapılamaz; hedef sunucu ise TCP yeniden birleştirmeyle
-veriyi eksiksiz alır.
+TLS ClientHello, DPI cihazının tek pakette SNI görmesini engelleyecek şekilde
+birden fazla TCP segmentine bölünür; hedef sunucu veriyi TCP yeniden
+birleştirmeyle eksiksiz alır. İleri yönlü modlarda (`SniMid`, `Fixed(n)`)
+üç kesim uygulanır (Cerrahi Çoklu Bölme):
+
+| Kesim | Konum | Amaç |
+|---|---|---|
+| 1 | `2` | TLS kayıt başlığını (0x16 0x03) ikiye ayırır |
+| 2 | `sni_offset - 9` | SNI uzantı başlığını (0x0000 + uzunluk) ayırır |
+| 3 | `sni_offset + sni_len / 2` | SNI ortası (`SniMid`) ya da `Fixed(n)` ofseti |
+
+Segmentler artan seq ile gönderilir ve birleşikleri orijinal ClientHello'nun
+bayt-tam kopyasıdır (boş segment üretilmez). Tekil 2-bayt ya da tekil
+SNI-ortası bölmeyi stateful tamponda yeniden birleştiren DPI kutuları bu
+dağılımda kural eşleştiremez.
 
 Varyantlar:
-- `SniMid`: hostname'in tam ortasından bölme
-- `Fixed(n)`: kaydın ilk n baytını ayırma
-- `Reverse(n)`: segmentleri ters sırada gönderme — bazı orta kutular
-  parçalı ClientHello'yu birleştirip yeniden denetler; ters sıra bu
-  birleştirmeyi boşa düşürür
+- `SniMid`: kesim 3 = hostname'in tam ortası
+- `Fixed(n)`: kesim 3 = kaydın ilk n baytı (yerleşik ISP profilleri `n = 2`
+  kullanır; teknik olarak `SniMid` ile aynı üç kesme noktasına oturur)
+- `SniMidReverse` / `Reverse(n)`: çoklu bölme uygulanmaz; iki segment ters
+  sırada gönderilir — bazı orta kutular parçalı ClientHello'yu birleştirip
+  yeniden denetler, ters sıra bu birleştirmeyi boşa düşürür
 
 ### 2. Çoklu Parçalama (MultiSplit)
 TLS ClientHello veya HTTP payload'ı, belirlenen birden fazla ofset noktasından

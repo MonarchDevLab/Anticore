@@ -203,7 +203,7 @@ mod tests {
         let bl = Blacklist::from_lines("discord.com\n");
         let d = decide_packet(&pkt, &bl, &[Step::FragmentTls { mode: SplitMode::SniMid }]);
         match d {
-            PacketDecision::Rewrite(segments) => assert_eq!(segments.len(), 2),
+            PacketDecision::Rewrite(segments) => assert_eq!(segments.len(), 4),
             other => panic!("beklenen Rewrite, gelen: {other:?}"),
         }
     }

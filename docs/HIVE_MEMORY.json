@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-10-16T10:31:49.981Z",
+  "updatedAt": "2026-10-17T00:48:45.873Z",
   "instincts": [
     {
       "id": "HIVE-001",
@@ -24,6 +24,32 @@
         "address",
         "already",
         "error"
+      ],
+      "scope": "project",
+      "status": "active"
+    },
+    {
+      "id": "HIVE-002",
+      "skill": "hive-hata-ayikla",
+      "domain": "genel",
+      "symptom": "Android VPN/proxy ISP profiles (Fixed(2)) fail to split SNI or package.ps1 fails with Copy-Item lock",
+      "cause": "Fixed(2) set custom_cuts=true with only [2] in proxy.rs; RFC 7396 merge patch ignores {}; NTFS blocks Copy-Item over running .exe",
+      "reflex": "Ensure proxy.rs and tester.rs always merge surgical multi-split offsets (2, sni_offset - 9, sni_mid); override tauri.android.conf.json bundle.resources with []; use Move-Item -Force before Copy-Item in package.ps1",
+      "weight": 85,
+      "verifiedCount": 1,
+      "projects": [
+        "antikor"
+      ],
+      "lastSeen": "2026-10-17",
+      "targetPatterns": [
+        "android",
+        "proxy",
+        "profiles",
+        "fixed",
+        "fail",
+        "split",
+        "package",
+        "fails"
       ],
       "scope": "project",
       "status": "active"

@@ -1102,6 +1102,55 @@ async fn handle_http(
     }
 }
 
+/// TLS ClientHello için cerrahi çoklu bölme kesim noktalarını hesaplar.
+/// Türkiye mobil ve sabit hatlarında (Türk Telekom, Superonline, Turkcell, Vodafone, TurkNet)
+/// tekil `Fixed(2)` kesimi SNI metnini ikinci segmentte bütün bıraktığı için,
+/// kayıt başlığı (`2`), SNI uzantı başlığı (`sni_offset - 9`) ve SNI ortası (`sni_offset + sni_len / 2`)
+/// kesimlerini her zaman birleştirir.
+fn compute_tls_split_cuts(
+    payload: &[u8],
+    info: &crate::tls::ClientHelloInfo,
+    steps: &[crate::strategy::Step],
+) -> Vec<usize> {
+    let mut cuts = Vec::with_capacity(6);
+
+    for step in steps {
+        match step {
+            crate::strategy::Step::MultiSplit { positions } => {
+                for &pos in positions {
+                    if pos > 0 && pos < payload.len() {
+                        cuts.push(pos);
+                    }
+                }
+            }
+            crate::strategy::Step::FragmentTls { mode } => {
+                if let Some(off) = crate::tls::find_split_offset(payload, mode) {
+                    if off > 0 && off < payload.len() {
+                        cuts.push(off);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    if payload.len() > 2 {
+        cuts.push(2);
+    }
+    if info.sni_offset > 9 && info.sni_offset - 9 < payload.len() {
+        cuts.push(info.sni_offset - 9);
+    }
+    let mid = info.sni_offset + (info.sni_len / 2);
+    if mid > 2 && mid < payload.len() {
+        cuts.push(mid);
+    }
+
+    cuts.retain(|&p| p > 0 && p < payload.len());
+    cuts.sort_unstable();
+    cuts.dedup();
+    cuts
+}
+
 /// İstemci ile hedef sunucu arasında iki yönlü şeffaf veri transferi ve DPI bypass koruması.
 async fn tunnel_bidirectional(
     client: &mut TcpStream,
@@ -1133,45 +1182,7 @@ async fn tunnel_bidirectional(
 
                 // 1) TLS ClientHello parçalama (DPI SNI sansürünü aşma)
                 if let Some(info) = crate::tls::parse_client_hello(payload) {
-                    let mut cuts = Vec::with_capacity(4);
-
-                    // A) Profil adımlarından kesim noktalarını topla
-                    let mut custom_cuts = false;
-                    for step in steps_c.iter() {
-                        match step {
-                            crate::strategy::Step::MultiSplit { positions } => {
-                                for &pos in positions {
-                                    if pos > 0 && pos < payload.len() {
-                                        cuts.push(pos);
-                                    }
-                                }
-                                custom_cuts = true;
-                            }
-                            crate::strategy::Step::FragmentTls { mode } => {
-                                if let Some(off) = crate::tls::find_split_offset(payload, mode) {
-                                    if off > 0 && off < payload.len() {
-                                        cuts.push(off);
-                                    }
-                                }
-                                custom_cuts = true;
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    // B) Varsayılan / Evrensel kalkan: Türkiye mobil ve sabit hatları için Tri-Split (2 bayt + SNI ortası)
-                    if !custom_cuts || cuts.is_empty() {
-                        cuts.push(2);
-                        let mid = info.sni_offset + (info.sni_len / 2);
-                        if mid > 2 && mid < payload.len() {
-                            cuts.push(mid);
-                        }
-                    } else if !cuts.contains(&2) && payload.len() > 2 {
-                        cuts.push(2);
-                    }
-
-                    cuts.sort_unstable();
-                    cuts.dedup();
+                    let cuts = compute_tls_split_cuts(payload, &info, &steps_c);
 
                     let mut prev = 0;
                     for &cut in &cuts {
@@ -1487,5 +1498,58 @@ mod tests {
 
         proxy2.stop_and_wait().await;
         proxy3.stop_and_wait().await;
+    }
+
+    #[test]
+    fn test_proxy_tls_split_cuts_for_fixed2_profile_emits_surgical_multi_split() {
+        let mut ch = Vec::new();
+        ch.extend_from_slice(&[0x03, 0x03]);
+        ch.extend_from_slice(&[0xAB; 32]);
+        ch.push(0x00);
+        ch.extend_from_slice(&[0x00, 0x02, 0x13, 0x01]);
+        ch.push(0x01);
+        ch.push(0x00);
+
+        let sni = b"discord.com";
+        let mut sni_ext = Vec::new();
+        sni_ext.extend_from_slice(&((sni.len() + 3) as u16).to_be_bytes());
+        sni_ext.push(0x00);
+        sni_ext.extend_from_slice(&(sni.len() as u16).to_be_bytes());
+        sni_ext.extend_from_slice(sni);
+
+        let mut exts = Vec::new();
+        exts.extend_from_slice(&0x0000u16.to_be_bytes());
+        exts.extend_from_slice(&(sni_ext.len() as u16).to_be_bytes());
+        exts.extend_from_slice(&sni_ext);
+
+        ch.extend_from_slice(&(exts.len() as u16).to_be_bytes());
+        ch.extend_from_slice(&exts);
+
+        let mut hs = vec![0x01];
+        let l = ch.len();
+        hs.push(((l >> 16) & 0xFF) as u8);
+        hs.push(((l >> 8) & 0xFF) as u8);
+        hs.push((l & 0xFF) as u8);
+        hs.extend_from_slice(&ch);
+
+        let mut payload = vec![0x16, 0x03, 0x01];
+        payload.extend_from_slice(&(hs.len() as u16).to_be_bytes());
+        payload.extend_from_slice(&hs);
+
+        let info = crate::tls::parse_client_hello(&payload).expect("ClientHello parse edilmeli");
+        let steps = vec![
+            crate::strategy::Step::FakePacketBefore { ttl: 4 },
+            crate::strategy::Step::FragmentTls {
+                mode: crate::tls::SplitMode::Fixed(2),
+            },
+            crate::strategy::Step::FakeWrongSeq,
+        ];
+
+        let cuts = compute_tls_split_cuts(&payload, &info, &steps);
+        assert_eq!(
+            cuts,
+            vec![2, info.sni_offset - 9, info.sni_offset + info.sni_len / 2],
+            "Fixed(2) ISP profillerinde de cerrahi 3 kesim (4 segment) uygulanmali"
+        );
     }
 }

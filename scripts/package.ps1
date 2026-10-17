@@ -12,7 +12,7 @@ function Safe-Replace-Exe {
     param([string]$Src, [string]$Dest)
     if (Test-Path -LiteralPath $Dest) {
         $relative = $Dest.Replace($root, '').TrimStart('\').Replace('\', '_')
-        Copy-Item -LiteralPath $Dest -Destination (Join-Path $backup $relative) -ErrorAction Stop
+        Move-Item -LiteralPath $Dest -Destination (Join-Path $backup $relative) -Force -ErrorAction Stop
     }
     Copy-Item -LiteralPath $Src -Destination $Dest -Force -ErrorAction Stop
     if (Test-Path -LiteralPath "$Dest.sig") {
@@ -93,6 +93,7 @@ $zipStaging = Join-Path $backup 'new-portable.zip'
 Compress-Archive -Path "$root\dist-portable\Anticore\*" -DestinationPath $zipStaging -CompressionLevel Optimal
 Safe-Replace-Exe $zipStaging $zipTarget
 Safe-Replace-Exe $zipStaging "$root\dist\Anticore_${ver}_x64-portable.zip"
+Safe-Replace-Exe $zipStaging "$root\dist\Anticore-v${ver}-Windows-Portable-x64.zip"
 
 # 7. Tauri Minisign (.sig) ve latest.json OTA Manifest Uretimi
 $keyFile = "$root\keys\anticore.key"
@@ -145,6 +146,20 @@ if (Test-Path -LiteralPath $keyFile) {
             url       = "$baseUrl/Anticore_${ver}_x64_en-US.msi"
         }
     }
+    $macArmSig = "$root\dist\Anticore_${ver}_arm64.pkg.sig"
+    if (Test-Path -LiteralPath $macArmSig) {
+        $platforms["darwin-aarch64"] = [ordered]@{
+            signature = (Get-Content -LiteralPath $macArmSig -Raw).Trim()
+            url       = "$baseUrl/Anticore_${ver}_arm64.pkg"
+        }
+    }
+    $macX64Sig = "$root\dist\Anticore_${ver}_x64.pkg.sig"
+    if (Test-Path -LiteralPath $macX64Sig) {
+        $platforms["darwin-x86_64"] = [ordered]@{
+            signature = (Get-Content -LiteralPath $macX64Sig -Raw).Trim()
+            url       = "$baseUrl/Anticore_${ver}_x64.pkg"
+        }
+    }
 
     $manifest = [ordered]@{
         version   = $ver
@@ -154,6 +169,15 @@ if (Test-Path -LiteralPath $keyFile) {
     }
     $manifestJson = $manifest | ConvertTo-Json -Depth 5
     Set-Content -LiteralPath "$root\dist\latest.json" -Value $manifestJson -Encoding UTF8
+}
+
+# 8. Android Universal APK Senkronizasyonu
+$apkUniversal = "$root\desktop\src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release.apk"
+if (Test-Path -LiteralPath $apkUniversal) {
+    New-Item -ItemType Directory -Force -Path "$root\dist-android" | Out-Null
+    Safe-Copy $apkUniversal "$root\dist\Anticore-v$ver.apk"
+    Safe-Copy $apkUniversal "$root\dist-android\Anticore-v$ver.apk"
+    Safe-Copy $apkUniversal "$root\dist-android\Anticore-latest.apk"
 }
 
 Write-Host "Paketler hazirlandi."

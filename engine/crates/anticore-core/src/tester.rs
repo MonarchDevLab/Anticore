@@ -351,8 +351,24 @@ pub fn probe_with_steps(
             }
             crate::strategy::Step::FragmentTls { mode } => {
                 if let Some(off) = crate::tls::find_split_offset(&hello, mode) {
-                    if off > 0 && off < hello.len() {
-                        multi_cuts = Some(vec![off]);
+                    let mut cuts = vec![off];
+                    if hello.len() > 2 {
+                        cuts.push(2);
+                    }
+                    if let Some(info) = crate::tls::parse_client_hello(&hello) {
+                        if info.sni_offset > 9 && info.sni_offset - 9 < hello.len() {
+                            cuts.push(info.sni_offset - 9);
+                        }
+                        let mid = info.sni_offset + info.sni_len / 2;
+                        if mid > 2 && mid < hello.len() {
+                            cuts.push(mid);
+                        }
+                    }
+                    cuts.retain(|&p| p > 0 && p < hello.len());
+                    cuts.sort_unstable();
+                    cuts.dedup();
+                    if !cuts.is_empty() {
+                        multi_cuts = Some(cuts);
                         break;
                     }
                 }
