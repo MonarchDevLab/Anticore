@@ -6,14 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.3.9] - 2026-10-15
+## [0.3.9] - 2026-10-17
 
 ### Added
+- **Surgical Multi-Split Engine (`strategy.rs`, `proxy.rs` & `tester.rs`):** Upgraded TLS ClientHello fragmentation across Windows WinDivert, macOS UTUN, Android VpnService/SOCKS5, and Blockcheck to simultaneously split at the TLS record header (`2`), SNI extension header (`sni_offset - 9`), and SNI midpoint (`sni_offset + sni_len / 2`), neutralizing stateful DPI reassembly across all Turkish ISPs.
+- **Native Android Hardware & Network Topology Telemetry (`commands.rs`):** Integrated zero-overhead Bionic libc `__system_property_get` FFI and `/proc` inspection (`SoC`, `RAM`, `Gateway`, `Wi-Fi/Cellular`) for mobile fleet diagnostics.
 - **Mandatory OTA Broadcast Enforcement (`UpdateModal.tsx` & `App.tsx`):** Enforced non-dismissible update modal and direct broadcast metadata fallback when the Fleet Dashboard dispatches a mandatory update, ensuring 100% delivery even under GitHub API rate limits.
 - **Multi-Platform OTA Asset Resolution (`beacon.ts` & `commands.rs`):** Synchronized telemetry beacon and Rust update checker to resolve `.apk` for Android, architecture-matched `.pkg` (`arm64`/`x64`) for macOS, and `.exe`/`.zip` exclusively for Windows.
-- **Automated Minisign & `latest.json` Packaging (`package.ps1`):** Integrated automatic `.sig` signature and `latest.json` manifest generation into the Windows release packaging pipeline.
+- **Automated Minisign, `latest.json` & Universal APK Packaging (`package.ps1`):** Integrated automatic `.sig` signature, multi-platform `latest.json` manifest generation, NTFS lock-free binary replacement, and Universal Android APK synchronization.
 
 ### Fixed
+- **Android SOCKS5 Port `10808` Conflict (`os error 98`):** Added `LanProxy::stop_and_wait` socket teardown and automatic `10808..=10828` fallback port binding synchronized via JNI to `AnticoreVpnService` (`hevtunnel.yaml`) and `probe_target`.
+- **Android One UI Adaptive Icon & 3D Header Emblem:** Calibrated Android Adaptive Icon foreground within the 54% center safe zone on a `#070B12` obsidian background and updated the top-left header/Quick Panel emblem to the 3D tactical shield.
 - **Update Banner Version Tag (`vavailable` Bug):** Fixed `onUpdateDetected` callback in `UpdateModal.tsx` and `App.tsx` to pass the resolved SemVer string (`0.3.9`) instead of a boolean flag.
 - **Non-Blocking Direct Update Installer:** Wrapped `install_update_direct` in `tokio::task::spawn_blocking` to prevent Tokio async runtime starvation during multi-megabyte binary downloads.
 - **NSIS Pre-Install Driver Lock Prevention (`installer-hooks.nsi`):** Added `anticore-desktop.exe` process termination and `WinDivert` / `WinDivert14` kernel service shutdown hooks prior to NSIS file extraction.

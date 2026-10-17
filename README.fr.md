@@ -86,18 +86,18 @@ Tous les exécutables sont directement compilés depuis les sources, exempts de 
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-desktop.exe"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.EXE-16.8_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Télécharger EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore.exe"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.EXE-17.6_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Télécharger EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.EXE-4.65_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Télécharger EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.EXE-4.79_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Télécharger EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64_en-US.msi"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.MSI-6.5_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Télécharger MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64_en-US.msi"><img src="https://img.shields.io/badge/TÉLÉCHARGER_.MSI-6.88_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Télécharger MSI" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-desktop.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(16.8_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(17.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/SETUP_INSTALLATEUR-Anticore__0.3.9__x64--setup.exe-20f2ff?style=flat-square&labelColor=08090D" alt="Setup" /></a>
@@ -176,14 +176,15 @@ curl -fsSL https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/scripts
 
 | Fichier | Taille | Somme de contrôle SHA-256 |
 |---|---|---|
-| `Anticore_0.3.9_x64-setup.exe` | 4.5 MB | `7FB3D04DEBA95119F1D53D7485AD8A46D5473BE8DDDE286E1C9E25D4FC6CDE76` |
-| `anticore-desktop.exe` | 16.8 MB | `FC805530210112B62A12CA9FCCE3AD91122F40C6C0426E44C86B4D1568F523AC` |
-| `Anticore_0.3.9_x64_en-US.msi` | 6.5 MB | `AD11DD3157FAC530A8C0ED5F299CC9AA8EEC0B8843B8981DDA70226BAF58E9FB` |
-| `Anticore-v0.3.9.apk` (Android) | 42.3 MB | `D036DCC5B434DA7C3EE3998A2DCEB9282FDC5363FB36B9BA933263E2B138EA68` |
-| `Anticore_0.3.9_arm64.pkg` | 6.8 MB | `053C1DF92BC6691AA0FEEACE47D775D099790BEBF2A0AC1F82372D6183CEB8F5` |
-| `Anticore_0.3.9_aarch64.dmg` | 6.8 MB | `9D490A4CF49EC721BB980ABE586C50D3937743D8C5B2DD106038B95874B10EFA` |
-| `Anticore_0.3.9_x64.pkg` | 7.1 MB | `68461BE56EAF7AC1FD69D399EA1A3013F30B8DFA3427DCB91D6803D04470AA13` |
-| `Anticore_0.3.9_x64.dmg` | 7.0 MB | `BB5C69A369F291B07E8CE790665FB8A9DF2C9A401212D2629AB33E54D68F6F7A` |
+| `Anticore_0.3.9_x64-setup.exe` | 4.79 MB | `71E8339C74E0A88ED914FA88904B65AB91480D92328D2D7597E33F86A7AB4154` |
+| `Anticore.exe` | 17.58 MB | `7DB1FABC148190FA35E00BB3875E2D7946C9FC841775148C38C3655C1BB63B4B` |
+| `Anticore_0.3.9_x64_en-US.msi` | 6.88 MB | `5354DEAD398E1BD2CCBAC567D75BF05818F37CA633C9E89B2F5810DB91D45AD0` |
+| `Anticore_0.3.9_x64-portable.zip` | 6.77 MB | `9E42DCD01342E75399F051EFDF9F013DCF8E3027AEE91F409608E20C79F25517` |
+| `Anticore-v0.3.9.apk` (Android) | 47.40 MB | `8FC1775A54B7F0632ABC0B30C4133C62FB6CD6A6732D299BDE4C9703EC93E278` |
+| `Anticore_0.3.9_arm64.pkg` | 6.69 MB | `752645914DA7DB08CCA4C3FA278C9269FD4CC8E75DF61FAB8B31D7A7CFC4A67E` |
+| `Anticore_0.3.9_aarch64.dmg` | 6.67 MB | `3718950D281A3ADB3338E2B6D6B6C37BCFBA400C73BBB22C7D3E01A04855E0CA` |
+| `Anticore_0.3.9_x64.pkg` | 6.99 MB | `BB3E7ED3B1CEC5F875B23D2369820BB3C43269FF9AEC19707E4794197205F4D3` |
+| `Anticore_0.3.9_x64.dmg` | 6.93 MB | `EF6FE6B305AAA66ECEADF362B65B89F77F62BBF0D5A4616A473548774CE3E60E` |
 
 ---
 
