@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.png?v=0.3.9-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -1038,27 +1038,33 @@ chmod +x scripts/macos-package.sh
 
 ## Marka Kimliği ve Görsel Varlıklar
 
-Anticore marka kimliği, taktik siber güvenlik kalkanı ve kuantum reaktör çekirdeği konsepti üzerine inşa edilmiştir. Tüm varlıklar şeffaf ve yüksek çözünürlüklü olarak depoda mevcuttur:
+Anticore marka kimliği, taktik siber güvenlik kalkanı ve kuantum reaktör çekirdeği konsepti üzerine inşa edilmiştir. Tüm görsel varlıklar şeffaf, ultra yüksek çözünürlüklü ve vektörel formatlarda depoda sunulmaktadır:
 
 <table width="100%" align="center">
   <tr>
-    <td width="33.3%" align="center" bgcolor="#090E17">
+    <td width="25%" align="center" bgcolor="#090E17">
       <img src="assets/anticore-3d-logo-transparent.png" width="130" alt="Anticore 3D Amblem" /><br /><br />
-      <b>3D Taktik Kalkan (Transparan PNG)</b><br />
-      <small>Obsidyen karbon kompozit, fırçalanmış titanyum ve kuantum reaktör çekirdeği.</small><br /><br />
-      <a href="assets/anticore-3d-logo-transparent.png"><code>assets/anticore-3d-logo-transparent.png</code></a>
+      <b>3D Taktik Kalkan (PNG)</b><br />
+      <small>Obsidyen karbon kompozit, titanyum ve kuantum reaktör çekirdeği (1024x1024).</small><br /><br />
+      <a href="assets/anticore-3d-logo-transparent.png"><code>anticore-3d-logo-transparent.png</code></a>
     </td>
-    <td width="33.3%" align="center" bgcolor="#090E17">
-      <img src="desktop/src-tauri/icons/icon-inactive.png" width="130" alt="Anticore Çevrimdışı Amblemi" /><br /><br />
-      <b>İnaktif / Çevrimdışı Amblemi</b><br />
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/banner.png?v=0.3.9-3d" width="220" alt="Anticore Retina Banner" /><br /><br />
+      <b>Ultra-HD Retina Banner</b><br />
+      <small>1760x560 piksel, yüksek DPI ekranlar için optimize edilmiş resmi GitHub başlığı.</small><br /><br />
+      <a href="assets/banner.png"><code>assets/banner.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/social-preview.png" width="220" alt="Anticore Sosyal Önizleme" /><br /><br />
+      <b>Sosyal Önizleme (OpenGraph)</b><br />
+      <small>1280x640 piksel, GitHub, X (Twitter) ve Discord önizleme kartı.</small><br /><br />
+      <a href="assets/social-preview.png"><code>assets/social-preview.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="desktop/src-tauri/icons/icon-inactive.png" width="110" alt="Anticore Çevrimdışı Amblemi" /><br /><br />
+      <b>İnaktif / Çevrimdışı Durumu</b><br />
       <small>DPI motoru durdurulduğunda tray alanında taktik kırmızı uyarı çekirdeği.</small><br /><br />
-      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>desktop/src-tauri/icons/icon-inactive.png</code></a>
-    </td>
-    <td width="33.3%" align="center" bgcolor="#090E17">
-      <img src="assets/banner.svg?v=0.3.9" width="220" alt="Anticore Vektör Banner" /><br /><br />
-      <b>Resmi Banner (SVG)</b><br />
-      <small>Gömülü 3D amblem, ISP telemetri göstergeleri ve donanım kartları dock'u.</small><br /><br />
-      <a href="assets/banner.svg"><code>assets/banner.svg</code></a>
+      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>icon-inactive.png</code></a>
     </td>
   </tr>
 </table>

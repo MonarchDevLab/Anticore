@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.png?v=0.3.9-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -1056,27 +1056,33 @@ chmod +x scripts/macos-package.sh
 
 ## Brand Identity & Visual Assets
 
-The Anticore brand identity represents a tactical cybernetic shield integrated with a high-energy quantum reactor core. High-resolution transparent assets are available in the repository:
+The Anticore brand identity represents a tactical cybernetic shield integrated with a high-energy quantum reactor core. High-resolution transparent, raster and vector assets are available in the repository:
 
 <table width="100%" align="center">
   <tr>
-    <td width="33.3%" align="center" bgcolor="#090E17">
+    <td width="25%" align="center" bgcolor="#090E17">
       <img src="assets/anticore-3d-logo-transparent.png" width="130" alt="Anticore 3D Emblem" /><br /><br />
-      <b>3D Tactical Shield (Transparent PNG)</b><br />
-      <small>Obsidian carbon composite, brushed titanium &amp; quantum core.</small><br /><br />
-      <a href="assets/anticore-3d-logo-transparent.png"><code>assets/anticore-3d-logo-transparent.png</code></a>
+      <b>3D Tactical Shield (PNG)</b><br />
+      <small>Obsidian carbon composite, titanium &amp; quantum core (1024x1024).</small><br /><br />
+      <a href="assets/anticore-3d-logo-transparent.png"><code>anticore-3d-logo-transparent.png</code></a>
     </td>
-    <td width="33.3%" align="center" bgcolor="#090E17">
-      <img src="desktop/src-tauri/icons/icon-inactive.png" width="130" alt="Anticore Offline State Emblem" /><br /><br />
-      <b>Inactive / Offline State Emblem</b><br />
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/banner.png?v=0.3.9-3d" width="220" alt="Anticore Retina Banner" /><br /><br />
+      <b>Ultra-HD Retina Banner</b><br />
+      <small>1760x560 px, high-DPI optimized official repository header.</small><br /><br />
+      <a href="assets/banner.png"><code>assets/banner.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/social-preview.png" width="220" alt="Anticore Social Preview" /><br /><br />
+      <b>Social Preview (OpenGraph)</b><br />
+      <small>1280x640 px, GitHub, X (Twitter) &amp; Discord preview card.</small><br /><br />
+      <a href="assets/social-preview.png"><code>assets/social-preview.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="desktop/src-tauri/icons/icon-inactive.png" width="110" alt="Anticore Offline State Emblem" /><br /><br />
+      <b>Inactive / Offline State</b><br />
       <small>Tactical crimson warning core activated when DPI engine stops.</small><br /><br />
-      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>desktop/src-tauri/icons/icon-inactive.png</code></a>
-    </td>
-    <td width="33.3%" align="center" bgcolor="#090E17">
-      <img src="assets/banner.svg?v=0.3.9" width="220" alt="Anticore Vector Banner" /><br /><br />
-      <b>Official Banner (SVG)</b><br />
-      <small>Embedded 3D emblem, ISP telemetry indicators &amp; hardware dock.</small><br /><br />
-      <a href="assets/banner.svg"><code>assets/banner.svg</code></a>
+      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>icon-inactive.png</code></a>
     </td>
   </tr>
 </table>

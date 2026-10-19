@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.png?v=0.3.9-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -199,6 +199,41 @@ Il manipule les paquets réseau directement dans la pile IP du système (WinDive
 4. **Partage réseau local (LAN Share & Proxy) :** Port `10808` pour consoles (PS5, Xbox, Switch) et mobiles (iOS, Android) avec résolveur DNS de secours (Cloudflare / Google) contre l'empoisonnement DNS.
 5. **Module d'assistance intégré :** Envoi simplifié de rapports d'incident et de suggestions depuis l'application.
 6. **Support multilingue :** Français, Anglais, Turc, Russe, Allemand.
+
+---
+
+## Identité visuelle et ressources de marque
+
+L'identité de marque d'Anticore est articulée autour d'un bouclier cybernétique tactique doté d'un cœur de réacteur quantique. L'ensemble des ressources visuelles est disponible dans le dépôt en haute résolution et au format vectoriel :
+
+<table width="100%" align="center">
+  <tr>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/anticore-3d-logo-transparent.png" width="130" alt="Emblème 3D Anticore" /><br /><br />
+      <b>Bouclier tactique 3D (PNG)</b><br />
+      <small>Composite carbone obsidienne, titane &amp; cœur quantique (1024x1024).</small><br /><br />
+      <a href="assets/anticore-3d-logo-transparent.png"><code>anticore-3d-logo-transparent.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/banner.png?v=0.3.9-3d" width="220" alt="Bannière Retina Anticore" /><br /><br />
+      <b>Bannière Ultra-HD Retina</b><br />
+      <small>1760x560 px, en-tête GitHub officielle optimisée pour les écrans haute densité.</small><br /><br />
+      <a href="assets/banner.png"><code>assets/banner.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/social-preview.png" width="220" alt="Aperçu social Anticore" /><br /><br />
+      <b>Aperçu social (OpenGraph)</b><br />
+      <small>1280x640 px, carte d'aperçu pour GitHub, X (Twitter) &amp; Discord.</small><br /><br />
+      <a href="assets/social-preview.png"><code>assets/social-preview.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="desktop/src-tauri/icons/icon-inactive.png" width="110" alt="État inactif Anticore" /><br /><br />
+      <b>État inactif / Hors ligne</b><br />
+      <small>Cœur rouge d'alerte tactique dans la zone de notification lors de l'arrêt du moteur DPI.</small><br /><br />
+      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>icon-inactive.png</code></a>
+    </td>
+  </tr>
+</table>
 
 ---
 

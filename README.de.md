@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.png?v=0.3.9-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -199,6 +199,41 @@ Sie modifiziert Pakete direkt im Betriebssystem-Netzwerkstack (WinDivert unter W
 4. **LAN-Freigabe & Proxy:** Port `10808` für Konsolen und Smartphones mit Fallback-DNS-Resolver (Cloudflare / Google) gegen DNS-Spoofing.
 5. **Integriertes Support-Modul:** Fehler- und Feedback-Meldungen direkt in der App.
 6. **5 Sprachen:** Deutsch, Englisch, Türkisch, Russisch, Französisch.
+
+---
+
+## Markenidentität & Visuelle Assets
+
+Die Markenidentität von Anticore basiert auf einem taktischen cybernetischen Schild mit integriertem Quantenreaktorkern. Alle visuellen Ressourcen stehen im Repository in hoher Auflösung und als Vektordateien zur Verfügung:
+
+<table width="100%" align="center">
+  <tr>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/anticore-3d-logo-transparent.png" width="130" alt="Anticore 3D Emblem" /><br /><br />
+      <b>3D Taktischer Schild (PNG)</b><br />
+      <small>Obsidian-Carbon, Titan &amp; Quantenkern (1024x1024).</small><br /><br />
+      <a href="assets/anticore-3d-logo-transparent.png"><code>anticore-3d-logo-transparent.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/banner.png?v=0.3.9-3d" width="220" alt="Anticore Retina Banner" /><br /><br />
+      <b>Ultra-HD Retina Banner</b><br />
+      <small>1760x560 px, optimierter offizieller GitHub-Header für HiDPI-Displays.</small><br /><br />
+      <a href="assets/banner.png"><code>assets/banner.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/social-preview.png" width="220" alt="Anticore Social Preview" /><br /><br />
+      <b>Social Preview (OpenGraph)</b><br />
+      <small>1280x640 px, Vorschaukarte für GitHub, X &amp; Discord.</small><br /><br />
+      <a href="assets/social-preview.png"><code>assets/social-preview.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="desktop/src-tauri/icons/icon-inactive.png" width="110" alt="Anticore Offline-Status" /><br /><br />
+      <b>Inaktiver / Offline-Status</b><br />
+      <small>Taktischer roter Warnkern im System-Tray bei gestoppter DPI-Engine.</small><br /><br />
+      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>icon-inactive.png</code></a>
+    </td>
+  </tr>
+</table>
 
 ---
 

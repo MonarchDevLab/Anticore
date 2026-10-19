@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.png?v=0.3.9-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -251,6 +251,41 @@ Anticore — это локальный программный комплекс �
                               (Не видит SNI,                  (Собирает TCP поток,
                                пропускает пакет)               открывает страницу)
 ```
+
+---
+
+## Фирменный стиль и визуальные ресурсы
+
+Концепция визуальной айдентики Anticore основана на тактическом кибернетическом щите с квантовым реакторным ядром. Все графические ресурсы доступны в репозитории в высоком разрешении и векторном формате:
+
+<table width="100%" align="center">
+  <tr>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/anticore-3d-logo-transparent.png" width="130" alt="Anticore 3D Эмблема" /><br /><br />
+      <b>3D Тактический Щит (PNG)</b><br />
+      <small>Обсидиановый композит, титан и квантовое ядро (1024x1024).</small><br /><br />
+      <a href="assets/anticore-3d-logo-transparent.png"><code>anticore-3d-logo-transparent.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/banner.png?v=0.3.9-3d" width="220" alt="Anticore Retina Баннер" /><br /><br />
+      <b>Ultra-HD Retina Баннер</b><br />
+      <small>1760x560 px, официальный заголовок GitHub для экранов высокой четкости.</small><br /><br />
+      <a href="assets/banner.png"><code>assets/banner.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="assets/social-preview.png" width="220" alt="Anticore Социальное превью" /><br /><br />
+      <b>Социальное превью (OpenGraph)</b><br />
+      <small>1280x640 px, карточка предпросмотра для GitHub, X и Discord.</small><br /><br />
+      <a href="assets/social-preview.png"><code>assets/social-preview.png</code></a>
+    </td>
+    <td width="25%" align="center" bgcolor="#090E17">
+      <img src="desktop/src-tauri/icons/icon-inactive.png" width="110" alt="Anticore Неактивное состояние" /><br /><br />
+      <b>Неактивный статус</b><br />
+      <small>Тактическое красное ядро в трее при отключенном DPI-модуле.</small><br /><br />
+      <a href="desktop/src-tauri/icons/icon-inactive.png"><code>icon-inactive.png</code></a>
+    </td>
+  </tr>
+</table>
 
 ---
 
