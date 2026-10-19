@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust (Edition 2021), Tauri v2, libnetfilter_queue (Linux), utun/pfctl (macOS), WinDivert (Windows), Tokio, TypeScript/React.
 
-**Spec:** [docs/superpowers/specs/2026-09-11-cross-platform-engine-design.md](file:///e:/Personel/Branding/Uygulama/Anticore/antikor/docs/superpowers/specs/2026-09-11-cross-platform-engine-design.md)
+**Spec:** [docs/superpowers/specs/2026-09-11-cross-platform-engine-design.md](file:///e:/Personel/Branding/Uygulama/Anticore/anticore/docs/superpowers/specs/2026-09-11-cross-platform-engine-design.md)
 
 ## Global Constraints
 

@@ -24,7 +24,7 @@ The previous web-based dashboard prototype has been upgraded based on three expl
 E:\Personel\Branding\Uygulama\
 ├── Anticore\                      (Git Repository: MonarchDevLab/Anticore)
 │   ├── .gitignore                 (Contains: /anticore-dashboard/)
-│   └── antikor\
+│   └── anticore\
 │       ├── .gitignore             (Contains: /anticore-dashboard/)
 │       └── desktop\
 │           ├── src\
@@ -73,7 +73,7 @@ E:\Personel\Branding\Uygulama\
 
 ## 3. Detailed Component Specifications
 
-### 3.1. Client-Side Version Integrity (`antikor/desktop`)
+### 3.1. Client-Side Version Integrity (`anticore/desktop`)
 - `Titlebar.tsx`: Must invoke `api.getAppVersion()` on mount and render a discrete mono badge `v0.3.1.1` adjacent to the brand title `ANTICORE`.
 - `TrayQuickPanel.tsx`: Replace `v{appVersion || "0.3.0"}` with `v{appVersion || "0.3.1.1"}`.
 - `tauri.conf.json`: Set `"version": "0.3.1.1"`.
@@ -116,12 +116,12 @@ E:\Personel\Branding\Uygulama\
 ## 4. Verification & Validation Protocol
 
 1. **Anticore Client Verification:**
-   - Run `npm test` in `antikor/desktop` (23/23 Vitest tests pass).
-   - Run `cargo check` in `antikor/desktop/src-tauri` (100% clean).
+   - Run `npm test` in `anticore/desktop` (23/23 Vitest tests pass).
+   - Run `cargo check` in `anticore/desktop/src-tauri` (100% clean).
    - Verify `v0.3.1.1` rendered in `Titlebar` and `TrayQuickPanel`.
 2. **Directory Relocation & Zero-Leakage:**
    - Move directory to `E:\Personel\Branding\Uygulama\anticore-dashboard`.
-   - Run `git status` in `antikor` to verify zero untracked dashboard files.
+   - Run `git status` in `anticore` to verify zero untracked dashboard files.
 3. **Electron Desktop Build & Launch:**
    - Install Electron dependency in `anticore-dashboard`.
    - Build server (`npm run build` in server) and client (`npm run build` in client).

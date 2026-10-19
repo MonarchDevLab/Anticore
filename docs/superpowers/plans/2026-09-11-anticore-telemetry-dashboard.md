@@ -4,11 +4,11 @@
 
 **Goal:** Anticore için son kullanıcıların açık kalma sürelerini, saatlik kullanım alışkanlıklarını, PC isimlerini, donanım/ISP bilgilerini ve yerleşik listelerde olmayan engelli siteleri (anomalileri) sessizce toplayan ve sadece geliştiriciye özel izleme sunan bağımsız bir yönetim paneli ve veri alım sistemi inşa etmek.
 
-**Architecture:** İstemci tarafında `antikor/desktop/src/services/connectivitySync.ts` ile arka planda sessiz, hata yutan ve sıfır etki bırakan telemetri toplayıcı; sunucu tarafında `anticore-dashboard/server` altında Fastify + SQLite (WAL) veri alım ve yönetim API'si; ön yüzde `anticore-dashboard/client` altında React 19 + Tailwind CSS + Lucide Icons ile geliştirilmiş Monolith Works karanlık temalı özel analitik arayüzü.
+**Architecture:** İstemci tarafında `anticore/desktop/src/services/connectivitySync.ts` ile arka planda sessiz, hata yutan ve sıfır etki bırakan telemetri toplayıcı; sunucu tarafında `anticore-dashboard/server` altında Fastify + SQLite (WAL) veri alım ve yönetim API'si; ön yüzde `anticore-dashboard/client` altında React 19 + Tailwind CSS + Lucide Icons ile geliştirilmiş Monolith Works karanlık temalı özel analitik arayüzü.
 
 **Tech Stack:** Node.js 22 LTS, TypeScript, Fastify, better-sqlite3, Zod, React 19, Vite, Tailwind CSS, Lucide Icons, Recharts.
 
-**Spec:** `antikor/docs/superpowers/specs/2026-09-11-anticore-telemetry-dashboard-design.md`
+**Spec:** `anticore/docs/superpowers/specs/2026-09-11-anticore-telemetry-dashboard-design.md`
 
 ## Global Constraints
 - `anticore-dashboard/` klasörü KESİNLİKLE `.gitignore` içine alınacak, GitHub'a asla yüklenmeyecektir.
@@ -22,7 +22,7 @@
 ### Görev 1: Git Yalıtımı ve Proje İskeleti (Git Isolation & Workspace Setup)
 
 **Dosyalar:**
-- Değiştir: `e:/Personel/Branding/Uygulama/Anticore/antikor/.gitignore`
+- Değiştir: `e:/Personel/Branding/Uygulama/Anticore/anticore/.gitignore`
 - Değiştir: `e:/Personel/Branding/Uygulama/Anticore/.gitignore` (varsa)
 - Oluştur: `e:/Personel/Branding/Uygulama/Anticore/anticore-dashboard/package.json`
 - Oluştur: `e:/Personel/Branding/Uygulama/Anticore/anticore-dashboard/.gitignore`
@@ -31,14 +31,14 @@
 - Üretir: Git tarafından asla izlenmeyen bağımsız `anticore-dashboard` monorepo kök dizini ve npm workspace tanımları.
 
 - [ ] **Adım 1: `.gitignore` dosyalarına `anticore-dashboard` kuralını ekle**
-  `antikor/.gitignore` dosyasının en altına aşağıdaki bloğu ekle:
+  `anticore/.gitignore` dosyasının en altına aşağıdaki bloğu ekle:
   ```gitignore
   # Özel Geliştirici Telemetri Paneli ve Veritabanı (ASLA GITHUB'A YÜKLENMEZ)
   /anticore-dashboard/
   anticore-dashboard/
   ```
 - [ ] **Adım 2: `git status` ile yalıtımı doğrula**
-  Komut: `git -C antikor status --ignored`
+  Komut: `git -C anticore status --ignored`
   Beklenen: `anticore-dashboard` dizini ya görünmemeli ya da ignored olarak listelenmeli.
 - [ ] **Adım 3: `anticore-dashboard/package.json` dosyasını oluştur**
   ```json
@@ -58,7 +58,7 @@
   }
   ```
 - [ ] **Adım 4: Doğrulama ve Git Durumu Kontrolü**
-  Komut: `git -C antikor status`
+  Komut: `git -C anticore status`
   Beklenen: Yalnızca `.gitignore` değişikliği görünmeli, `anticore-dashboard` asla görünmemeli.
 
 ---
@@ -214,10 +214,10 @@
 ### Görev 5: Anticore İstemci İçi Sessiz Telemetri Katmanı & 3D Gri Orb Bakım Ekranı
 
 **Dosyalar:**
-- Oluştur: `antikor/desktop/src/services/connectivitySync.ts`
-- Oluştur: `antikor/desktop/src/components/MaintenanceOverlay.tsx` (3D Gri / Metalik Dönen Orb eşliğinde bakım ekranı)
-- Değiştir: `antikor/desktop/src/App.tsx` (Servisin sessizce başlatılması ve bakım modu state'i)
-- Değiştir: `antikor/desktop/src-tauri/src/commands.rs` (PC adı alma ve Rust motor anomali kancası)
+- Oluştur: `anticore/desktop/src/services/connectivitySync.ts`
+- Oluştur: `anticore/desktop/src/components/MaintenanceOverlay.tsx` (3D Gri / Metalik Dönen Orb eşliğinde bakım ekranı)
+- Değiştir: `anticore/desktop/src/App.tsx` (Servisin sessizce başlatılması ve bakım modu state'i)
+- Değiştir: `anticore/desktop/src-tauri/src/commands.rs` (PC adı alma ve Rust motor anomali kancası)
 
 **Arayüzler:**
 - İstemci İçi Çağrılar:
@@ -248,7 +248,7 @@
 - [ ] **Adım 5: Yaşam Döngüsünü `App.tsx`'e Bağla**
   Açılışta `initConnectivitySync()` çağır. `window.addEventListener('beforeunload', () => flushBeacon())` bağla. Bakım modu durumunu `MaintenanceOverlay` ile dinamik yansıt.
 - [ ] **Adım 6: Vitest Testleri ile İstemci Servisini Doğrula**
-  Kuyruk yönetimi, 100 olay limiti, sessiz hata yutma, uzaktan komut işleme ve batch serialization testlerini çalıştır (`npm test` `antikor/desktop`).
+  Kuyruk yönetimi, 100 olay limiti, sessiz hata yutma, uzaktan komut işleme ve batch serialization testlerini çalıştır (`npm test` `anticore/desktop`).
 
 ---
 

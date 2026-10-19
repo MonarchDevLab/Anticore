@@ -20,18 +20,18 @@
 ### Task 1: Anticore Client Dynamic Version Reading (`v0.3.1.1`)
 
 **Files:**
-- Modify: `antikor/desktop/src/components/Titlebar.tsx`
-- Modify: `antikor/desktop/src/views/TrayQuickPanel.tsx`
-- Modify: `antikor/desktop/src-tauri/tauri.conf.json`
-- Modify: `antikor/desktop/src/services/connectivitySync.ts`
-- Test: `antikor/desktop/src/services/connectivitySync.test.ts`
+- Modify: `anticore/desktop/src/components/Titlebar.tsx`
+- Modify: `anticore/desktop/src/views/TrayQuickPanel.tsx`
+- Modify: `anticore/desktop/src-tauri/tauri.conf.json`
+- Modify: `anticore/desktop/src/services/connectivitySync.ts`
+- Test: `anticore/desktop/src/services/connectivitySync.test.ts`
 
 **Interfaces:**
 - Consumes: `api.getAppVersion()` from `src/lib/tauri.ts`
 - Produces: Dynamic `v0.3.1.1` version badge in Titlebar, QuickPanel, and telemetry payload.
 
 - [ ] **Step 1: Update `tauri.conf.json` to `0.3.1.1`**
-  - In `antikor/desktop/src-tauri/tauri.conf.json`, change line 4 `"version": "0.3.1"` to `"version": "0.3.1.1"`.
+  - In `anticore/desktop/src-tauri/tauri.conf.json`, change line 4 `"version": "0.3.1"` to `"version": "0.3.1.1"`.
 
 - [ ] **Step 2: Update `Titlebar.tsx` to dynamically display `v0.3.1.1`**
   - Mount hook calls `api.getAppVersion().then(setVersion).catch(() => setVersion("0.3.1.1"))`.
@@ -45,24 +45,24 @@
   - In `flush()`, use `appVersion: this.appVersion || '0.3.1.1'`.
 
 - [ ] **Step 5: Run tests & verify compilation**
-  - Run `npm test` in `antikor/desktop`.
-  - Run `npm run build` in `antikor/desktop`.
-  - Run `cargo check` in `antikor/desktop/src-tauri`.
+  - Run `npm test` in `anticore/desktop`.
+  - Run `npm run build` in `anticore/desktop`.
+  - Run `cargo check` in `anticore/desktop/src-tauri`.
 
 ---
 
 ### Task 2: Relocate Dashboard to `E:\Personel\Branding\Uygulama\anticore-dashboard`
 
 **Files:**
-- Move directory: `antikor/../anticore-dashboard` -> `E:\Personel\Branding\Uygulama\anticore-dashboard`
-- Modify: `antikor/.gitignore` (confirm `/anticore-dashboard/` entry)
+- Move directory: `anticore/../anticore-dashboard` -> `E:\Personel\Branding\Uygulama\anticore-dashboard`
+- Modify: `anticore/.gitignore` (confirm `/anticore-dashboard/` entry)
 - Create: `E:\Personel\Branding\Uygulama\anticore-dashboard/.gitignore`
 
 - [ ] **Step 1: Move directory using PowerShell**
   - Execute `Move-Item -Path "e:\Personel\Branding\Uygulama\Anticore\anticore-dashboard" -Destination "E:\Personel\Branding\Uygulama\anticore-dashboard" -Force`.
 
-- [ ] **Step 2: Verify git status in `antikor`**
-  - Run `git status` in `antikor` to confirm no untracked `anticore-dashboard` files remain.
+- [ ] **Step 2: Verify git status in `anticore`**
+  - Run `git status` in `anticore` to confirm no untracked `anticore-dashboard` files remain.
 
 - [ ] **Step 3: Verify target directory integrity**
   - Check directory listing at `E:\Personel\Branding\Uygulama\anticore-dashboard` (server, client, data, package.json).
@@ -137,6 +137,6 @@
 - [ ] **Step 2: Test desktop app launch**
   - Launch `electron .` and verify window opens, connects to port 8080, and renders the Hexcore dashboard.
 - [ ] **Step 3: Test client-to-dashboard telemetri**
-  - Send simulated beacon from `antikor/desktop`. Verify PC name, uptime, dwell time, and `v0.3.1.1` show up in real-time.
+  - Send simulated beacon from `anticore/desktop`. Verify PC name, uptime, dwell time, and `v0.3.1.1` show up in real-time.
 - [ ] **Step 4: Update documentation**
-  - Update `antikor/docs/TASKS.md`, `antikor/docs/WORKLOG.md`, `antikor/docs/HANDOFF.md`.
+  - Update `anticore/docs/TASKS.md`, `anticore/docs/WORKLOG.md`, `anticore/docs/HANDOFF.md`.

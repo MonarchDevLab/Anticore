@@ -3,7 +3,7 @@
 Tarih: 2026-09-11  
 Durum: Taslak (Gözden Geçirme Aşamasında)  
 Hedef Dizin: `anticore-dashboard/` (Git yalıtımlı, yalnızca yerel/özel geliştirici kullanımı)  
-İstemci: `Anticore Desktop` (`antikor/desktop`) & `Anticore Engine` (`antikor/engine`)
+İstemci: `Anticore Desktop` (`anticore/desktop`) & `Anticore Engine` (`anticore/engine`)
 
 ---
 
@@ -290,5 +290,5 @@ anticore-dashboard/                     <-- KESİNLİKLE .gitignore ile korunur
 ```
 
 **Git Yalıtım Kuralı:**
-`antikor/.gitignore` ve root `.gitignore` dosyalarına `/anticore-dashboard/` satırı eklenir. Hiçbir telemetri sunucu kodu, veritabanı veya dashboard arayüzü asla GitHub'a sızamaz.
+`anticore/.gitignore` ve root `.gitignore` dosyalarına `/anticore-dashboard/` satırı eklenir. Hiçbir telemetri sunucu kodu, veritabanı veya dashboard arayüzü asla GitHub'a sızamaz.
 
