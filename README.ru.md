@@ -4,13 +4,9 @@
   <img src="assets/banner.svg?v=0.3.9" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
-<p align="center">
-  <img src="assets/anticore-3d-logo-transparent.png" alt="ANTICORE 3D Tactical Shield Emblem" width="150" />
-</p>
-
 # ANTICORE
 
-### Высокопроизводительный комплекс обхода DPI и восстановления свободы сети для Windows и macOS без потери скорости
+### Высокопроизводительный комплекс обхода DPI и восстановления свободы сети для Windows, macOS и Android без потери скорости
 
 [![Версия](https://img.shields.io/github/v/release/MonarchDevLab/Anticore?style=for-the-badge&color=20ffa0&labelColor=08090D&logo=github)](https://github.com/MonarchDevLab/Anticore/releases/latest)
 [![Загрузки](https://img.shields.io/github/downloads/MonarchDevLab/Anticore/total?style=for-the-badge&color=20f2ff&labelColor=08090D)](https://github.com/MonarchDevLab/Anticore/releases/latest)
@@ -207,11 +203,11 @@ curl -fsSL https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/scripts
 
 | Файл дистрибутива | Размер | Контрольная сумма SHA-256 |
 |---|---|---|
-| `Anticore_0.3.9_x64-setup.exe` | 4.79 MB | `81F1B82E5D7111FD02AE0E5B3B7824A1CE8CB597BB6A918A712A5023DCCE4560` |
-| `Anticore.exe` | 17.58 MB | `2C0086DE67D725687B26CE946BE90B5CDA4D622B1690FC6FDAA4B620B63A512B` |
-| `Anticore_0.3.9_x64_en-US.msi` | 6.88 MB | `1E712FDF07CCE6D9F412B206B7C41E3388A51F20F4170A51A3C3045EA47BDB8C` |
-| `Anticore_0.3.9_x64-portable.zip` | 6.77 MB | `16D03083DC3FE2A2861A9A05D62A7E162297497B3594A0434FF9F256DD59D96C` |
-| `Anticore-v0.3.9.apk` (Android) | 47.42 MB | `EBDDE34873F28323DAE7F9276AEE6C3419A7869F02218F164E42BD8108BD09DA` |
+| `Anticore_0.3.9_x64-setup.exe` | 4.83 MB | `21167A76637BD63C2D775D23A6E6AF9566B50D7253F30D4D00A3557B2C76C4C3` |
+| `Anticore.exe` | 17.61 MB | `84D2F2B88887B209E3B122FEF8171C280722AC0B2274829A675346A95CE52A83` |
+| `Anticore_0.3.9_x64_en-US.msi` | 6.91 MB | `6EB960FE77A3951119FFB5029E32ADAC67329B46305F89506E282CA2F3A41773` |
+| `Anticore_0.3.9_x64-portable.zip` | 7.07 MB | `28C571A05F97A3D627907CE7F8E6E75609E2425C162480B4938CA71FE67C76E8` |
+| `Anticore-v0.3.9.apk` (Android) | 47.61 MB | `61E3CC2E21D78E83E43651475A767E4B46A14E11D53E59972F4780831F95C8F4` |
 | `Anticore_0.3.9_arm64.pkg` | 6.69 MB | `752645914DA7DB08CCA4C3FA278C9269FD4CC8E75DF61FAB8B31D7A7CFC4A67E` |
 | `Anticore_0.3.9_aarch64.dmg` | 6.67 MB | `3718950D281A3ADB3338E2B6D6B6C37BCFBA400C73BBB22C7D3E01A04855E0CA` |
 | `Anticore_0.3.9_x64.pkg` | 6.99 MB | `BB3E7ED3B1CEC5F875B23D2369820BB3C43269FF9AEC19707E4794197205F4D3` |

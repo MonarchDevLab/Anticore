@@ -172,8 +172,8 @@ export default function Titlebar({
         {isMac && <div className="h-3.5 w-px bg-white/[0.1] mr-0.5" />}
 
         {/* Logo & Versiyon */}
-        <div className="flex items-center gap-2 pointer-events-none">
-          <BrandLogo size={isMobile || isAndroid ? 24 : 22} running={running} showText={false} />
+        <div className="flex items-center gap-2.5 pointer-events-none">
+          <BrandLogo size={isMobile || isAndroid ? 28 : 26} running={running} showText={false} />
           <div className="flex items-center gap-1.5">
             <span className="font-bold tracking-widest text-paper-bright text-xs">
               ANTICORE

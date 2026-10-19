@@ -48,9 +48,9 @@ function formatRelativeTime(
 function getDeviceIcon(deviceType: string) {
   switch (deviceType) {
     case "mobile":
-      return <Smartphone size={16} className="text-anticore-primary" />;
+      return <Smartphone size={16} className="text-live" />;
     case "pc":
-      return <Monitor size={16} className="text-sky-400" />;
+      return <Monitor size={16} className="text-sky" />;
     case "console":
       return <Gamepad2 size={16} className="text-purple-400" />;
     default:
@@ -81,16 +81,26 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
     setDiagState("testing");
     setDiagMessage(null);
     try {
-      const port = lanInfo?.proxy_port || 10808;
-      await fetch(`http://127.0.0.1:${port}/status`, {
-        method: "GET",
-        mode: "no-cors",
-        cache: "no-cache",
-      });
-      // no-cors mode returns opaque 0 status if reachable, or fails completely
-      setDiagState("ok");
-      setDiagMessage("Proxy soketi yanıt veriyor (10808 aktif, DNS yedekleme hazır).");
-      pushLog("[+] LAN Proxy tanı testi başarılı: Soket ve yerel sunucu yanıt veriyor.");
+      const res = await api.probeTarget("discord.com");
+      if (res.result === "open") {
+        setDiagState("ok");
+        setDiagMessage(
+          `Proxy soketi ve DPI bypass tüneli doğrulandı (discord.com -> ${res.latency_ms ?? 0} ms).`,
+        );
+        pushLog(
+          `[+] LAN Proxy tanı testi başarılı: discord.com erişimi açık (${res.latency_ms ?? 0} ms).`,
+        );
+      } else {
+        const port = lanInfo?.proxy_port || 10808;
+        await fetch(`http://127.0.0.1:${port}/status`, {
+          method: "GET",
+          mode: "no-cors",
+          cache: "no-cache",
+        });
+        setDiagState("ok");
+        setDiagMessage(`Proxy soketi aktif (Port ${port} dinleniyor, DNS yedekleme hazır).`);
+        pushLog("[+] LAN Proxy tanı testi başarılı: Soket ve yerel sunucu yanıt veriyor.");
+      }
     } catch (e) {
       setDiagState("error");
       setDiagMessage("Yerel proxy soketine erişilemedi. Lütfen proxy'yi durdurup yeniden başlatın.");
@@ -193,41 +203,55 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
   const clients: ConnectedClientDto[] = lanInfo?.connected_devices || [];
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="mx-auto max-w-4xl space-y-6 pb-12">
       {/* Başlık */}
-      <div className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border-brutal">
         <div>
-          <h1 className="text-xl font-semibold text-paper-bright flex items-center gap-2">
-            <Share2 className="text-anticore-primary" size={22} />
-            {t("lan_share_title")}
-          </h1>
+          <h2 className="text-xl font-bold tracking-tight text-paper-bright flex items-center gap-2.5">
+            <Share2 className="text-live" size={22} />
+            <span>{t("lan_share_title")}</span>
+          </h2>
           <p className="text-xs text-paper-muted mt-1">{t("lan_share_subtitle")}</p>
         </div>
-      </div>
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-semibold border ${
+              isProxyActive
+                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/40"
+                : "bg-surface-elevated text-paper-muted border-border-brutal"
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${isProxyActive ? "bg-emerald-400 animate-pulse" : "bg-red-400"}`}
+            />
+            {isProxyActive ? t("lan_proxy_status_active") : t("lan_proxy_status_stopped")}
+          </span>
+        </div>
+      </header>
 
       {errorMsg && (
-        <div className="rounded-lg bg-red-950/40 border border-red-800/50 p-3 text-xs text-red-300 flex items-center gap-2">
-          <AlertTriangle size={15} className="text-red-400 shrink-0" />
+        <div className="card rounded-lg bg-red-950/90 border border-red-500/50 p-3.5 text-xs text-red-200 flex items-center gap-2.5 shadow-md">
+          <AlertTriangle size={16} className="text-red-400 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {firewallSuccess && (
-        <div className="rounded-lg bg-emerald-950/40 border border-emerald-800/50 p-3 text-xs text-emerald-300 flex items-center gap-2">
-          <Check size={15} className="text-emerald-400 shrink-0" />
+        <div className="card rounded-lg bg-emerald-950/90 border border-emerald-500/50 p-3.5 text-xs text-emerald-200 flex items-center gap-2.5 shadow-md">
+          <Check size={16} className="text-emerald-400 shrink-0" />
           <span>{firewallSuccess}</span>
         </div>
       )}
 
       {/* Ana Tünel Motoru Kapalı Uyarısı */}
       {!engineRunning && isProxyActive && (
-        <div className="rounded-lg bg-amber-950/30 border border-amber-800/50 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-200 shadow-sm animate-fade-in">
-          <div className="flex items-start gap-2.5">
+        <div className="card rounded-lg bg-surface-card border border-amber-500/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-200 shadow-md">
+          <div className="flex items-start gap-3">
             <ShieldAlert size={18} className="text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <div className="font-semibold text-amber-300">Ana DPI Tüneli Kapalı</div>
-              <div className="text-[11px] text-amber-200/80 mt-0.5 leading-relaxed">
-                Yerel proxy aktif; ancak telefon ve konsolların engelli sitelere (Discord, Roblox vb.) sorunsuz erişebilmesi için ana tünel motorunun çalışması önerilir.
+              <div className="font-bold text-amber-300">Ana DPI Tüneli Kapalı (Yerel Proxy Bağımsız Bypass Modunda)</div>
+              <div className="text-xs text-paper-muted mt-0.5 leading-relaxed">
+                Yerel proxy sunucusu kendi cerrahi TLS bölme motoruyla çalışmaktadır; tam sistem koruması için ana tünel motorunu da başlatabilirsiniz.
               </div>
             </div>
           </div>
@@ -235,9 +259,9 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             <button
               type="button"
               onClick={onStartEngine}
-              className="px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-void font-semibold text-xs transition-transform duration-150 active:scale-[0.97] shrink-0 flex items-center gap-1.5 shadow"
+              className="btn btn-primary !py-2 !px-3.5 text-xs font-semibold shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
-              <Play size={13} />
+              <Play size={14} />
               <span>Motoru Başlat</span>
             </button>
           )}
@@ -247,10 +271,10 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
       {/* Windows Güvenlik Duvarı Durum Bildirimi (Sadece Windows) */}
       {!isMac && !isAndroid && lanInfo && (
         <div
-          className={`rounded-lg border p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+          className={`card rounded-lg border p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-surface-card ${
             lanInfo.firewall_allowed
-              ? "bg-emerald-950/20 border-emerald-800/30 text-emerald-300"
-              : "bg-amber-950/30 border-amber-800/40 text-amber-200"
+              ? "border-emerald-500/35 text-emerald-300"
+              : "border-amber-500/45 text-amber-200"
           }`}
         >
           <div className="flex items-center gap-2.5">
@@ -260,7 +284,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               <ShieldAlert size={18} className="text-amber-400 shrink-0" />
             )}
             <div>
-              <span className="font-semibold">
+              <span className="font-semibold text-paper-bright">
                 {lanInfo.firewall_allowed
                   ? t("lan_firewall_status_ok")
                   : t("lan_firewall_status_warn")}
@@ -273,12 +297,12 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               type="button"
               disabled={firewallBusy}
               onClick={handleAllowFirewall}
-              className="px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-void font-semibold text-xs transition-transform duration-150 active:scale-[0.97] shrink-0 flex items-center gap-1.5 shadow"
+              className="btn btn-primary !py-2 !px-3.5 text-xs font-semibold shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
               {firewallBusy ? (
-                <LoaderCircle size={13} className="animate-spin" />
+                <LoaderCircle size={14} className="animate-spin" />
               ) : (
-                <ShieldCheck size={13} />
+                <ShieldCheck size={14} />
               )}
               <span>{t("lan_btn_fix_firewall")}</span>
             </button>
@@ -287,26 +311,26 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
       )}
 
       {/* MOD A: Wi-Fi SOCKS5 / HTTP Proxy Kartı */}
-      <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-5 tabular-nums">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-border/20 pb-4">
-          <div className="flex items-start gap-3">
+      <section className="card rounded-xl bg-surface-card border border-border-brutal p-5 space-y-5 tabular-nums shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-brutal pb-4">
+          <div className="flex items-start gap-3.5">
             <div
-              className={`p-2.5 rounded-lg ${
+              className={`p-3 rounded-lg shrink-0 ${
                 isProxyActive
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                  : "bg-paper-border/30 text-paper-muted border border-paper-border/40"
+                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/35"
+                  : "bg-surface-elevated text-paper-muted border border-border-brutal"
               }`}
             >
               <Wifi size={20} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-medium text-paper-bright">{t("lan_proxy_card_title")}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-bold text-paper-bright">{t("lan_proxy_card_title")}</h3>
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide ${
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-semibold ${
                     isProxyActive
-                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse"
-                      : "bg-red-500/15 text-red-400 border border-red-500/30"
+                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/35"
+                      : "bg-red-500/15 text-red-400 border border-red-500/35"
                   }`}
                 >
                   <span
@@ -315,7 +339,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
                   {isProxyActive ? t("lan_proxy_status_active") : t("lan_proxy_status_stopped")}
                 </span>
               </div>
-              <p className="text-xs text-paper-muted mt-1 max-w-xl">{t("lan_proxy_card_desc")}</p>
+              <p className="text-xs text-paper-muted mt-1 max-w-xl leading-relaxed">{t("lan_proxy_card_desc")}</p>
             </div>
           </div>
 
@@ -323,18 +347,18 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             type="button"
             disabled={busy || loading}
             onClick={toggleProxy}
-            className={`px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-[transform,opacity] duration-150 active:scale-[0.97] shrink-0 ${
+            className={`px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all duration-150 active:scale-[0.97] shrink-0 cursor-pointer ${
               isProxyActive
                 ? "bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500 shadow-lg"
             }`}
           >
             {busy ? (
-              <LoaderCircle className="animate-spin" size={14} />
+              <LoaderCircle className="animate-spin" size={15} />
             ) : isProxyActive ? (
-              <Power size={14} />
+              <Power size={15} />
             ) : (
-              <Play size={14} />
+              <Play size={15} />
             )}
             <span>{isProxyActive ? t("lan_btn_stop_proxy") : t("lan_btn_start_proxy")}</span>
           </button>
@@ -343,18 +367,18 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
         {/* Bağlantı Parametreleri */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* IP Adresi */}
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 flex flex-col justify-between">
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-3.5 flex flex-col justify-between">
             <span className="text-[11px] text-paper-muted uppercase tracking-wider font-mono">
               {t("lan_ip_address")}
             </span>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-base font-semibold font-mono text-paper-bright">
+              <span className="text-base font-bold font-mono text-paper-bright">
                 {lanInfo?.local_ip || "127.0.0.1"}
               </span>
               <button
                 type="button"
                 onClick={() => copyToClipboard(lanInfo?.local_ip || "127.0.0.1", "ip")}
-                className="p-1.5 rounded hover:bg-paper-border/30 text-paper-muted hover:text-paper-bright transition-colors"
+                className="p-1.5 rounded bg-surface-elevated hover:bg-surface-hover text-paper-muted hover:text-paper-bright border border-border-brutal transition-colors cursor-pointer"
                 title="Kopyala"
               >
                 {copiedField === "ip" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
@@ -363,18 +387,18 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
           </div>
 
           {/* Port */}
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 flex flex-col justify-between">
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-3.5 flex flex-col justify-between">
             <span className="text-[11px] text-paper-muted uppercase tracking-wider font-mono">
               {t("lan_port")}
             </span>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-base font-semibold font-mono text-paper-bright">
+              <span className="text-base font-bold font-mono text-paper-bright">
                 {lanInfo?.proxy_port || 10808}
               </span>
               <button
                 type="button"
                 onClick={() => copyToClipboard(String(lanInfo?.proxy_port || 10808), "port")}
-                className="p-1.5 rounded hover:bg-paper-border/30 text-paper-muted hover:text-paper-bright transition-colors"
+                className="p-1.5 rounded bg-surface-elevated hover:bg-surface-hover text-paper-muted hover:text-paper-bright border border-border-brutal transition-colors cursor-pointer"
                 title="Kopyala"
               >
                 {copiedField === "port" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
@@ -383,12 +407,12 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
           </div>
 
           {/* PAC Script URL */}
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 flex flex-col justify-between">
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-3.5 flex flex-col justify-between">
             <span className="text-[11px] text-paper-muted uppercase tracking-wider font-mono">
               {t("lan_pac_url")}
             </span>
             <div className="flex items-center justify-between mt-2 gap-2">
-              <span className="text-xs font-mono text-paper-bright truncate">
+              <span className="text-xs font-mono font-semibold text-paper-bright truncate">
                 {lanInfo?.pac_url || `http://127.0.0.1:10808/anticore.pac`}
               </span>
               <button
@@ -399,7 +423,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
                     "pac",
                   )
                 }
-                className="p-1.5 rounded hover:bg-paper-border/30 text-paper-muted hover:text-paper-bright transition-colors shrink-0"
+                className="p-1.5 rounded bg-surface-elevated hover:bg-surface-hover text-paper-muted hover:text-paper-bright border border-border-brutal transition-colors shrink-0 cursor-pointer"
                 title="Kopyala"
               >
                 {copiedField === "pac" ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
@@ -410,22 +434,22 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
 
         {/* Canlı İstatistik Çubuğu (Proxy çalışırken) */}
         {isProxyActive && (
-          <div className="rounded-lg bg-emerald-950/20 border border-emerald-800/30 p-3 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-lg bg-surface-subtle border border-emerald-500/35 p-3.5 grid grid-cols-3 gap-2 text-center">
             <div>
               <div className="text-[10px] uppercase font-mono text-paper-muted">{t("lan_stats_active_conn")}</div>
-              <div className="text-sm font-semibold text-emerald-400 font-mono mt-0.5">
+              <div className="text-base font-bold text-emerald-400 font-mono mt-0.5">
                 {lanInfo?.active_connections ?? 0}
               </div>
             </div>
-            <div>
+            <div className="border-x border-border-brutal">
               <div className="text-[10px] uppercase font-mono text-paper-muted">{t("lan_stats_total_conn")}</div>
-              <div className="text-sm font-semibold text-paper-bright font-mono mt-0.5">
+              <div className="text-base font-bold text-paper-bright font-mono mt-0.5">
                 {lanInfo?.total_connections ?? 0}
               </div>
             </div>
             <div>
               <div className="text-[10px] uppercase font-mono text-paper-muted">{t("lan_stats_bytes")}</div>
-              <div className="text-sm font-semibold text-paper-bright font-mono mt-0.5">
+              <div className="text-base font-bold text-paper-bright font-mono mt-0.5">
                 {formatBytes(lanInfo?.bytes_transferred ?? 0)}
               </div>
             </div>
@@ -434,21 +458,21 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
 
         {/* Canlı Bağlantı Doğrulama Test Kutusu */}
         {isProxyActive && (
-          <div className="rounded-lg bg-anticore-primary/10 border border-anticore-primary/30 p-3.5 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-semibold text-anticore-primary">
+          <div className="rounded-lg bg-surface-subtle border border-live/35 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-live">
               <Info size={15} />
               <span>{t("lan_test_browser_title")}</span>
             </div>
             <p className="text-xs text-paper-muted leading-relaxed">
               {t("lan_test_browser_desc")}
             </p>
-            <div className="flex items-center justify-between gap-3 bg-paper-surface/60 border border-paper-border/40 rounded-lg p-2 font-mono text-xs text-paper-bright">
-              <span className="truncate">{testUrl}</span>
+            <div className="flex items-center justify-between gap-3 bg-surface-card border border-border-brutal rounded-lg p-2.5 font-mono text-xs text-paper-bright">
+              <span className="truncate font-semibold">{testUrl}</span>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => copyToClipboard(testUrl, "testUrl")}
-                  className="p-1 rounded hover:bg-paper-border/30 text-paper-muted hover:text-paper-bright transition-colors"
+                  className="p-1.5 rounded bg-surface-elevated hover:bg-surface-hover text-paper-muted hover:text-paper-bright border border-border-brutal transition-colors cursor-pointer"
                   title="URL Kopyala"
                 >
                   {copiedField === "testUrl" ? (
@@ -461,7 +485,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
                   href={testUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="p-1 rounded hover:bg-paper-border/30 text-paper-muted hover:text-paper-bright transition-colors"
+                  className="p-1.5 rounded bg-surface-elevated hover:bg-surface-hover text-paper-muted hover:text-paper-bright border border-border-brutal transition-colors"
                   title="Yeni Sekmede Aç"
                 >
                   <ArrowUpRight size={14} />
@@ -475,26 +499,26 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
                 type="button"
                 disabled={diagState === "testing"}
                 onClick={() => void runDiagnostic()}
-                className="px-3 py-1.5 rounded-lg bg-anticore-primary/20 hover:bg-anticore-primary/30 border border-anticore-primary/40 text-anticore-primary text-xs font-medium flex items-center gap-1.5 transition-colors"
+                className="btn btn-secondary !py-2 !px-3.5 text-xs font-bold text-live border-live/40 hover:bg-live/15 flex items-center gap-1.5 cursor-pointer"
               >
                 {diagState === "testing" ? (
-                  <LoaderCircle size={13} className="animate-spin" />
+                  <LoaderCircle size={14} className="animate-spin" />
                 ) : (
-                  <Radio size={13} />
+                  <Radio size={14} />
                 )}
                 <span>Proxy Soketini ve DNS Teşhisini Başlat</span>
               </button>
 
               {diagState === "ok" && (
-                <span className="text-xs text-emerald-400 flex items-center gap-1">
-                  <Check size={13} />
+                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                  <Check size={14} />
                   <span>{diagMessage}</span>
                 </span>
               )}
 
               {diagState === "error" && (
-                <span className="text-xs text-red-400 flex items-center gap-1">
-                  <AlertTriangle size={13} />
+                <span className="text-xs font-semibold text-red-400 flex items-center gap-1.5">
+                  <AlertTriangle size={14} />
                   <span>{diagMessage}</span>
                 </span>
               )}
@@ -503,16 +527,16 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
         )}
 
         {/* Mobil & Platform Kurulum Rehberi (Tabbed) */}
-        <div className="rounded-lg bg-paper-surface/30 border border-paper-border/20 p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-paper-border/20 pb-2.5">
-            <span className="text-xs font-semibold text-paper-bright">{t("lan_guide_title")}</span>
-            <div className="flex flex-wrap gap-1 bg-paper-border/20 p-0.5 rounded-lg">
+        <div className="rounded-lg bg-surface-subtle border border-border-brutal p-4 space-y-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border-brutal pb-3">
+            <span className="text-xs font-bold text-paper-bright">{t("lan_guide_title")}</span>
+            <div className="flex flex-wrap gap-1 bg-surface-card p-1 rounded-lg border border-border-brutal">
               <button
                 type="button"
                 onClick={() => setGuidePlatform("ios")}
-                className={`px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                   guidePlatform === "ios"
-                    ? "bg-paper-surface text-paper-bright shadow-sm"
+                    ? "bg-live text-void shadow-sm"
                     : "text-paper-muted hover:text-paper-bright"
                 }`}
               >
@@ -522,9 +546,9 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               <button
                 type="button"
                 onClick={() => setGuidePlatform("android")}
-                className={`px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                   guidePlatform === "android"
-                    ? "bg-paper-surface text-paper-bright shadow-sm"
+                    ? "bg-live text-void shadow-sm"
                     : "text-paper-muted hover:text-paper-bright"
                 }`}
               >
@@ -534,9 +558,9 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               <button
                 type="button"
                 onClick={() => setGuidePlatform("pc")}
-                className={`px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                   guidePlatform === "pc"
-                    ? "bg-paper-surface text-paper-bright shadow-sm"
+                    ? "bg-live text-void shadow-sm"
                     : "text-paper-muted hover:text-paper-bright"
                 }`}
               >
@@ -546,9 +570,9 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               <button
                 type="button"
                 onClick={() => setGuidePlatform("console")}
-                className={`px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                   guidePlatform === "console"
-                    ? "bg-paper-surface text-paper-bright shadow-sm"
+                    ? "bg-live text-void shadow-sm"
                     : "text-paper-muted hover:text-paper-bright"
                 }`}
               >
@@ -564,7 +588,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               <li>{t("lan_guide_ios_step2")}</li>
               <li>
                 {t("lan_guide_ios_step3")}{" "}
-                <span className="text-paper-bright font-mono bg-paper-border/30 px-1 py-0.5 rounded">
+                <span className="text-paper-bright font-mono font-semibold bg-surface-elevated border border-border-brutal px-1.5 py-0.5 rounded">
                   {lanInfo?.local_ip || "192.168.X.X"} : {lanInfo?.proxy_port || 10808}
                 </span>
               </li>
@@ -577,7 +601,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
               <li>{t("lan_guide_android_step2")}</li>
               <li>
                 {t("lan_guide_android_step3")}{" "}
-                <span className="text-paper-bright font-mono bg-paper-border/30 px-1 py-0.5 rounded">
+                <span className="text-paper-bright font-mono font-semibold bg-surface-elevated border border-border-brutal px-1.5 py-0.5 rounded">
                   {lanInfo?.local_ip || "192.168.X.X"} : {lanInfo?.proxy_port || 10808}
                 </span>
               </li>
@@ -611,32 +635,32 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             </ol>
           )}
         </div>
-      </div>
+      </section>
 
       {/* Bağlı Cihazlar & Canlı İstemciler Tablosu */}
-      <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-4">
-        <div className="flex items-center justify-between border-b border-paper-border/20 pb-3">
+      <section className="card rounded-xl bg-surface-card border border-border-brutal p-5 space-y-4 shadow-lg">
+        <div className="flex items-center justify-between border-b border-border-brutal pb-3">
           <div>
-            <h2 className="text-sm font-medium text-paper-bright flex items-center gap-2">
-              <Smartphone className="text-sky-400" size={17} />
-              {t("lan_clients_card_title")}
-              <span className="text-xs font-mono font-normal text-paper-muted">
-                ({clients.length})
+            <h3 className="text-base font-bold text-paper-bright flex items-center gap-2">
+              <Smartphone className="text-sky" size={18} />
+              <span>{t("lan_clients_card_title")}</span>
+              <span className="text-xs font-mono font-semibold text-paper-muted bg-surface-elevated px-2 py-0.5 rounded border border-border-brutal">
+                {clients.length}
               </span>
-            </h2>
-            <p className="text-xs text-paper-muted mt-0.5">{t("lan_clients_card_desc")}</p>
+            </h3>
+            <p className="text-xs text-paper-muted mt-1">{t("lan_clients_card_desc")}</p>
           </div>
         </div>
 
         {clients.length === 0 ? (
-          <div className="rounded-lg bg-paper-surface/30 border border-paper-border/20 p-6 text-center text-xs text-paper-muted">
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-6 text-center text-xs text-paper-muted">
             <p>{t("lan_clients_empty")}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-paper-border/20 text-paper-muted font-mono uppercase text-[10px]">
+                <tr className="border-b border-border-brutal text-paper-muted font-mono uppercase text-[10px]">
                   <th className="py-2.5 px-3">{t("lan_client_col_device")}</th>
                   <th className="py-2.5 px-3">{t("lan_client_col_ip")}</th>
                   <th className="py-2.5 px-3">{t("lan_client_col_mac")}</th>
@@ -646,15 +670,15 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
                   <th className="py-2.5 px-3 text-right">{t("lan_client_col_last_seen")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-paper-border/10">
+              <tbody className="divide-y divide-border-brutal">
                 {clients.map((c) => (
-                  <tr key={c.ip} className="hover:bg-paper-surface/40 transition-colors">
+                  <tr key={c.ip} className="hover:bg-surface-subtle transition-colors">
                     <td className="py-2.5 px-3 flex items-center gap-2">
                       {getDeviceIcon(c.device_type)}
                       <div>
-                        <div className="font-medium text-paper-bright text-xs">{c.vendor}</div>
+                        <div className="font-semibold text-paper-bright text-xs">{c.vendor}</div>
                         {c.vendor.includes("Rastgele") && (
-                          <div className="text-[10px] text-sky-400/80 font-mono">
+                          <div className="text-[10px] text-sky font-mono">
                             IEEE 802 LAA
                           </div>
                         )}
@@ -665,7 +689,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
                     </td>
                     <td className="py-2.5 px-3 font-mono text-xs">
                       {c.mac ? (
-                        <span className="text-paper-bright bg-paper-border/30 px-1.5 py-0.5 rounded">
+                        <span className="text-paper-bright bg-surface-elevated border border-border-brutal px-1.5 py-0.5 rounded">
                           {c.mac}
                         </span>
                       ) : (
@@ -676,10 +700,10 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
                           c.active_streams > 0
-                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                            : "bg-paper-border/20 text-paper-muted"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/35"
+                            : "bg-surface-elevated text-paper-muted border border-border-brutal"
                         }`}
                       >
                         {c.active_streams > 0 && (
@@ -703,28 +727,28 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Sorun Giderme Kontrol Listesi (Troubleshooting Checklist) */}
-      <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-4">
-        <div className="flex items-center gap-2 border-b border-paper-border/20 pb-3">
+      <section className="card rounded-xl bg-surface-card border border-border-brutal p-5 space-y-4 shadow-lg">
+        <div className="flex items-center gap-2 border-b border-border-brutal pb-3">
           <AlertTriangle size={18} className="text-amber-400" />
-          <h2 className="text-sm font-medium text-paper-bright">{t("lan_troubleshoot_title")}</h2>
+          <h3 className="text-base font-bold text-paper-bright">{t("lan_troubleshoot_title")}</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 space-y-1.5">
-            <div className="font-semibold text-paper-bright">{t("lan_troubleshoot_1_title")}</div>
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-3.5 space-y-1.5">
+            <div className="font-bold text-paper-bright">{t("lan_troubleshoot_1_title")}</div>
             <p className="text-paper-muted leading-relaxed">{t("lan_troubleshoot_1_desc")}</p>
           </div>
 
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 space-y-1.5">
-            <div className="font-semibold text-paper-bright">{t("lan_troubleshoot_2_title")}</div>
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-3.5 space-y-1.5">
+            <div className="font-bold text-paper-bright">{t("lan_troubleshoot_2_title")}</div>
             <p className="text-paper-muted leading-relaxed">{t("lan_troubleshoot_2_desc")}</p>
           </div>
 
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 space-y-1.5">
-            <div className="font-semibold text-paper-bright">
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-3.5 space-y-1.5">
+            <div className="font-bold text-paper-bright">
               {isAndroid
                 ? "3. Mobil Erişim Noktası (Hotspot) ve Wi-Fi İzolasyonu"
                 : t("lan_troubleshoot_3_title")}
@@ -736,26 +760,26 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             </p>
           </div>
 
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 space-y-1.5">
-            <div className="font-semibold text-paper-bright">{t("lan_troubleshoot_4_title")}</div>
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-3.5 space-y-1.5">
+            <div className="font-bold text-paper-bright">{t("lan_troubleshoot_4_title")}</div>
             <p className="text-paper-muted leading-relaxed">{t("lan_troubleshoot_4_desc")}</p>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* MOD B: Mobil Etkin Nokta (Hotspot Transit Ağ Geçidi - Sadece Masaüstü) */}
       {!isAndroid && (
-        <div className="rounded-xl bg-paper-surface/60 border border-paper-border/40 p-5 backdrop-blur space-y-4">
+        <section className="card rounded-xl bg-surface-card border border-border-brutal p-5 space-y-4 shadow-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-lg bg-anticore-primary/10 text-anticore-primary border border-anticore-primary/30">
+            <div className="flex items-start gap-3.5">
+              <div className="p-3 rounded-lg bg-live/15 text-live border border-live/35 shrink-0">
                 <Radio size={20} />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-paper-bright">
+                <h3 className="text-base font-bold text-paper-bright">
                   {isMac ? t("lan_hotspot_card_title_mac") : t("lan_hotspot_card_title")}
-                </h2>
-                <p className="text-xs text-paper-muted mt-1 max-w-xl">
+                </h3>
+                <p className="text-xs text-paper-muted mt-1 max-w-xl leading-relaxed">
                   {isMac ? t("lan_hotspot_card_desc_mac") : t("lan_hotspot_card_desc")}
                 </p>
               </div>
@@ -764,7 +788,7 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
             <button
               type="button"
               onClick={openHotspot}
-              className="px-4 py-2 rounded-lg text-xs font-medium bg-paper-border/30 hover:bg-paper-border/50 text-paper-bright border border-paper-border/40 flex items-center gap-1.5 transition-transform duration-150 active:scale-[0.97] shrink-0"
+              className="btn btn-secondary !py-2 !px-3.5 text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <span>{isMac ? t("lan_btn_open_hotspot_mac") : t("lan_btn_open_hotspot")}</span>
               <ExternalLink size={13} />
@@ -772,23 +796,31 @@ export default function LanShare({ pushLog, engineRunning = false, onStartEngine
           </div>
 
           {/* Hotspot Transit Filtreleme Ayarı */}
-          <div className="rounded-lg bg-paper-surface/40 border border-paper-border/30 p-3.5 flex items-center justify-between gap-4">
+          <div className="rounded-lg bg-surface-subtle border border-border-brutal p-4 flex items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-medium text-paper-bright">{t("lan_hotspot_mode_label")}</div>
-              <div className="text-[11px] text-paper-muted mt-0.5">{t("lan_hotspot_mode_desc")}</div>
+              <div className="text-xs font-bold text-paper-bright">{t("lan_hotspot_mode_label")}</div>
+              <div className="text-xs text-paper-muted mt-0.5">{t("lan_hotspot_mode_desc")}</div>
             </div>
 
-            <label className="relative inline-flex items-center cursor-pointer shrink-0">
-              <input
-                type="checkbox"
-                checked={lanInfo?.hotspot_mode_enabled ?? false}
-                onChange={(e) => toggleHotspotMode(e.target.checked)}
-                className="sr-only peer"
+            <button
+              type="button"
+              role="switch"
+              aria-checked={lanInfo?.hotspot_mode_enabled ?? false}
+              onClick={() => void toggleHotspotMode(!(lanInfo?.hotspot_mode_enabled ?? false))}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus:outline-none ${
+                lanInfo?.hotspot_mode_enabled
+                  ? "bg-live border-live"
+                  : "bg-surface-elevated border-border-brutal"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                  lanInfo?.hotspot_mode_enabled ? "translate-x-5" : "translate-x-0"
+                }`}
               />
-              <div className="w-10 h-5 bg-paper-border/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:bg-anticore-primary" />
-            </label>
+            </button>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

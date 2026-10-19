@@ -168,9 +168,10 @@ fn resolve_target_addr(host: &str, port: u16) -> Result<SocketAddr, String> {
 
     // DNS zehirlenmesi veya yerel çözümlenememe durumunda meşru sunucu IP yedekleri
     match host.trim().to_lowercase().as_str() {
-        "discord.com" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(162, 159, 138, 232)), port)),
+        "discord.com" | "www.discord.com" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(162, 159, 135, 232)), port)),
         "gateway.discord.gg" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(162, 159, 135, 234)), port)),
-        "roblox.com" | "www.roblox.com" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(128, 116, 119, 3)), port)),
+        "roblox.com" | "www.roblox.com" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(128, 116, 102, 3)), port)),
+        "wattpad.com" | "www.wattpad.com" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(3, 160, 57, 67)), port)),
         "instagram.com" | "www.instagram.com" => Ok(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(157, 240, 245, 174)), port)),
         _ => Err(format!("DNS: {host} için geçerli IP çözümlenemedi (DNS zehirlenmesi olabilir)")),
     }
@@ -181,7 +182,8 @@ fn synthetic_hello(sni: &str) -> Vec<u8> {
     let mut ch = Vec::new();
     ch.extend_from_slice(&[0x03, 0x03]); // legacy version TLS1.2
     ch.extend_from_slice(&[0xAB; 32]); // 32 byte random
-    ch.push(0x00); // session id length 0
+    ch.push(0x20); // 32-byte session id length (TLS 1.3 middlebox compatibility mode)
+    ch.extend_from_slice(&[0xCD; 32]);
 
     // Standart Cipher Suites (TLS 1.3 ve yaygın TLS 1.2 ciphers)
     let ciphers: [u8; 10] = [
@@ -237,7 +239,7 @@ fn synthetic_hello(sni: &str) -> Vec<u8> {
     exts.extend_from_slice(&(sig_algs.len() as u16).to_be_bytes());
     exts.extend_from_slice(&sig_algs);
 
-    // 5. Supported Versions (0x002b: TLS 1.2, TLS 1.3)
+    // 5. Supported Versions (0x002b: TLS 1.3, TLS 1.2)
     let versions: [u8; 5] = [
         0x04,       // length: 4 bytes
         0x03, 0x04, // TLS 1.3
@@ -246,6 +248,16 @@ fn synthetic_hello(sni: &str) -> Vec<u8> {
     exts.extend_from_slice(&0x002bu16.to_be_bytes());
     exts.extend_from_slice(&(versions.len() as u16).to_be_bytes());
     exts.extend_from_slice(&versions);
+
+    // 6. Key Share (0x0033: x25519 32-byte public key share)
+    let mut ks_ext = Vec::with_capacity(38);
+    ks_ext.extend_from_slice(&36u16.to_be_bytes()); // client_shares length
+    ks_ext.extend_from_slice(&0x001du16.to_be_bytes()); // group: x25519
+    ks_ext.extend_from_slice(&32u16.to_be_bytes()); // key_exchange length
+    ks_ext.extend_from_slice(&[0x09; 32]); // valid non-zero x25519 basepoint
+    exts.extend_from_slice(&0x0033u16.to_be_bytes());
+    exts.extend_from_slice(&(ks_ext.len() as u16).to_be_bytes());
+    exts.extend_from_slice(&ks_ext);
 
     ch.extend_from_slice(&(exts.len() as u16).to_be_bytes());
     ch.extend_from_slice(&exts);
@@ -535,5 +547,19 @@ mod tests {
         // Kapalı port: Unreachable beklenir (bağlantı reddedilir)
         let r = probe("127.0.0.1", 9, 300);
         assert!(matches!(r, ProbeResult::Unreachable(_)));
+    }
+
+    #[test]
+    #[ignore]
+    fn live_probe_with_steps_bypasses_dpi() {
+        let steps = crate::profile::find_profile("universal").unwrap().steps;
+        for host in ["discord.com", "roblox.com", "wattpad.com"] {
+            let res = probe_with_steps(host, 443, &steps, 3500);
+            println!("LIVE PROBE {host} -> {res:?}");
+            assert!(
+                matches!(res, ProbeResult::Open { .. }),
+                "Expected Open for {host}, got {res:?}"
+            );
+        }
     }
 }

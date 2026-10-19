@@ -276,9 +276,11 @@ pub fn check_firewall_rule(port: u16) -> bool {
             ])
             .output()
         {
-            let out = String::from_utf8_lossy(&output.stdout);
-            if out.contains(&format!("{port}")) && (out.contains("Allow") || out.contains("İzin Ver")) {
-                return true;
+            if output.status.success() {
+                let out = String::from_utf8_lossy(&output.stdout);
+                if out.contains(&format!("{port}")) {
+                    return true;
+                }
             }
         }
         // Genel kural adı denetimi
@@ -286,9 +288,11 @@ pub fn check_firewall_rule(port: u16) -> bool {
             .args(["advfirewall", "firewall", "show", "rule", "name=Anticore_LAN_Proxy"])
             .output()
         {
-            let out = String::from_utf8_lossy(&output.stdout);
-            if out.contains("Allow") || out.contains("İzin Ver") {
-                return true;
+            if output.status.success() {
+                let out = String::from_utf8_lossy(&output.stdout);
+                if out.contains("Anticore_LAN_Proxy") {
+                    return true;
+                }
             }
         }
         false
@@ -304,8 +308,11 @@ pub fn check_firewall_rule(port: u16) -> bool {
 pub fn ensure_firewall_rule(port: u16) -> Result<(), String> {
     #[cfg(windows)]
     {
+        if check_firewall_rule(port) {
+            return Ok(());
+        }
         let rule_name = format!("Anticore_LAN_Proxy_{port}");
-        let _ = silent_command("netsh")
+        let output = silent_command("netsh")
             .args([
                 "advfirewall",
                 "firewall",
@@ -319,7 +326,13 @@ pub fn ensure_firewall_rule(port: u16) -> Result<(), String> {
                 "profile=any",
                 "description=Anticore DPI LAN Proxy Gelen Baglanti Izni",
             ])
-            .output();
+            .output()
+            .map_err(|e| format!("netsh çalıştırılamadı: {e}"))?;
+
+        if !output.status.success() && !check_firewall_rule(port) {
+            let err_txt = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            return Err(format!("Güvenlik duvarı kuralı eklenemedi (Yönetici izni gerekli): {err_txt}"));
+        }
     }
     #[cfg(not(windows))]
     {
@@ -418,10 +431,14 @@ pub async fn start_lan_proxy(
     };
 
     if !already_running {
+        let status = crate::commands::get_status_sync(app.clone());
+        let active_steps = crate::commands::resolve_steps(&app, &status.profile_id)
+            .unwrap_or_else(|_| anticore_core::profile::builtin_profiles()[0].steps.clone());
+
         let config = ProxyConfig {
             bind_addr: std::net::SocketAddr::from(([0, 0, 0, 0], target_port)),
             lan_ip: local_ip.clone(),
-            steps: Vec::new(),
+            steps: active_steps,
         };
         let mut proxy = LanProxy::new(config);
         proxy.start().await?;

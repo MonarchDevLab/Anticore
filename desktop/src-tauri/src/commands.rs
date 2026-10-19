@@ -1021,7 +1021,7 @@ fn load_custom_profiles(app: &AppHandle) -> Vec<ProfileDto> {
     serde_json::from_str(&text).unwrap_or_default()
 }
 
-fn resolve_steps(app: &AppHandle, profile_id: &str) -> Result<Vec<anticore_core::strategy::Step>, String> {
+pub(crate) fn resolve_steps(app: &AppHandle, profile_id: &str) -> Result<Vec<anticore_core::strategy::Step>, String> {
     // Önce builtin, yoksa custom
     if let Some(p) = anticore_core::profile::find_profile(profile_id) {
         return Ok(p.steps);
@@ -1640,19 +1640,28 @@ pub fn restart_as_admin(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub async fn probe_target(app: AppHandle, req: ProbeRequest) -> ProbeDto {
     let host = req.host.trim().to_lowercase();
-    let is_running = app.state::<Engine>().running.load(Ordering::SeqCst);
+    let status = get_status_sync(app.clone());
+    let is_running = status.running;
+    let active_steps = resolve_steps(&app, &status.profile_id)
+        .unwrap_or_else(|_| anticore_core::profile::builtin_profiles()[0].steps.clone());
     let host_fallback = host.clone();
 
     tokio::task::spawn_blocking(move || {
         let r = if is_running {
-            // Motor aktifken yerel SOCKS5 proxy üzerinden bypass etkinliğini doğrula
+            // 1. Önce yerel SOCKS5 proxy (Android VPN veya aktif LAN Proxy) üzerinden dene
             let socks_port = crate::android_bridge::get_socks_port();
             let socks_addr = format!("127.0.0.1:{socks_port}");
-            let socks_probe = anticore_core::tester::probe_via_socks5(&host, 443, &socks_addr, 3000);
+            let socks_probe = anticore_core::tester::probe_via_socks5(&host, 443, &socks_addr, 2500);
             if matches!(socks_probe, anticore_core::tester::ProbeResult::Open { .. }) {
                 socks_probe
             } else {
-                anticore_core::tester::probe(&host, 443, 3000)
+                // 2. Doğrudan cerrahi çoklu bölme adımlarıyla (probe_with_steps) yokla
+                let step_probe = anticore_core::tester::probe_with_steps(&host, 443, &active_steps, 3000);
+                if matches!(step_probe, anticore_core::tester::ProbeResult::Open { .. }) {
+                    step_probe
+                } else {
+                    anticore_core::tester::probe(&host, 443, 3000)
+                }
             }
         } else {
             anticore_core::tester::probe(&host, 443, 3000)
