@@ -198,6 +198,10 @@ fn find_motor_exe(_app: &AppHandle) -> Result<PathBuf, String> {
         candidates.push(cwd.join("anticore-cli"));
         candidates.push(cwd.join("bin").join("anticore.exe"));
         candidates.push(cwd.join("bin").join("anticore"));
+        candidates.push(cwd.join("anticore").join("anticore-cli.exe"));
+        candidates.push(cwd.join("anticore").join("anticore-cli"));
+        candidates.push(cwd.join("anticore").join("bin").join("anticore.exe"));
+        candidates.push(cwd.join("anticore").join("bin").join("anticore"));
         candidates.push(cwd.join("antikor").join("anticore-cli.exe"));
         candidates.push(cwd.join("antikor").join("anticore-cli"));
         candidates.push(cwd.join("antikor").join("bin").join("anticore.exe"));

@@ -29,12 +29,12 @@ Anticore projesine katkıda bulunmak isteyen mühendisler, **Monolith Works & Mo
 Bir değişiklik teslim edilmeden önce aşağıdaki adımlar yerel ortamda doğrulanmalıdır:
 ```bash
 # 1. Rust Motor Testleri
-cd antikor/engine && cargo test --workspace
+cd engine && cargo test --workspace
 
 # 2. Rust Masaüstü Kontrolü
-cd antikor/desktop/src-tauri && cargo check
+cd desktop/src-tauri && cargo check
 
 # 3. Frontend Tip Kontrolü ve Derleme
-cd antikor/desktop && npm run build
+cd desktop && npm run build
 ```
 Tüm adımlar 0 hata ve %100 yeşil test sonucu vermelidir.

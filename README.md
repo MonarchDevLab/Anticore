@@ -1022,14 +1022,14 @@ Kendi ikili dosyalarınızı temiz bir ortamda derlemek isterseniz aşağıdaki 
 ```powershell
 # 1. Depoyu klonlayın
 git clone https://github.com/MonarchDevLab/Anticore.git
-cd Anticore/antikor
+cd Anticore
 
 # ── Windows Derleme & Paketleme ──
 cd engine && cargo test --workspace && cargo build --release --workspace
 cd ../desktop && npm install && npm test && npm run tauri build
 
 # ── macOS Derleme & Paketleme (Apple Silicon & Intel DMG) ──
-cd Anticore/antikor
+cd Anticore
 chmod +x scripts/macos-package.sh
 ./scripts/macos-package.sh all
 ```

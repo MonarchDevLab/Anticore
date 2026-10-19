@@ -1040,14 +1040,14 @@ To compile the binaries from source within a clean development environment, ensu
 ```powershell
 # 1. Clone the repository
 git clone https://github.com/MonarchDevLab/Anticore.git
-cd Anticore/antikor
+cd Anticore
 
 # ── Windows Build & Packaging ──
 cd engine && cargo test --workspace && cargo build --release --workspace
 cd ../desktop && npm install && npm test && npm run tauri build
 
 # ── macOS Build & Packaging (Apple Silicon & Intel DMG) ──
-cd Anticore/antikor
+cd Anticore
 chmod +x scripts/macos-package.sh
 ./scripts/macos-package.sh all
 ```
