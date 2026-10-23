@@ -116,31 +116,7 @@ export interface EngineConfig {
   pasif_savunma: boolean;
   quic_engelle: boolean;
   lan_share: boolean;
-}
-
-export interface ConnectedClientDto {
-  ip: string;
-  mac: string | null;
-  vendor: string;
-  device_type: string;
-  active_streams: number;
-  total_requests: number;
-  bytes_transferred: number;
-  last_seen_secs_ago: number;
-  last_target: string | null;
-}
-
-export interface LanInfoDto {
-  local_ip: string;
-  proxy_port: number;
-  proxy_running: boolean;
-  hotspot_mode_enabled: boolean;
-  active_connections: number;
-  total_connections: number;
-  bytes_transferred: number;
-  pac_url: string;
-  firewall_allowed: boolean;
-  connected_devices: ConnectedClientDto[];
+  all_sites: boolean;
 }
 
 export interface SetupStatus {
@@ -307,13 +283,6 @@ export const api = {
   hideQuickPanel: () => invoke<void>("hide_quick_panel"),
   prepareForUpdate: () => invoke<void>("prepare_for_update"),
   exitApp: () => invoke<void>("exit_app"),
-  getLanInfo: () => invoke<LanInfoDto>("get_lan_info"),
-  startLanProxy: (port?: number) => invoke<LanInfoDto>("start_lan_proxy", { port }),
-  stopLanProxy: () => invoke<LanInfoDto>("stop_lan_proxy"),
-  openHotspotSettings: () => invoke<void>("open_hotspot_settings"),
-  setLanShareHotspotMode: (enabled: boolean) =>
-    invoke<void>("set_lan_share_hotspot_mode", { enabled }),
-  allowFirewallLanProxy: () => invoke<boolean>("allow_firewall_lan_proxy"),
 };
 
 export function onLog(cb: (line: string) => void): Promise<() => void> {

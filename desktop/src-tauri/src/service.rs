@@ -102,6 +102,8 @@ pub struct EngineConfig {
     pub quic_engelle: bool,
     /// Yerel ağ paylaşımı / Hotspot transit trafiğini de kapsama alır.
     pub lan_share: bool,
+    /// Hedef listesini yok sayar; tüm sitelere DPI atlatma uygulanır.
+    pub all_sites: bool,
 }
 
 impl Default for EngineConfig {
@@ -110,6 +112,7 @@ impl Default for EngineConfig {
             pasif_savunma: true,
             quic_engelle: true,
             lan_share: false,
+            all_sites: true,
         }
     }
 }

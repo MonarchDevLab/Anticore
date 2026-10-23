@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-10-23
+
+### Added
+- **Apply to All Sites (`all_sites`, default on):** DPI bypass targets the first packet of every HTTPS/HTTP connection instead of only the domain list, so blocked sites missing from the list (adult sites and mirrors in particular) open without manual entries. Throughput is unaffected because only the ClientHello or HTTP request line is captured. Switch it off in Settings for list-only mode.
+- **Update signature verification:** Directly downloaded installers are checked against the embedded updater public key (minisign) before launch.
+
+### Changed
+- **DNS health check:** Probes the system resolver while the engine runs and includes an adult-site lookup; the Dashboard warning no longer hides while running.
+- **Update download:** Only GitHub `releases/download` URLs are accepted; the 180 s total timeout is replaced by connect and idle-read timeouts; failed installer launches are reported instead of silently exiting; the portable updater script gives up after 60 retries.
+- **Release workflow:** Manual runs require an explicit tag; the tag must match `tauri.conf.json`, `package.json` and both Cargo versions; the portable `Anticore.exe` is signed; `latest.json` is not published without a Windows signature and every URL in it is checked after upload.
+
+### Removed
+- **Network & Device Sharing view (`LanShare.tsx`, `lan_share.rs`):** Removed the desktop LAN proxy / Hotspot screen, its Tauri commands, navigation entries and translations. The core `LanProxy` stays: the Android local SOCKS5 tunnel depends on it.
+
 ## [0.3.9] - 2026-10-17
 
 ### Added

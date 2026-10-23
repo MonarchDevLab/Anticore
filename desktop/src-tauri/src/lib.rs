@@ -1,6 +1,5 @@
 pub mod android_bridge;
 mod commands;
-pub mod lan_share;
 pub mod net_teardown;
 pub mod process;
 mod service;
@@ -65,7 +64,6 @@ pub fn run() {
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
         .manage(Engine::new())
-        .manage(lan_share::LanProxyState::new())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init());
@@ -207,12 +205,6 @@ pub fn run() {
             tray::set_show_tray_icon,
             tray::get_always_on_top,
             tray::set_always_on_top,
-            lan_share::get_lan_info,
-            lan_share::start_lan_proxy,
-            lan_share::stop_lan_proxy,
-            lan_share::open_hotspot_settings,
-            lan_share::set_lan_share_hotspot_mode,
-            lan_share::allow_firewall_lan_proxy,
         ])
         .run(tauri::generate_context!())
     {

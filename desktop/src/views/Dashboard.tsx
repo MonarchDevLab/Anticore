@@ -36,7 +36,7 @@ export default function Dashboard({ status, running, logs: _logs, selectedProfil
     <div className="connection-workspace">
       <header className="workspace-heading"><div><h1>{copy.title}</h1></div></header>
       {data.error && <div className="workspace-notice" role="alert"><TriangleAlert size={18} /><span>{copy.loadError}</span><button onClick={data.reload} disabled={data.loading}>{copy.retry}</button></div>}
-      {!isAndroid && !isMobile && !running && data.dns?.poisoned && (
+      {!isAndroid && !isMobile && data.dns?.poisoned && (
         <div className="workspace-notice" role="alert">
           <TriangleAlert size={18} />
           <span>{copy.dnsWarning}</span>

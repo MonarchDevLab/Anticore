@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-core"
-version = "0.3.9"
+version = "0.4.0"
 dependencies = [
  "serde",
  "tokio",
@@ -57,15 +57,17 @@ dependencies = [
 
 [[package]]
 name = "anticore-desktop"
-version = "0.3.9"
+version = "0.4.0"
 dependencies = [
  "anticore-core",
  "anticore-transport-macos",
  "anticore-transport-win",
+ "base64 0.22.1",
  "chrono",
  "jni 0.21.1",
  "libc",
  "lru",
+ "minisign-verify",
  "semver",
  "serde",
  "serde_json",
@@ -86,7 +88,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-transport-macos"
-version = "0.3.9"
+version = "0.4.0"
 dependencies = [
  "anticore-core",
  "libc",
@@ -94,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "anticore-transport-win"
-version = "0.3.9"
+version = "0.4.0"
 dependencies = [
  "anticore-core",
 ]

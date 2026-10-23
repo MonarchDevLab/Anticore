@@ -10,7 +10,6 @@ import Sites from "./views/Sites";
 import Profiles from "./views/Profiles";
 import TestCenter from "./views/TestCenter";
 import NetworkRepair from "./views/NetworkRepair";
-import LanShare from "./views/LanShare";
 import ChangelogView from "./views/ChangelogView";
 import SupportView from "./views/SupportView";
 import Setup from "./views/Setup";
@@ -46,7 +45,7 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
   const [topError, setTopError] = useState<string | null>(null);
   const [elevating, setElevating] = useState(false);
-  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.3.9");
+  const [currentAppVersion, setCurrentAppVersion] = useState<string>("0.4.0");
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [broadcastUpdate, setBroadcastUpdate] = useState<BroadcastUpdatePayload | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -225,7 +224,7 @@ export default function App() {
       onUpdateBroadcast: (update) => {
         if (!update || !update.version) return;
         void api.getAppVersion().then((ver) => {
-          const effectiveCurrent = (ver || currentAppVersion || "0.3.9").trim().replace(/^v+/i, "");
+          const effectiveCurrent = (ver || currentAppVersion || "0.4.0").trim().replace(/^v+/i, "");
           const candidateVer = update.version.trim().replace(/^v+/i, "");
           if (isNewerVersion(effectiveCurrent, candidateVer)) {
             setUpdateAvailable(candidateVer);
@@ -568,13 +567,6 @@ export default function App() {
           {view === "profiles" && <Profiles />}
           {view === "test" && <TestCenter pushLog={pushLog} />}
           {view === "network" && <NetworkRepair pushLog={pushLog} />}
-          {view === "lan_share" && (
-            <LanShare
-              pushLog={pushLog}
-              engineRunning={running}
-              onStartEngine={() => void quickToggle()}
-            />
-          )}
           {view === "changelog" && <ChangelogView />}
           {view === "setup" && <Setup pushLog={pushLog} />}
           {(view === "destek" || view === "support") && <SupportView pushLog={pushLog} />}

@@ -9,6 +9,8 @@ use std::path::Path;
 #[derive(Debug, Clone, Default)]
 pub struct Blacklist {
     domains: HashSet<String>,
+    /// Liste yok sayılır, tüm TLS/HTTP trafiği hedeflenir.
+    target_all: bool,
 }
 
 impl Blacklist {
@@ -25,7 +27,15 @@ impl Blacklist {
                 domains.insert(d);
             }
         }
-        Self { domains }
+        Self { domains, target_all: false }
+    }
+
+    pub fn set_target_all(&mut self, on: bool) {
+        self.target_all = on;
+    }
+
+    pub fn target_all(&self) -> bool {
+        self.target_all
     }
 
     pub fn from_file(path: &Path) -> std::io::Result<Self> {
@@ -310,6 +320,15 @@ mod tests {
         assert!(bl.matches(b"img.stripcdn.com"));
         assert!(bl.matches(b"eporner.com"));
         assert!(bl.matches(b"eporner-cdn.com"));
+    }
+
+    #[test]
+    fn target_all_flag_is_off_by_default() {
+        let mut bl = Blacklist::from_lines("discord.com
+");
+        assert!(!bl.target_all());
+        bl.set_target_all(true);
+        assert!(bl.target_all());
     }
 
     #[test]

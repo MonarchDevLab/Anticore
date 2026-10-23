@@ -129,12 +129,18 @@ fn parse_run_opts(args: &[String]) -> Result<RunOpts, String> {
 }
 
 fn load_blacklist_from(data_dir: Option<&Path>) -> Blacklist {
-    if let Some(dir) = data_dir {
-        if let Ok(text) = std::fs::read_to_string(dir.join("blacklist.txt")) {
-            return Blacklist::from_lines(&text);
-        }
-    }
-    Blacklist::from_lines(DEFAULT_BLACKLIST)
+    let mut bl = data_dir
+        .and_then(|dir| std::fs::read_to_string(dir.join("blacklist.txt")).ok())
+        .map(|text| Blacklist::from_lines(&text))
+        .unwrap_or_else(|| Blacklist::from_lines(DEFAULT_BLACKLIST));
+    // Masaüstü uygulamasıyla aynı varsayılan: config.json'da yoksa tüm siteler hedeflenir.
+    let all_sites = data_dir
+        .and_then(|dir| std::fs::read_to_string(dir.join("config.json")).ok())
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+        .and_then(|v| v.get("all_sites").and_then(|x| x.as_bool()))
+        .unwrap_or(true);
+    bl.set_target_all(all_sites);
+    bl
 }
 
 /// Profil çözümü: builtin + (data-dir varsa) profiles.json içindeki özel profiller.

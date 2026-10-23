@@ -102,7 +102,7 @@ export default function UpdateModal({ open, onClose, onUpdateDetected, broadcast
         }
       }
     } catch (err) {
-      const currentVer = await api.getAppVersion().catch(() => "0.3.9");
+      const currentVer = await api.getAppVersion().catch(() => "0.4.0");
       const fallback = buildBroadcastFallbackInfo(currentVer);
       if (fallback) {
         setUpdateInfo(fallback);

@@ -34,7 +34,7 @@ export default function Titlebar({
   const { theme, setTheme, options } = useTheme();
   const { lang, setLang, t } = useI18n();
   const [isMaximized, setIsMaximized] = useState(false);
-  const [appVersion, setAppVersion] = useState<string>("0.3.9");
+  const [appVersion, setAppVersion] = useState<string>("0.4.0");
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   // Tauri window instance lazy-loader (fallback)

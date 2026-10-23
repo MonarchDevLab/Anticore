@@ -32,11 +32,46 @@ interface ReleaseEntry {
 
 const RELEASES: ReleaseEntry[] = [
   {
+    version: "v0.4.0",
+    titleTr: "Tüm Sitelere Uygula, Güvenli Güncelleme Doğrulaması ve DNS Sağlık Denetimi",
+    titleEn: "Apply to All Sites, Verified Updates & DNS Health Check",
+    date: "23 Ekim 2026",
+    isLatest: true,
+    highlightTr: "Hedef listesinde olmayan engelli siteler (özellikle yetişkin siteleri ve aynaları) artık sıfır hız kaybıyla açılır; güncellemeler imza ile doğrulanır; Ağ Paylaşımı ekranı kaldırıldı.",
+    highlightEn: "Blocked sites missing from the target list (adult sites and mirrors in particular) now open with zero speed loss; updates are signature-verified; the Network Sharing screen was removed.",
+    changes: [
+      {
+        type: "feature",
+        textTr: "Tüm Sitelere Uygula: Varsayılan açık ayar, DPI atlatmayı hedef listesi yerine tüm HTTPS/HTTP bağlantılarının ilk paketine uygular. Aktarım hızı etkilenmez.",
+        textEn: "Apply to All Sites: a default-on setting applies DPI bypass to the first packet of every HTTPS/HTTP connection instead of the target list. Throughput is unaffected.",
+      },
+      {
+        type: "fix",
+        textTr: "DNS Sağlık Denetimi: Motor çalışırken de sistem DNS'i sınanır; yetişkin site çözümlemesi de yoklanır ve zehirlenme varsa Panoda uyarı bandı çıkar.",
+        textEn: "DNS Health Check: the system resolver is probed even while the engine runs, including an adult-site lookup, and the Dashboard warns on poisoning.",
+      },
+      {
+        type: "security",
+        textTr: "Güncelleme Doğrulaması: Doğrudan indirilen paketler minisign imzasıyla doğrulanır, yalnızca GitHub sürüm adreslerinden kabul edilir; indirme için toplam süre sınırı kaldırıldı.",
+        textEn: "Update Verification: directly downloaded packages are minisign-verified and accepted only from GitHub release URLs; the total download time limit was removed.",
+      },
+      {
+        type: "fix",
+        textTr: "Sürüm Yayın Hattı: Etiket ile uygulama sürümü uyuşmazlığı yayını durdurur; latest.json yayın sonrası adres bazında doğrulanır.",
+        textEn: "Release Pipeline: a tag/app version mismatch now stops the release, and latest.json URLs are verified after publishing.",
+      },
+      {
+        type: "fix",
+        textTr: "Ağ & Cihaz Paylaşımı ekranı kaldırıldı.",
+        textEn: "The Network & Device Sharing screen was removed.",
+      },
+    ],
+  },
+  {
     version: "v0.3.9",
     titleTr: "Çoklu Platform OTA GüncellemeTahkimi, Zorunlu Yayın Kalkanı ve Otomatik İmzalama",
     titleEn: "Multi-Platform OTA Update Hardening, Mandatory Broadcast Shield & Automated Signing",
     date: "15 Ekim 2026",
-    isLatest: true,
     highlightTr: "Güncelleme bildirim bandındaki sürüm etiketi hatası ('vavailable') giderildi; Filo Yönetim Paneli'nden gönderilen zorunlu (mandatory) güncellemeler için kapatılamaz kilitli kurulum akışı eklendi; Windows, macOS ve Android paket seçicileri platforma duyarlı hale getirildi ve NSIS kurulum kancaları WinDivert sürücü kilidine karşı tahkim edildi.",
     highlightEn: "Fixed the update banner version tag regression ('vavailable'); enforced un-dismissible installation flow for mandatory fleet OTA broadcasts; made Windows, macOS, and Android package selectors strictly platform-aware; and hardened NSIS installer hooks against WinDivert kernel driver locks.",
     changes: [

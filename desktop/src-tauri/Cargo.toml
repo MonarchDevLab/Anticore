@@ -1,6 +1,6 @@
 [package]
 name = "anticore-desktop"
-version = "0.3.9"
+version = "0.4.0"
 edition = "2021"
 license = "MIT"
 authors = ["Monolith Works <info@monolithworks.com.tr>"]
@@ -24,6 +24,8 @@ tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"
 ureq = { version = "2", features = ["json"] }
+base64 = "0.22"
+minisign-verify = "0.2"
 semver = "1"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 url = "2"

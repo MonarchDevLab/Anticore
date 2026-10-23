@@ -38,7 +38,6 @@ export default function MobileBottomNav({
           view === id ||
           (id === "settings" &&
             (view === "network" ||
-              view === "lan_share" ||
               view === "changelog" ||
               view === "support" ||
               view === "destek" ||

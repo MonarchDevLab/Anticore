@@ -20,7 +20,6 @@ import {
   Eye,
   Pin,
   Bell,
-  Share2,
   Wrench,
   LifeBuoy,
   FileText,
@@ -564,27 +563,6 @@ export default function SettingsView({
 
             <button
               type="button"
-              onClick={() => onNavigate("lan_share")}
-              className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-transform duration-150 active:scale-[0.97] cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-lg bg-white/[0.05] text-paper-bright">
-                  <Share2 size={16} />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-paper-bright block">
-                    {lang === "tr" ? "LAN Proxy Paylaşımı" : "LAN Proxy Share"}
-                  </span>
-                  <span className="text-[11px] text-paper-muted block">
-                    {lang === "tr" ? "Yerel ağ cihazlarına bypass sun" : "Share bypass with local devices"}
-                  </span>
-                </div>
-              </div>
-              <ChevronRight size={16} className="text-paper-muted shrink-0" />
-            </button>
-
-            <button
-              type="button"
               onClick={() => onNavigate("changelog")}
               className="p-3.5 rounded-xl border border-white/[0.06] bg-surface-subtle/50 hover:border-live/30 flex items-center justify-between text-left transition-transform duration-150 active:scale-[0.97] cursor-pointer"
             >
@@ -744,6 +722,14 @@ export default function SettingsView({
               busy={cfgBusy === "pasif_savunma"}
               disabled={running}
               onChange={(v) => void patchConfig({ pasif_savunma: v })}
+            />
+            <Toggle
+              label={t("settings_all_sites")}
+              desc={t("settings_all_sites_desc")}
+              checked={config.all_sites}
+              busy={cfgBusy === "all_sites"}
+              disabled={running}
+              onChange={(v) => void patchConfig({ all_sites: v })}
             />
             <Toggle
               label={t("settings_quic")}
@@ -1215,7 +1201,7 @@ export default function SettingsView({
           <dt className="text-paper-muted font-medium">{t("settings_about_engine")}</dt>
           <dd className="text-paper-bright font-mono">
             {isAndroid
-              ? `Anticore Mobile v${appVersion || "0.3.9"} (Rust VpnService)`
+              ? `Anticore Mobile v${appVersion || "0.4.0"} (Rust VpnService)`
               : appVersion
                 ? `Anticore v${appVersion} (Rust Kernel)`
                 : t("settings_about_engine_value")}

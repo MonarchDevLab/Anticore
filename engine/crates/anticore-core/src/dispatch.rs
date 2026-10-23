@@ -87,8 +87,8 @@ pub fn decide_packet(raw: &[u8], blacklist: &Blacklist, steps: &[Step]) -> Packe
 
 /// Paketin hedef listede kayıtlı bir SNI/Host taşıyıp taşımadığı.
 pub fn targets_blacklist(view: &PacketView, blacklist: &Blacklist) -> bool {
-    if blacklist.is_empty() {
-        return true; // liste boşsa tüm TLS/HTTP trafiği hedeflenir
+    if blacklist.target_all() || blacklist.is_empty() {
+        return true; // tüm-site modu veya boş liste: tüm TLS/HTTP trafiği hedeflenir
     }
     let payload = view.payload();
     if let Some(info) = parse_client_hello(payload) {
@@ -194,6 +194,16 @@ mod tests {
         let bl = Blacklist::from_lines("discord.com\n");
         let d = decide_packet(&pkt, &bl, &[Step::FragmentTls { mode: SplitMode::SniMid }]);
         assert!(matches!(d, PacketDecision::Passthrough(PassthroughReason::NotTargeted)));
+    }
+
+    #[test]
+    fn target_all_rewrites_unlisted_sni() {
+        let pkt = synthetic_packet(&client_hello_payload(b"example.com"));
+        let mut bl = Blacklist::from_lines("discord.com
+");
+        bl.set_target_all(true);
+        let steps = [Step::FragmentTls { mode: SplitMode::Fixed(2) }];
+        assert!(matches!(decide_packet(&pkt, &bl, &steps), PacketDecision::Rewrite(_)));
     }
 
     #[test]

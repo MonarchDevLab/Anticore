@@ -94,6 +94,12 @@ pub struct EngineConfigDto {
     pub pasif_savunma: bool,
     pub quic_engelle: bool,
     pub lan_share: bool,
+    #[serde(default = "default_all_sites")]
+    pub all_sites: bool,
+}
+
+fn default_all_sites() -> bool {
+    true
 }
 
 #[tauri::command]
@@ -103,6 +109,7 @@ pub fn get_engine_config(app: AppHandle) -> EngineConfigDto {
         pasif_savunma: c.pasif_savunma,
         quic_engelle: c.quic_engelle,
         lan_share: c.lan_share,
+        all_sites: c.all_sites,
     }
 }
 
@@ -116,6 +123,7 @@ pub fn set_engine_config(app: AppHandle, config: EngineConfigDto) -> Result<(), 
     ec.pasif_savunma = config.pasif_savunma;
     ec.quic_engelle = config.quic_engelle;
     ec.lan_share = config.lan_share;
+    ec.all_sites = config.all_sites;
     save_engine_config_internal(&app, &ec)
 }
 
@@ -125,12 +133,14 @@ pub(crate) fn save_engine_config_internal(app: &AppHandle, config: &crate::servi
         pasif_savunma: bool,
         quic_engelle: bool,
         lan_share: bool,
+        all_sites: bool,
         defense_migrated: bool,
     }
     let payload = StoredConfig {
         pasif_savunma: config.pasif_savunma,
         quic_engelle: config.quic_engelle,
         lan_share: config.lan_share,
+        all_sites: config.all_sites,
         defense_migrated: true,
     };
     std::fs::write(
@@ -941,6 +951,7 @@ pub(crate) fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfi
         pasif_savunma: Option<bool>,
         quic_engelle: Option<bool>,
         lan_share: Option<bool>,
+        all_sites: Option<bool>,
         defense_migrated: Option<bool>,
     }
     match serde_json::from_str::<Raw>(&text) {
@@ -950,6 +961,7 @@ pub(crate) fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfi
                 pasif_savunma: r.pasif_savunma.unwrap_or(defaults.pasif_savunma),
                 quic_engelle: r.quic_engelle.unwrap_or(defaults.quic_engelle),
                 lan_share: r.lan_share.unwrap_or(defaults.lan_share),
+                all_sites: r.all_sites.unwrap_or(defaults.all_sites),
             };
             if !migrated {
                 // Eski sürümlerde pasif_savunma ve quic_engelle false kalmış kurulumlarda
@@ -960,6 +972,7 @@ pub(crate) fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfi
                     pasif_savunma: Some(cfg.pasif_savunma),
                     quic_engelle: Some(cfg.quic_engelle),
                     lan_share: Some(cfg.lan_share),
+                    all_sites: Some(cfg.all_sites),
                     defense_migrated: Some(true),
                 };
                 if let Ok(serialized) = serde_json::to_string_pretty(&updated) {
@@ -972,7 +985,14 @@ pub(crate) fn load_engine_config(app: &AppHandle) -> crate::service::EngineConfi
     }
 }
 
+/// Hedef listesini yükler; "tüm siteler" ayarı açıksa eşleşme kapsamını genişletir.
 fn load_blacklist(app: &AppHandle) -> anticore_core::config::Blacklist {
+    let mut bl = load_blacklist_list(app);
+    bl.set_target_all(load_engine_config(app).all_sites);
+    bl
+}
+
+fn load_blacklist_list(app: &AppHandle) -> anticore_core::config::Blacklist {
     let p = blacklist_path(app);
     if !p.exists() {
         let _ = std::fs::write(&p, anticore_core::config::DEFAULT_BLACKLIST);
@@ -1992,12 +2012,12 @@ pub fn is_poisoned_or_bogus_ip(ip: &std::net::IpAddr) -> bool {
 /// Discord ve hedef siteler için DNS'in operatör yönlendirme IP'sine
 /// yönlendirilip yönlendirilmediğini (DNS zehirlenmesi) asenkron ve kilitlenmesiz test eder.
 #[tauri::command]
+#[cfg_attr(not(target_os = "android"), allow(unused_variables))]
 pub async fn check_dns_health(app: AppHandle) -> DnsHealthDto {
-    let engine = app.state::<Engine>();
-    let is_running = engine.running.load(Ordering::SeqCst) || crate::android_bridge::is_vpn_running();
-
     #[cfg(target_os = "android")]
     {
+        let engine = app.state::<Engine>();
+        let is_running = engine.running.load(Ordering::SeqCst) || crate::android_bridge::is_vpn_running();
         return DnsHealthDto {
             poisoned: false,
             resolved_ip: if is_running { "1.1.1.1 (Tünellendi)".into() } else { "Sistem DNS".into() },
@@ -2012,83 +2032,65 @@ pub async fn check_dns_health(app: AppHandle) -> DnsHealthDto {
 
     #[cfg(not(target_os = "android"))]
     {
-        if is_running {
-            return DnsHealthDto {
-                poisoned: false,
-                resolved_ip: "1.1.1.1".into(),
-                is_secure: true,
-                message: "Anticore motoru devrede. Paketler filtreleniyor.".into(),
-            };
+        // Motorun çalışması DNS zehirlenmesini gidermez; sistem çözümleyicisi her durumda sınanır.
+        // Engelli yetişkin siteleri de DNS düzeyinde kesildiğinden Discord ile birlikte yoklanır.
+        use std::time::Duration;
+        const PROBES: [&str; 2] = ["discord.com", "pornhub.com"];
+
+        // spawn_blocking işleri oluşturulur oluşturulmaz başlar; ortak son tarih toplam beklemeyi 3 sn ile sınırlar.
+        let deadline = tokio::time::Instant::now() + Duration::from_millis(3000);
+        let handles: Vec<_> = PROBES
+            .iter()
+            .map(|host| {
+                let host = *host;
+                tokio::task::spawn_blocking(move || {
+                    use std::net::ToSocketAddrs;
+                    (host, 443u16).to_socket_addrs().map(|a| a.collect::<Vec<_>>())
+                })
+            })
+            .collect();
+        let mut results = Vec::with_capacity(handles.len());
+        for h in handles {
+            results.push(tokio::time::timeout_at(deadline, h).await);
         }
 
-        use std::net::ToSocketAddrs;
-        use std::time::Duration;
-
-        let res = tokio::time::timeout(Duration::from_millis(3000), tokio::task::spawn_blocking(|| {
-            ("discord.com", 443u16).to_socket_addrs()
-        })).await;
-
-        match res {
-            Ok(Ok(Ok(addrs))) => {
-                let addrs_vec: Vec<_> = addrs.collect();
-                if addrs_vec.is_empty() {
-                    return DnsHealthDto {
-                        poisoned: true,
-                        resolved_ip: "none".into(),
-                        is_secure: false,
-                        message: "Discord domaini çözümlenemedi (DNS engeli olabilir).".into(),
+        let mut first_ok_ip = None;
+        for (host, res) in PROBES.iter().zip(results) {
+            let fail = |resolved: &str, message: String| DnsHealthDto {
+                poisoned: true,
+                resolved_ip: resolved.into(),
+                is_secure: false,
+                message,
+            };
+            match res {
+                Ok(Ok(Ok(addrs))) => {
+                    let Some(first) = addrs.first() else {
+                        return fail("none", format!("{host} çözümlenemedi (DNS engeli olabilir)."));
                     };
+                    if let Some(bad) = addrs.iter().find(|sa| is_poisoned_or_bogus_ip(&sa.ip())) {
+                        return fail(
+                            &bad.ip().to_string(),
+                            format!("İnternet sağlayıcınız {host} alan adını hatalı yönlendirme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır."),
+                        );
+                    }
+                    first_ok_ip.get_or_insert_with(|| first.ip().to_string());
                 }
+                Ok(Ok(Err(e))) => return fail("unresolvable", format!("{host} çözümlenemedi: {e}")),
+                Ok(Err(join_err)) => return fail("task_error", format!("DNS çözümleme görevi başarısız: {join_err}")),
+                Err(_) => {
+                    return fail(
+                        "timeout",
+                        format!("{host} sorgusu 3 saniyede yanıt vermedi (İnternet sağlayıcınız DNS isteklerini engelliyor olabilir)."),
+                    )
+                }
+            }
+        }
 
-                let mut poisoned_ip = None;
-                for sa in &addrs_vec {
-                    if is_poisoned_or_bogus_ip(&sa.ip()) {
-                        poisoned_ip = Some(sa.ip().to_string());
-                        break;
-                    }
-                }
-
-                let first_ip = addrs_vec[0].ip().to_string();
-                if let Some(bad_ip) = poisoned_ip {
-                    DnsHealthDto {
-                        poisoned: true,
-                        resolved_ip: bad_ip,
-                        is_secure: false,
-                        message: "İnternet sağlayıcınız (ISP) Discord'u hatalı yönlendirme IP'sine yönlendiriyor. Güvenli DNS uygulanmalıdır.".into(),
-                    }
-                } else {
-                    DnsHealthDto {
-                        poisoned: false,
-                        resolved_ip: first_ip,
-                        is_secure: true,
-                        message: "DNS çözünürlüğü temiz ve gerçek sunucuya ulaşıyor.".into(),
-                    }
-                }
-            }
-            Ok(Ok(Err(e))) => {
-                DnsHealthDto {
-                    poisoned: true,
-                    resolved_ip: "unresolvable".into(),
-                    is_secure: false,
-                    message: format!("DNS çözümlenemedi: {e}"),
-                }
-            }
-            Ok(Err(join_err)) => {
-                DnsHealthDto {
-                    poisoned: true,
-                    resolved_ip: "task_error".into(),
-                    is_secure: false,
-                    message: format!("DNS çözümleme görevi başarısız: {join_err}"),
-                }
-            }
-            Err(_) => {
-                DnsHealthDto {
-                    poisoned: true,
-                    resolved_ip: "timeout".into(),
-                    is_secure: false,
-                    message: "DNS sorgusu 3 saniyede yanıt vermedi (İnternet sağlayıcınız DNS isteklerini engelliyor olabilir).".into(),
-                }
-            }
+        DnsHealthDto {
+            poisoned: false,
+            resolved_ip: first_ok_ip.unwrap_or_default(),
+            is_secure: true,
+            message: "DNS çözünürlüğü temiz ve gerçek sunuculara ulaşıyor.".into(),
         }
     }
 }
@@ -2900,6 +2902,7 @@ pub async fn factory_reset(app: AppHandle) -> Result<(), String> {
             pasif_savunma: default_cfg.pasif_savunma,
             quic_engelle: default_cfg.quic_engelle,
             lan_share: default_cfg.lan_share,
+            all_sites: default_cfg.all_sites,
         };
         std::fs::write(
             config_path(&app),
@@ -3665,6 +3668,63 @@ pub async fn check_update(
     .map_err(|e| e.to_string())?
 }
 
+/// İndirme adresi yalnızca GitHub sürüm varlıklarına izin verir (rastgele URL'den çalıştırılabilir dosya indirmeyi engeller).
+fn is_trusted_release_url(url: &str) -> bool {
+    url.starts_with("https://github.com/") && url.contains("/releases/download/") && !url.contains("..")
+}
+
+/// Tauri güncelleyici biçimi: açık anahtar ve imza, minisign metninin base64 kodlu hâlidir.
+#[cfg(not(target_os = "android"))]
+fn verify_minisign(pubkey_b64: &str, sig_b64: &str, data: &[u8]) -> Result<(), String> {
+    use base64::Engine as _;
+    let b64 = base64::engine::general_purpose::STANDARD;
+    let decode_text = |v: &str| -> Result<String, String> {
+        let raw = b64.decode(v.trim()).map_err(|e| format!("Base64 çözülemedi: {e}"))?;
+        String::from_utf8(raw).map_err(|e| format!("Geçersiz UTF-8: {e}"))
+    };
+    let public_key = minisign_verify::PublicKey::decode(&decode_text(pubkey_b64)?)
+        .map_err(|e| format!("Açık anahtar geçersiz: {e}"))?;
+    let signature = minisign_verify::Signature::decode(&decode_text(sig_b64)?)
+        .map_err(|e| format!("İmza biçimi geçersiz: {e}"))?;
+    public_key
+        .verify(data, &signature, false)
+        .map_err(|e| format!("Güncelleme paketi imzası doğrulanamadı, kurulum iptal edildi: {e}"))
+}
+
+/// "<url>.sig" varsa paketi gömülü updater açık anahtarıyla (minisign) doğrular.
+/// İmza yayınlanmamışsa (404) doğrulama atlanır; imza vardır ama eşleşmezse indirme reddedilir.
+#[cfg(not(target_os = "android"))]
+fn verify_release_signature(app: &AppHandle, download_url: &str, file: &std::path::Path) -> Result<(), String> {
+    let sig_url = format!("{download_url}.sig");
+    let sig_b64 = match ureq::get(&sig_url)
+        .set("User-Agent", &format!("Anticore-Desktop/{APP_VERSION}"))
+        .timeout(std::time::Duration::from_secs(20))
+        .call()
+    {
+        Ok(resp) => resp.into_string().map_err(|e| format!("İmza dosyası okunamadı: {e}"))?,
+        Err(ureq::Error::Status(404, _)) => {
+            app.emit("log", "[!] Güncelleme için .sig bulunamadı, imza doğrulaması atlandı".to_string()).ok();
+            return Ok(());
+        }
+        Err(e) => return Err(format!("Güncelleme imzası indirilemedi: {e}")),
+    };
+
+    let pubkey_b64 = app
+        .config()
+        .plugins
+        .0
+        .get("updater")
+        .and_then(|u| u.get("pubkey"))
+        .and_then(|k| k.as_str())
+        .ok_or("Güncelleyici açık anahtarı yapılandırmada bulunamadı")?
+        .to_string();
+
+    let data = std::fs::read(file).map_err(|e| format!("İndirilen paket okunamadı: {e}"))?;
+    verify_minisign(&pubkey_b64, &sig_b64, &data)?;
+    app.emit("log", "[+] Güncelleme paketi imzası doğrulandı".to_string()).ok();
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn install_update_direct(
     app: AppHandle,
@@ -3706,6 +3766,14 @@ pub async fn install_update_direct(
 
         #[cfg(not(target_os = "android"))]
         {
+            if !is_trusted_release_url(&download_url) {
+                // Sürüm sayfası gibi indirilebilir olmayan GitHub adresleri tarayıcıda açılır.
+                if download_url.starts_with("https://github.com/") {
+                    return open_browser_url(app, download_url);
+                }
+                return Err("Güncelleme bağlantısı yalnızca GitHub sürüm (releases/download) adreslerinden kabul edilir".into());
+            }
+
             if download_url.ends_with(".zip") {
                 return Err("Taşınabilir ZIP arşivleri doğrudan güncellenemez. Lütfen Kurulum Paketi (.exe) kullanın veya Ayarlar menüsünden manuel indirin.".into());
             }
@@ -3733,9 +3801,13 @@ pub async fn install_update_direct(
 
             let mut target_file_path = temp_dir.join(&filename);
 
-            let resp = ureq::get(&download_url)
+            // Toplam süre sınırı yok: yavaş hatlarda büyük paket yarıda kesilmesin; yalnızca bağlantı ve okuma boşta süresi sınırlıdır.
+            let resp = ureq::AgentBuilder::new()
+                .timeout_connect(std::time::Duration::from_secs(20))
+                .timeout_read(std::time::Duration::from_secs(60))
+                .build()
+                .get(&download_url)
                 .set("User-Agent", &format!("Anticore-Desktop/{}", APP_VERSION))
-                .timeout(std::time::Duration::from_secs(180))
                 .call()
                 .map_err(|e| format!("İndirme başlatılamadı: {e}"))?;
 
@@ -3797,6 +3869,11 @@ pub async fn install_update_direct(
                 let _ = std::fs::set_permissions(&target_file_path, std::fs::Permissions::from_mode(0o644));
             }
 
+            if let Err(e) = verify_release_signature(&app, &download_url, &target_file_path) {
+                let _ = std::fs::remove_file(&target_file_path);
+                return Err(e);
+            }
+
             // Motoru ve çalışan alt servisleri zarifçe kapat
             let engine = app.state::<Engine>();
             let _ = prepare_for_update(app.clone(), engine);
@@ -3805,35 +3882,37 @@ pub async fn install_update_direct(
             {
                 let current_exe = std::env::current_exe().map_err(|e| format!("Mevcut uygulama yolu alınamadı: {e}"))?;
 
+                // İndirilen dosyanın geçerli bir Windows PE (MZ) yürütülebilir dosyası olduğunu doğrula.
+                // Bozuk indirme, 404 HTML yanıtı veya .zip dosyalarının çalıştırılmasını ve 16-bit sistem hatasını engeller.
+                let mut magic = [0u8; 2];
+                if let Ok(mut f) = std::fs::File::open(&target_file_path) {
+                    let _ = f.read_exact(&mut magic);
+                }
+                if magic != *b"MZ" {
+                    let _ = std::fs::remove_file(&target_file_path);
+                    return Err("İndirilen güncelleme paketi geçerli bir Windows yürütülebilir dosyası (.exe) değil. İndirme bozulmuş veya bağlantı hatalı olabilir.".into());
+                }
+
                 if is_portable_exe {
+                    // En fazla 60 deneme: yazma izni yoksa betik sonsuza dek dönmez, eski sürüm yeniden açılır.
                     let bat_path = temp_dir.join("anticore_portable_updater.bat");
                     let bat_content = format!(
-                        "@echo off\r\ntimeout /t 1 /nobreak > nul\r\n:retry\r\nmove /y \"{}\" \"{}\" > nul 2>&1\r\nif errorlevel 1 (\r\n    timeout /t 1 /nobreak > nul\r\n    goto retry\r\n)\r\nstart \"\" \"{}\"\r\ndel \"%~f0\"\r\nexit\r\n",
-                        target_file_path.display(),
-                        current_exe.display(),
-                        current_exe.display()
+                        "@echo off\r\nset n=0\r\ntimeout /t 1 /nobreak > nul\r\n:retry\r\nmove /y \"{new}\" \"{cur}\" > nul 2>&1\r\nif errorlevel 1 (\r\n    set /a n+=1\r\n    if %n% GEQ 60 goto done\r\n    timeout /t 1 /nobreak > nul\r\n    goto retry\r\n)\r\n:done\r\nstart \"\" \"{cur}\"\r\ndel \"%~f0\"\r\nexit\r\n",
+                        new = target_file_path.display(),
+                        cur = current_exe.display(),
                     );
                     std::fs::write(&bat_path, bat_content).map_err(|e| format!("Güncelleme betiği yazılamadı: {e}"))?;
 
-                    let _ = silent_command("cmd.exe")
+                    silent_command("cmd.exe")
                         .args(["/c", &bat_path.to_string_lossy()])
-                        .spawn();
+                        .spawn()
+                        .map_err(|e| format!("Güncelleme betiği başlatılamadı: {e}"))?;
 
                     std::process::exit(0);
                 } else {
-                    // İndirilen dosyanın geçerli bir Windows PE (MZ) yürütülebilir dosyası olduğunu doğrula.
-                    // Bozuk indirme, 404 HTML yanıtı veya .zip dosyalarının çalıştırılmasını ve 16-bit sistem hatasını engeller.
-                    let mut magic = [0u8; 2];
-                    if let Ok(mut f) = std::fs::File::open(&target_file_path) {
-                        let _ = f.read_exact(&mut magic);
-                    }
-                    if magic != *b"MZ" {
-                        let _ = std::fs::remove_file(&target_file_path);
-                        return Err("İndirilen güncelleme paketi geçerli bir Windows yürütülebilir dosyası (.exe) değil. İndirme bozulmuş veya bağlantı hatalı olabilir.".into());
-                    }
-
-                    let _ = silent_command(target_file_path.to_str().unwrap_or_default())
-                        .spawn();
+                    silent_command(target_file_path.to_str().unwrap_or_default())
+                        .spawn()
+                        .map_err(|e| format!("Kurulum paketi başlatılamadı (yönetici izni gerekebilir): {e}"))?;
 
                     std::process::exit(0);
                 }
@@ -5120,8 +5199,39 @@ pub fn drain_captured_domains(engine: tauri::State<Engine>) -> Vec<crate::servic
 mod tests {
     use super::*;
 
+    #[cfg(not(target_os = "android"))]
+    #[test]
+    fn minisign_rejects_tampered_data_and_bad_input() {
+        let conf = include_str!("../tauri.conf.json");
+        let v: serde_json::Value = serde_json::from_str(conf).unwrap();
+        let pubkey = v["plugins"]["updater"]["pubkey"].as_str().unwrap();
+        assert!(verify_minisign(pubkey, "not-base64!!", b"x").is_err());
+        assert!(verify_minisign("not-base64!!", "AAAA", b"x").is_err());
+        assert!(verify_minisign(pubkey, "AAAA", b"x").is_err());
+    }
+
+    /// Gerçek yayın paketiyle: ANTICORE_SIGTEST_DIR altında Anticore_0.3.9_x64-setup.exe ve .sig bulunmalı.
+    #[cfg(not(target_os = "android"))]
+    #[test]
+    #[ignore]
+    fn minisign_verifies_published_release_asset() {
+        let dir = std::path::PathBuf::from(std::env::var("ANTICORE_SIGTEST_DIR").unwrap());
+        let conf = include_str!("../tauri.conf.json");
+        let v: serde_json::Value = serde_json::from_str(conf).unwrap();
+        let pubkey = v["plugins"]["updater"]["pubkey"].as_str().unwrap();
+        let sig = std::fs::read_to_string(dir.join("Anticore_0.3.9_x64-setup.exe.sig")).unwrap();
+        let mut data = std::fs::read(dir.join("Anticore_0.3.9_x64-setup.exe")).unwrap();
+        verify_minisign(pubkey, &sig, &data).expect("yayınlanmış paket doğrulanmalı");
+        data[100] ^= 0xFF;
+        assert!(verify_minisign(pubkey, &sig, &data).is_err(), "değiştirilmiş paket reddedilmeli");
+    }
+
     #[test]
     fn detects_newer_patch_and_minor() {
+        assert!(is_trusted_release_url("https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"));
+        assert!(!is_trusted_release_url("http://github.com/MonarchDevLab/Anticore/releases/download/v1/a.exe"));
+        assert!(!is_trusted_release_url("https://evil.example/releases/download/v1/a.exe"));
+        assert!(!is_trusted_release_url("https://github.com/x/y/releases/latest"));
         assert!(is_newer_version("0.2.0", "v0.2.1"));
         assert!(is_newer_version("0.2.0", "0.3.0"));
         assert!(!is_newer_version("0.2.0", "0.2.0"));

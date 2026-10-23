@@ -1,9 +1,9 @@
-import { Activity, Globe2, Layers, LayoutDashboard, LoaderCircle, Power, Settings, Share2, Shield, FileText, Wrench, LifeBuoy } from "lucide-react";
+import { Activity, Globe2, Layers, LayoutDashboard, LoaderCircle, Power, Settings, Shield, FileText, Wrench, LifeBuoy } from "lucide-react";
 import { useI18n } from "../lib/i18n";
 import { isAndroid } from "../lib/platform";
 import { connectionCopy } from "../features/connection/copy";
 
-export type ViewId = "dashboard" | "sites" | "profiles" | "test" | "network" | "lan_share" | "setup" | "destek" | "settings" | "wizard" | "logs" | "changelog" | "support";
+export type ViewId = "dashboard" | "sites" | "profiles" | "test" | "network" | "setup" | "destek" | "settings" | "wizard" | "logs" | "changelog" | "support";
 interface Props { view: ViewId; onNavigate: (view: ViewId) => void; running: boolean; known: boolean; busy: boolean; onToggle: () => void; }
 
 export default function AppNavigation({ view, onNavigate, running, known, busy, onToggle }: Props) {
@@ -17,7 +17,7 @@ export default function AppNavigation({ view, onNavigate, running, known, busy, 
   ];
   const groups = [
     { label: copy.workspace, items: [{ id: "dashboard", label: t("nav_dashboard"), icon: LayoutDashboard }, { id: "sites", label: t("nav_sites"), icon: Globe2 }, { id: "profiles", label: t("nav_profiles"), icon: Layers }] },
-    { label: copy.tools, items: [{ id: "test", label: t("nav_test"), icon: Activity }, { id: "network", label: t("nav_network"), icon: Wrench }, { id: "lan_share", label: t("nav_lan_share"), icon: Share2 }] },
+    { label: copy.tools, items: [{ id: "test", label: t("nav_test"), icon: Activity }, { id: "network", label: t("nav_network"), icon: Wrench }] },
     { label: copy.support, items: supportItems },
   ];
   return (
