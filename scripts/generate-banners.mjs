@@ -317,7 +317,7 @@ const bannerHtml = `<!DOCTYPE html>
       <span class="card-val">WIN • MAC • ANDROID</span>
     </div>
     <div class="dock-card badge-card">
-      <span class="badge-text">v0.3.9 STABLE</span>
+      <span class="badge-text">v0.4.0 STABLE</span>
     </div>
   </div>
 </body>
@@ -505,7 +505,7 @@ const socialHtml = `<!DOCTYPE html>
   <div class="left-column">
     <div class="status-pill">
       <div class="pulse-dot"></div>
-      <div class="pill-text">TURKISH ISP CALIBRATED // v0.3.9 STABLE</div>
+      <div class="pill-text">TURKISH ISP CALIBRATED // v0.4.0 STABLE</div>
     </div>
     <h1 class="brand-title">ANTICORE</h1>
     <p class="brand-desc">
@@ -726,7 +726,7 @@ const bannerSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 280"
     <g transform="translate(612, 0)">
       <rect width="188" height="28" rx="14" fill="url(#versionGrad)" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="1" filter="url(#subtleGlow)"/>
       <circle cx="28" cy="14" r="3.5" fill="#05080E"/>
-      <text x="100" y="18" text-anchor="middle" fill="#05080E" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="11" font-weight="900" letter-spacing="1.2">v0.3.9 STABLE</text>
+      <text x="100" y="18" text-anchor="middle" fill="#05080E" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="11" font-weight="900" letter-spacing="1.2">v0.4.0 STABLE</text>
     </g>
   </g>
 </svg>`;

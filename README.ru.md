@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.png?v=0.3.9-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.png?v=0.4.0-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -69,7 +69,7 @@
 
 ---
 
-## Варианты загрузки (v0.3.9)
+## Варианты загрузки (v0.4.0)
 
 Все бинарные сборки скомпилированы напрямую из исходного кода, очищены от путей сборки (Zero Leakage) и подписаны цифровой подписью Minisign.
 
@@ -96,13 +96,13 @@
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore.exe"><img src="https://img.shields.io/badge/СКАЧАТЬ_.EXE-17.6_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Скачать EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore.exe"><img src="https://img.shields.io/badge/СКАЧАТЬ_.EXE-17.6_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="Скачать EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/СКАЧАТЬ_.EXE-4.79_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Скачать EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64-setup.exe"><img src="https://img.shields.io/badge/СКАЧАТЬ_.EXE-4.79_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="Скачать EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64_en-US.msi"><img src="https://img.shields.io/badge/СКАЧАТЬ_.MSI-6.88_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Скачать MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64_en-US.msi"><img src="https://img.shields.io/badge/СКАЧАТЬ_.MSI-6.88_MB-FFE600?style=for-the-badge&labelColor=08090D" alt="Скачать MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -118,10 +118,10 @@
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(17.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore.exe"><img src="https://img.shields.io/badge/STANDALONE-Anticore.exe_(17.6_MB)-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/SETUP_ИНСТАЛЛЯТОР-Anticore__0.3.9__x64--setup.exe-20f2ff?style=flat-square&labelColor=08090D" alt="Setup" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64-setup.exe"><img src="https://img.shields.io/badge/SETUP_ИНСТАЛЛЯТОР-Anticore__0.4.0__x64--setup.exe-20f2ff?style=flat-square&labelColor=08090D" alt="Setup" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/АРХИВ-Все_релизы_GitHub-FFFFFF?style=flat-square&labelColor=08090D" alt="Все релизы" /></a>
@@ -130,7 +130,7 @@
   </tbody>
 </table>
 
-### Мобильная станция Android (v0.3.9)
+### Мобильная станция Android (v0.4.0)
 
 Нативный клиент обхода DNS и DPI для Android (API 26 / Android 8.0+):
 
@@ -152,7 +152,7 @@
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore-v0.3.9.apk"><img src="https://img.shields.io/badge/СКАЧАТЬ_.APK-Universal_(Android_8.0+)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Скачать APK" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore-v0.4.0.apk"><img src="https://img.shields.io/badge/СКАЧАТЬ_.APK-Universal_(Android_8.0+)-20ffa0?style=for-the-badge&labelColor=08090D" alt="Скачать APK" /></a>
       </td>
       <td align="center" valign="middle">
         <img src="https://img.shields.io/badge/БЕЗОПАСНОСТЬ-БЕЗ_ROOT_%E2%80%A2_ZERO_LOG-20f2ff?style=flat-square&labelColor=08090D" alt="Без Root" />
@@ -181,12 +181,12 @@
   <tbody>
     <tr>
       <td align="center">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_arm64.pkg"><img src="https://img.shields.io/badge/ИНСТАЛЛЯТОР_.PKG-arm64-20ffa0?style=for-the-badge&labelColor=08090D" alt="arm64 PKG" /></a>&nbsp;
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_aarch64.dmg"><img src="https://img.shields.io/badge/ОБРАЗ_.DMG-arm64-20f2ff?style=for-the-badge&labelColor=08090D" alt="arm64 DMG" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_arm64.pkg"><img src="https://img.shields.io/badge/ИНСТАЛЛЯТОР_.PKG-arm64-20ffa0?style=for-the-badge&labelColor=08090D" alt="arm64 PKG" /></a>&nbsp;
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_aarch64.dmg"><img src="https://img.shields.io/badge/ОБРАЗ_.DMG-arm64-20f2ff?style=for-the-badge&labelColor=08090D" alt="arm64 DMG" /></a>
       </td>
       <td align="center">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.pkg"><img src="https://img.shields.io/badge/ИНСТАЛЛЯТОР_.PKG-x64-20ffa0?style=for-the-badge&labelColor=08090D" alt="x64 PKG" /></a>&nbsp;
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.dmg"><img src="https://img.shields.io/badge/ОБРАЗ_.DMG-x64-20f2ff?style=for-the-badge&labelColor=08090D" alt="x64 DMG" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64.pkg"><img src="https://img.shields.io/badge/ИНСТАЛЛЯТОР_.PKG-x64-20ffa0?style=for-the-badge&labelColor=08090D" alt="x64 PKG" /></a>&nbsp;
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64.dmg"><img src="https://img.shields.io/badge/ОБРАЗ_.DMG-x64-20f2ff?style=for-the-badge&labelColor=08090D" alt="x64 DMG" /></a>
       </td>
     </tr>
   </tbody>
@@ -203,15 +203,15 @@ curl -fsSL https://raw.githubusercontent.com/MonarchDevLab/Anticore/main/scripts
 
 | Файл дистрибутива | Размер | Контрольная сумма SHA-256 |
 |---|---|---|
-| `Anticore_0.3.9_x64-setup.exe` | 4.83 MB | `21167A76637BD63C2D775D23A6E6AF9566B50D7253F30D4D00A3557B2C76C4C3` |
+| `Anticore_0.4.0_x64-setup.exe` | 4.71 MB | `4AD57922DA2002B410E083CD0EA8E9545D14A020FB37360A2CD2151528821A72` |
 | `Anticore.exe` | 17.61 MB | `84D2F2B88887B209E3B122FEF8171C280722AC0B2274829A675346A95CE52A83` |
-| `Anticore_0.3.9_x64_en-US.msi` | 6.91 MB | `6EB960FE77A3951119FFB5029E32ADAC67329B46305F89506E282CA2F3A41773` |
-| `Anticore_0.3.9_x64-portable.zip` | 7.07 MB | `28C571A05F97A3D627907CE7F8E6E75609E2425C162480B4938CA71FE67C76E8` |
-| `Anticore-v0.3.9.apk` (Android) | 47.61 MB | `61E3CC2E21D78E83E43651475A767E4B46A14E11D53E59972F4780831F95C8F4` |
-| `Anticore_0.3.9_arm64.pkg` | 6.69 MB | `752645914DA7DB08CCA4C3FA278C9269FD4CC8E75DF61FAB8B31D7A7CFC4A67E` |
-| `Anticore_0.3.9_aarch64.dmg` | 6.67 MB | `3718950D281A3ADB3338E2B6D6B6C37BCFBA400C73BBB22C7D3E01A04855E0CA` |
-| `Anticore_0.3.9_x64.pkg` | 6.99 MB | `BB3E7ED3B1CEC5F875B23D2369820BB3C43269FF9AEC19707E4794197205F4D3` |
-| `Anticore_0.3.9_x64.dmg` | 6.93 MB | `EF6FE6B305AAA66ECEADF362B65B89F77F62BBF0D5A4616A473548774CE3E60E` |
+| `Anticore_0.4.0_x64_en-US.msi` | 6.74 MB | `32725BDC2AE266D9BA3AF14BFCDDA3BC8F18A8C0A9874D81BBA7C817DB168506` |
+| `Anticore_0.4.0_x64-portable.zip` | 6.90 MB | `7AFD1C0F33EB8C4D5752AE48EC22EFFDDB459E40BDFBC450460FE349C1504816` |
+| `Anticore-v0.4.0.apk` (Android) | 47.29 MB | `9F6478A01D2186EA45D9C91857016546A527EAD744138AED5135527DB0749C3F` |
+| `Anticore_0.4.0_arm64.pkg` | 7.66 MB | `D4EF4117FCADD4BB1ED8711C2BBE747D409C6818F1EB32BAE63377C64303CD29` |
+| `Anticore_0.4.0_aarch64.dmg` | 8.64 MB | `32DA99AD8531E7E7965F966BFF59FB989D57A3183CF7762F75FE58EABCC23B71` |
+| `Anticore_0.4.0_x64.pkg` | 7.96 MB | `45B2765215F5A172C9CB8F1BE6B2851548A073CDEAADF1061F95D51018057716` |
+| `Anticore_0.4.0_x64.dmg` | 8.88 MB | `7FFEEF68B0C5235ED9469B5EE512EAD98C41ACCFFB3ADFC8ADD8DCF2407D82A7` |
 
 ---
 
@@ -267,7 +267,7 @@ Anticore — это локальный программный комплекс �
       <a href="assets/anticore-3d-logo-transparent.png"><code>anticore-3d-logo-transparent.png</code></a>
     </td>
     <td width="25%" align="center" bgcolor="#090E17">
-      <img src="assets/banner.png?v=0.3.9-3d" width="220" alt="Anticore Retina Баннер" /><br /><br />
+      <img src="assets/banner.png?v=0.4.0-3d" width="220" alt="Anticore Retina Баннер" /><br /><br />
       <b>Ultra-HD Retina Баннер</b><br />
       <small>1760x560 px, официальный заголовок GitHub для экранов высокой четкости.</small><br /><br />
       <a href="assets/banner.png"><code>assets/banner.png</code></a>

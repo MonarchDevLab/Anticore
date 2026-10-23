@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/banner.png?v=0.3.9-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
+  <img src="assets/banner.png?v=0.4.0-3d" alt="ANTICORE - Zero-Loss DPI Circumvention Suite" width="100%" style="max-width: 880px;" />
 </p>
 
 # ANTICORE
@@ -69,7 +69,7 @@
 
 ---
 
-## İndirme Seçenekleri (v0.3.9)
+## İndirme Seçenekleri (v0.4.0)
 
 Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arındırılmış (Zero Leakage) ve Minisign ile doğrulanmıştır.
 
@@ -96,13 +96,13 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-17.6_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir Standalone EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-17.6_MB-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir Standalone EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.8_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir Setup EXE" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64-setup.exe"><img src="https://img.shields.io/badge/INDIR_.EXE-4.8_MB-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir Setup EXE" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-Kurumsal-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64_en-US.msi"><img src="https://img.shields.io/badge/INDIR_.MSI-Kurumsal-FFE600?style=for-the-badge&labelColor=08090D" alt="İndir MSI" /></a>
       </td>
     </tr>
     <tr>
@@ -118,10 +118,10 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
     </tr>
     <tr>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64-setup.exe"><img src="https://img.shields.io/badge/SETUP_KURULUM-Anticore__0.3.9__x64--setup.exe-20ffa0?style=flat-square&labelColor=08090D" alt="Setup" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64-setup.exe"><img src="https://img.shields.io/badge/SETUP_KURULUM-Anticore__0.4.0__x64--setup.exe-20ffa0?style=flat-square&labelColor=08090D" alt="Setup" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore.exe"><img src="https://img.shields.io/badge/PORTABLE_EXE-Anticore.exe_(17.6_MB)-20f2ff?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore.exe"><img src="https://img.shields.io/badge/PORTABLE_EXE-Anticore.exe_(17.6_MB)-20f2ff?style=flat-square&labelColor=08090D" alt="Anticore.exe" /></a>
       </td>
       <td align="center" bgcolor="#161b22">
         <a href="https://github.com/MonarchDevLab/Anticore/releases/latest"><img src="https://img.shields.io/badge/AR%C5%9E%C4%B0V-GitHub_T%C3%BCm_S%C3%BCr%C3%BCmler-FFFFFF?style=flat-square&labelColor=08090D" alt="Tüm Sürümler" /></a>
@@ -130,7 +130,7 @@ Tüm ikili paketler doğrudan derlenmiş, yerel geliştirici yollarından arınd
   </tbody>
 </table>
 
-### Android Mobil Dağıtım İstasyonu (v0.3.9)
+### Android Mobil Dağıtım İstasyonu (v0.4.0)
 
 Android (API 26 / Android 8.0 ve üzeri) için yerel DNS & DPI baypas istemcisi doğrudan paketlenmiştir:
 
@@ -152,7 +152,7 @@ Android (API 26 / Android 8.0 ve üzeri) için yerel DNS & DPI baypas istemcisi 
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore-v0.3.9.apk"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.APK-Universal_(Android_8.0+)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir APK" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore-v0.4.0.apk"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.APK-Universal_(Android_8.0+)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir APK" /></a>
       </td>
       <td align="center" valign="middle">
         <img src="https://img.shields.io/badge/G%C3%9CVENL%C4%B0K-ROOTSUZ_%E2%80%A2_ZERO_LOG-20f2ff?style=flat-square&labelColor=08090D" alt="Rootsuz" />
@@ -161,7 +161,7 @@ Android (API 26 / Android 8.0 ve üzeri) için yerel DNS & DPI baypas istemcisi 
   </tbody>
 </table>
 
-### macOS Dağıtım İstasyonu (v0.3.9)
+### macOS Dağıtım İstasyonu (v0.4.0)
 
 macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve üst menü çubuğu Hızlı Panel (`quick-panel`) paketleri mimarilerine göre ayrıştırılmıştır:
 
@@ -190,34 +190,34 @@ macOS (11.0 Big Sur ve üzeri) için yerel `utun` + `pfctl` çekirdek motoru ve 
   <tbody>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_arm64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir PKG ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_arm64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-ARM64_(Installer)-20ffa0?style=for-the-badge&labelColor=08090D" alt="İndir PKG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir PKG Intel x64" /></a>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_aarch64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="İndir DMG ARM64" /></a>
-      </td>
-      <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="İndir DMG Intel x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64.pkg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.PKG-x64_(Installer)-20f2ff?style=for-the-badge&labelColor=08090D" alt="İndir PKG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_aarch64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-ARM64_(Disk_Image)-20ffa0?style=flat-square&labelColor=08090D" alt="İndir DMG ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64.dmg"><img src="https://img.shields.io/badge/%C4%B0ND%C4%B0R_.DMG-x64_(Disk_Image)-20f2ff?style=flat-square&labelColor=08090D" alt="İndir DMG Intel x64" /></a>
       </td>
     </tr>
     <tr>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-cli-macos-arm64-0.3.9.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_aarch64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__aarch64.app.tar.gz-20ffa0?style=flat-square&labelColor=08090D" alt="App ARM64" /></a>
       </td>
       <td align="center" valign="middle">
-        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/anticore-cli-macos-x64-0.3.9.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_x64.app.tar.gz"><img src="https://img.shields.io/badge/STANDALONE_.APP-Anticore__x64.app.tar.gz-20f2ff?style=flat-square&labelColor=08090D" alt="App x64" /></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/anticore-cli-macos-arm64-0.4.0.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--arm64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI ARM64" /></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/anticore-cli-macos-x64-0.4.0.tar.gz"><img src="https://img.shields.io/badge/CLI_&_DAEMON-anticore--cli--x64.tar.gz-FFE600?style=flat-square&labelColor=08090D" alt="CLI x64" /></a>
       </td>
     </tr>
     <tr>
@@ -242,10 +242,10 @@ Paketi Terminal üzerinden doğrudan indirip macOS yerel yükleyicisiyle kurmak 
 
 ```bash
 # Apple Silicon Mac (M1 / M2 / M3 / M4)
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_arm64.pkg && sudo installer -pkg Anticore_0.3.9_arm64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_arm64.pkg && sudo installer -pkg Anticore_0.4.0_arm64.pkg -target /
 
 # Intel Tabanlı Mac
-curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anticore_0.3.9_x64.pkg && sudo installer -pkg Anticore_0.3.9_x64.pkg -target /
+curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.4.0/Anticore_0.4.0_x64.pkg && sudo installer -pkg Anticore_0.4.0_x64.pkg -target /
 ```
 
 > [!IMPORTANT]
@@ -269,19 +269,19 @@ curl -LO https://github.com/MonarchDevLab/Anticore/releases/download/v0.3.9/Anti
 
 | Paket Dosyası | Boyut | SHA-256 Özeti |
 |---|:---:|---|
-| `Anticore_0.3.9_x64-setup.exe` | 4.83 MB | `21167A76637BD63C2D775D23A6E6AF9566B50D7253F30D4D00A3557B2C76C4C3` |
+| `Anticore_0.4.0_x64-setup.exe` | 4.71 MB | `4AD57922DA2002B410E083CD0EA8E9545D14A020FB37360A2CD2151528821A72` |
 | `Anticore.exe` / `anticore-desktop.exe` (Bağımsız GUI) | 17.61 MB | `84D2F2B88887B209E3B122FEF8171C280722AC0B2274829A675346A95CE52A83` |
-| `Anticore_0.3.9_x64_en-US.msi` | 6.91 MB | `6EB960FE77A3951119FFB5029E32ADAC67329B46305F89506E282CA2F3A41773` |
-| `Anticore_0.3.9_x64-portable.zip` | 7.07 MB | `28C571A05F97A3D627907CE7F8E6E75609E2425C162480B4938CA71FE67C76E8` |
-| `Anticore-v0.3.9.apk` (Android Evrensel) | 47.61 MB | `61E3CC2E21D78E83E43651475A767E4B46A14E11D53E59972F4780831F95C8F4` |
-| `Anticore_0.3.9_arm64.pkg` | 6.69 MB | `752645914DA7DB08CCA4C3FA278C9269FD4CC8E75DF61FAB8B31D7A7CFC4A67E` |
-| `Anticore_0.3.9_aarch64.dmg` | 6.67 MB | `3718950D281A3ADB3338E2B6D6B6C37BCFBA400C73BBB22C7D3E01A04855E0CA` |
-| `Anticore_0.3.9_x64.pkg` | 6.99 MB | `BB3E7ED3B1CEC5F875B23D2369820BB3C43269FF9AEC19707E4794197205F4D3` |
-| `Anticore_0.3.9_x64.dmg` | 6.93 MB | `EF6FE6B305AAA66ECEADF362B65B89F77F62BBF0D5A4616A473548774CE3E60E` |
+| `Anticore_0.4.0_x64_en-US.msi` | 6.74 MB | `32725BDC2AE266D9BA3AF14BFCDDA3BC8F18A8C0A9874D81BBA7C817DB168506` |
+| `Anticore_0.4.0_x64-portable.zip` | 6.90 MB | `7AFD1C0F33EB8C4D5752AE48EC22EFFDDB459E40BDFBC450460FE349C1504816` |
+| `Anticore-v0.4.0.apk` (Android Evrensel) | 47.29 MB | `9F6478A01D2186EA45D9C91857016546A527EAD744138AED5135527DB0749C3F` |
+| `Anticore_0.4.0_arm64.pkg` | 7.66 MB | `D4EF4117FCADD4BB1ED8711C2BBE747D409C6818F1EB32BAE63377C64303CD29` |
+| `Anticore_0.4.0_aarch64.dmg` | 8.64 MB | `32DA99AD8531E7E7965F966BFF59FB989D57A3183CF7762F75FE58EABCC23B71` |
+| `Anticore_0.4.0_x64.pkg` | 7.96 MB | `45B2765215F5A172C9CB8F1BE6B2851548A073CDEAADF1061F95D51018057716` |
+| `Anticore_0.4.0_x64.dmg` | 8.88 MB | `7FFEEF68B0C5235ED9469B5EE512EAD98C41ACCFFB3ADFC8ADD8DCF2407D82A7` |
 
 ```powershell
 # İndirdiğiniz paketi PowerShell ile doğrulamak için:
-Get-FileHash .\Anticore_0.3.9_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\Anticore_0.4.0_x64-setup.exe -Algorithm SHA256
 ```
 </details>
 
@@ -518,7 +518,7 @@ flowchart TD
         TCPIP["Windows Ağ Yığını (TCP/IP)"]
     end
 
-    subgraph AnticoreEngine["ANTICORE v0.3.9 (Rust Çekirdeği)"]
+    subgraph AnticoreEngine["ANTICORE v0.4.0 (Rust Çekirdeği)"]
         WD["WinDivert Çekirdek Sürücüsü"]
         Check{"Hedef Alan Adı\nKara Listede mi?"}
         Manip["Cerrahi TLS SNI Bölme\n+ Düşük TTL Sahte Paket (TTL=4)"]
@@ -717,7 +717,7 @@ Türkiye'deki ana internet servis sağlayıcılarının kullandığı derin pake
       <th width="19%" align="center">GoodbyeDPI</th>
       <th width="19%" align="center">SplitWire</th>
       <th width="19%" align="center">
-        <img src="https://img.shields.io/badge/ANTICORE-v0.3.9-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore v0.3.9" />
+        <img src="https://img.shields.io/badge/ANTICORE-v0.4.0-20ffa0?style=flat-square&labelColor=08090D" alt="Anticore v0.4.0" />
       </th>
     </tr>
   </thead>
@@ -826,7 +826,7 @@ Ana uygulama penceresini açmadan, Windows görev çubuğunun sağ alt köşesin
   <thead>
     <tr>
       <th width="50%" align="left">
-        <img src="https://img.shields.io/badge/TRAY_KOKP%C4%B0T-ANTICORE_v0.3.9_CANLI_KOMUTA-161b22?style=flat-square" alt="Tray Cockpit" />
+        <img src="https://img.shields.io/badge/TRAY_KOKP%C4%B0T-ANTICORE_v0.4.0_CANLI_KOMUTA-161b22?style=flat-square" alt="Tray Cockpit" />
       </th>
       <th width="50%" align="right">
         <img src="https://img.shields.io/badge/MOTOR-KORUMA_AKT%C4%B0F-20ffa0?style=flat-square&labelColor=08090D" alt="Durum Aktif" /> &nbsp;
@@ -985,7 +985,7 @@ Resmi GitHub Releases sayfasından indirdiğiniz kurulum ve taşınabilir paketl
     <tr>
       <td colspan="2">
         <b>Doğrulama Komutu (PowerShell / Bash):</b><br />
-        <code>minisign -Vm Anticore_0.3.9_x64-setup.exe -p anticore.key.pub</code>
+        <code>minisign -Vm Anticore_0.4.0_x64-setup.exe -p anticore.key.pub</code>
       </td>
     </tr>
   </tbody>
@@ -1049,7 +1049,7 @@ Anticore marka kimliği, taktik siber güvenlik kalkanı ve kuantum reaktör çe
       <a href="assets/anticore-3d-logo-transparent.png"><code>anticore-3d-logo-transparent.png</code></a>
     </td>
     <td width="25%" align="center" bgcolor="#090E17">
-      <img src="assets/banner.png?v=0.3.9-3d" width="220" alt="Anticore Retina Banner" /><br /><br />
+      <img src="assets/banner.png?v=0.4.0-3d" width="220" alt="Anticore Retina Banner" /><br /><br />
       <b>Ultra-HD Retina Banner</b><br />
       <small>1760x560 piksel, yüksek DPI ekranlar için optimize edilmiş resmi GitHub başlığı.</small><br /><br />
       <a href="assets/banner.png"><code>assets/banner.png</code></a>
