@@ -7,9 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Mevcut release etiketi (örn: v0.3.9)'
-        required: false
-        default: 'v0.3.9'
+        description: 'Yayınlanacak sürüm etiketi (örn: v0.3.10); tauri.conf.json sürümüyle aynı olmalı'
+        required: true
 
 jobs:
   publish:
@@ -38,11 +37,28 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           if [[ "${GITHUB_REF}" != refs/tags/* ]]; then
             TAG="${{ github.event.inputs.release_tag }}"
-            if [ -z "$TAG" ]; then
-              TAG="v0.3.9"
-            fi
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Geçersiz sürüm etiketi: '$TAG' (v<major>.<minor>.<patch> bekleniyor)"
+            exit 1
           fi
           echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+
+      - name: Sürüm tutarlılığını doğrula
+        shell: bash
+        run: |
+          ver="${RELEASE_TAG#v}"
+          conf=$(node -p "require('./desktop/src-tauri/tauri.conf.json').version")
+          pkg=$(node -p "require('./desktop/package.json').version")
+          eng=$(sed -n 's/^version = "\(.*\)"/\1/p' engine/Cargo.toml | head -1)
+          app=$(sed -n 's/^version = "\(.*\)"/\1/p' desktop/src-tauri/Cargo.toml | head -1)
+          echo "etiket=$ver tauri.conf=$conf package.json=$pkg engine=$eng desktop=$app"
+          for v in "$conf" "$pkg" "$eng" "$app"; do
+            if [ "$v" != "$ver" ]; then
+              echo "::error::Sürüm uyuşmazlığı: etiket $ver, dosya sürümü $v. Güncelleyici sürekli yeni sürüm bildirir."
+              exit 1
+            fi
+          done
 
       - name: Node kurulumu
         uses: actions/setup-node@v4
@@ -234,9 +250,10 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           if [[ "${GITHUB_REF}" != refs/tags/* ]]; then
             TAG="${{ github.event.inputs.release_tag }}"
-            if [ -z "$TAG" ]; then
-              TAG="v0.3.9"
-            fi
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Geçersiz sürüm etiketi: '$TAG' (v<major>.<minor>.<patch> bekleniyor)"
+            exit 1
           fi
           echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
 
@@ -262,7 +279,7 @@ jobs:
           cd dist_release
 
           echo "GitHub Release paketleri indiriliyor: $ref..."
-          gh release download "$ref" --pattern "Anticore_*" || true
+          gh release download "$ref" --pattern "Anticore_*" --pattern "Anticore.exe" || true
 
           sign_asset() {
             local file="$1"
@@ -281,6 +298,7 @@ jobs:
           MSI_FILE="Anticore_${ver}_x64_en-US.msi"
           MAC_ARM64="Anticore_${ver}_arm64.pkg"
           MAC_X64="Anticore_${ver}_x64.pkg"
+          PORTABLE_EXE="Anticore.exe"
 
           export VER="$ver"
           export REF="$ref"
@@ -288,6 +306,7 @@ jobs:
           export SIG_MSI="$(sign_asset "$MSI_FILE")"
           export SIG_ARM64="$(sign_asset "$MAC_ARM64")"
           export SIG_X64="$(sign_asset "$MAC_X64")"
+          sign_asset "$PORTABLE_EXE" > /dev/null
 
           node -e '
             const fs = require("fs");
@@ -336,6 +355,10 @@ jobs:
               };
             }
 
+            if (!manifest.platforms["windows-x86_64"]) {
+              console.error("windows-x86_64 imzası üretilemedi; latest.json yayınlanmıyor.");
+              process.exit(1);
+            }
             fs.writeFileSync("latest.json", JSON.stringify(manifest, null, 2), "utf8");
             console.log("Oluşturulan latest.json içeriği:");
             console.log(JSON.stringify(manifest, null, 2));
@@ -343,6 +366,16 @@ jobs:
 
           echo "latest.json GitHub Release üzerine yükleniyor..."
           gh release upload "$ref" latest.json --clobber
+
+          echo "Manifest adresleri doğrulanıyor..."
+          for u in $(node -p "[...new Set(Object.values(require('./latest.json').platforms).map(p => p.url))].join(' ')"); do
+            code=$(curl -s -o /dev/null -L -I -w "%{http_code}" "$u")
+            echo "$code $u"
+            if [ "$code" != "200" ]; then
+              echo "::error::Manifest adresi indirilemiyor: $u ($code)"
+              exit 1
+            fi
+          done
 
           echo "İmza (.sig) dosyaları GitHub Release üzerine yükleniyor..."
           for sig in *.sig; do
